@@ -1,0 +1,4 @@
+/.lein-env
+/*.org
+/.lein-failures
+/resources/public/js/compiled
