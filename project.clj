@@ -71,7 +71,7 @@
    ;; Frontend
    ;;
    :frontend
-   [:vcs :common :cljs
+   [:vcs :common
     {:source-paths ["src/frontend"]
      :plugins
      [[lein-cljsbuild "1.1.4"
@@ -109,39 +109,38 @@
      :repl-options
      {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
      :figwheel
-     {:css-dirs ["resources/public/css"]}}]
+     {:css-dirs ["resources/public/css"]}}]}
 
-   ;;
-   ;; cljs
-   ;;
-   :cljs
-   {:cljsbuild
-    {:builds
-     [{:id           "prod"
-       :jar          true
-       :source-paths ["src/frontend" "src/common" "src/vcs"]
-       :compiler     {:main           vimsical.frontend.core
-                      :asset-path     "/js"
-                      :externs        ["resources/externs/svg.js"]
-                      :output-to      "resources/public/js/compiled/vimsical.js"
-                      :optimizations  :advanced
-                      :pretty-print   false
-                      :parallel-build true
-                      ;; Determines whether readable names are emitted. This can
-                      ;; be useful when debugging issues in the optimized
-                      ;; JavaScript and can aid in finding missing
-                      ;; externs. Defaults to false.
-                      :pseudo-names   false}}
-      {:id           "dev"
-       :figwheel     {:on-jsload vimsical.frontend.core/-main}
-       :source-paths ["src/frontend" "src/common" "src/vcs" "dev/frontend"]
-       :compiler     {:main            vimsical.frontend.core
-                      :asset-path      "/js/compiled/out"
-                      :output-to       "resources/public/js/compiled/vimsical.js"
-                      :output-dir      "resources/public/js/compiled/out"
-                      :optimizations   :none
-                      :parallel-build  true
-                      :preloads        [devtools.preload]
-                      :external-config {:devtools/config
-                                        {:features-to-install [:formatters :hints]
-                                         :fn-symbol           "F"}}}}]}}})
+  ;;
+  ;; cljsbuild
+  ;;
+  :cljsbuild
+  {:builds
+   [{:id           "prod"
+     :jar          true
+     :source-paths ["src/frontend" "src/common" "src/vcs"]
+     :compiler     {:main           vimsical.frontend.core
+                    :asset-path     "/js"
+                    :externs        ["resources/externs/svg.js"]
+                    :output-to      "resources/public/js/compiled/vimsical.js"
+                    :optimizations  :advanced
+                    :pretty-print   false
+                    :parallel-build true
+                    ;; Determines whether readable names are emitted. This can
+                    ;; be useful when debugging issues in the optimized
+                    ;; JavaScript and can aid in finding missing
+                    ;; externs. Defaults to false.
+                    :pseudo-names   false}}
+    {:id           "dev"
+     :figwheel     {:on-jsload vimsical.frontend.core/-main}
+     :source-paths ["src/frontend" "src/common" "src/vcs" "dev/frontend"]
+     :compiler     {:main            vimsical.frontend.core
+                    :asset-path      "/js/compiled/out"
+                    :output-to       "resources/public/js/compiled/vimsical.js"
+                    :output-dir      "resources/public/js/compiled/out"
+                    :optimizations   :none
+                    :parallel-build  true
+                    :preloads        [devtools.preload]
+                    :external-config {:devtools/config
+                                      {:features-to-install [:formatters :hints]
+                                       :fn-symbol           "F"}}}}]})
