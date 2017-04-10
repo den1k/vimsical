@@ -1,11 +1,8 @@
 (ns vimsical.frontend.core
   (:require [reagent.core :as reagent]
             [re-frame.core :as re-frame]
-            [vimsical.frontend.config :as config]))
-
-(defn temp-root []
-  (fn []
-    [:div "Hello from Johnny"]))
+            [vimsical.frontend.config :as config]
+            [vimsical.frontend.views.app.app :as app]))
 
 (defn dev-setup []
   (when config/debug?
@@ -14,12 +11,13 @@
 
 (defn mount-root []
   (re-frame/clear-subscription-cache!)
-  (reagent/render [temp-root]
+  (reagent/render [app/app]
                   (.getElementById js/document "app")))
 
 (defn on-reload
   "Called by figwheel on reload. See project.clj."
-  [])
+  []
+  (mount-root))
 
 (defn ^:export init
   "Called from index.html"

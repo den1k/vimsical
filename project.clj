@@ -1,8 +1,6 @@
 (defproject vimsical "0.1.0-SNAPSHOT"
   :dependencies
-  [[org.clojure/clojure "1.9.0-alpha15"]
-   [org.clojure/clojurescript "1.9.494"]
-   [figwheel-sidecar "0.5.10-SNAPSHOT"]]
+  [[org.clojure/clojure "1.9.0-alpha15"]]
 
   :source-paths []                                          ; ignore src/ in all profiles
 
@@ -95,12 +93,15 @@
       [cljsjs/google-diff-match-patch "20121119-1"]
       [com.stuartsierra/mapgraph "0.2.1"]
       [reagent "0.6.1"]
-      [re-frame "0.9.2"]]
+      [re-frame "0.9.2"]
+      [re-com "0.9.0"]]
+     :prep-tasks
+     [["garden" "once"]]
      :garden
      {:builds
       [{:id           "dev-styles"
-        :source-paths ["stylesheets"]
-        :stylesheet   vimsical.frontend/styles
+        :source-paths ["src/frontend"]
+        :stylesheet   vimsical.frontend.styles.core/styles
         :compiler     {:output-to     "resources/public/css/app.css"
                        :vendors       ["webkit" "moz"]
                        :auto-prefix   #{:user-select}
@@ -152,6 +153,9 @@
                       :output-dir           "resources/public/js/compiled/out"
                       :optimizations        :none
                       :parallel-build       true
+                      ;; Add cache busting timestamps to source map urls.
+                      ;; This is helpful for keeping source maps up to date when
+                      ;; live reloading code.
                       :source-map-timestamp true
                       :preloads             [devtools.preload]
                       :external-config      {:devtools/config
