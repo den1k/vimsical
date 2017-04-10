@@ -78,7 +78,7 @@
    :frontend
    [:vcs :common :cljs
     {:source-paths
-     ["src/frontend"]
+     ["src/frontend" "src/styles"]
      :plugins
      [[lein-cljsbuild "1.1.4"
        :exclusions [org.apache.commons/commons-compress]]
@@ -100,8 +100,8 @@
      :garden
      {:builds
       [{:id           "dev-styles"
-        :source-paths ["src/frontend"]
-        :stylesheet   vimsical.frontend.styles.core/styles
+        :source-paths ["src/styles"]
+        :stylesheet   vimsical.styles.core/styles
         :compiler     {:output-to     "resources/public/css/app.css"
                        :vendors       ["webkit" "moz"]
                        :auto-prefix   #{:user-select}
