@@ -5,10 +5,14 @@
     '[figwheel-sidecar.config :as config]))
 
 #?(:clj
+   (def cljs-builds
+        (-> (config/get-project-config) :profiles :cljs :cljsbuild :builds)))
+
+#?(:clj
    (def figwheel-config
      {:figwheel-options {:css-dirs ["resources/public/css"]}
       :build-ids        ["dev"]
-      :all-builds       (config/get-project-builds)}))
+      :all-builds       cljs-builds}))
 
 #?(:clj
    (defn start-dev
@@ -20,5 +24,5 @@
 #?(:clj
    (start-dev))
 
-#?(:cljs
+#_(:cljs
    (require '[vimsical.util.dev]))
