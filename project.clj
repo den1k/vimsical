@@ -70,7 +70,9 @@
    :backend-dev
    [:backend
     {:dependencies
-     [[criterium "0.4.4"]]}]
+     [[criterium "0.4.4"]]
+     :source-paths
+     ["dev/backend"]}]
 
    ;;
    ;; Frontend
@@ -128,28 +130,30 @@
      [{:id           "prod"
        :jar          true
        :source-paths ["src/frontend" "src/common" "src/vcs"]
-       :compiler     {:main           vimsical.frontend.core
-                      :asset-path     "/js"
-                      :externs        ["resources/externs/svg.js"]
-                      :output-to      "resources/public/js/compiled/vimsical.js"
-                      :optimizations  :advanced
-                      :pretty-print   false
-                      :parallel-build true
+       :compiler     {:main            vimsical.frontend.core
+                      :asset-path      "/js"
+                      :externs         ["resources/externs/svg.js"]
+                      :output-to       "resources/public/js/compiled/vimsical.js"
+                      :optimizations   :advanced
+                      :pretty-print    false
+                      :parallel-build  true
+                      :closure-defines {goog.DEBUG false}
                       ;; Determines whether readable names are emitted. This can
                       ;; be useful when debugging issues in the optimized
                       ;; JavaScript and can aid in finding missing
                       ;; externs. Defaults to false.
-                      :pseudo-names   false}}
+                      :pseudo-names    false}}
       {:id           "dev"
-       :figwheel     {:on-jsload vimsical.frontend.core/-main}
+       :figwheel     {:on-jsload vimsical.frontend.core/on-reload}
        :source-paths ["src/frontend" "src/common" "src/vcs" "dev/frontend"]
-       :compiler     {:main            vimsical.frontend.core
-                      :asset-path      "/js/compiled/out"
-                      :output-to       "resources/public/js/compiled/vimsical.js"
-                      :output-dir      "resources/public/js/compiled/out"
-                      :optimizations   :none
-                      :parallel-build  true
-                      :preloads        [devtools.preload]
-                      :external-config {:devtools/config
-                                        {:features-to-install [:formatters :hints]
-                                         :fn-symbol           "F"}}}}]}}})
+       :compiler     {:main                 vimsical.frontend.core
+                      :asset-path           "/js/compiled/out"
+                      :output-to            "resources/public/js/compiled/vimsical.js"
+                      :output-dir           "resources/public/js/compiled/out"
+                      :optimizations        :none
+                      :parallel-build       true
+                      :source-map-timestamp true
+                      :preloads             [devtools.preload]
+                      :external-config      {:devtools/config
+                                             {:features-to-install :all
+                                              :fn-symbol           "λ"}}}}]}}})

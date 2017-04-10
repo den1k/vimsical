@@ -5,6 +5,7 @@
     '[figwheel-sidecar.config :as config]))
 
 #?(:clj
+   ;; This fetches :cljsbuilds from project.clj via the :cljs profile
    (def cljs-builds
         (-> (config/get-project-config) :profiles :cljs :cljsbuild :builds)))
 
@@ -23,6 +24,3 @@
 
 #?(:clj
    (start-dev))
-
-#_(:cljs
-   (require '[vimsical.util.dev]))
