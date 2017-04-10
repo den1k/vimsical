@@ -7,11 +7,12 @@
 #?(:clj
    ;; This fetches :cljsbuilds from project.clj via the :cljs profile
    (def cljs-builds
-        (-> (config/get-project-config) :profiles :cljs :cljsbuild :builds)))
+     (-> (config/get-project-config) :profiles :cljs :cljsbuild :builds)))
 
 #?(:clj
    (def figwheel-config
-     {:figwheel-options {:css-dirs ["resources/public/css"]}
+     {:figwheel-options {:css-dirs         ["resources/public/css"]
+                         :reload-clj-files {:clj false :cljc true}}
       :build-ids        ["dev"]
       :all-builds       cljs-builds}))
 

@@ -43,6 +43,7 @@
     [[com.cognitect/transit-cljs "0.8.239"]
      [org.clojure/core.async "0.3.442"]
      [com.stuartsierra/component "0.3.1"]
+     [medley "0.8.4"]
      [environ "1.1.0"]]}
 
    ;;
@@ -100,8 +101,8 @@
      :garden
      {:builds
       [{:id           "dev-styles"
-        :source-paths ["src/styles"]
-        :stylesheet   vimsical.styles.core/styles
+        :source-paths ["src/frontend"]
+        :stylesheet   vimsical.frontend.styles/styles
         :compiler     {:output-to     "resources/public/css/app.css"
                        :vendors       ["webkit" "moz"]
                        :auto-prefix   #{:user-select}
@@ -144,20 +145,20 @@
                       ;; JavaScript and can aid in finding missing
                       ;; externs. Defaults to false.
                       :pseudo-names    false}}
-      {:id           "dev"
-       :figwheel     {:on-jsload vimsical.frontend.core/on-reload}
-       :source-paths ["src/frontend" "src/common" "src/vcs" "dev/frontend"]
-       :compiler     {:main                 vimsical.frontend.core
-                      :asset-path           "/js/compiled/out"
-                      :output-to            "resources/public/js/compiled/vimsical.js"
-                      :output-dir           "resources/public/js/compiled/out"
-                      :optimizations        :none
-                      :parallel-build       true
-                      ;; Add cache busting timestamps to source map urls.
-                      ;; This is helpful for keeping source maps up to date when
-                      ;; live reloading code.
-                      :source-map-timestamp true
-                      :preloads             [devtools.preload]
-                      :external-config      {:devtools/config
-                                             {:features-to-install :all
-                                              :fn-symbol           "λ"}}}}]}}})
+      {:id               "dev"
+       :figwheel         {:on-jsload vimsical.frontend.core/on-reload}
+       :source-paths     ["src/frontend" "src/common" "src/vcs" "dev/frontend"]
+       :compiler         {:main                 vimsical.frontend.core
+                          :asset-path           "/js/compiled/out"
+                          :output-to            "resources/public/js/compiled/vimsical.js"
+                          :output-dir           "resources/public/js/compiled/out"
+                          :optimizations        :none
+                          :parallel-build       true
+                          ;; Add cache busting timestamps to source map urls.
+                          ;; This is helpful for keeping source maps up to date when
+                          ;; live reloading code.
+                          :source-map-timestamp true
+                          :preloads             [devtools.preload]
+                          :external-config      {:devtools/config
+                                                 {:features-to-install :all
+                                                  :fn-symbol           "λ"}}}}]}}})
