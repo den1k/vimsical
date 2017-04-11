@@ -32,21 +32,21 @@
   [_ deltas new-deltas]
   (into (or deltas (indexed-deltas)) new-deltas))
 
-;; * Indexed deltas by branch uuid
+;; * Indexed deltas by branch id
 
 ;; TODO how to get a better spec for it?
 (s/def ::indexed-vector indexed/indexed-vector?)
 
-(s/def ::indexed-deltas-by-branch-uuid
+(s/def ::indexed-deltas-by-branch-id
   (s/map-of :db/id ::indexed))
 
-(defmethod add-deltas ::indexed-deltas-by-branch-uuid
-  [_ indexed-deltas-by-branch-uuid new-deltas]
+(defmethod add-deltas ::indexed-deltas-by-branch-id
+  [_ indexed-deltas-by-branch-id new-deltas]
   (let [fconj (fnil conj (indexed-deltas))]
     (reduce
-     (fn [acc {:keys [branch-uuid] :as delta}]
-       (update acc branch-uuid fconj delta))
-     indexed-deltas-by-branch-uuid new-deltas)))
+     (fn [acc {:keys [branch-id] :as delta}]
+       (update acc branch-id fconj delta))
+     indexed-deltas-by-branch-id new-deltas)))
 
 
 ;; * Branch topology

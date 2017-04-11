@@ -1,11 +1,12 @@
-(ns vimsical.vcs.indexed-test
+(ns vimsical.vcs.data.indexed.vector-test
   (:require
    [clojure.spec :as s]
-   [vimsical.vcs.indexed :as sut]
+   [vimsical.vcs.data.indexed.vector :as sut]
    [clojure.test :refer [deftest is are testing]]
    [vimsical.common.test :refer [is= isnt=]]))
 
-;; * Indexed vector
+
+;; * Data
 
 (defn indexed-vector-test-data []
   (let [key->val (fn [k] (when k {:id k}))
@@ -23,16 +24,19 @@
         (update :iv  update-fn)
         (update :ivb update-fn))))
 
+
+;; * Tests
+
 (deftest indexed-vector-test
   (let [{:keys [iv]} (indexed-vector-test-data)]
-    (are [val idx] (is= idx (sut/key-of iv val))
+    (are [val idx] (is= idx (sut/index-of iv val))
       {:id 0}  0
       {:id 50} 5
       {:id 90} 9)))
 
 (deftest indexed-vector-by-test
   (let [{:keys [ivb]} (indexed-vector-test-data)]
-    (are [k idx] (is= idx (sut/key-of ivb k))
+    (are [k idx] (is= idx (sut/index-of ivb k))
       0  0
       50 5
       90 9)))
@@ -69,14 +73,12 @@
         (is= -1 (.offset v))
         (is= (.index v) {:b 1 :c 2})
         (is= (.v v) [:b :c])
-        (is= 0 (sut/key-of v :b)))
+        (is= 0 (sut/index-of v :b)))
       (testing "next + conj"
         (is= (.index v') {:b 1 :c 2 :d 3})
         (is= (.v v') [:b :c :d])
-        (is= 0 (sut/key-of v' :b))
-        (is= 2 (sut/key-of v' :d))))))
-
-;; (vec (drop 2 (:iv (indexed-vector-test-data))))
+        (is= 0 (sut/index-of v' :b))
+        (is= 2 (sut/index-of v' :d))))))
 
 (deftest indexed-vector-split-test
   (let [{:keys [iv ivb]} (indexed-vector-test-data)]
@@ -99,9 +101,9 @@
 
 (deftest indexed-vector-key-of-test
   (let [{:keys [key->val iv ivb]} (update-test-data (indexed-vector-test-data))]
-    (are [idx k] (do (is= idx (sut/key-of iv (key->val k)))
+    (are [idx k] (do (is= idx (sut/index-of iv (key->val k)))
                      (is= (key->val k) (nth iv idx))
-                     (is= idx (sut/key-of ivb k))
+                     (is= idx (sut/index-of ivb k))
                      (is= (key->val k) (nth ivb idx)))
       0  0
       5  50
@@ -109,30 +111,4 @@
       10 100
       14 140)))
 
-
-;; * Indexed map
-
-(defn indexed-map-test-data []
-  (let [keys     (range 0 100 10)
-        key->val (fn [k] {:id k})
-        vals     (map key->val keys)
-        iv       (sut/indexed-map (zipmap keys vals))]
-    {:keys     keys
-     :key->val key->val
-     :vals     vals
-     :iv       iv}))
-
-(deftest indexed-map-key-of-test
-  (let [{:keys [keys key->val vals iv]} (indexed-map-test-data)]
-    (are [k] (is= k (sut/key-of iv (key->val k)))
-      0
-      50
-      90)))
-
-(deftest indexed-map-lookup-test
-  (let [{:keys [keys key->val vals iv]} (indexed-map-test-data)]
-    (are [k] (is= (key->val k) (get iv k))
-      0
-      50
-      90)))
 

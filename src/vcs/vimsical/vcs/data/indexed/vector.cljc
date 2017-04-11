@@ -1,31 +1,31 @@
-(ns vimsical.vcs.indexed
-  "A wrapper type for a vector to allow for constant time key-of operations."
+(ns vimsical.vcs.data.indexed.vector
+  "A wrapper type for a vector to allow for constant time index-of operations.
+
+  NOTES
+
+  Normalize on equiv is bad, make sure we need to check the index at allit
+  after enough testing...
+
+  Alternatively we could define a max offset value and on assocN or next
+  -normalize if we're above threshold, kinda like a rebalancing op?
+
+  ISSUES
+
+  Doesn't work with concat (no support for lazy seq protocols)"
   (:refer-clojure :exclude [split-at])
   (:require [clojure.spec :as s]))
-
-;; NOTE
-
-;; Normalize on equiv is bad, make sure we need to check the index at allit
-;; after enough testing...
-
-;; Alternatively we could define a max offset value and on assocN or next
-;; -normalize if we're above threshold, kinda like a rebalancing op?
-
-;; ISSUES
-
-;; Doesn't work with concat (no support for lazy seq protocols)
-
 
 
 ;; * Protocol
 
-(defprotocol IIndexed
-  (key-of [_ val] [_ val not-found]))
+(defprotocol IIndexedVector
+  (index-of [_ val] [_ val not-found]))
 
 (defprotocol IIndexedInternal
   (-split-at [_ n])
   (-splice-at [_ n v])
   (-normalize [_]))
+
 
 ;; * Private
 
@@ -37,10 +37,13 @@
       (assoc! m! v (+ offset i)))
     (transient (empty index)) index)))
 
-;; * Vector
 
+;; * Indexed Vector
 
 (defn ^:declared indexed-vector [offset f index v])
+
+
+;; ** Type
 
 (deftype IndexedVector
     [^long offset
@@ -52,9 +55,7 @@
   (seq [this] (when (seq v) this))
 
   clojure.lang.ISeq
-  (first [_]
-    (println "first" (first v))
-    (first v))
+  (first [_] (first v))
   (next [this]
     (when (seq v)
       (let [val     (first v)
@@ -84,7 +85,6 @@
 
   clojure.lang.IPersistentVector
   (assocN [_ i val]
-    (println val)
     (let [val-index (+ (- offset) (int i))
           val-key   (f val)
           index'    (assoc index val-key val-index)
@@ -95,10 +95,10 @@
   (nth [_ n] (nth v n))
   (nth [_ n not-found] (nth v n not-found))
 
-  IIndexed
-  (key-of [_ val]
+  IIndexedVector
+  (index-of [_ val]
     (+ offset ^long (get index val)))
-  (key-of [_ val not-found]
+  (index-of [_ val not-found]
     (if-some [i ^long (get index val not-found)]
       (+ offset i)
       not-found))
@@ -116,26 +116,25 @@
                    (mapv vec)))]
       (let [[index-a index-b] (split-index n index)
             [v-a v-b]         (split-v n v)]
-        (println "va-b" v-a v-b)
         [(indexed-vector offset f index-a v-a)
          (indexed-vector (- offset ^int n) f index-b v-b)])))
   (-splice-at [this n other]
     (let [[l r] (-split-at this n)]
-      (println {:l l
-                :r r
-                :other other
-                :linto (into l other)
-                :rinto (into (into l other) r)
-                :vec (vec (into (into l other) r))})
       (into (into l other) r)))
   (-normalize [_]
     (indexed-vector f 0 (normalize-index index offset) v)))
+
+
+;; ** Printing
 
 (defmethod clojure.pprint/simple-dispatch IndexedVector [^IndexedVector v]
   ((get-method clojure.pprint/simple-dispatch clojure.lang.IPersistentVector) (.v v)))
 
 (defmethod print-method IndexedVector [^IndexedVector v w]
   (print-method (.v v) w))
+
+
+;; * Constructors
 
 (defn indexed-vector
   ([] (indexed-vector nil))
@@ -152,6 +151,14 @@
    (-> (IndexedVector. 0 f {} [])
        (into v))))
 
+
+;; * API
+
+(defn indexed-vector-spec
+  [vector-spec]
+  (fn [^IndexedVector iv]
+    (s/valid? vector-spec (.v iv))))
+
 (defn indexed-vector?
   ([] (indexed-vector))
   ([x] (instance? IndexedVector x)))
@@ -163,61 +170,3 @@
   (-splice-at v n insert-vector))
 
 
-;; * Map
-
-;; TODO clojure.lang.IKVReduce
-
-(deftype IndexedMap
-    [^clojure.lang.IPersistentMap index
-     ^clojure.lang.IPersistentMap m]
-
-  clojure.lang.IPersistentCollection
-  (seq [this] (if (seq m) this nil))
-  (cons [_ [key val]]
-    (IndexedMap. (assoc index val key) (assoc m key val)))
-  (empty [_]
-    (IndexedMap. (empty index) (empty m)))
-  (equiv [_ val]
-    (if (instance? IndexedMap val)
-      (and (= m (.m ^IndexedMap val))
-           (= index (.index ^IndexedMap val)))
-      false))
-
-  clojure.lang.Counted
-  (count [_] (count m))
-
-  clojure.lang.ISeq
-  (first [_] (first m))
-  (next [_] (next m))
-  (more [_] (rest m))
-
-  clojure.lang.Associative
-  (containsKey [_ key] (.containsKey m key))
-  (entryAt [_ key] (.entryAt m key))
-  (assoc [_ key val]
-    (IndexedMap.
-     (assoc index val key)
-     (assoc m key val)))
-
-  clojure.lang.ILookup
-  (valAt [_ key] (.valAt m key))
-  (valAt [_ key not-found] (.valAt m key not-found))
-
-  IIndexed
-  (key-of [_ val] (get index val))
-  (key-of [_ val not-found] (get index val not-found)))
-
-(defn indexed-map
-  ([] (indexed-map nil))
-  ([m] (into (IndexedMap. {} {}) m)))
-
-(defn indexed-vector-spec
-  [vector-spec]
-  (fn [^IndexedVector iv]
-    (s/valid? vector-spec (.v iv))))
-
-(comment
-  ;; Spec interop
-  (s/explain
-   (s/every number? :kind vector?)
-   (indexed-vector [1 2])))

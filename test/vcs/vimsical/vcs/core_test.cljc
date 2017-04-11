@@ -2,8 +2,8 @@
   (:require
    [clojure.spec :as s]
    [clojure.test :refer [deftest testing is are]]
-   [vimsical.common.uuid :refer [uuid]]
    [vimsical.common.test :refer [is= diff=]]
+   [vimsical.common.uuid :refer [uuid]]
    [vimsical.vcs.core :as sut]
    [vimsical.vcs.indexed :as indexed]))
 
@@ -46,9 +46,9 @@
 
 (deftest indexed-deltas
   (testing "vector equiv"
-    (is= deltas (vec (sut/indexed-deltas deltas))))
+    (is= deltas (seq (sut/indexed-deltas deltas))))
   (testing "adding deltas to an indexed deltas vector"
-    (is= deltas (vec (sut/add-deltas ::sut/deltas (sut/indexed-deltas []) deltas)))))
+    (is= deltas (seq (sut/add-deltas ::sut/deltas (sut/indexed-deltas []) deltas)))))
 
 
 ;; * Indexed deltas by branch uuid
@@ -61,7 +61,7 @@
         batches        (split-at 3 indexed-deltas)
         actual         (reduce
                         (fn [acc batch]
-                          (sut/add-deltas ::sut/indexed-deltas-by-branch-uuid acc batch))
+                          (sut/add-deltas ::sut/indexed-deltas-by-branch-id acc batch))
                         {} batches)]
     (testing "groups with indexed vectors"
       (is (every? indexed/indexed-vector? (vals actual))))
@@ -74,10 +74,26 @@
         0 child-id  d2
         2 gchild-id d7))))
 
+
 ;; * Topology
 
 (testing "branches are ordered according to their entry delta ids")
 
+
+
 ;; * Topology index
 
 (testing "can find the ")
+
+
+;; * Files state
+
+(testing "Given a delta and a traversal, find the previous deltas of other files")
+
+
+;; * Timeline
+
+;; NON GOAL :o)
+;; (testing "Find deltas at time")
+
+(testing "Add deltas")

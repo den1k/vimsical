@@ -1,7 +1,10 @@
 (ns vimsical.vcs.delta
   (:require
    [clojure.spec :as s]
+   [vimsical.common.coll :as coll]
    [vimsical.vcs.op :as op]))
+
+;; * Spec
 
 (s/def ::id uuid?)
 (s/def ::prev-id (s/nilable ::id))
@@ -19,9 +22,10 @@
    :sel ::op/crsr-sel))
 
 (s/def ::delta
-  (s/keys :req-un [::id ::prev-uuid
+  (s/keys :req-un [::id ::prev-id
                    ::op
                    ::pad
                    ::file-id ::branch-id
                    ::meta]))
+
 
