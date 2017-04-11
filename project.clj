@@ -15,24 +15,19 @@
      [lein-environ "1.1.0"]]}
 
    :test
-   [:backend :frontend :vcs :common
-    {:source-paths
-     ["test/backend" "test/frontend" "test/vcs" "test/common"]
-     :dependencies
-     [[org.clojure/test.check "0.9.0"]]}]
+   {:dependencies
+    [[org.clojure/test.check "0.9.0"]]}
 
    :uberjar
    {:aot          :all
     :omit-source  true
     :uberjar-name "vimsical.jar"}
-
    ;;
    ;; Vcs
    ;;
    :vcs
    {:source-paths ["src/vcs"]
     :dependencies []}
-
    ;;
    ;; Common
    ;;
@@ -45,7 +40,6 @@
      [com.stuartsierra/component "0.3.1"]
      [medley "0.8.4"]
      [environ "1.1.0"]]}
-
    ;;
    ;; Backend
    ;;
@@ -73,11 +67,17 @@
      :source-paths
      ["dev/backend"]}]
 
+   :backend-test
+   [:test :backend :vcs :common
+    {:source-paths
+     ["test/backend" "test/vcs" "test/common"]
+     :dependencies
+     [[org.clojure/test.check "0.9.0"]]}]
    ;;
    ;; Frontend
    ;;
    :frontend
-   [:vcs :common :cljs
+   [:vcs :common :cljs :css
     {:source-paths
      ["src/frontend" "src/styles"]
      :plugins
@@ -127,6 +127,27 @@
      :figwheel
      {:css-dirs ["resources/public/css"]}}]
 
+   :frontend-test
+   [:test :frontend :vcs :common
+    {:source-paths
+     ["test/frontend" "test/vcs" "test/common"]
+     :plugins [[lein-doo "0.1.7"]]}]
+   ;;
+   ;; CSS
+   ;;
+   :css
+   {:plugins      [[lein-garden "0.2.8" :exclusions [org.clojure/clojure]]]
+    :dependencies [[garden "1.3.2"]]
+    :prep-tasks   [["garden" "once"]]
+    :garden
+    {:builds
+     [{:id           "dev-styles"
+       :source-paths ["src/frontend"]
+       :stylesheet   vimsical.frontend.styles.core/styles
+       :compiler     {:output-to     "resources/public/css/app.css"
+                      :vendors       ["webkit" "moz"]
+                      :auto-prefix   #{:user-select}
+                      :pretty-print? true}}]}}
    ;;
    ;; Cljs
    ;;
@@ -165,4 +186,22 @@
                       :preloads             [devtools.preload]
                       :external-config      {:devtools/config
                                              {:features-to-install :all
-                                              :fn-symbol           "λ"}}}}]}}})
+                                              :fn-symbol           "λ"}}}}
+      {:id           "test"
+       :source-paths ["src/frontend"  "src/common"  "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
+       :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
+                      :output-dir     "resources/public/js/compiled/out-test"
+                      :main           vimsical.runner
+                      :target         :nodejs
+                      :optimizations  :none
+                      :parallel-build true}}
+      {:id           "test-advanced"
+       :source-paths ["src/frontend"  "src/common"  "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
+       :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
+                      :output-dir     "resources/public/js/compiled/out-test-advanced"
+                      :main           vimsical.runner
+                      :target         :nodejs
+                      :optimizations  :advanced
+                      :pretty-print   true
+                      :pseudo-names   true
+                      :parallel-build true}}]}}})
