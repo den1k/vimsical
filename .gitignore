@@ -15,3 +15,11 @@ infra/.env
 infra/.env.sh
 
 .idea
+
+/.lein-env
+/*.org
+/.lein-failures
+/resources/public/js/compiled
+/.nrepl-port
+/figwheel_server.log
+

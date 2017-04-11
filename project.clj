@@ -10,8 +10,11 @@
 
   :profiles
   {:dev
-   {:plugins
-    [[lein-pprint "1.1.2"]              ; lein with-profile frontend-dev pprint
+   {:dependencies
+    ;; Help CIDER find the Java code in Clojure
+    [[org.clojure/clojure "1.9.0-alpha14" :classifier "sources"]]
+    :plugins
+    [[lein-pprint  "1.1.2"]             ; lein with-profile frontend-dev pprint
      [lein-environ "1.1.0"]]}
 
    :test
@@ -27,7 +30,10 @@
    ;;
    :vcs
    {:source-paths ["src/vcs"]
-    :dependencies []}
+    :dependencies
+    [[org.clojure/core.rrb-vector "0.0.11"]
+     [org.clojure/data.avl        "0.0.17"]]}
+
    ;;
    ;; Common
    ;;
@@ -45,8 +51,8 @@
    ;;
    :backend
    [:vcs :common
-    {:source-paths
-     ["src/backend"]
+    {:source-paths ["src/backend"]
+     :main         vimsical.backend.core
      :repositories
      {"my.datomic.com"
       {:url      "https://my.datomic.com/repo"
@@ -57,8 +63,9 @@
       [org.immutant/web "2.1.5" :exclusions [ring/ring-core]]
       [cc.qbits/alia-all "3.3.0"]
       [com.datomic/datomic-pro "0.9.5544" :exclusions [commons-codec]]]
-     :main
-     vimsical.backend.core}]
+     :global-vars
+     {*warn-on-reflection* true
+      *unchecked-math*     :warn-on-boxed}}]
 
    :backend-dev
    [:backend
