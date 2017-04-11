@@ -5,7 +5,7 @@
             [re-com.box :refer [flex-child-style flex-flow-style]]
             [re-com.validate :refer [string-or-hiccup? number-or-string? html-attr? css-style?] :refer-macros [validate-args-macro]]
             [re-com.splits :as splits]
-            [reagent.core :as reagent]
+            [reagent.core :as r]
             [vimsical.common.util.util :as util]
             [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e-handler]]))
 
@@ -33,12 +33,12 @@
       :as   args}]
   {:pre [(validate-args-macro n-v-split-args-desc args "n-v-split")]}
   (let [container-id           (gensym "n-v-split-")
-        dragging?              (reagent/atom false)         ;; is the user dragging the splitter (mouse is down)?
-        over?                  (reagent/atom false)         ;; is the mouse over the splitter, if so, highlight it
+        dragging?              (r/atom false)               ;; is the user dragging the splitter (mouse is down)?
+        over?                  (r/atom false)               ;; is the mouse over the splitter, if so, highlight it
         panel-count            (count panels)
-        percs                  (reagent/atom (vec (repeat panel-count (/ 100 panel-count))))
-        prev-mouse-y           (reagent/atom 0)
-        splitter-idx           (reagent/atom nil)
+        percs                  (r/atom (vec (repeat panel-count (/ 100 panel-count))))
+        prev-mouse-y           (r/atom 0)
+        splitter-idx           (r/atom nil)
         splitter-children      (if splitter-children
                                  (do (assert (= panel-count (count splitter-children)))
                                      splitter-children)
@@ -105,13 +105,18 @@
 
         make-split-panel-attrs (fn [idx perc]
                                  {:key   (str "split-panel-" idx)
-                                  :style {:height (str "calc(" perc "% - "
-                                                       splitter-size-int "px)")}})
+                                  :class "display-flex"
+                                  :style (merge
+                                          (flex-flow-style "column nowrap")
+                                          (flex-child-style "auto")
+                                          {:height (str "calc(" perc "% - "
+                                                        splitter-size-int "px)")})})
 
         make-panel-attrs       (fn [idx class in-drag?]
                                  {:class (str "display-flex " class)
                                   :style (merge
-                                          {:background :cadetblue}
+                                          (flex-child-style size)
+                                          {:background :skyblue}
                                           (when in-drag? {:pointer-events "none"}))})
 
         make-splitter-attrs    (fn [idx resizable? class]
@@ -138,7 +143,7 @@
                (cond
                  splitter-child splitter-child
                  resizable? [splits/drag-handle :horizontal @over?])]
-              [:div (make-panel-attrs idx "rc-n-v-split" @dragging?)
+              [:div (make-panel-attrs idx "rc-n-v-split-panel" @dragging?)
                panel]]))
          (range panel-count) @percs panels splitter-children))])))
 
@@ -150,12 +155,12 @@
       :as   args}]
   {:pre [(validate-args-macro n-v-split-args-desc args "h-split")]}
   (let [container-id         (gensym "n-h-split-")
-        dragging?            (reagent/atom false)           ;; is the user dragging the splitter (mouse is down)?
-        over?                (reagent/atom false)           ;; is the mouse over the splitter, if so, highlight it
+        dragging?            (r/atom false)                 ;; is the user dragging the splitter (mouse is down)?
+        over?                (r/atom false)                 ;; is the mouse over the splitter, if so, highlight it
         panel-count          (count panels)
-        percs                (reagent/atom (vec (repeat panel-count (/ 100 panel-count))))
-        prev-mouse-x         (reagent/atom 0)
-        splitter-idx         (reagent/atom nil)
+        percs                (r/atom (vec (repeat panel-count (/ 100 panel-count))))
+        prev-mouse-x         (r/atom 0)
+        splitter-idx         (r/atom nil)
         splitter-count       (dec panel-count)
         splitter-children    (if splitter-children
                                (do (assert (= splitter-count (count splitter-children)))
@@ -224,7 +229,7 @@
                                 :key   (str "panel-" idx)
                                 :style (merge
                                         {:min-height "100%"
-                                         :background :cadetblue
+                                         :background :lightgreen
                                          :width      (str "calc(" perc "% - "
                                                           (/ splitter-size-int
                                                              (/ panel-count splitter-count)) "px)")}
