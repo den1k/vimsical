@@ -19,7 +19,7 @@
 ;; * Protocol
 
 (defprotocol IIndexedVector
-  (index-of [_ val] [_ val not-found]))
+  (index-of [_ val]))
 
 (defprotocol IIndexedInternal
   (-split-at [_ n])
@@ -98,10 +98,6 @@
   IIndexedVector
   (index-of [_ val]
     (+ offset ^long (get index val)))
-  (index-of [_ val not-found]
-    (if-some [i ^long (get index val not-found)]
-      (+ offset i)
-      not-found))
 
   IIndexedInternal
   (-split-at [_ n]
@@ -163,8 +159,17 @@
   ([] (indexed-vector))
   ([x] (instance? IndexedVector x)))
 
+(s/fdef split-at
+        :args (s/cat :n pos-int? :v indexed-vector?)
+        :ret  (s/tuple indexed-vector? indexed-vector?))
+
 (defn split-at [n ^IndexedVector v]
   (-split-at v n))
+
+
+(s/fdef splice-at
+        :args (s/cat :n pos-int? :v indexed-vector? :insert sequential?)
+        :ret  indexed-vector?)
 
 (defn splice-at [n ^IndexedVector v insert-vector]
   (-splice-at v n insert-vector))

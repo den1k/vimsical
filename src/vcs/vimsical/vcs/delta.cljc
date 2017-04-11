@@ -22,10 +22,4 @@
    :sel ::op/crsr-sel))
 
 (s/def ::delta
-  (s/keys :req-un [::id ::prev-id
-                   ::op
-                   ::pad
-                   ::file-id ::branch-id
-                   ::meta]))
-
-
+  (s/keys :req-un [::id ::prev-id ::op ::pad ::file-id ::branch-id ::meta]))

@@ -1,10 +1,12 @@
 (ns vimsical.vcs.data.indexed.vector-test
   (:require
    [clojure.spec :as s]
+   [clojure.spec.test :as st]
    [vimsical.vcs.data.indexed.vector :as sut]
    [clojure.test :refer [deftest is are testing]]
    [vimsical.common.test :refer [is= isnt=]]))
 
+(st/instrument)
 
 ;; * Data
 
@@ -99,7 +101,7 @@
       (is= expect (seq (sut/splice-at split-index iv insert)))
       (is= expect (seq (sut/splice-at split-index ivb insert))))))
 
-(deftest indexed-vector-key-of-test
+(deftest indexed-vector-index-of-test
   (let [{:keys [key->val iv ivb]} (update-test-data (indexed-vector-test-data))]
     (are [idx k] (do (is= idx (sut/index-of iv (key->val k)))
                      (is= (key->val k) (nth iv idx))

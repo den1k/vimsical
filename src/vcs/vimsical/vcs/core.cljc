@@ -1,59 +1,60 @@
 (ns vimsical.vcs.core
   (:require
    [clojure.spec :as s]
-   [vimsical.vcs.indexed :as indexed]
+   [vimsical.vcs.data.indexed.vector :as indexed.vector]
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]))
 
 
-(defmulti add-deltas
-  (fn [spec coll deltas] spec))
+(s/def ::deltas (s/every ::delta/delta))
 
 ;; * Deltas
 
-(s/def ::deltas
-  (s/every ::delta/delta :kind vector?))
+(s/fdef add-deltas
+        :args (s/cat :deltas ::deltas :new ::deltas)
+        :ret  ::deltas)
 
-(defmethod add-deltas ::deltas
-  [_ deltas new-deltas]
-  (into (or deltas []) new-deltas))
+(defn add-deltas
+  [deltas new]
+  (into deltas new))
+
 
 ;; * Indexed deltas
 
-(s/def ::indexed-deltas indexed/indexed-vector?)
+(s/def ::indexed-deltas indexed.vector/indexed-vector?)
 
-(defn indexed-deltas
-  "Return deltas indexed by their :id"
-  ([] (indexed/indexed-vector-by :id))
-  ([deltas] (indexed/indexed-vector-by :id deltas)))
+(s/fdef indexed-add-deltas
+        :args (s/cat :index indexed.vector/indexed-vector?
+                     :deltas ::deltas)
+        :ret  indexed.vector/indexed-vector?)
 
-(defmethod add-deltas ::indexed-deltas
-  [_ deltas new-deltas]
-  (into (or deltas (indexed-deltas)) new-deltas))
+(defn indexed-add-deltas
+  [index deltas]
+  (into
+   (or index (indexed.vector/indexed-vector-by :id deltas))
+   deltas))
+
 
 ;; * Indexed deltas by branch id
 
-;; TODO how to get a better spec for it?
-(s/def ::indexed-vector indexed/indexed-vector?)
+(s/def ::indexed-deltas (s/and indexed.vector/indexed-vector? ::deltas))
+(s/def ::indexed-deltas-by-branch-id (s/map-of :db/id ::indexed-deltas))
 
-(s/def ::indexed-deltas-by-branch-id
-  (s/map-of :db/id ::indexed))
+(s/fdef index-by-branch-add-deltas
+        :args (s/cat :acc    ::indexed-deltas-by-branch-id
+                     :deltas ::deltas)
+        :ret ::indexed-deltas-by-branch-id)
 
-(defmethod add-deltas ::indexed-deltas-by-branch-id
-  [_ indexed-deltas-by-branch-id new-deltas]
-  (let [fconj (fnil conj (indexed-deltas))]
+(defn index-by-branch-add-deltas
+  [acc deltas]
+  (let [fconj (fnil conj (indexed.vector/indexed-vector-by :id))]
     (reduce
      (fn [acc {:keys [branch-id] :as delta}]
        (update acc branch-id fconj delta))
-     indexed-deltas-by-branch-id new-deltas)))
+     acc deltas)))
 
 
-;; * Branch topology
+;; * Branch traversal
 
-
-;; Find the latest deltas for all files at a given point
-;;
-;; * Deltas at time?
-;; VS
-;; * Deltas at delta?
+;; * File state

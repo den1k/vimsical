@@ -1,11 +1,14 @@
 (ns vimsical.vcs.core-test
   (:require
    [clojure.spec :as s]
-   [clojure.test :refer [deftest testing is are]]
+   [clojure.spec.test :as st]
+   [clojure.test :as t :refer [deftest testing is are]]
    [vimsical.common.test :refer [is= diff=]]
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.vcs.core :as sut]
-   [vimsical.vcs.indexed :as indexed]))
+   [vimsical.vcs.data.indexed.vector :as indexed.vector]))
+
+(st/instrument)
 
 (def master-id (uuid))
 (def child-id (uuid))
@@ -39,16 +42,16 @@
   (testing "deltas spec"
     (is (s/valid? ::sut/deltas deltas))))
 
-(deftest deltas-test
-  (testing "adding deltas to the vector"
+(t/deftest deltas-test
+  (t/testing "adding deltas to the vector"
     (let [[l r] (split-at 3 deltas)]
-      (diff= deltas (sut/add-deltas ::sut/deltas l r)))))
+      (t/is (= deltas (sut/add-deltas l r))))))
 
 (deftest indexed-deltas
   (testing "vector equiv"
     (is= deltas (seq (sut/indexed-deltas deltas))))
   (testing "adding deltas to an indexed deltas vector"
-    (is= deltas (seq (sut/add-deltas ::sut/deltas (sut/indexed-deltas []) deltas)))))
+    (is= deltas (seq (sut/indexed-add-deltas (sut/indexed-deltas []) deltas)))))
 
 
 ;; * Indexed deltas by branch uuid
@@ -57,18 +60,18 @@
   (let [expected       {master-id (sut/indexed-deltas [d0 d1])
                         child-id  (sut/indexed-deltas [d2 d3 d6])
                         gchild-id (sut/indexed-deltas [d4 d5 d7])}
-        indexed-deltas (sut/indexed-deltas deltas)
-        batches        (split-at 3 indexed-deltas)
-        actual         (reduce
-                        (fn [acc batch]
-                          (sut/add-deltas ::sut/indexed-deltas-by-branch-id acc batch))
-                        {} batches)]
+        batches        (split-at 3 deltas)
+        actual         (reduce sut/index-by-branch-add-deltas {} batches)]
+    (println actual)
     (testing "groups with indexed vectors"
-      (is (every? indexed/indexed-vector? (vals actual))))
+      (is (every? indexed.vector/indexed-vector? (vals actual))))
     (testing "deltas are added to the branch index"
       (is= expected actual))
     (testing "can find the index of a delta in a branch"
-      (are [index branch-uuid delta] (is= index (-> actual (get branch-uuid) (indexed/key-of delta)))
+      (are [index branch-uuid delta]
+          (is= index (-> actual
+                         (get branch-uuid)
+                         (indexed.vector/index-of (:id delta))))
         0 master-id d0
         0 child-id  d2
         0 child-id  d2
