@@ -6,6 +6,7 @@
             [re-com.validate :refer [string-or-hiccup? number-or-string? html-attr? css-style?] :refer-macros [validate-args-macro]]
             [re-com.splits :as splits]
             [reagent.core :as reagent]
+            [vimsical.common.util.util :as util]
             [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e-handler]]))
 
 (def n-v-split-args-desc
@@ -22,8 +23,6 @@
    {:name :class :required false :type "string" :validate-fn string? :description "CSS class names, space separated, applied to outer container"}
    {:name :style :required false :type "CSS style map" :validate-fn css-style? :description "CSS styles to add or override, applied to outer container"}
    {:name :attr :required false :type "HTML attr map" :validate-fn html-attr? :description [:span "HTML attributes, like " [:code ":on-mouse-move"] [:br] "No " [:code ":class"] " or " [:code ":style"] "allowed, applied to outer container"]}])
-
-;; TODO call update-percs on resize
 
 (defn n-v-split
   "Returns markup for a vertical layout component for an arbitrary number of
@@ -63,8 +62,6 @@
                                        (update idx - perc-amt)
                                        (update (dec idx) + perc-amt))))
 
-        <html>?                #(= % (.-documentElement js/document)) ;; test for the <html> element
-
         mouse-y-delta          (fn [mouse-y]
                                  (let [prev @prev-mouse-y]
                                    (reset! prev-mouse-y mouse-y)
@@ -85,6 +82,7 @@
         mouseover-split        (fn [idx]
                                  (reset! over? true)
                                  (reset! splitter-idx idx))
+
         mouseout-split         #(when-not @dragging?
                                   (reset! over? false))
 
@@ -92,7 +90,7 @@
                                  (and @over? (= @splitter-idx idx)))
 
         make-container-attrs   (fn [class style attr in-drag?]
-                                 (merge {:class (str "rc-v-split display-flex " class)
+                                 (merge {:class (str "rc-n-v-split display-flex " class)
                                          :id    container-id
                                          :style (merge (flex-child-style size)
                                                        (flex-flow-style "column nowrap")
@@ -107,94 +105,104 @@
 
         make-split-panel-attrs (fn [idx perc]
                                  {:key   (str "split-panel-" idx)
-                                  :style {:height (str "calc(" perc "% + " splitter-size ")")}})
+                                  :style {:height (str "calc(" perc "% - "
+                                                       splitter-size-int "px)")}})
 
-        make-panel-attrs       (fn [idx class in-drag? perc]
+        make-panel-attrs       (fn [idx class in-drag?]
                                  {:class (str "display-flex " class)
                                   :style (merge
-                                          {
-                                           :height     "100%"
-                                           :background :cadetblue}
+                                          {:background :cadetblue}
                                           (when in-drag? {:pointer-events "none"}))})
 
-        make-splitter-attrs    (fn [idx class]
-                                 {:class         (str "display-flex " class)
-                                  :on-mouse-down (e-> (mousedown idx))
-                                  :on-mouse-over (e-handler (mouseover-split idx))
-                                  :on-mouse-out  (e-handler (mouseout-split))
-                                  :style         (merge {:height splitter-size}
-                                                        {:cursor "row-resize"}
-                                                        (when (current-over? idx)
-                                                          {:background-color "#f8f8f8"}))})
+        make-splitter-attrs    (fn [idx resizable? class]
+                                 (cond-> {:class (str "display-flex " class)
+                                          :style {:height splitter-size}}
+                                   resizable? (util/merge-1
+                                               {:on-mouse-down (e-> (mousedown idx))
+                                                :on-mouse-over (e-handler (mouseover-split idx))
+                                                :on-mouse-out  (e-handler (mouseout-split))
+                                                :style         (merge
+                                                                {:cursor "row-resize"}
+                                                                (when (current-over? idx)
+                                                                  {:background-color "#f8f8f8"}))})))]
 
-        update-percs           (fn [c]
-                                 ;; get exact height after render to compute
-                                 ;; accurate percentages for panels including
-                                 ;; splitters
-                                 (let [el                  (reagent/dom-node c)
-                                       h                   (.-clientHeight el)
-                                       h-splits            (- h splitters-height)
-                                       accurate-panel-perc (/ (* 100 (/ h-splits h)) panel-count)]
-                                   (reset! percs (vec (repeat panel-count accurate-panel-perc)))))]
-
-    (reagent/create-class
-     {:component-did-mount
-      update-percs
-      :reagent-render
-      (fn
-        [& {:keys [panels class style attr]}]
-        [:div (make-container-attrs class style attr @dragging?)
-         (doall
-          (map
-           (fn [idx perc panel splitter-child]
+    (fn
+      [& {:keys [panels class style attr]}]
+      [:div (make-container-attrs class style attr @dragging?)
+       (doall
+        (map
+         (fn [idx perc panel splitter-child]
+           (let [resizable? (not (zero? idx))]
              [:div (make-split-panel-attrs idx perc)
-              [:div (make-splitter-attrs idx "re-v-split-splitter")
+              [:div (make-splitter-attrs idx resizable? "rc-n-v-split-splitter")
                (cond
                  splitter-child splitter-child
-                 (not (zero? idx)) [splits/drag-handle :horizontal @over?])]
-              [:div (make-panel-attrs idx "re-v-split-top" @dragging? perc)
-               panel]])
-           (range (count panels)) @percs panels splitter-children))])})))
+                 resizable? [splits/drag-handle :horizontal @over?])]
+              [:div (make-panel-attrs idx "rc-n-v-split" @dragging?)
+               panel]]))
+         (range panel-count) @percs panels splitter-children))])))
 
-(def custom-hv-split-args-desc
-  (conj splits/hv-split-args-desc
-        {:name :splitter-child :required false :type "hiccup" :validate-fn string-or-hiccup? :description "markup to go into each splitter instead of drag-handle"}))
-
-(defn h-split
+(defn n-h-split
   "Returns markup for a horizontal layout component"
-  [& {:keys [size width height on-split-change initial-split splitter-size splitter-child margin]
+  [& {:keys [panels size width height on-split-change initial-split
+             splitter-size splitter-child splitter-children margin]
       :or   {size "auto" initial-split 50 splitter-size "8px" margin "8px"}
       :as   args}]
-  {:pre [(validate-args-macro custom-hv-split-args-desc args "h-split")]}
-  (let [container-id         (gensym "h-split-")
-        split-perc           (reagent/atom (js/parseInt initial-split)) ;; splitter position as a percentage of width
+  {:pre [(validate-args-macro n-v-split-args-desc args "h-split")]}
+  (let [container-id         (gensym "n-h-split-")
         dragging?            (reagent/atom false)           ;; is the user dragging the splitter (mouse is down)?
         over?                (reagent/atom false)           ;; is the mouse over the splitter, if so, highlight it
+        panel-count          (count panels)
+        percs                (reagent/atom (vec (repeat panel-count (/ 100 panel-count))))
+        prev-mouse-x         (reagent/atom 0)
+        splitter-idx         (reagent/atom nil)
+        splitter-count       (dec panel-count)
+        splitter-children    (if splitter-children
+                               (do (assert (= splitter-count (count splitter-children)))
+                                   splitter-children)
+                               (repeat splitter-count splitter-child))
+        splitter-size-int    (js/parseInt splitter-size)
+        splitters-width      (* splitter-count splitter-size-int)
 
         stop-drag            (fn []
-                               (when on-split-change (on-split-change @split-perc))
+                               (when on-split-change (on-split-change @percs))
                                (reset! dragging? false))
 
-        calc-perc            (fn [mouse-x]                  ;; turn a mouse y coordinate into a percentage position
-                               (let [container  (get-element-by-id container-id) ;; the outside container
-                                     offsets    (sum-scroll-offsets container) ;; take any scrolling into account
-                                     c-width    (.-clientWidth container) ;; the container's width
-                                     c-left-x   (.-offsetLeft container) ;; the container's left X
-                                     relative-x (+ (- mouse-x c-left-x) (:left offsets))] ;; the X of the mouse, relative to container
-                                 (* 100.0 (/ relative-x c-width)))) ;; do the percentage calculation
+        calc-percs           (fn [delta]
+                               (let [container (get-element-by-id container-id) ;; the outside container
+                                     c-width   (.-clientWidth container) ;; the container's width
+                                     perc-amt  (* 100 (/ delta c-width))
+                                     idx       @splitter-idx]
+                                 (-> @percs
+                                     (update idx - perc-amt)
+                                     (update (dec idx) + perc-amt))))
+
+        mouse-x-delta        (fn [mouse-x]
+                               (let [prev @prev-mouse-x]
+                                 (reset! prev-mouse-x mouse-x)
+                                 (- mouse-x prev)))
 
         mousemove            (fn [event]
-                               (reset! split-perc (calc-perc (.-clientX event))))
+                               (let [delta (mouse-x-delta (.-clientX event))]
+                                 (when (not (zero? delta))
+                                   (reset! percs (calc-percs delta)))))
 
-        mousedown            (fn [event]
+        mousedown            (fn [event idx]
                                (.preventDefault event)      ;; stop selection of text during drag
-                               (reset! dragging? true))
+                               (reset! dragging? true)
+                               (reset! prev-mouse-x (.-clientX event)))
 
         mouseleave           (fn [event]
                                (stop-drag))
 
-        mouseover-split      #(reset! over? true)           ;; true CANCELs mouse-over (false cancels all others)
+        mouseover-split      (fn [idx]
+                               (reset! over? true)
+                               (reset! splitter-idx idx))
+
         mouseout-split       #(reset! over? false)
+
+        current-over?        (fn [idx]
+                               (and @over? (= @splitter-idx idx)))
 
         make-container-attrs (fn [class style attr in-drag?]
                                (merge {:class (str "rc-h-split display-flex " class)
@@ -211,30 +219,47 @@
                                          :on-mouse-leave (e-> mouseleave)})
                                       attr))
 
-        make-panel-attrs     (fn [class in-drag? percentage]
+        make-panel-attrs     (fn [idx class in-drag? perc]
                                {:class (str "display-flex " class)
-                                :style (merge (flex-child-style (str percentage " 1 0px"))
-                                              {:overflow "hidden"} ;; TODO: Shouldn't have this...test removing it
-                                              (when in-drag? {:pointer-events "none"}))})
+                                :key   (str "panel-" idx)
+                                :style (merge
+                                        {:min-height "100%"
+                                         :background :cadetblue
+                                         :width      (str "calc(" perc "% - "
+                                                          (/ splitter-size-int
+                                                             (/ panel-count splitter-count)) "px)")}
+                                        (when in-drag? {:pointer-events "none"}))})
 
-        make-splitter-attrs  (fn [class]
+        make-splitter-attrs  (fn [idx class]
                                {:class         (str "display-flex " class)
-                                :on-mouse-down (e-> mousedown)
-                                :on-mouse-over (e-handler (mouseover-split))
+                                :key           (str "splitter-" idx)
+                                :on-mouse-down (e-> (mousedown idx))
+                                :on-mouse-over (e-handler (mouseover-split idx))
                                 :on-mouse-out  (e-handler (mouseout-split))
-                                :style         (merge (when-not splitter-child
-                                                        (flex-child-style (str "0 0 " splitter-size)))
+                                :style         (merge {:width splitter-size}
                                                       {:cursor "col-resize"}
-                                                      (when @over? {:background-color "#f8f8f8"}))})]
+                                                      (when (current-over? idx)
+                                                        {:background-color "#f8f8f8"}))})]
 
     (fn
-      [& {:keys [panel-1 panel-2 class style attr]}]
-      [:div (make-container-attrs class style attr @dragging?)
-       [:div (make-panel-attrs "rc-h-split-top" @dragging? @split-perc)
-        panel-1]
-       [:div (make-splitter-attrs "rc-h-split-splitter")
-        (or
-         splitter-child
-         [splits/drag-handle :vertical @over?])]
-       [:div (make-panel-attrs "rc-h-split-bottom" @dragging? (- 100 @split-perc))
-        panel-2]])))
+      [& {:keys [panels class style attr]}]
+      (let [tagged-panels    (map (fn [idx panel perc]
+                                    [:panel (inc idx) panel perc])
+                                  (range panel-count) panels @percs)
+            tagged-splitters (map (fn [idx spl-ch]
+                                    [:splitter (inc idx) spl-ch])
+                                  (range splitter-count) splitter-children)
+            interleaved      (util/interleave-all tagged-panels tagged-splitters)]
+        [:div (make-container-attrs class style attr @dragging?)
+         (doall
+          (map
+           (fn [[kind idx panel-or-splitter perc]]
+             (case kind
+               :panel [:div (make-panel-attrs idx "rc-n-h-split" @dragging? perc)
+                       panel-or-splitter]
+               :splitter
+               [:div (make-splitter-attrs idx "rc-n-h-split-splitter")
+                (or
+                 splitter-child
+                 [splits/drag-handle :vertical @over?])]))
+           interleaved))]))))

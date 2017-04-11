@@ -182,6 +182,7 @@
 
 (def map-keys md/map-keys)
 (def map-vals md/map-vals)
+(def interleave-all md/interleave-all)
 
 (defn index-of
   ([coll x]
