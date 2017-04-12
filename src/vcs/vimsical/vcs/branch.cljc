@@ -9,6 +9,11 @@
 
 ;; * Spec
 
+(s/def ::branch
+  (s/keys :req [:db/id]
+          :opt [::parent ::files]))
+
+
 ;; ** Attributes
 
 (s/def :db/id uuid?)
@@ -37,26 +42,39 @@
      acc
      (recur (conj acc parent) parent))))
 
+(defn ancestors
+  "Return a seq of that `branch`'s ancestors, starting with parent.
+
+  Expects branch to be *fully denormalized*, i.e. each branch contains its
+  parent recursively."
+  [branch] (not-empty (lineage [] branch)))
+
 (defn common-ancestor
   "Return the common ancestor of the given branches if any."
   [branch-a branch-b]
-  (let [lineage-a (next (lineage branch-a))
-        lineage-b (next (lineage branch-b))]
+  (let [ancestors-a (ancestors branch-a)
+        ancestors-b (ancestors branch-b)]
     (some-val
      (fn [ancestor-a]
-       (some-val (=by :db/id ancestor-a) lineage-b))
-     lineage-a)))
+       (some-val (=by :db/id ancestor-a) ancestors-b))
+     ancestors-a)))
 
 (defn depth
-  "Return the depth of the child branch from the base branch "
-  [base child]
-  (let [pred (=by :db/id base)]
-    (when-not (pred child)
-      (some
-       (fn [[i branch]]
-         (when (pred branch) i))
-       ;; Vectors of [n ancestor] starting at [1 parent]
-       (next (map-indexed vector (lineage child)))))))
+  "Return the count of ancestors "
+  ^long [branch] (count (ancestors branch)))
+
+(defn relative-depth
+  "Return the count of ancestors between `base` and `child`. Returns 0 is base
+  and child are equal, nil if they have no common ancestor."
+  ([base child]
+   (let [pred (=by :db/id base)]
+     (if (pred child)
+       0
+       (some
+        (fn [[i branch]]
+          (when (pred branch) i))
+        ;; Vectors of [n ancestor] starting at [1 parent]
+        (next (map-indexed vector (lineage child))))))))
 
 (defn in-lineage?
   "Return true if `other` is part of `branch`'s lineage, either its direct

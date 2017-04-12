@@ -12,7 +12,7 @@
   ISSUES
 
   Doesn't work with concat (no support for lazy seq protocols)"
-  (:refer-clojure :exclude [split-at])
+  (:refer-clojure :exclude [split-at concat])
   (:require [clojure.spec :as s]))
 
 
@@ -24,10 +24,22 @@
 (defprotocol IIndexedInternal
   (-split-at [_ n])
   (-splice-at [_ n v])
-  (-normalize [_]))
+  (-concat [_ v])
+  (-normalize [_])
+  (-consistent? [_]))
 
 
 ;; * Private
+
+(defn- new-index
+  ([vals] (new-index identity vals))
+  ([f vals]
+   (persistent!
+    (reduce
+     (fn [m! [i val]]
+       (assoc! m! (f val) i))
+     (transient {})
+     (map-indexed vector vals)))))
 
 (defn- normalize-index
   [index ^long offset]
@@ -97,7 +109,8 @@
 
   IIndexedVector
   (index-of [_ val]
-    (+ offset ^long (get index val)))
+    (when-some [i (get index val)]
+      (+ offset ^long i)))
 
   IIndexedInternal
   (-split-at [_ n]
@@ -117,8 +130,27 @@
   (-splice-at [this n other]
     (let [[l r] (-split-at this n)]
       (into (into l other) r)))
+  (-concat [this other]
+    (assert (= f (.f ^IndexedVector other)) "Merging vectors indexed by different keys is not supported")
+    (let [index' (merge (normalize-index index offset)
+                        (normalize-index (.index ^IndexedVector other) (count this)))
+          v'     (into v (.v ^IndexedVector other))]
+      (indexed-vector 0 f index' v')))
   (-normalize [_]
-    (indexed-vector f 0 (normalize-index index offset) v)))
+    (indexed-vector 0 f (normalize-index index offset) v))
+  (-consistent? [this]
+    (doseq [[i val] (map-indexed vector v)]
+      (when-not (= i (index-of this (f val)))
+        (throw
+         (ex-info
+          "Inconsistent indexed vector state"
+          {:val          val
+           :fval         (f val)
+           :index-pos    (index-of this (f val))
+           :index-vector i
+           :index        index
+           :v            v}))))
+    true))
 
 
 ;; ** Printing
@@ -132,46 +164,45 @@
 
 ;; * Constructors
 
+(defn indexed-vector?
+  ([]  (indexed-vector))
+  ([x] (instance? IndexedVector x)))
+
+(s/def ::indexed-vector (s/and indexed-vector? -consistent?))
+
+(s/fdef indexed-vector :ret ::indexed-vector)
+
 (defn indexed-vector
-  ([] (indexed-vector nil))
-  ([v]
-   (-> (indexed-vector 0 identity {} [])
-       (into v)))
+  ([] (indexed-vector []))
+  ([v] (indexed-vector 0 identity (new-index v) v))
   ([offset f index v]
-   {:pre [(number? offset) (ifn? f) (map? index) (vector? v)]}
-   (IndexedVector. (long offset) f index v)))
+   {:pre [(number? offset) (ifn? f) (map? index) (sequential? v)]}
+   (IndexedVector. (long offset) f index (vec v))))
 
 (defn indexed-vector-by
-  ([f] (indexed-vector-by f nil))
-  ([f v]
-   (-> (IndexedVector. 0 f {} [])
-       (into v))))
+  ([f] (indexed-vector 0 f {} []))
+  ([f v] (indexed-vector 0 f (new-index f v) v)))
 
 
 ;; * API
 
-(defn indexed-vector-spec
-  [vector-spec]
-  (fn [^IndexedVector iv]
-    (s/valid? vector-spec (.v iv))))
-
-(defn indexed-vector?
-  ([] (indexed-vector))
-  ([x] (instance? IndexedVector x)))
-
 (s/fdef split-at
-        :args (s/cat :n pos-int? :v indexed-vector?)
-        :ret  (s/tuple indexed-vector? indexed-vector?))
+        :args (s/cat :n pos-int? :v ::indexed-vector)
+        :ret  (s/tuple ::indexed-vector ::indexed-vector))
 
 (defn split-at [n ^IndexedVector v]
   (-split-at v n))
 
-
 (s/fdef splice-at
-        :args (s/cat :n pos-int? :v indexed-vector? :insert sequential?)
-        :ret  indexed-vector?)
+        :args (s/cat :n pos-int? :v ::indexed-vector :insert sequential?)
+        :ret  ::indexed-vector)
 
 (defn splice-at [n ^IndexedVector v insert-vector]
   (-splice-at v n insert-vector))
 
+(s/fdef concat
+        :args (s/cat :v ::indexed-vector :other ::indexed-vector)
+        :ret  ::indexed-vector)
 
+(defn concat [^IndexedVector v ^IndexedVector other]
+  (-concat v other))

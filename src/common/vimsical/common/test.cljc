@@ -2,7 +2,8 @@
   (:require
    [clojure.data :as data]
    [clojure.test :as t]
-   [vimsical.common.uuid :as uuid]))
+   [vimsical.common.uuid :as uuid])
+  #?(:clj (:import (java.util UUID))))
 
 
 ;; * Assertions
@@ -29,23 +30,45 @@
     (t/is (nil? only-in-expected))
     (t/is (nil? only-in-actual))))
 
-
 ;; * UUID
 
-(def ^{:dynamic true :private true} *uuids* nil)
+(def ^{:dynamic true :private true} *print-tags* true)
+(def ^{:dynamic true :private true} *tag->uuid* (atom {}))
+(def ^{:dynamic true :private true} *uuid->tag* (atom {}))
+
+;; Override print-method to show the tags instead of the UUID values, useful
+;; when looking at test data!
+
+#?(:clj
+   (defmethod print-method UUID [^UUID uuid ^java.io.Writer w]
+     (letfn [(print-default []
+               (print-method (symbol "#uuid ") w)
+               (print-method (.toString uuid) w))
+             (print-tag [tag]
+               (print-method (symbol "<uuid ") w)
+               (print-method tag w)
+               (print-method (symbol ">") w))]
+       (if *print-tags*
+         (if-some [tag (get @*uuid->tag* uuid)]
+           (print-tag tag)
+           (print-default))
+         (print-default)))))
 
 (defn uuid-fixture
   "Setup a uuid cache to retrieve stable uuids by key with `uuid`."
   [f]
-  (binding [*uuids* (atom {})] (f)))
+  (binding [*tag->uuid* (atom @*tag->uuid*)]
+    (binding [*uuid->tag* (atom @*uuid->tag*)]
+      (f))))
 
 (defn uuid
   "Return a stable uuid for the given value."
   ([] (uuid/uuid))
-  ([any]
-   (or (get (deref *uuids*) any)
+  ([tag]
+   (or (get (deref *tag->uuid*) tag)
        (let [uuid (uuid/uuid)]
-         (swap! *uuids* assoc any uuid)
+         (swap! *tag->uuid* assoc tag uuid)
+         (swap! *uuid->tag* assoc uuid tag)
          uuid))))
 
 (defn- uuid-seq*

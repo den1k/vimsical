@@ -1,21 +1,23 @@
 (ns vimsical.vcs.data.indexed.vector-test
   (:require
    [clojure.spec :as s]
-   [clojure.spec.test :as st]
+   [orchestra.spec.test :as st]
    [vimsical.vcs.data.indexed.vector :as sut]
    [clojure.test :refer [deftest is are testing]]
    [vimsical.common.test :refer [is= isnt=]]))
 
-(st/instrument)
+(st/instrument 'vimsical.vcs.data.indexed.vector)
 
 ;; * Data
 
-(defn indexed-vector-test-data []
-  (let [key->val (fn [k] (when k {:id k}))
-        vals     (map key->val (range 0 100 10))
-        iv       (sut/indexed-vector vals)
-        ivb      (sut/indexed-vector-by :id vals)]
-    {:key->val key->val :vals vals :iv iv :ivb ivb}))
+(defn indexed-vector-test-data
+  ([] (indexed-vector-test-data (range 0 100 10)))
+  ([range]
+   (let [key->val (fn [k] (when k {:id k}))
+         vals     (map key->val range)
+         iv       (sut/indexed-vector vals)
+         ivb      (sut/indexed-vector-by :id vals)]
+     {:key->val key->val :vals vals :iv iv :ivb ivb})))
 
 
 (defn update-test-data [{:keys [key->val] :as data}]
@@ -91,15 +93,27 @@
       (isnt= iv (apply concat (split-at 3 iv)))
       (isnt= ivb (apply concat (split-at 3 ivb))))))
 
-(deftest indexed-vector-split-test
+(deftest indexed-vector-splce-test
   (let [{:keys [iv ivb vals]}      (indexed-vector-test-data)
         split-index                3
         insert                     [:a]
         [expect-left expect-right] (split-at split-index vals)
         expect                     (into (into (vec expect-left) insert) expect-right)]
-    (testing ""
-      (is= expect (seq (sut/splice-at split-index iv insert)))
-      (is= expect (seq (sut/splice-at split-index ivb insert))))))
+    (is= expect (seq (sut/splice-at split-index iv insert)))
+    (is= expect (seq (sut/splice-at split-index ivb insert)))))
+
+(deftest indexed-vector-concat-test
+  (let [{iv1 :iv ivb1 :ivb}             (indexed-vector-test-data (range 0 10))
+        {iv2 :iv ivb2 :ivb}             (indexed-vector-test-data (range 10 20))
+        {iv-expect :iv ivb-expect :ivb} (indexed-vector-test-data (range 0 20))
+        iv-actual                       (sut/concat iv1 iv2)
+        ivb-actual                      (sut/concat ivb1 ivb2)]
+    (is= iv-expect  (seq iv-actual))
+    (is= ivb-expect (seq ivb-actual))
+    (are [val idx] (is= idx (sut/index-of iv-actual val))
+      {:id 0}  0
+      {:id 10} 10
+      {:id 19} 19)))
 
 (deftest indexed-vector-index-of-test
   (let [{:keys [key->val iv ivb]} (update-test-data (indexed-vector-test-data))]
@@ -113,4 +127,7 @@
       10 100
       14 140)))
 
-
+(deftest indexed-vector-equiv-test
+  (let [{:keys [iv ivb]} (indexed-vector-test-data (range 0 10))]
+    (are [a b] (= a b)
+      iv iv)))

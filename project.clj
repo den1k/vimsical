@@ -18,8 +18,12 @@
      [lein-environ "1.1.0"]]}
 
    :test
-   {:dependencies
-    [[org.clojure/test.check "0.9.0"]]}
+   [:backend :frontend :vcs :common
+    {:source-paths
+     ["test/backend" "test/frontend" "test/vcs" "test/common"]
+     :dependencies
+     [[org.clojure/test.check "0.9.0"]
+      [orchestra              "0.2.0"]]}]
 
    :uberjar
    {:aot          :all
