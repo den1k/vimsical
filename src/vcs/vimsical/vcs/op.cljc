@@ -2,9 +2,15 @@
   (:require
    [clojure.spec :as s]))
 
-;; NOTE Should match :vimsical.vcs.delta/id, but circular dependency
-(s/def ::id (s/nilable nat-int?))
-(s/def ::str-insert (s/tuple #{:str/ins} ::id string?))
-(s/def ::str-remove (s/tuple #{:str/rem} ::id))
-(s/def ::crsr-move  (s/tuple #{:crsr/mv} ::id))
-(s/def ::crsr-sel   (s/tuple #{:crsr/sel} (s/tuple ::id ::id)))
+(s/def ::id (s/nilable uuid?))
+(s/def :vimsical.vcs.op.str/ins    (s/tuple #{:str/ins} ::id string?))
+(s/def :vimsical.vcs.op.str/rem    (s/tuple #{:str/rem} ::id))
+(s/def :vimsical.vcs.op.crsr/move  (s/tuple #{:crsr/mv} ::id))
+(s/def :vimsical.vcs.op.crsr/sel   (s/tuple #{:crsr/sel} (s/tuple ::id ::id)))
+
+(s/def ::op
+  (s/or
+   :str/ins   :vimsical.vcs.op.str/ins
+   :str/rem   :vimsical.vcs.op.str/rem
+   :crsr/move :vimsical.vcs.op.crsr/move
+   :crsr/sel  :vimsical.vcs.op.crsr/sel))

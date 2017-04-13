@@ -39,14 +39,14 @@
 ;; * Deltas
 
 (def d0 {:branch-id master-id, :id id0 :prev-id nil, :file-id file1-id, :op [:str/ins nil "h"], :pad 0,   :meta {:timestamp 1, :version 1.0}})
-(def d1 {:branch-id master-id, :id id1 :prev-id id0, :file-id file1-id, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d2 {:branch-id child-id,  :id id2 :prev-id id1, :file-id file1-id, :op [:str/ins 0   "i"], :pad 100, :meta {:timestamp 1, :version 1.0}})
-(def d3 {:branch-id child-id,  :id id3 :prev-id id2, :file-id file1-id, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d4 {:branch-id gchild-id, :id id4 :prev-id id3, :file-id file1-id, :op [:str/ins 1   "!"], :pad 100, :meta {:timestamp 1, :version 1.0}})
-(def d5 {:branch-id gchild-id, :id id5 :prev-id id4, :file-id file1-id, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d6 {:branch-id gchild-id, :id id6 :prev-id id5, :file-id file2-id, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d7 {:branch-id child-id,  :id id7 :prev-id id3, :file-id file2-id, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d8 {:branch-id master-id, :id id8 :prev-id id1, :file-id file1-id, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d1 {:branch-id master-id, :id id1 :prev-id id0, :file-id file1-id, :op [:crsr/mv id0],     :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d2 {:branch-id child-id,  :id id2 :prev-id id1, :file-id file1-id, :op [:str/ins id1 "i"], :pad 100, :meta {:timestamp 1, :version 1.0}})
+(def d3 {:branch-id child-id,  :id id3 :prev-id id2, :file-id file1-id, :op [:crsr/mv id2],     :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d4 {:branch-id gchild-id, :id id4 :prev-id id3, :file-id file1-id, :op [:str/ins id3 "!"], :pad 100, :meta {:timestamp 1, :version 1.0}})
+(def d5 {:branch-id gchild-id, :id id5 :prev-id id4, :file-id file1-id, :op [:crsr/mv id4],     :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d6 {:branch-id gchild-id, :id id6 :prev-id id5, :file-id file2-id, :op [:crsr/mv id5],     :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d7 {:branch-id child-id,  :id id7 :prev-id id3, :file-id file2-id, :op [:crsr/mv id3],     :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d8 {:branch-id master-id, :id id8 :prev-id id1, :file-id file1-id, :op [:crsr/mv id1],     :pad 1,   :meta {:timestamp 1, :version 1.0}})
 
 (def deltas [d0 d1 d2 d3 d4 d5 d6 d7 d8])
 

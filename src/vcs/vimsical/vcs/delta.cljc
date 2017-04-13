@@ -13,13 +13,6 @@
 (s/def ::version number?)
 (s/def ::meta (s/keys :req-un [:time/timestamp ::version]))
 
-(s/def ::op
-  (s/or
-   :insert ::op/str-insert
-   :remove ::op/str-remove
-   :move ::op/crsr-move
-   :sel ::op/crsr-sel))
-
 (s/def ::delta
-  (s/keys :req-un [::id ::prev-id ::op ::pad ::file-id ::branch-id]
+  (s/keys :req-un [::id ::prev-id ::op/op ::pad ::file-id ::branch-id]
           :opt-un [::meta]))
