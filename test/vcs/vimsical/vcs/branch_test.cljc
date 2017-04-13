@@ -1,12 +1,12 @@
 (ns vimsical.vcs.branch-test
   (:require
+   [clojure.test :as t :refer [are deftest]]
    [orchestra.spec.test :as st]
-   [clojure.test :as t :refer [deftest is are testing]]
-   [vimsical.vcs.examples :as examples]
+   [vimsical.common.test :refer [is=]]
    [vimsical.vcs.branch :as sut]
-   [vimsical.common.test :refer [diff= is=]]))
+   [vimsical.vcs.examples :as examples]))
 
-(st/instrument 'vimsical.vcs.branch)
+(st/instrument)
 
 (deftest lineage-test
   (is= [examples/master] (sut/lineage examples/master))
@@ -19,9 +19,10 @@
   (is= [examples/child examples/master] (sut/ancestors examples/gchild)))
 
 (deftest common-ancestor-test
-  (is (nil? (sut/common-ancestor examples/master examples/master)))
-  (is (nil? (sut/common-ancestor examples/master examples/child)))
-  (is= examples/master (sut/common-ancestor examples/child examples/gchild)))
+  (are [a b expect] (is= expect (sut/common-ancestor a b) (sut/common-ancestor b a))
+    examples/master examples/master nil
+    examples/master examples/child  nil
+    examples/child  examples/gchild examples/master))
 
 (deftest depth-test
   (are [depth branch] (is= depth (sut/depth branch))

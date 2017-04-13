@@ -1,12 +1,11 @@
 (ns vimsical.vcs.data.indexed.vector-test
   (:require
-   [clojure.spec :as s]
+   [clojure.test :refer [are deftest testing]]
    [orchestra.spec.test :as st]
-   [vimsical.vcs.data.indexed.vector :as sut]
-   [clojure.test :refer [deftest is are testing]]
-   [vimsical.common.test :refer [is= isnt=]]))
+   [vimsical.common.test :refer [is= isnt=]]
+   [vimsical.vcs.data.indexed.vector :as sut]))
 
-(st/instrument 'vimsical.vcs.data.indexed.vector)
+(st/instrument)
 
 ;; * Data
 

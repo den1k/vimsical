@@ -1,11 +1,10 @@
 (ns vimsical.vcs.branch
+  (:refer-clojure :exclude [ancestors])
   (:require
    [clojure.spec :as s]
-   [clojure.set :as set]
    [vimsical.common.core :as common :refer [=by some-val]]
-   [vimsical.vcs.file :as file]
-   [vimsical.vcs.delta :as delta]))
-
+   [vimsical.vcs.delta :as delta]
+   [vimsical.vcs.file :as file]))
 
 ;; * Spec
 
@@ -29,6 +28,12 @@
 
 
 ;; * Lineage
+
+(defn master? [{::keys [parent]}] (nil? parent))
+
+(defn parent?
+  [parent child]
+  (=by :db/id (comp :db/id ::parent) parent child))
 
 (defn lineage
   "Return a seq of that `branch`'s lineage, starting with itself,
@@ -59,9 +64,22 @@
        (some-val (=by :db/id ancestor-a) ancestors-b))
      ancestors-a)))
 
+(defn common-ancestor
+  "Return the common ancestor of the given branches if any."
+  [branch-a branch-b]
+  (let [ancestors-a (ancestors branch-a)
+        ancestors-b (ancestors branch-b)]
+    (some-val
+     (fn [ancestor-a]
+       (some-val (=by :db/id ancestor-a) ancestors-b))
+     ancestors-a)))
+
 (defn depth
   "Return the count of ancestors "
-  ^long [branch] (count (ancestors branch)))
+  ^long [{::keys [parent] :as branch}]
+  (if (nil? parent)
+    0
+    (count (ancestors branch))))
 
 (defn relative-depth
   "Return the count of ancestors between `base` and `child`. Returns 0 is base

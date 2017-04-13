@@ -2,14 +2,22 @@
   (:require
    [clojure.spec :as s]
    [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.data.indexed.vector :as indexed.vector]))
-
+   [vimsical.vcs.data.indexed.vector :as indexed.vector]
+   [vimsical.vcs.delta :as delta]))
 
 ;; * Spec
 
+(defn sorted-index?
+  [index]
+  (boolean
+   (reduce
+    (fn [{:keys [id] :as left}
+         {:keys [prev-id] :as right}]
+      (if (= id prev-id) right (reduced false)))
+    (seq index))))
+
 (s/def ::deltas (s/every ::delta/delta))
-(s/def ::index (s/and ::indexed.vector/indexed-vector ::deltas))
+(s/def ::index (s/and ::indexed.vector/indexed-vector ::deltas sorted-index?))
 (s/def ::delta-index (s/map-of :db/id ::index))
 
 
@@ -49,7 +57,9 @@
 
 (s/fdef get-deltas
         :args (s/cat :delta-index ::delta-index
-                     :branch (s/or :branch ::branch/branch :uuid uuid?)))
+                     :branch (s/or :branch ::branch/branch :uuid uuid?))
+        :ret  ::index)
+
 (defn get-deltas
   [delta-index branch]
   (get delta-index (if (map? branch) (:db/id branch) branch)))
@@ -57,13 +67,12 @@
 (s/fdef index-of
         :args
         (s/or :delta  (s/cat :delta-index ::delta-index :delta ::delta/delta)
-              :params (s/cat :delta-index ::delta-index :branch-id :db/id :delta-id ::delta/id)))
+              :params (s/cat :delta-index ::delta-index :branch-id :db/id :delta-id ::delta/id))
+        :ret  (s/nilable number?))
 
 (defn index-of
   ([delta-index {:keys [branch-id id] :as delta}]
-   (some-> delta-index
-           (get-deltas branch-id)
-           (indexed.vector/index-of id)))
+   (index-of delta-index branch-id id))
   ([delta-index branch-id delta-id]
    (some-> delta-index
            (get-deltas branch-id)

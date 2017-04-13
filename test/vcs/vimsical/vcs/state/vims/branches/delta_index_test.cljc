@@ -1,17 +1,19 @@
-(ns  vimsical.vcs.state.vims.branches.delta-index-test
+(ns vimsical.vcs.state.vims.branches.delta-index-test
   (:require
-   [clojure.spec :as s]
+   [clojure.test :as t :refer [are deftest]]
    [orchestra.spec.test :as st]
-   [clojure.test :as t :refer [deftest testing is are]]
-   [vimsical.common.test :refer [is= diff=]]
+   [vimsical.common.test :refer [is=]]
    [vimsical.vcs.examples :as examples]
    [vimsical.vcs.state.vims.branches.delta-index :as sut]))
 
-(st/instrument 'vimsical.vcs.state.vims.branches.delta-index)
+(st/instrument)
+
+(deftest constructor-test
+  (is= examples/delta-index (sut/new-delta-index examples/deltas)))
 
 (deftest add-deltas-test
   (let [expected    examples/delta-index
-        batches     (split-at 3 examples/deltas)
+        batches     (split-at (rand-int (count examples/deltas)) examples/deltas)
         actual      (reduce sut/add-deltas (sut/new-delta-index) batches)]
     (is= expected actual)))
 

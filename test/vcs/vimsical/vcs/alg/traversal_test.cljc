@@ -1,11 +1,12 @@
 (ns vimsical.vcs.alg.traversal-test
   (:require
    [orchestra.spec.test :as st]
+   [vimsical.common.test :refer [is= diff=]]
    [clojure.test :as t :refer [deftest testing is are]]
    [vimsical.vcs.examples :as examples]
    [vimsical.vcs.alg.traversal :as sut]))
 
-(st/instrument 'vimsical.vcs.alg.traversal)
+(st/instrument)
 
 (defn ascending?  [comparison-result] (== (var-get #'sut/asc) comparison-result))
 (defn descending? [comparison-result] (== (var-get #'sut/desc) comparison-result))
@@ -21,4 +22,4 @@
       descending? examples/gchild examples/child)))
 
 (deftest inlining-test
-  (is (= examples/deltas (sut/inline examples/delta-index examples/branches))))
+  (is= examples/deltas (sut/inline examples/delta-index examples/branches)))

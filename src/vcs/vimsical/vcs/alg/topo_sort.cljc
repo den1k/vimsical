@@ -15,8 +15,9 @@
 (s/def ::sorted-deltas (s/and ::deltas topo-sorted?))
 
 (s/fdef topo-sort
-        :args (s/cat :branches ::branch/branch :deltas ::deltas)
-        :ref  ::sorted-deltas)
+        ;; NOTE Can't spec args without a valid delta seq gen
+        ;; :args (s/cat :branches ::branch/branch :deltas ::deltas)
+        :ret  ::sorted-deltas)
 
 
 ;; * Topo sort
@@ -116,7 +117,7 @@
                    more')))))))
 
 (s/fdef topo-sort
-        :args (s/cat :branches ::branch/branch :deltas ::deltas)
+        :args (s/cat :branches (s/every ::branch/branch) :deltas ::deltas)
         :ref  boolean?)
 
 (defn topo-sorted?

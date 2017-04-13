@@ -1,40 +1,74 @@
 (ns vimsical.vcs.alg.traversal
   (:require
    [clojure.spec :as s]
+   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.data.indexed.vector :as indexed.vector]
    [vimsical.vcs.state.vims.branches.delta-index :as delta-index]
-   [vimsical.vcs.branch :as branch]))
-
-
-;; * Spec
-
-(s/def ::comparison-result #{-1 0 1})
-
-(s/def ::branch-comparator
-  (s/fspec :args (s/cat :a ::branch/branch :b ::branch/branch) :ret  ::comparison-result))
-
+   [vimsical.vcs.state.vims.branches.tree :as tree]))
 
 ;; * Internal
 
-;; Can never remember those...
+;; Can never remember those!
 (def ^:private asc -1)
 (def ^:private desc 1)
+
+(defn- post-order-reduce
+  "Post-order reduction of a tree.
+
+  `rec` is a fn of `tree` that should return the recursive part of the tree or
+  nil to stop the recursion and start bracktracking.
+
+  `f` is a reducing fn of `acc` and a `tree` node"
+  [rec f acc tree]
+  (letfn [(post-order-reduce' [acc tree]
+            (post-order-reduce rec f acc tree))
+          (rec' [acc rec-tree]
+            (reduce post-order-reduce' acc rec-tree))]
+    (if-some [rec-tree (rec tree)]
+      (f (rec' acc rec-tree) tree)
+      (f acc tree))))
+
+(comment
+  (assert
+   (= [0 1 2 3 4 5])
+   (post-order-reduce
+    :children
+    (fn f [acc {:keys [id]}]
+      (conj acc id))
+    [] {:id        5
+        :children [{:id 2 :children [{:id 1 :children [{:id 0}]}]}
+                   {:id 4 :children [{:id 3}]}]})))
 
 
 ;; * Branch comparator
 
+(s/fdef new-comparator
+        :args (s/cat :state ::comparator-state)
+        :ret  (s/fspec :args (s/cat :a ::comparable :b ::comparable)
+                       :ret  #{-1 0 1}))
+
 (s/fdef new-branch-comparator
-        :args ::delta-index/delta-index
-        :ret  ::branch-comparator)
+        :args (s/cat :delta-index ::delta-index/delta-index)
+        ;;
+        ;; NOTE this doesn't work because fspec will exercise the :args spec and
+        ;; invoke the comparator with it, so the comparators args spec needs to
+        ;; ensure that branches :a and :b have a valid lineage relationship.
+        ;;
+        ;; The way we'd solve this is by making a generator that'd output a
+        ;; lineage, and make a comparable branch spec whose generator would bind
+        ;; to that and pluck some values from the lineage generator
+        ;;
+        ;; :ret  (s/fspec :args (s/cat :a ::branch/branch :b ::branch/branch)
+        ;;                :ret  #{-1 0 1})
+        )
 
 (defn new-branch-comparator
   [delta-index]
   (letfn [(compare-relative-depth [common-ancestor a b]
             (let [depth-a          (branch/relative-depth common-ancestor a)
                   depth-b          (branch/relative-depth common-ancestor b)
-                  ;; Deeper branches should come after shallow ones
-                  depth-comparison (compare depth-b depth-a)]
-              (when-not (== 0 depth-comparison)
+                  depth-comparison (compare depth-a depth-b)]
+              (when-not (zero? depth-comparison)
                 depth-comparison)))
           (branch-entry-index [delta-index {::branch/keys [entry-delta-id] :keys [db/id]}]
             (delta-index/index-of delta-index id entry-delta-id))
@@ -46,47 +80,62 @@
       [a b]
       (let [common-ancestor (branch/common-ancestor a b)]
         (cond
+          (branch/parent? a b) asc
+
+          (branch/parent? b a) desc
+
           (some? common-ancestor)
           (or (compare-relative-depth common-ancestor a b)
               (compare-entry-deltas common-ancestor a b)
               (throw (ex-info "Entry deltas not found???")))
 
-          ;; a is master
           (and (zero? (branch/depth a))
-               (pos?  (branch/depth b)))
-          asc
+               (pos?  (branch/depth b))) asc
 
-          ;; b is master
           (and (pos?  (branch/depth a))
-               (zero? (branch/depth b)))
-          desc
+               (zero? (branch/depth b))) desc
 
           :else
           (throw
            (ex-info
-            "Can't compare branches if no master and no common ancestor, are the
-            branches fully denormalized (included their ancestors recursively
-            through ::branch/parent?"
+            "Can't compare branches with no master or no common ancestor, are
+            the branches fully denormalized (include their ancestors
+            recursively through ::branch/parent)?"
             {:branch-a a :branch-b b})))))))
 
 
 ;; * Branch inlining
 
 (s/fdef inline
-        :args (s/cat :delta-index ::delta-index/delta-index :branches (s/every ::branch/branch))
+        :args (s/cat :delta-index ::delta-index/delta-index
+                     :branches (s/every ::branch/branch))
         :ret  ::indexed.vector/indexed-vector)
 
+;; NOTE do a post-traversal of the branch-tree, inlining children in their
+;; relative desc order (so inserting an earlier branch doesn't require keeping
+;; offsets of offsets processed so far
+
 (defn inline
+  "Does a post-order-reduce traversal of the branch tree, reducing over children
+  branches and inlining their deltas in a single indexed vector."
   [delta-index branches]
-  (let [cpr (new-branch-comparator delta-index)]
-    (reduce
-     (fn [indexed-vector {:as           branch
-                          :keys         [db/id]
-                          ::branch/keys [entry-delta-id]}]
-       (let [indexed-deltas (delta-index/get-deltas delta-index branch)
-             index          (when entry-delta-id (delta-index/index-of delta-index id entry-delta-id))]
-         (if (some? entry-delta-id)
-           (indexed.vector/splice-at indexed-vector index indexed-deltas)
-           (indexed.vector/concat indexed-vector indexed-deltas))))
-     (indexed.vector/indexed-vector-by :id)
-     (sort cpr branches))))
+  (let [cpr  (new-branch-comparator delta-index)
+        tree (tree/branch-tree branches)
+        rec  (fn [{::branch/keys [children]}]
+               (sort cpr children))]
+    (::insert-deltas
+     (post-order-reduce
+      rec
+      (fn [{:as    acc
+            ::keys [insert-id insert-deltas]}
+           {:as           branch
+            :keys         [db/id]
+            ::branch/keys [entry-delta-id]}]
+        (let [branch-deltas (delta-index/get-deltas delta-index branch)]
+          (if (nil? acc)
+            {::insert-id     entry-delta-id
+             ::insert-deltas branch-deltas}
+            (let [insert-index (inc (delta-index/index-of delta-index id insert-id))]
+              {::insert-id     entry-delta-id
+               ::insert-deltas (indexed.vector/splice-at insert-index branch-deltas insert-deltas)}))))
+      nil tree))))

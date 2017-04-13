@@ -1,12 +1,10 @@
 (ns vimsical.vcs.examples
   (:require
    [clojure.spec :as s]
-   [vimsical.vcs.delta :as delta]
+   [vimsical.common.test :refer [uuid]]
    [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.state.vims.branches.delta-index :as branches.delta-index]
-   [vimsical.vcs.state.vims.branches.tree :as branches.tree]
-   [vimsical.common.test :refer [uuid]]))
-
+   [vimsical.vcs.delta :as delta]
+   [vimsical.vcs.state.vims.branches.delta-index :as branches.delta-index]))
 
 ;; * UUIDs
 
@@ -16,15 +14,15 @@
 (def file1-id (uuid :file1))
 (def file2-id (uuid :file2))
 
-(def id0 (uuid :delta-0))
-(def id1 (uuid :delta-1))
-(def id2 (uuid :delta-2))
-(def id3 (uuid :delta-3))
-(def id4 (uuid :delta-4))
-(def id5 (uuid :delta-5))
-(def id6 (uuid :delta-6))
-(def id7 (uuid :delta-7))
-(def id8 (uuid :delta-8))
+(def id0 (uuid :id0))
+(def id1 (uuid :id1))
+(def id2 (uuid :id2))
+(def id3 (uuid :id3))
+(def id4 (uuid :id4))
+(def id5 (uuid :id5))
+(def id6 (uuid :id6))
+(def id7 (uuid :id7))
+(def id8 (uuid :id8))
 
 
 ;; * Branches
@@ -40,15 +38,15 @@
 
 ;; * Deltas
 
-(def d0 {:branch-id master-id, :file-id file1-id, :id id0 :prev-id nil, :op [:str/ins nil "h"], :pad 0,   :meta {:timestamp 1, :version 1.0}})
-(def d1 {:branch-id master-id, :file-id file1-id, :id id1 :prev-id id0, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d2 {:branch-id child-id,  :file-id file1-id, :id id2 :prev-id id1, :op [:str/ins 0   "i"], :pad 100, :meta {:timestamp 1, :version 1.0}})
-(def d3 {:branch-id child-id,  :file-id file1-id, :id id3 :prev-id id2, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d4 {:branch-id gchild-id, :file-id file1-id, :id id4 :prev-id id3, :op [:str/ins 1   "!"], :pad 100, :meta {:timestamp 1, :version 1.0}})
-(def d5 {:branch-id gchild-id, :file-id file1-id, :id id5 :prev-id id4, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d6 {:branch-id child-id,  :file-id file2-id, :id id6 :prev-id id5, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d7 {:branch-id gchild-id, :file-id file2-id, :id id7 :prev-id id6, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d8 {:branch-id master-id, :file-id file1-id, :id id8 :prev-id id1, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d0 {:branch-id master-id, :id id0 :prev-id nil, :file-id file1-id, :op [:str/ins nil "h"], :pad 0,   :meta {:timestamp 1, :version 1.0}})
+(def d1 {:branch-id master-id, :id id1 :prev-id id0, :file-id file1-id, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d2 {:branch-id child-id,  :id id2 :prev-id id1, :file-id file1-id, :op [:str/ins 0   "i"], :pad 100, :meta {:timestamp 1, :version 1.0}})
+(def d3 {:branch-id child-id,  :id id3 :prev-id id2, :file-id file1-id, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d4 {:branch-id gchild-id, :id id4 :prev-id id3, :file-id file1-id, :op [:str/ins 1   "!"], :pad 100, :meta {:timestamp 1, :version 1.0}})
+(def d5 {:branch-id gchild-id, :id id5 :prev-id id4, :file-id file1-id, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d6 {:branch-id gchild-id, :id id6 :prev-id id5, :file-id file2-id, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d7 {:branch-id child-id,  :id id7 :prev-id id3, :file-id file2-id, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d8 {:branch-id master-id, :id id8 :prev-id id1, :file-id file1-id, :op [:crsr/mv 1],       :pad 1,   :meta {:timestamp 1, :version 1.0}})
 
 (def deltas [d0 d1 d2 d3 d4 d5 d6 d7 d8])
 
@@ -59,8 +57,8 @@
 
 (def delta-index
   {master-id (#'branches.delta-index/new-index [d0 d1 d8])
-   child-id  (#'branches.delta-index/new-index [d2 d3 d6])
-   gchild-id (#'branches.delta-index/new-index [d4 d5 d7])})
+   child-id  (#'branches.delta-index/new-index [d2 d3 d7])
+   gchild-id (#'branches.delta-index/new-index [d4 d5 d6])})
 
 (s/assert* ::branches.delta-index/delta-index delta-index)
 
@@ -69,5 +67,3 @@
 
 (def branch-tree
   (assoc master ::branch/children [(assoc child ::branch/children [gchild])]))
-
-(s/assert* ::branches.tree/tree branch-tree)

@@ -1,9 +1,7 @@
 (ns vimsical.vcs.state.vims.branches.tree
   (:require
    [clojure.spec :as s]
-   [vimsical.common.coll :refer [index-by]]
    [vimsical.vcs.branch :as branch]))
-
 
 ;; * Spec
 
@@ -32,7 +30,7 @@
 ;; * API
 
 (s/fdef branch-tree
-        :args (s/every ::branch/branch)
+        :args (s/cat :branches (s/every ::branch/branch))
         :ret  ::tree)
 
 (defn branch-tree
