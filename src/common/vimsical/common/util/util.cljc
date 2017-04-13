@@ -1,7 +1,8 @@
 (ns vimsical.common.util.util
   (:refer-clojure :exclude [max min halt-when])
   #?@(:clj
-      [(:require
+      [
+       (:require
         [clojure.core.async :as a :refer [alt! go-loop]]
         [clojure.string :as string]
         [medley.core :as md])]
@@ -11,7 +12,8 @@
         [cljs.core.async :as a]
         [clojure.string :as string]
         [goog.object :as gobj]
-        [medley.core :as md])
+        [medley.core :as md]
+        [goog.functions :as gfns])
        (:require-macros [cljs.core.async.macros :refer [alt! go-loop]])]))
 
 #?(:cljs
@@ -74,37 +76,6 @@
 (defn min-max [coll]
   [(apply clojure.core/max coll)
    (apply clojure.core/max coll)])
-
-;; TODO use goog.closure debounce and throttle
-(defn debounce-or-throttle-fn [type]
-  {:pre [(get #{:debounce :throttle} type)]}
-  (fn [dur]
-    {:pre [(pos? dur)]}
-    (let [reset-chan (a/chan)]
-      (go-loop [timeout (a/timeout dur) thunk nil]
-        (alt!
-         reset-chan ([next-thunk] (do
-                                    (recur
-                                     (case type
-                                       :debounce (a/timeout dur)
-                                       :throttle timeout)
-                                     next-thunk)))
-         timeout ([_] (do (when thunk (thunk))
-                          (recur (a/timeout dur) nil)))))
-      (fn [thunk]
-        (a/put! reset-chan thunk)))))
-
-(def debounce-fn
-  "Takes a duration during which to debounce. Returns a function that
-   takes a thunk that will only run after dur elapsed or not at all if
-   another call (with a new thunk) is made before."
-  (debounce-or-throttle-fn :debounce))
-
-(def throttle-fn
-  "Takes a duration during which to throttle. Returns a function that
-   takes a thunk. Each thunk replaces the previous one, so once
-   duration elapsed, the most recent one will run."
-  (debounce-or-throttle-fn :throttle))
 
 (defn ffilter [pred coll]
   (some #(if (pred %) %) coll))
@@ -302,6 +273,14 @@
         (if (pred input)
           (reduced {::halt (if retf (retf (rf result) input) input)})
           (rf result input)))))))
+
+#?(:cljs
+   (defn debounce [f interval]
+     (gfns/debounce f interval)))
+
+#?(:cljs
+   (defn throttle [f interval]
+     (gfns/debounce f interval)))
 
 #?(:cljs
    (defn url-encode [s]
