@@ -1,5 +1,5 @@
 (ns vimsical.frontend.core
-  (:require [reagent.core :as reagent]
+  (:require [reagent.core :as r]
             [re-frame.core :as re-frame]
             [vimsical.frontend.config :as config]
             [vimsical.frontend.app.views :refer [app]]))
@@ -9,10 +9,13 @@
     (enable-console-print!)
     (println "dev mode")))
 
+(defn require-js-libs [cb]
+  (js/require (array "vs/editor/editor.main") cb))
+
 (defn mount-root []
   (re-frame/clear-subscription-cache!)
-  (reagent/render [app]
-                  (.getElementById js/document "app")))
+  (r/render [app]
+            (.getElementById js/document "app")))
 
 (defn on-reload
   "Called by figwheel on reload. See project.clj."
@@ -22,6 +25,8 @@
 (defn ^:export init
   "Called from index.html"
   []
-  ;(re-frame/dispatch-sync [:initialize-db])
-  (dev-setup)
-  (mount-root))
+  (require-js-libs
+   #(do
+      ;(re-frame/dispatch-sync [:initialize-db])
+      (dev-setup)
+      (mount-root))))

@@ -204,12 +204,13 @@
                         (str (name ns) "/" (name x))))]
     (md/map-keys (comp keyword prefix) map)))
 
-(defn update-when [x pred f & args]
-  (cond
-    (sequential? x) (mapv #(if (pred %)
-                             (apply f % args)
-                             %) x)
-    (pred x) (apply f x args)))
+(defn update-when
+  "Calls pred with every item of coll and applies f & args to it when true."
+  [coll pred f & args]
+  (mapv #(if (pred %)
+           (apply f % args)
+           %)
+        coll))
 
 (defn with-delay
   ([f]

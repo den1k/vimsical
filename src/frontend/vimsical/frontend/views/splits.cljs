@@ -33,8 +33,8 @@
       :as   args}]
   {:pre [(validate-args-macro n-v-split-args-desc args "n-v-split")]}
   (let [container-id           (gensym "n-v-split-")
-        dragging?              (r/atom false)               ;; is the user dragging the splitter (mouse is down)?
-        over?                  (r/atom false)               ;; is the mouse over the splitter, if so, highlight it
+        dragging?              (r/atom false) ;; is the user dragging the splitter (mouse is down)?
+        over?                  (r/atom false) ;; is the mouse over the splitter, if so, highlight it
         panel-count            (count panels)
         percs                  (r/atom (vec (repeat panel-count (/ 100 panel-count))))
         prev-mouse-y           (r/atom 0)
@@ -75,7 +75,7 @@
                                      (reset! percs (calc-percs delta)))))
 
         mousedown              (fn [event idx]
-                                 (.preventDefault event)    ;; stop selection of text during drag
+                                 (.preventDefault event) ;; stop selection of text during drag
                                  (reset! dragging? true)
                                  (reset! prev-mouse-y (.-clientY event)))
 
@@ -97,7 +97,7 @@
                                                        {:margin margin
                                                         :width  width}
                                                        style)}
-                                        (when in-drag?      ;; only listen when we are dragging
+                                        (when in-drag? ;; only listen when we are dragging
                                           {:on-mouse-up    (e-handler (stop-drag))
                                            :on-mouse-move  (e-> mousemove)
                                            :on-mouse-leave (e-> mouseleave)})
@@ -155,8 +155,8 @@
       :as   args}]
   {:pre [(validate-args-macro n-v-split-args-desc args "h-split")]}
   (let [container-id         (gensym "n-h-split-")
-        dragging?            (r/atom false)                 ;; is the user dragging the splitter (mouse is down)?
-        over?                (r/atom false)                 ;; is the mouse over the splitter, if so, highlight it
+        dragging?            (r/atom false) ;; is the user dragging the splitter (mouse is down)?
+        over?                (r/atom false) ;; is the mouse over the splitter, if so, highlight it
         panel-count          (count panels)
         percs                (r/atom (vec (repeat panel-count (/ 100 panel-count))))
         prev-mouse-x         (r/atom 0)
@@ -193,7 +193,7 @@
                                    (reset! percs (calc-percs delta)))))
 
         mousedown            (fn [event idx]
-                               (.preventDefault event)      ;; stop selection of text during drag
+                               (.preventDefault event) ;; stop selection of text during drag
                                (reset! dragging? true)
                                (reset! prev-mouse-x (.-clientX event)))
 
@@ -210,7 +210,7 @@
                                (and @over? (= @splitter-idx idx)))
 
         make-container-attrs (fn [class style attr in-drag?]
-                               (merge {:class (str "rc-h-split display-flex " class)
+                               (merge {:class (str "rc-n-h-split display-flex " class)
                                        :id    container-id
                                        :style (merge (flex-child-style size)
                                                      (flex-flow-style "row nowrap")
@@ -218,7 +218,7 @@
                                                       :width  width
                                                       :height height}
                                                      style)}
-                                      (when in-drag?        ;; only listen when we are dragging
+                                      (when in-drag? ;; only listen when we are dragging
                                         {:on-mouse-up    (e-handler (stop-drag))
                                          :on-mouse-move  (e-> mousemove)
                                          :on-mouse-leave (e-> mouseleave)})
@@ -260,8 +260,9 @@
           (map
            (fn [[kind idx panel-or-splitter perc]]
              (case kind
-               :panel [:div (make-panel-attrs idx "rc-n-h-split" @dragging? perc)
-                       panel-or-splitter]
+               :panel
+               [:div (make-panel-attrs idx "rc-n-h-split-panel" @dragging? perc)
+                panel-or-splitter]
                :splitter
                [:div (make-splitter-attrs idx "rc-n-h-split-splitter")
                 (or
