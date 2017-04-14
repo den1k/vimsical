@@ -78,25 +78,60 @@
                   :justify-content :center}
    editor-tab])
 
-(def n-h-split
-  [:.rc-n-h-split
+(def editor-header
+  [:.editor-header
+   {:display        :flex
+    :flex-direction :row
+    :align-items    :center
+    ;; height set on component due requirement of precise height by
+    ;; split component
+    :padding        [6 16]
+    :text-align     :center
+    :background     :#ffffff
+    :border-bottom  "solid 2px #eceff3"}
+   [:.title {:flex-grow      :1
+             :font-size      :20.7px
+             :letter-spacing :0}]
+   (mapv #(color/type-child-style (first %)
+                                  :&.
+                                  :.title
+                                  :color
+                                  (second %))
+         color/type-colors-editors)
+   [:.options {:width      :38px
+               :height     :17px
+               :object-fit :contain
+               :cursor     :pointer}
+    [:svg {:width  :inherit
+           :height :inherit}]
+    [:&:hover
+     [:* {:fill :#000000}]]]
+   [:&.css :&.javascript
+    {:z-index    :5
+     :position   :relative
+     :border-top "solid 2px #eceff3"
+     :box-shadow "0 -4px 6px 0 rgba(143, 144, 150, 0.2)"}]])
+
+(def live-preview-and-editors
+  [:.live-preview-and-editors
    {:border-top "solid 2px #eceff3"}
    live-preview
    [:.rc-n-h-split-splitter
-    {:display      :flex
-     :box-sizing   :border-box
-     :padding      :4px
-     ;; width set on component
-     :background   :#ffffff
-     :border-left  "solid 2px #eceff3"
-     :border-right "solid 2px #eceff3"
-     :cursor       :col-resize}
-    {:flex            "1"
-     :display         :flex
+    {:display         :flex
+     :flex            "1"
      :flex-direction  :column
      :justify-content :space-around
-     :align-items     :center}
-    editor-tabs]])
+     :align-items     :center
+     :box-sizing      :border-box
+     :padding         :4px
+     ;; width set on component due requirement of precise height by
+     ;; split component
+     :background      :#ffffff
+     :border-left     "solid 2px #eceff3"
+     :border-right    "solid 2px #eceff3"
+     :cursor          :col-resize}
+    editor-tabs]
+   editor-header])
 
 (def vcr
   [:.vcr
@@ -104,4 +139,4 @@
    {:display  "relative"
     :overflow "hidden"}
    playback
-   n-h-split])
+   live-preview-and-editors])

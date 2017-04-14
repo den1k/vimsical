@@ -15,9 +15,11 @@
    :editor        ^{:key sub-type} [code-editor sub-type]
    :hidden?       false})
 
+(defn visible-files [files]
+  (->> files (remove :file/hidden?)))
+
 (defn visible-editors [files editors-by-type]
-  (->> files
-       (remove :file/hidden?)
+  (->> (visible-files files)
        (map :file/sub-type)
        (select-keys editors-by-type)
        vals
@@ -111,23 +113,38 @@
                           (fn [file] (= (:file/sub-type file) sub-type))
                           update :file/hidden? not))}]])])
 
+(defn editor-header [{:file/keys [sub-type]}]
+  (let [title (get {:html "HTML" :css "CSS" :javascript "JS"} sub-type)]
+    [:div.editor-header {:class sub-type}
+     [:div.title title]
+     #_(icon (om/computed {}
+                          {:class "options"
+                           :icon  :text-editor-section-options}))]))
+
+(defn editor-headers [files]
+  (mapv editor-header files))
+
 (defn vcr []
   (let [files-subs      (r/atom files)
         editors-by-type (editors-by-type files)
         playing?        false]
     (fn []
-      (let [visible-editors (visible-editors @files-subs editors-by-type)]
+      (let [visible-files          (visible-files @files-subs)
+            visible-editor-headers (editor-headers visible-files)
+            visible-editors        (visible-editors @files-subs editors-by-type)]
         [v-box
          :class "vcr"
          :size "100%"
          :children
          [[playback]
           [n-h-split
+           :class "live-preview-and-editors"
            :panels [[live-preview]
                     [n-v-split
                      :height "100%"
-                     :splitter-size "30px"
+                     :splitter-size "31px"
                      :panels visible-editors
+                     :splitter-children visible-editor-headers
                      :margin "0"]]
            :splitter-child [editor-tabs files-subs]
            :splitter-size "34px"

@@ -121,7 +121,8 @@
 
         make-splitter-attrs    (fn [idx resizable? class]
                                  (cond-> {:class (str "display-flex " class)
-                                          :style {:height splitter-size}}
+                                          :style {:flex-direction :column
+                                                  :height         splitter-size}}
                                    resizable? (util/merge-1
                                                {:on-mouse-down (e-> (mousedown idx))
                                                 :on-mouse-over (e-handler (mouseover-split idx))
@@ -149,7 +150,7 @@
 
 (defn n-h-split
   "Returns markup for a horizontal layout component"
-  [& {:keys [panels size width height on-split-change initial-split
+  [& {:keys [panels size width height on-split-change initial-split class
              splitter-size splitter-child splitter-children margin]
       :or   {size "auto" initial-split 50 splitter-size "8px" margin "8px"}
       :as   args}]
