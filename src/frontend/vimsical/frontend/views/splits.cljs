@@ -39,13 +39,17 @@
         percs                  (r/atom (vec (repeat panel-count (/ 100 panel-count))))
         prev-mouse-y           (r/atom 0)
         splitter-idx           (r/atom nil)
-        splitter-children      (if splitter-children
-                                 (do (assert (= panel-count (count splitter-children)))
-                                     splitter-children)
-                                 (repeat panel-count splitter-child))
         splitter-size-int      (js/parseInt splitter-size)
         splitters-count        (cond-> panel-count (nil? splitter-child) dec)
         splitters-height       (* splitters-count splitter-size-int)
+
+        make-splitter-children (fn [{:keys [panels splitter-child splitter-children]}]
+                                 (let [panel-count (count panels)]
+                                   (if splitter-children
+                                     (do (assert (= (count panels)
+                                                    (count splitter-children)))
+                                         splitter-children)
+                                     (repeat panel-count splitter-child))))
 
         stop-drag              (fn []
                                  (when on-split-change (on-split-change @percs))
@@ -133,20 +137,21 @@
                                                                   {:background-color "#f8f8f8"}))})))]
 
     (fn
-      [& {:keys [panels class style attr]}]
-      [:div (make-container-attrs class style attr @dragging?)
-       (doall
-        (map
-         (fn [idx perc panel splitter-child]
-           (let [resizable? (not (zero? idx))]
-             [:div (make-split-panel-attrs idx perc)
-              [:div (make-splitter-attrs idx resizable? "rc-n-v-split-splitter")
-               (cond
-                 splitter-child splitter-child
-                 resizable? [splits/drag-handle :horizontal @over?])]
-              [:div (make-panel-attrs idx "rc-n-v-split-panel" @dragging?)
-               panel]]))
-         (range panel-count) @percs panels splitter-children))])))
+      [& {:keys [panels class style attr splitter-children] :as opts}]
+      (let [splitter-children (make-splitter-children opts)]
+        [:div (make-container-attrs class style attr @dragging?)
+         (doall
+          (map
+           (fn [idx perc panel splitter-child]
+             (let [resizable? (not (zero? idx))]
+               [:div (make-split-panel-attrs idx perc)
+                [:div (make-splitter-attrs idx resizable? "rc-n-v-split-splitter")
+                 (cond
+                   splitter-child splitter-child
+                   resizable? [splits/drag-handle :horizontal @over?])]
+                [:div (make-panel-attrs idx "rc-n-v-split-panel" @dragging?)
+                 panel]]))
+           (range panel-count) @percs panels splitter-children))]))))
 
 (defn n-h-split
   "Returns markup for a horizontal layout component"

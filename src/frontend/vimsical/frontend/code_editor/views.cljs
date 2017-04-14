@@ -57,8 +57,6 @@
         (dispose-editor @editor-instance))
       :render
       (fn [_]
-        [:div {:style {:display    "flex"
-                       :flex       "auto"
-                       :background :tomato}}])})))
+        [:div.code-editor])})))
 
 

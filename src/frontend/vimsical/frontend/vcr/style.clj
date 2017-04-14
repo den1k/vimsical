@@ -1,6 +1,7 @@
 (ns vimsical.frontend.vcr.style
   (:require [vimsical.frontend.live-preview.style :refer [live-preview]]
             [vimsical.frontend.timeline.style :refer [timeline]]
+            [vimsical.frontend.code-editor.style :refer [code-editor]]
             [vimsical.frontend.styles.color :as color :refer [colors]]))
 
 (def play-pause
@@ -81,11 +82,12 @@
 (def editor-header
   [:.editor-header
    {:display        :flex
+    :flex-shrink    0
     :flex-direction :row
     :align-items    :center
     ;; height set on component due requirement of precise height by
     ;; split component
-    :padding        [6 16]
+    ;:padding        "6px 16px"
     :text-align     :center
     :background     :#ffffff
     :border-bottom  "solid 2px #eceff3"}
@@ -98,16 +100,8 @@
                                   :color
                                   (second %))
          color/type-colors-editors)
-   [:.options {:width      :38px
-               :height     :17px
-               :object-fit :contain
-               :cursor     :pointer}
-    [:svg {:width  :inherit
-           :height :inherit}]
-    [:&:hover
-     [:* {:fill :#000000}]]]
    [:&.css :&.javascript
-    {:z-index    :5
+    {:z-index    :1
      :position   :relative
      :border-top "solid 2px #eceff3"
      :box-shadow "0 -4px 6px 0 rgba(143, 144, 150, 0.2)"}]])
@@ -126,12 +120,13 @@
      :padding         :4px
      ;; width set on component due requirement of precise height by
      ;; split component
-     :background      :#ffffff
+     :background      :white
      :border-left     "solid 2px #eceff3"
      :border-right    "solid 2px #eceff3"
      :cursor          :col-resize}
     editor-tabs]
-   editor-header])
+   editor-header
+   code-editor])
 
 (def vcr
   [:.vcr

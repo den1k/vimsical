@@ -10,25 +10,15 @@
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e-handler]]
    [vimsical.common.util.util :as util]))
 
-(defn wrap-editor [{:keys [file/sub-type]}]
-  {:file/sub-type sub-type
-   :editor        ^{:key sub-type} [code-editor sub-type]
-   :hidden?       false})
-
 (defn visible-files [files]
-  (->> files (remove :file/hidden?)))
+  (remove :file/hidden? files))
 
-(defn visible-editors [files editors-by-type]
-  (->> (visible-files files)
-       (map :file/sub-type)
-       (select-keys editors-by-type)
-       vals
-       (mapv :editor)))
+(defn views-for-files [files editor-components-by-type]
+  (->> (map :file/sub-type files)
+       (map editor-components-by-type)))
 
-(defn editors-by-type [files]
-  (->> files
-       (map wrap-editor)
-       (util/project :file/sub-type)))
+(defn editor-components-by-file-type [editor-components]
+  (util/project :file/sub-type editor-components))
 
 ;;
 ;; * Temp
@@ -113,25 +103,27 @@
                           (fn [file] (= (:file/sub-type file) sub-type))
                           update :file/hidden? not))}]])])
 
-(defn editor-header [{:file/keys [sub-type]}]
+(defn- editor-header [{:keys [file/sub-type] :as file}]
   (let [title (get {:html "HTML" :css "CSS" :javascript "JS"} sub-type)]
-    [:div.editor-header {:class sub-type}
-     [:div.title title]
-     #_(icon (om/computed {}
-                          {:class "options"
-                           :icon  :text-editor-section-options}))]))
+    [:div.editor-header {:key sub-type :class sub-type}
+     [:div.title title]]))
 
-(defn editor-headers [files]
-  (mapv editor-header files))
+(defn- editor-components [{:keys [file/sub-type] :as file}]
+  {:file/sub-type sub-type
+   :editor-header ^{:key sub-type} [editor-header file]
+   :editor        ^{:key sub-type} [code-editor sub-type]})
 
 (defn vcr []
-  (let [files-subs      (r/atom files)
-        editors-by-type (editors-by-type files)
-        playing?        false]
+  (let [files-subs   (r/atom files)
+        editor-comps (->> files
+                          (map editor-components)
+                          editor-components-by-file-type)
+        playing?     false]
     (fn []
       (let [visible-files          (visible-files @files-subs)
-            visible-editor-headers (editor-headers visible-files)
-            visible-editors        (visible-editors @files-subs editors-by-type)]
+            visi-components        (views-for-files visible-files editor-comps)
+            visible-editor-headers (mapv :editor-header visi-components)
+            visible-editors        (mapv :editor visi-components)]
         [v-box
          :class "vcr"
          :size "100%"
