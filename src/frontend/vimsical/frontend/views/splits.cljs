@@ -120,7 +120,6 @@
                                  {:class (str "display-flex " class)
                                   :style (merge
                                           (flex-child-style size)
-                                          {:background :skyblue}
                                           (when in-drag? {:pointer-events "none"}))})
 
         make-splitter-attrs    (fn [idx resizable? class]
@@ -134,7 +133,7 @@
                                                 :style         (merge
                                                                 {:cursor "row-resize"}
                                                                 (when (current-over? idx)
-                                                                  {:background-color "#f8f8f8"}))})))]
+                                                                  {:background "#f8f8f8"}))})))]
 
     (fn
       [& {:keys [panels class style attr splitter-children] :as opts}]
@@ -168,10 +167,13 @@
         prev-mouse-x         (r/atom 0)
         splitter-idx         (r/atom nil)
         splitter-count       (dec panel-count)
-        splitter-children    (if splitter-children
-                               (do (assert (= splitter-count (count splitter-children)))
-                                   splitter-children)
-                               (repeat splitter-count splitter-child))
+        default-splitter?    (and (nil? splitter-child) (nil? splitter-children))
+        splitter-children    (cond
+                               splitter-children (do (assert (= splitter-count (count splitter-children)))
+                                                     splitter-children)
+                               splitter-child (repeat splitter-count splitter-child)
+
+                               default-splitter? (repeat splitter-count (fn [] [splits/drag-handle :vertical @over?])))
         splitter-size-int    (js/parseInt splitter-size)
         splitters-width      (* splitter-count splitter-size-int)
 
@@ -207,7 +209,8 @@
                                (stop-drag))
 
         mouseover-split      (fn [idx]
-                               (reset! over? true)
+                               (when default-splitter?
+                                 (reset! over? true))
                                (reset! splitter-idx idx))
 
         mouseout-split       #(reset! over? false)
@@ -235,7 +238,6 @@
                                 :key   (str "panel-" idx)
                                 :style (merge
                                         {:min-height "100%"
-                                         :background :lightgreen
                                          :width      (str "calc(" perc "% - "
                                                           (/ splitter-size-int
                                                              (/ panel-count splitter-count)) "px)")}
@@ -250,7 +252,7 @@
                                 :style         (merge {:width splitter-size}
                                                       {:cursor "col-resize"}
                                                       (when (current-over? idx)
-                                                        {:background-color "#f8f8f8"}))})]
+                                                        {:background "#f8f8f8"}))})]
 
     (fn
       [& {:keys [panels class style attr]}]
@@ -271,7 +273,5 @@
                 panel-or-splitter]
                :splitter
                [:div (make-splitter-attrs idx "rc-n-h-split-splitter")
-                (or
-                 splitter-child
-                 [splits/drag-handle :vertical @over?])]))
+                splitter-child]))
            interleaved))]))))
