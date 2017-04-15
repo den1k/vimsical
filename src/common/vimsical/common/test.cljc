@@ -45,9 +45,8 @@
                (print-method (symbol "#uuid ") w)
                (print-method (.toString uuid) w))
              (print-tag [tag]
-               (print-method (symbol "<uuid ") w)
-               (print-method tag w)
-               (print-method (symbol ">") w))]
+               (print-method (symbol "#uuid ") w)
+               (print-method tag w))]
        (if *print-tags*
          (if-some [tag (get @*uuid->tag* uuid)]
            (print-tag tag)

@@ -6,6 +6,7 @@
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.state.vims.branches.delta-index :as branches.delta-index]))
 
+
 ;; * UUIDs
 
 (def master-id (uuid :master))
@@ -53,6 +54,14 @@
 (s/assert* (s/coll-of ::delta/delta) deltas)
 
 
+;; * Latest file deltas
+
+(def latest-file-deltas
+  {master-id {file1-id d8}
+   child-id  {file1-id d3 file2-id d7}
+   gchild-id {file1-id d5 file2-id d6}})
+
+
 ;; * Delta index
 
 (def delta-index
@@ -67,3 +76,13 @@
 
 (def branch-tree
   (assoc master ::branch/children [(assoc child ::branch/children [gchild])]))
+
+;; (def state
+;;   (let [[d1 d2 d3]
+;;         [{:branch-id #uuid :branch, :file-id #uuid :file, :prev-id nil,                :id #uuid [:str/ins 0], :op [:str/ins nil "f"], :pad 1, :meta {:timestamp 123, :version 0.3}}
+;;          {:branch-id #uuid :branch, :file-id #uuid :file, :prev-id #uuid [:str/ins 0], :id #uuid [:str/ins 1], :op [:str/ins #uuid [:str/ins 0] "u"], :pad 1, :meta {:timestamp 123, :version 0.3}}
+;;          {:branch-id #uuid :branch, :file-id #uuid :file, :prev-id #uuid [:str/ins 1], :id #uuid [:str/ins 2], :op [:str/ins #uuid [:str/ins 1] "n"], :pad 1, :meta {:timestamp 123, :version 0.3}}]]
+;;     {d1 {:latest-deltas    {:<branch-id> {:<file-id> d1}}
+;;          :branch-tree      :<branch-tree>
+;;          :deltas-by-branch {#uuid :branch [d1]}
+;;          :string-by-file {}}}))

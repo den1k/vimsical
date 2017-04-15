@@ -3,6 +3,11 @@
 
   NOTES
 
+  priority maps are a good match for the indexes, but the clj impl was slower
+  than maps, the cljs one looks better, need to test that
+
+  Use rrb vectors for vectors
+
   Normalize on equiv is bad, make sure we need to check the index at allit
   after enough testing...
 
@@ -10,10 +15,13 @@
   -normalize if we're above threshold, kinda like a rebalancing op?
 
   ISSUES
-
+  
   Doesn't work with concat (no support for lazy seq protocols)"
   (:refer-clojure :exclude [split-at concat])
-  (:require [clojure.spec :as s]))
+  (:require
+   [clojure.spec :as s]
+   [clojure.data.priority-map :as pm]
+   [clojure.core.rrb-vector :as rrb]))
 
 
 ;; * Protocol
@@ -30,29 +38,74 @@
 
 
 ;; * Private
+;; ** Index
 
 (defn- new-index
+  ([] {})
   ([vals] (new-index identity vals))
   ([f vals]
    (persistent!
     (reduce
-     (fn [m! [i val]]
-       (assoc! m! (f val) i))
-     (transient {})
-     (map-indexed vector vals)))))
+     (fn [m [i val]]
+       (assoc! m (f val) i))
+     (transient (new-index)) (map-indexed vector vals)))))
 
 (defn- normalize-index
   [index ^long offset]
-  (persistent!
-   (reduce-kv
-    (fn [m! v ^long i]
-      (assoc! m! v (+ offset i)))
-    (transient (empty index)) index)))
+  (if (zero? offset)
+    index
+    (persistent!
+     (reduce-kv
+      (fn [m v ^long i]
+        (assoc! m v (+ offset i)))
+      (transient (empty index)) index))))
+
+(defn- split-index
+  [n index]
+  (->> (seq index)
+       (sort-by second)
+       (clojure.core/split-at n)
+       (mapv (partial into (new-index)))))
+
+(defn merge-indexes
+  [index-offset-map]
+  (reduce-kv
+   (fn [m index offset]
+     (merge m (normalize-index index offset)))
+   (new-index) index-offset-map))
+
+(defn- splice-index
+  [n index other]
+  (let [[index-a index-b] (split-index n index)]
+    (merge-indexes
+     {index-a 0
+      other   (count index-a)
+      index-b (count other)})))
+
+
+;; ** Vector
+
+(defn- new-vector
+  ([] (rrb/vector))
+  ([v] (rrb/vec v)))
+
+(defn- split-vector [n v]
+  [(rrb/subvec v 0 n) (rrb/subvec v n)])
+
+(defn- splice-vector
+  [n v other]
+  (let [[l r] (split-vector n v)]
+    (rrb/catvec l other r)))
+
+(defn merge-vectors
+  [& vs]
+  (apply rrb/catvec vs ))
 
 
 ;; * Indexed Vector
 
 (defn ^:declared indexed-vector [offset f index v])
+(defn ^:declared indexed-vector? [v])
 
 
 ;; ** Type
@@ -114,27 +167,23 @@
 
   IIndexedInternal
   (-split-at [_ n]
-    (letfn [(split-index [n index]
-              (->> (seq index)
-                   (sort-by second)
-                   (clojure.core/split-at n)
-                   (mapv (partial into {}))))
-            (split-v [n v]
-              (->> v
-                   (clojure.core/split-at n)
-                   (mapv vec)))]
-      (let [[index-a index-b] (split-index n index)
-            [v-a v-b]         (split-v n v)]
-        [(indexed-vector offset f index-a v-a)
-         (indexed-vector (- offset ^int n) f index-b v-b)])))
+    (let [[index-a index-b] (split-index n index)
+          [v-a v-b]         (split-vector n v)]
+      [(indexed-vector offset f index-a v-a)
+       (indexed-vector (- offset ^int n) f index-b v-b)]))
   (-splice-at [this n other]
-    (let [[l r] (-split-at this n)]
-      (into (into l other) r)))
+    ;; Could coerce the arg and build the index, would be more efficient than
+    ;; building the index client side to offset it here again...
+    (assert (indexed-vector? other))
+    (let [index' (splice-index n index (.index ^IndexedVector other))
+          v'     (splice-vector n v (.v ^IndexedVector other))]
+      (indexed-vector offset f index' v')))
   (-concat [this other]
-    (assert (= f (.f ^IndexedVector other)) "Merging vectors indexed by different keys is not supported")
-    (let [index' (merge (normalize-index index offset)
-                        (normalize-index (.index ^IndexedVector other) (count this)))
-          v'     (into v (.v ^IndexedVector other))]
+    (assert (indexed-vector? other))
+    (let [index' (merge-indexes
+                  {index                         offset
+                   (.index ^IndexedVector other) (count this)})
+          v'     (merge-vectors v (.v ^IndexedVector other))]
       (indexed-vector 0 f index' v')))
   (-normalize [_]
     (indexed-vector 0 f (normalize-index index offset) v))
@@ -162,7 +211,7 @@
   (print-method (.v v) w))
 
 
-;; * Constructors
+;; * API
 
 (defn indexed-vector?
   ([]  (indexed-vector))
@@ -173,36 +222,47 @@
 (s/fdef indexed-vector :ret ::indexed-vector)
 
 (defn indexed-vector
-  ([] (indexed-vector []))
+  ([] (indexed-vector (new-vector)))
   ([v] (indexed-vector 0 identity (new-index v) v))
   ([offset f index v]
    {:pre [(number? offset) (ifn? f) (map? index) (sequential? v)]}
-   (IndexedVector. (long offset) f index (vec v))))
+   (IndexedVector. (long offset) f index (new-vector v))))
 
 (defn indexed-vector-by
-  ([f] (indexed-vector 0 f {} []))
-  ([f v] (indexed-vector 0 f (new-index f v) v)))
-
-
-;; * API
+  ([f] (indexed-vector 0 f (new-index) (new-vector)))
+  ([f v] (indexed-vector 0 f (new-index f v) (new-vector v))))
 
 (s/fdef split-at
-        :args (s/cat :n pos-int? :v ::indexed-vector)
+        :args (s/cat :n nat-int? :v ::indexed-vector)
         :ret  (s/tuple ::indexed-vector ::indexed-vector))
 
 (defn split-at [n ^IndexedVector v]
   (-split-at v n))
 
 (s/fdef splice-at
-        :args (s/cat :n pos-int? :v ::indexed-vector :insert sequential?)
+        :args (s/cat :n nat-int? :v ::indexed-vector :insert sequential?)
         :ret  ::indexed-vector)
 
-(defn splice-at [n ^IndexedVector v insert-vector]
-  (-splice-at v n insert-vector))
+(defn splice-at [n ^IndexedVector v other]
+  (if (== (count v) (long n))
+    (-concat v other)
+    (-splice-at v n other)))
 
 (s/fdef concat
         :args (s/cat :v ::indexed-vector :other ::indexed-vector)
         :ret  ::indexed-vector)
 
-(defn concat [^IndexedVector v ^IndexedVector other]
+(defn concat [^IndexedVector v other]
   (-concat v other))
+
+
+
+(comment
+  (orchestra.spec.test/unstrument)
+  (require '[criterium.core :as criterium])
+  ;; Vectors: Execution time mean : 600.855707 ms
+  (let [cnt 10000
+        v   (indexed-vector (range cnt))
+        v'  (indexed-vector (range 5))]
+    (criterium/quick-bench
+     (splice-at cnt v v'))))

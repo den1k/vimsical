@@ -76,7 +76,9 @@
     {:dependencies
      [[criterium "0.4.4"]]
      :source-paths
-     ["dev/backend"]}]
+     ["dev/backend"]
+     :dependencies
+     [[diffit "1.0.0"]]}]
 
    :backend-test
    [:test :backend :vcs :common

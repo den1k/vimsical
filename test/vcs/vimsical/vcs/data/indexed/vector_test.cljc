@@ -95,11 +95,12 @@
 (deftest indexed-vector-splce-test
   (let [{:keys [iv ivb vals]}      (indexed-vector-test-data)
         split-index                3
-        insert                     [:a]
+        insert-iv                  (sut/indexed-vector [{:id 1000}])
+        insert-ivb                 (sut/indexed-vector-by :id [{:id 1000}])
         [expect-left expect-right] (split-at split-index vals)
-        expect                     (into (into (vec expect-left) insert) expect-right)]
-    (is= expect (seq (sut/splice-at split-index iv insert)))
-    (is= expect (seq (sut/splice-at split-index ivb insert)))))
+        expect                     (into (into (vec expect-left) insert-iv) expect-right)]
+    (is= expect (seq (sut/splice-at split-index iv insert-iv)))
+    (is= expect (seq (sut/splice-at split-index ivb insert-ivb)))))
 
 (deftest indexed-vector-concat-test
   (let [{iv1 :iv ivb1 :ivb}             (indexed-vector-test-data (range 0 10))

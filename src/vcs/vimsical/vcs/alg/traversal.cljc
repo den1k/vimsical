@@ -12,18 +12,18 @@
 (def ^:private asc -1)
 (def ^:private desc 1)
 
-(defn- post-order-reduce
-  "Post-order reduction of a tree.
+(defn- reduce-tree
+  "Depth-first reduction of a tree.
 
   `rec` is a fn of `tree` that should return the recursive part of the tree or
   nil to stop the recursion and start bracktracking.
 
   `f` is a reducing fn of `acc` and a `tree` node"
   [rec f acc tree]
-  (letfn [(post-order-reduce' [acc tree]
-            (post-order-reduce rec f acc tree))
+  (letfn [(reduce-tree' [acc tree]
+            (reduce-tree rec f acc tree))
           (rec' [acc rec-tree]
-            (reduce post-order-reduce' acc rec-tree))]
+            (reduce reduce-tree' acc rec-tree))]
     (if-some [rec-tree (rec tree)]
       (f (rec' acc rec-tree) tree)
       (f acc tree))))
@@ -31,7 +31,7 @@
 (comment
   (assert
    (= [0 1 2 3 4 5])
-   (post-order-reduce
+   (reduce-tree
     :children
     (fn f [acc {:keys [id]}]
       (conj acc id))
@@ -116,7 +116,7 @@
 ;; offsets of offsets processed so far
 
 (defn inline
-  "Does a post-order-reduce traversal of the branch tree, reducing over children
+  "Does a reduce-tree traversal of the branch tree, reducing over children
   branches and inlining their deltas in a single indexed vector."
   [delta-index branches]
   (let [cpr  (new-branch-comparator delta-index)
@@ -124,7 +124,7 @@
         rec  (fn [{::branch/keys [children]}]
                (sort cpr children))]
     (::insert-deltas
-     (post-order-reduce
+     (reduce-tree
       rec
       (fn [{:as    acc
             ::keys [insert-id insert-deltas]}

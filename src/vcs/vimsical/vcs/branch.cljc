@@ -15,7 +15,8 @@
 
 ;; ** Attributes
 
-(s/def :db/id uuid?)
+(s/def ::id uuid?)
+(s/def :db/id ::id)
 (s/def ::name (s/nilable string?))
 (s/def ::start-delta-id (s/nilable ::delta/id))
 (s/def ::entry-delta-id (s/nilable ::delta/id))

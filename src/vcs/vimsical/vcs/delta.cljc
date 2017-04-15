@@ -5,14 +5,34 @@
 
 ;; * Spec
 
+(def current-version 0.3)
+
 (s/def ::id uuid?)
 (s/def ::prev-id (s/nilable ::id))
 (s/def ::pad nat-int?)
 (s/def ::branch-id uuid?)
 (s/def ::file-id uuid?)
 (s/def ::version number?)
-(s/def ::meta (s/keys :req-un [:time/timestamp ::version]))
+(s/def ::timestamp nat-int?)
+(s/def ::meta (s/keys :req-un [::timestamp ::version]))
 
 (s/def ::delta
-  (s/keys :req-un [::id ::prev-id ::op/op ::pad ::file-id ::branch-id]
+  (s/keys :req-un [::branch-id ::file-id ::prev-id ::id ::op/op ::pad]
           :opt-un [::meta]))
+
+(s/def ::new-delta
+  (s/keys :req-un [::branch-id ::file-id ::prev-id ::id ::op/op ::pad ::timestamp]))
+
+(s/fdef new-delta
+        :args ::new-delta
+        :ret  ::delta)
+
+(defn new-delta
+  [{:keys [branch-id file-id prev-id id op pad timestamp]}]
+  {:branch-id branch-id
+   :file-id   file-id
+   :prev-id   prev-id
+   :id        id
+   :op        op
+   :pad       pad
+   :meta      {:timestamp timestamp :version current-version}})
