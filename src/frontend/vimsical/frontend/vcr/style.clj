@@ -1,5 +1,7 @@
-(ns vimsical.frontend.vcr.style)
+(ns vimsical.frontend.vcr.style
+  (:require [vimsical.frontend.live-preview.style :refer [live-preview]]))
 
 (def vcr
-  [[:.vcr
-    {:background :orange}]])
+  [:.vcr
+   {:background :orange}
+   live-preview])

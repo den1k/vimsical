@@ -2,6 +2,7 @@
   (:require
    [re-com.core :refer [v-box h-box box]]
    [vimsical.frontend.views.splits :refer [n-h-split n-v-split]]
+   [vimsical.frontend.live-preview.views :refer [live-preview]]
    [vimsical.frontend.code-editor.views :refer [code-editor]]
    [reagent.core :as r]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e-handler]]
@@ -58,7 +59,7 @@
          :children
          [[:div "timeline"]
           [n-h-split
-           :panels [[:h1 "live-preview"]
+           :panels [[live-preview]
                     [n-v-split
                      :height "100%"
                      :splitter-size "30px"

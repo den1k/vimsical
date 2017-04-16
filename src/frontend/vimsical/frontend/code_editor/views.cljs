@@ -51,14 +51,12 @@
     (r/create-class
      {:component-did-mount
       (fn [c]
-        (let [editor (new-editor c (editor-opts file-type))]
-          (js/console.debug editor)
-          (reset! editor-instance editor)))
+        (reset! editor-instance (new-editor c (editor-opts file-type))))
       :component-will-unmount
       (fn [_]
         (dispose-editor @editor-instance))
-      :reagent-render
-      (fn [file-type]
+      :render
+      (fn [_]
         [:div {:style {:display    "flex"
                        :flex       "auto"
                        :background :tomato}}])})))
