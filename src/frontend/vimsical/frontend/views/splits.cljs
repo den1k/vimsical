@@ -1,11 +1,11 @@
 (ns vimsical.frontend.views.splits
-  (:require [re-frame.core :as rf]
-            [re-com.core :refer [h-box box border] :as rc]
+  (:require [re-frame.core :as re-frame]
+            [re-com.core :as re-com]
             [re-com.util :refer [get-element-by-id sum-scroll-offsets]]
             [re-com.box :refer [flex-child-style flex-flow-style]]
             [re-com.validate :refer [string-or-hiccup? number-or-string? html-attr? css-style?] :refer-macros [validate-args-macro]]
             [re-com.splits :as splits]
-            [reagent.core :as r]
+            [reagent.core :as reagent]
             [vimsical.common.util.util :as util]
             [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e-handler]]))
 
@@ -33,12 +33,12 @@
       :as   args}]
   {:pre [(validate-args-macro n-v-split-args-desc args "n-v-split")]}
   (let [container-id           (gensym "n-v-split-")
-        dragging?              (r/atom false) ;; is the user dragging the splitter (mouse is down)?
-        over?                  (r/atom false) ;; is the mouse over the splitter, if so, highlight it
+        dragging?              (reagent/atom false) ;; is the user dragging the splitter (mouse is down)?
+        over?                  (reagent/atom false) ;; is the mouse over the splitter, if so, highlight it
         panel-count            (count panels)
-        percs                  (r/atom (vec (repeat panel-count (/ 100 panel-count))))
-        prev-mouse-y           (r/atom 0)
-        splitter-idx           (r/atom nil)
+        percs                  (reagent/atom (vec (repeat panel-count (/ 100 panel-count))))
+        prev-mouse-y           (reagent/atom 0)
+        splitter-idx           (reagent/atom nil)
         splitter-size-int      (js/parseInt splitter-size)
         splitters-count        (cond-> panel-count (nil? splitter-child) dec)
         splitters-height       (* splitters-count splitter-size-int)
@@ -160,12 +160,12 @@
       :as   args}]
   {:pre [(validate-args-macro n-v-split-args-desc args "h-split")]}
   (let [container-id         (gensym "n-h-split-")
-        dragging?            (r/atom false) ;; is the user dragging the splitter (mouse is down)?
-        over?                (r/atom false) ;; is the mouse over the splitter, if so, highlight it
+        dragging?            (reagent/atom false) ;; is the user dragging the splitter (mouse is down)?
+        over?                (reagent/atom false) ;; is the mouse over the splitter, if so, highlight it
         panel-count          (count panels)
-        percs                (r/atom (vec (repeat panel-count (/ 100 panel-count))))
-        prev-mouse-x         (r/atom 0)
-        splitter-idx         (r/atom nil)
+        percs                (reagent/atom (vec (repeat panel-count (/ 100 panel-count))))
+        prev-mouse-x         (reagent/atom 0)
+        splitter-idx         (reagent/atom nil)
         splitter-count       (dec panel-count)
         default-splitter?    (and (nil? splitter-child) (nil? splitter-children))
         splitter-children    (cond

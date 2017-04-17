@@ -1,8 +1,7 @@
 (ns vimsical.frontend.live-preview.views
   (:require
    [vimsical.common.util.util :as util]
-   [reagent.core :as r]
-   [reagent.dom.server :as rd]
+   [reagent.core :as reagent]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e-handler]]
    [clojure.string :as string])
   (:refer-clojure :exclude [create-node]))
@@ -75,7 +74,7 @@
   (let [iframe-node (atom nil)          ;; regular atom. only set once
         ;; todo subs to files
         filetypes   #{:html :css :javascript}]
-    (r/create-class
+    (reagent/create-class
      {; component should maybe never update? TBD
       ;:should-component-update (fn [_ _ _] false)
       :render

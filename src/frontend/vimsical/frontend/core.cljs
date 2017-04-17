@@ -1,5 +1,5 @@
 (ns vimsical.frontend.core
-  (:require [reagent.core :as r]
+  (:require [reagent.core :as reagent]
             [re-frame.core :as re-frame]
             [vimsical.frontend.config :as config]
             [vimsical.frontend.app.views :refer [app]]))
@@ -14,8 +14,8 @@
 
 (defn mount-root []
   (re-frame/clear-subscription-cache!)
-  (r/render [app]
-            (.getElementById js/document "app")))
+  (reagent/render [app]
+                  (.getElementById js/document "app")))
 
 (defn on-reload
   "Called by figwheel on reload. See project.clj."

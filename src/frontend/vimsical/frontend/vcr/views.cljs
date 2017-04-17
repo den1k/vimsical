@@ -1,12 +1,12 @@
 (ns vimsical.frontend.vcr.views
   (:require
-   [re-com.core :refer [v-box h-box box]]
-   [vimsical.frontend.views.splits :refer [n-h-split n-v-split]]
+   [re-com.core :as re-com]
+   [vimsical.frontend.views.splits :as splits]
    [vimsical.frontend.timeline.views :refer [timeline]]
    [vimsical.frontend.live-preview.views :refer [live-preview]]
    [vimsical.frontend.code-editor.views :refer [code-editor]]
    [vimsical.frontend.views.shapes :as shapes]
-   [reagent.core :as r]
+   [reagent.core :as reagent]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e-handler]]
    [vimsical.common.util.util :as util]))
 
@@ -53,7 +53,7 @@
 
 (defn- speed-control []
   (let [speed-range [1.0 1.5 1.75 2 2.25 2.5]
-        speed       (r/atom (first speed-range))]
+        speed       (reagent/atom (first speed-range))]
     (fn []
       [:div.control.speed
        (triangle-left {:class    "icon speed-triangle decrease"
@@ -63,7 +63,7 @@
                         :on-click (e-handler :increase)})])))
 
 (defn- playback-control []
-  (let [playing? (r/atom false)]
+  (let [playing? (reagent/atom false)]
     (fn []
       [:div.control.play-pause
        (if-not @playing?
@@ -114,7 +114,7 @@
    :editor        ^{:key sub-type} [code-editor sub-type]})
 
 (defn vcr []
-  (let [files-subs   (r/atom files)
+  (let [files-subs   (reagent/atom files)
         editor-comps (->> files
                           (map editor-components)
                           editor-components-by-file-type)
@@ -124,15 +124,15 @@
             visi-components        (views-for-files visible-files editor-comps)
             visible-editor-headers (mapv :editor-header visi-components)
             visible-editors        (mapv :editor visi-components)]
-        [v-box
+        [re-com/v-box
          :class "vcr"
          :size "100%"
          :children
          [[playback]
-          [n-h-split
+          [splits/n-h-split
            :class "live-preview-and-editors"
            :panels [[live-preview]
-                    [n-v-split
+                    [splits/n-v-split
                      :height "100%"
                      :splitter-size "31px"
                      :panels visible-editors

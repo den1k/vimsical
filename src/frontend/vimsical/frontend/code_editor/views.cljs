@@ -1,5 +1,5 @@
 (ns vimsical.frontend.code-editor.views
-  (:require [reagent.core :as r]))
+  (:require [reagent.core :as reagent]))
 
 (defn editor-opts
   "https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditorconstructionoptions.html"
@@ -40,15 +40,15 @@
    :model  {:tabSize 2}})
 
 (defn new-editor [c {:keys [editor model] :as opts}]
-  (doto (js/monaco.editor.create (r/dom-node c) (clj->js editor))
+  (doto (js/monaco.editor.create (reagent/dom-node c) (clj->js editor))
     (.. getModel (updateOptions (clj->js model)))))
 
 (defn dispose-editor [editor]
   (.dispose editor))
 
 (defn code-editor [file-type]
-  (let [editor-instance (r/atom nil)]
-    (r/create-class
+  (let [editor-instance (reagent/atom nil)]
+    (reagent/create-class
      {:component-did-mount
       (fn [c]
         (reset! editor-instance (new-editor c (editor-opts file-type))))
