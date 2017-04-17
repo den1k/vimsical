@@ -2,16 +2,19 @@
   (:require [reagent.core :as reagent]
             [re-frame.core :as re-frame]
             [vimsical.frontend.config :as config]
-            [vimsical.frontend.views.app.app :as app]))
+            [vimsical.frontend.app.views :refer [app]]))
 
 (defn dev-setup []
   (when config/debug?
     (enable-console-print!)
     (println "dev mode")))
 
+(defn require-js-libs [cb]
+  (js/require (array "vs/editor/editor.main") cb))
+
 (defn mount-root []
   (re-frame/clear-subscription-cache!)
-  (reagent/render [app/app]
+  (reagent/render [app]
                   (.getElementById js/document "app")))
 
 (defn on-reload
@@ -22,6 +25,8 @@
 (defn ^:export init
   "Called from index.html"
   []
-  ;(re-frame/dispatch-sync [:initialize-db])
-  (dev-setup)
-  (mount-root))
+  (require-js-libs
+   #(do
+      ;(re-frame/dispatch-sync [:initialize-db])
+      (dev-setup)
+      (mount-root))))

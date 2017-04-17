@@ -1,1 +1,0 @@
-(ns vimsical.frontend.views.nav)

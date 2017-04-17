@@ -36,8 +36,9 @@
     ["src/common"]
     :dependencies
     [[com.cognitect/transit-cljs "0.8.239"]
-     [org.clojure/core.async "0.3.442"]
+     [org.clojure/core.async "0.3.442" :exclusions [org.clojure/tools.reader]]
      [com.stuartsierra/component "0.3.1"]
+     [medley "0.8.4"]
      [environ "1.1.0"]]}
    ;;
    ;; Backend
@@ -80,27 +81,27 @@
     {:source-paths
      ["src/frontend"]
      :plugins
-     [[lein-cljsbuild "1.1.4"
+     [[lein-cljsbuild "1.1.5"
        :exclusions [org.apache.commons/commons-compress]]]
      :dependencies
-     [[org.clojure/clojurescript "1.9.293"]
+     [[org.clojure/clojurescript "1.9.518"]
+      ;; Dependency of Google Closure compiler
+      ;; Needed for to compile CLJS
       [com.google.guava/guava "21.0"]
-      [cljsjs/codemirror "5.11.0-2"]
-      ;; Added this to fix a compilation issue with garden
-      [ns-tracker "0.3.0"]
       [cljsjs/google-diff-match-patch "20121119-1"]
       [com.stuartsierra/mapgraph "0.2.1"]
       [reagent "0.6.1"]
       [re-frame "0.9.2"]
-      [re-com "0.9.0"]]}]
+      [re-com "2.0.0"]
+      [thi.ng/color "1.2.0"]]}]
 
    :frontend-dev
    [:frontend
     {:plugins
-     [[lein-figwheel "0.5.9"]]
+     [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]]
      :dependencies
      [[com.cemerick/piggieback "0.2.2-SNAPSHOT"]
-      [figwheel-sidecar "0.5.10-SNAPSHOT"]
+      [figwheel-sidecar "0.5.10"]
       [binaryage/devtools "0.8.3"]]
      :source-paths
      ["dev/frontend"]
@@ -114,17 +115,21 @@
     {:source-paths
      ["test/frontend" "test/vcs" "test/common"]
      :plugins [[lein-doo "0.1.7"]]}]
+
    ;;
    ;; CSS
    ;;
+   ;; NOTE this profile won't run by itself since it needs some frontend deps
    :css
    {:plugins      [[lein-garden "0.2.8" :exclusions [org.clojure/clojure]]]
-    :dependencies [[garden "1.3.2"]]
+    :dependencies [[garden "1.3.2"]
+                   ;; Added this to fix a compilation issue with garden
+                   [ns-tracker "0.3.0"]]
     :prep-tasks   [["garden" "once"]]
     :garden
     {:builds
      [{:id           "dev-styles"
-       :source-paths ["src/frontend"]
+       :source-paths ["src/frontend" "src/common"]
        :stylesheet   vimsical.frontend.styles.core/styles
        :compiler     {:output-to     "resources/public/css/app.css"
                       :vendors       ["webkit" "moz"]
