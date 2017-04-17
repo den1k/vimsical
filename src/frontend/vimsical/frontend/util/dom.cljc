@@ -45,4 +45,4 @@
 #?(:clj
    (defmacro e-handler
      ([& body]
-      `(fn [~'e] ~@body nil))))                             ;; force return nil
+      `(fn e-handler# [~'e] ~@body nil))))                  ;; force return nil
