@@ -4,7 +4,8 @@
    [clojure.spec :as s]
    [vimsical.common.core :as common :refer [=by some-val]]
    [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.file :as file]))
+   [vimsical.vcs.file :as file]
+   [clojure.spec :as s]))
 
 ;; * Spec
 
@@ -106,3 +107,39 @@
      (=by :db/id other)
      lineage))))
 
+
+;; * Tree
+
+(s/def ::children (s/every ::tree))
+(s/def ::tree (s/merge ::branch (s/keys :opt [::children])))
+
+
+;; ** Internal
+
+(defn- tree*
+  [branches-by-parent-id {:keys [db/id] :as branch}]
+  (letfn [(assoc-maybe [m k v] (cond-> m (some? v) (assoc k v)))
+          (recur-children [children]
+            (cond->> children
+              (seq children)
+              (mapv (fn [child] (tree* branches-by-parent-id child)))))]
+    (assoc-maybe
+     branch ::children
+     (recur-children
+      (get branches-by-parent-id id)))))
+
+
+;; ** API
+
+(s/fdef branch-tree
+        :args (s/cat :branches (s/every ::branch))
+        :ret  ::tree)
+
+(defn branch-tree
+  [branches]
+  (letfn [(parent-id [branch] (-> branch ::parent :db/id))]
+    (let [branches-by-parent-id (group-by parent-id branches)
+          [master & error]      (get branches-by-parent-id nil)]
+      (if error
+        (throw (ex-info "Found more than one branch with no parent:" {:error error :master master}))
+        (tree* branches-by-parent-id master)))))

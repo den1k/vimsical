@@ -1,0 +1,228 @@
+(ns vimsical.vcs.data.gen.diff
+  "This ns provides the building blocks for programatically generating edit
+  events by diffing strings."
+  (:require
+   [clojure.spec :as s]
+   [vimsical.vcs.op :as op]
+   [vimsical.vcs.delta :as delta]
+   [vimsical.vcs.edit-event :as edit-event]
+   [diffit.vec :as diffit]))
+
+
+;; * Edit events
+
+;; ** Cursor
+;; *** Moving after str events
+;;
+;; Add the crsr/mv events after str/* edit-events
+;;
+
+(s/fdef move-past-edit-event
+        :args (s/cat :e ::edit-event/edit-event)
+        :ret  (s/every ::edit-event/edit-event))
+
+(defmulti move-past-edit-event ::edit-event/op)
+
+(defmethod move-past-edit-event :str/ins
+  [{::edit-event/keys [idx diff] :as evt}]
+  [evt {::edit-event/op :crsr/mv ::edit-event/idx (+ (count diff) idx)}])
+
+(defmethod move-past-edit-event :str/rem
+  [{::edit-event/keys [idx amt] :as evt}]
+  (let [idx (max 0 (- idx amt))]
+    (cond-> [evt]
+      (pos? idx) (conj {::edit-event/op :crsr/mv ::edit-event/idx idx}))))
+
+(defn move-past-edit-events-xf
+  []
+  (comp (map move-past-edit-event) cat))
+
+
+;; *** Moving between diff events
+;;
+;; When the diff generates, say an insert at X and a delete at Y, we want to add
+;; the cursor movements going from (+ X 1) do Y. There is some complexity in the
+;; implementation because these fns usually kick in after we've added the
+;; `move-past-edit-event`
+
+(defmulti post-event-index
+  "Return what should be the index after the event has been applied. Say if we
+  insert 3 chars at pos n then the post-event-index is n+3"
+  ::edit-event/op)
+
+(defmethod post-event-index :str/ins
+  [{::edit-event/keys [idx diff]}]
+  (+ idx (count diff)))
+
+(defmethod post-event-index :str/rem
+  [{::edit-event/keys [idx amt]}]
+  (max 0 (- idx amt)))
+
+(defmethod post-event-index :crsr/mv
+  [{::edit-event/keys [idx]}]
+  idx)
+
+(defn move-to-next-event
+  [[{:as left idx1 ::edit-event/idx}
+    {:as right idx2 ::edit-event/idx op-right ::edit-event/op}]]
+  (letfn [(drange [from to]
+            (if (< to from)
+              (reverse (range to from))
+              (range (inc from) (inc to))))]
+    (if (nil? right)
+      [left]
+      (let [distance (- idx2 (post-event-index left))
+            init     [left]
+            idxs     (if-not (zero? distance) (drange idx1 idx2))]
+        (->> idxs
+             (mapv (fn [idx] {::edit-event/op :crsr/mv ::edit-event/idx idx}))
+             (into init))))))
+
+(defn move-to-next-events
+  [events]
+  (mapcat move-to-next-event (partition-all 2 1 events)))
+
+(comment
+  ;; Can't get the xf version to work
+  (defn partition-events-xf
+    []
+    (let [prev-input (volatile! nil)
+          cnt        (volatile! -1)]
+      (fn [rf]
+        (fn
+          ([] (rf))
+          ([result]
+           (if (or (== 1 @cnt) (even? @cnt))
+             (rf (rf result [@prev-input nil]))
+             (rf result)))
+          ([result input]
+           (println "IN" input)
+           (if (pos? (vswap! cnt inc))
+             (rf result [@prev-input (vreset! prev-input input)])
+             (do (vreset! prev-input input) result)))))))
+  (defn move-to-next-events-xf []
+    (comp
+     (partition-events-xf)
+     (map  move-to-next-event)
+     cat)))
+
+
+;; ** Splicing: 1 edit-event -> * edit-events
+
+;; We don't want to always have that because the vcs should splice deltas for
+;; macro events, but in some test cases it is useful to generate every single
+;; insert for a given diff
+
+(defmulti splice-edit-event ::edit-event/op)
+
+(defmethod splice-edit-event :default [e] e)
+
+(defmethod splice-edit-event :str/ins
+  [{::edit-event/keys [op idx diff]}]
+  (let [idxs  (range idx (+ idx (count diff)))
+        chars (seq diff)]
+    (mapv
+     (fn [[idx char]]
+       {::edit-event/op   op
+        ::edit-event/idx  idx
+        ::edit-event/diff (str char)})
+     (map vector idxs chars))))
+
+(defmethod splice-edit-event :str/rem
+  [{::edit-event/keys [op idx amt] :as evt}]
+  (mapv
+   (fn [amt]
+     {::edit-event/op   op
+      ::edit-event/idx (max 0 (- idx amt))
+      ::edit-event/amt 1})
+   (range amt)))
+
+(defn splice-edit-events-xf [] (comp (map splice-edit-event) cat))
+
+
+;; * String diff to edit events
+;; ** str -> diff
+
+(s/def ::ins (s/cat :op #{:+} :index nat-int? :chars vector?))
+(s/def ::rem (s/cat :op #{:-} :index nat-int? :amt pos-int?))
+(s/def ::edit (s/or :ins ::ins :rem ::rem))
+(s/def ::edit-script (s/spec (s/* ::edit)))
+(s/def ::diff (s/cat :edit-distance number? :edit-script ::edit-script ))
+
+;; ** diff -> edit-event
+
+(defmulti diffit-edit->edit-event first)
+
+(defmethod diffit-edit->edit-event :+
+  [[_ idx chars]]
+  {::edit-event/op :str/ins ::edit-event/idx idx ::edit-event/diff (apply str chars)})
+
+(defmethod diffit-edit->edit-event :-
+  [[_ idx amt]]
+  {::edit-event/op :str/rem ::edit-event/idx idx ::edit-event/amt amt})
+
+(defn edit-script->edit-events
+  "Retun a seq of edit-events for an edit script. Single events may contain
+  insertions and deltions for multiple characters."
+  [[_ edits]]
+  (into [] (map diffit-edit->edit-event) edits))
+
+(comment
+  (edit-script->edit-events
+   (diffit/diff "ac" "caaaab"))
+  [#:vimsical.vcs.edit-event{:op :str/ins, :idx 0, :diff "c"}
+   #:vimsical.vcs.edit-event{:op :str/ins, :idx 2, :diff "aaab"}
+   #:vimsical.vcs.edit-event{:op :str/rem, :idx 6, :amt 1}])
+
+
+;; * Diff API
+
+(s/def ::splice-string (s/tuple string?))
+(s/def ::string string?)
+(s/def ::splice-or-string (s/or :splice ::splice-string :s ::string))
+
+(def ^:private diff->edit-events (comp edit-script->edit-events diffit/diff))
+
+(s/fdef diffs->edit-events
+        :args (s/every ::splice-or-string)
+        :ret (s/every (s/every ::edit-event/edit-event)))
+
+(defn diffs->edit-events
+  "Take a list of string as varargs and generates a sequence of edit-events with
+  corresponding cursor movements. Each string can be wrapped in a vector which
+  will cause its diff's edit-events to be spliced into the final seq.
+
+  For example:
+
+  (diffs->edit-events
+  \"\"
+  \"function sum (a, b) { return a + b } ;\")
+
+  Will return a single :str/ins event with the second string as a diff.
+
+  (diffs->edit-events
+  \"\"
+  [\"function sum (a, b) { return a + b };\"]
+  \"function add (a, b) { return a + b };\")
+
+  Will return one str/ins event per character in the first string, and two events
+  for the second one: a str/rem with an :amt of 3, and a str/ins with \"add\"
+  "
+  [& splices-and-strs]
+  (letfn [(splice-xf [splice-or-str]
+            (if (vector? splice-or-str)
+              (splice-edit-events-xf)
+              (map identity)))]
+    (move-to-next-events
+     (::edit-events
+      (reduce
+       (fn [{::keys [s edit-events] :as acc} splice-or-str]
+         (let [s' (if (vector? splice-or-str) (first splice-or-str) splice-or-str)
+               xf (comp
+                   (splice-xf splice-or-str)
+                   (move-past-edit-events-xf))]
+           (if (nil? acc)
+             {::s s' ::edit-events []}
+             {::s s' ::edit-events
+              (transduce  xf conj edit-events (diff->edit-events s s'))})))
+       nil splices-and-strs)))))

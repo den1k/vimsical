@@ -1,8 +1,8 @@
-(ns vimsical.vcs.state.vims.branches.delta-index
+(ns vimsical.vcs.state.branches
   (:require
    [clojure.spec :as s]
    [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.data.indexed.vector :as indexed.vector]
+   [vimsical.vcs.data.indexed.vector :as indexed]
    [vimsical.vcs.delta :as delta]))
 
 ;; * Spec
@@ -17,15 +17,15 @@
     (seq index))))
 
 (s/def ::deltas (s/every ::delta/delta))
-(s/def ::index (s/and ::indexed.vector/indexed-vector ::deltas sorted-index?))
+(s/def ::index (s/and ::indexed/indexed-vector ::deltas sorted-index?))
 (s/def ::delta-index (s/map-of :db/id ::index))
 
 
 ;; * Internal
 
 (defn- new-index
-  ([] (indexed.vector/indexed-vector-by :id))
-  ([deltas] (indexed.vector/indexed-vector-by :id deltas)))
+  ([] (indexed/vector-by :id))
+  ([deltas] (indexed/vec-by :id deltas)))
 
 (defn- update-index
   [index delta]
@@ -76,4 +76,4 @@
   ([delta-index branch-id delta-id]
    (some-> delta-index
            (get-deltas branch-id)
-           (indexed.vector/index-of delta-id))))
+           (indexed/index-of delta-id))))

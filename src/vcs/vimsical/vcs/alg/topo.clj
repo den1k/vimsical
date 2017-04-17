@@ -1,4 +1,5 @@
-(ns vimsical.vcs.alg.topo-sort
+(ns vimsical.vcs.alg.topo
+  (:refer-clojure :exclude [sort sorted?])
   (:require
    [clojure.set :as set]
    [clojure.spec :as s]
@@ -7,22 +8,22 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]))
 
+
 ;; * Specs
 
-(defn ^:declared topo-sorted? [branches deltas])
-
+(defn ^:declared sorted? [branches deltas])
 (s/def ::deltas (s/every ::delta/delta))
-(s/def ::sorted-deltas (s/and ::deltas topo-sorted?))
-
-(s/fdef topo-sort
-        ;; NOTE Can't spec args without a valid delta seq gen
-        ;; :args (s/cat :branches ::branch/branch :deltas ::deltas)
-        :ret  ::sorted-deltas)
+(s/def ::sorted (s/and ::deltas sorted?))
 
 
 ;; * Topo sort
 
-(defn topo-sort
+(s/fdef sort
+        ;; NOTE Can't spec args without a valid delta seq gen
+        ;; :args (s/cat :branches ::branch/branch :deltas ::deltas)
+        :ret  ::sorted)
+
+(defn sort
   "Sort `deltas` in topological order, running time is linear to input size.
 
   The sort guarantees that no delta will appear before its previous delta.
@@ -38,13 +39,13 @@
 
   (let [s1 (shuffle my-delta-seq)
         s2 (shuffle my-delta-seq)
-        s1-sorted (topo-sort my-branches s1)
-        s2-sorted (topo-sort my-branches s2)]
+        s1-sorted (sort my-branches s1)
+        s2-sorted (sort my-branches s2)]
     (= s1-sorted s2-sorted))
 
   ...could be true, or false.
 
-  However `topo-sorted?` returns true for both."
+  However `sorted?` returns true for both."
   [branches deltas]
   ;;
   ;; Implementation notes:
@@ -116,11 +117,11 @@
                    (conj! ordered! delta)
                    more')))))))
 
-(s/fdef topo-sort
+(s/fdef sorted?
         :args (s/cat :branches (s/every ::branch/branch) :deltas ::deltas)
         :ref  boolean?)
 
-(defn topo-sorted?
+(defn sorted?
   [branches [delta & deltas]]
   (let [branches-by-id (coll/index-by :db/id branches)]
     (letfn [(delta->branch [{:keys [branch-id]}]

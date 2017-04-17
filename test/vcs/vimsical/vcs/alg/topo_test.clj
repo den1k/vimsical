@@ -1,14 +1,14 @@
-(ns vimsical.vcs.alg.topo-sort-test
+(ns vimsical.vcs.alg.topo-test
   (:require
-   [clojure.test :refer [deftest testing is are]]
+   [clojure.test :refer [deftest is testing]]
    [orchestra.spec.test :as st]
    [vimsical.common.test :refer [uuid]]
-   [vimsical.vcs.alg.topo-sort :as sut]
+   [vimsical.vcs.alg.topo :as sut]
    [vimsical.vcs.branch :as branch]))
 
 (st/instrument)
 
-(deftest sort-test
+(deftest topo-test
   (testing "predicate across branches"
     (let [master         (uuid)
           child1         (uuid)
@@ -48,15 +48,15 @@
            {:branch-id child21 :id id5 :prev-id id4 :pad 0 :op [:str/ins nil "a"] :file-id file-id}
            {:branch-id child2  :id id2 :prev-id id1 :pad 0 :op [:str/ins nil "a"] :file-id file-id}
            {:branch-id child2  :id id3 :prev-id id2 :pad 0 :op [:str/ins nil "a"] :file-id file-id}]]
-      (is (sut/topo-sorted? branches sorted))
-      (is (not (sut/topo-sorted? branches nsorted)))))
+      (is (sut/sorted? branches sorted))
+      (is (not (sut/sorted? branches nsorted)))))
   (testing "sort across branches"
     (let [master         (uuid)
           child1         (uuid)
           child11        (uuid)
           child2         (uuid)
           child21        (uuid)
-          file-id         (uuid)
+          file-id        (uuid)
           id0            (uuid)
           id1            (uuid)
           id2            (uuid)
@@ -80,6 +80,6 @@
            {:branch-id child21 :id id5 :prev-id id4 :pad 0 :op [:str/ins nil "a"] :file-id file-id}
            {:branch-id child11 :id id4 :prev-id id3 :pad 0 :op [:str/ins nil "a"] :file-id file-id}
            {:branch-id child11 :id id5 :prev-id id4 :pad 0 :op [:str/ins nil "a"] :file-id file-id}]
-          sorted-deltas  (sut/topo-sort branches (shuffle deltas))]
+          sorted-deltas  (sut/sort branches (shuffle deltas))]
       (is (= (set deltas) (set sorted-deltas)))
-      (is (sut/topo-sorted? branches sorted-deltas)))))
+      (is (sut/sorted? branches sorted-deltas)))))

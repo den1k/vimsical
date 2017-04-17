@@ -24,7 +24,7 @@
   (s/keys :req-un [::branch-id ::file-id ::prev-id ::id ::op/op ::pad ::timestamp]))
 
 (s/fdef new-delta
-        :args ::new-delta
+        :args (s/cat :new-delta ::new-delta)
         :ret  ::delta)
 
 (defn new-delta

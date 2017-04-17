@@ -1,10 +1,9 @@
 (ns vimsical.vcs.alg.traversal
-  (:require
-   [clojure.spec :as s]
-   [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.data.indexed.vector :as indexed.vector]
-   [vimsical.vcs.state.vims.branches.delta-index :as delta-index]
-   [vimsical.vcs.state.vims.branches.tree :as tree]))
+  (:require [clojure.spec :as s]
+            [vimsical.vcs.data.splittable :as splittable]
+            [vimsical.vcs.branch :as branch]
+            [vimsical.vcs.data.indexed.vector :as indexed.vector]
+            [vimsical.vcs.state.branches :as delta-index]))
 
 ;; * Internal
 
@@ -120,7 +119,7 @@
   branches and inlining their deltas in a single indexed vector."
   [delta-index branches]
   (let [cpr  (new-branch-comparator delta-index)
-        tree (tree/branch-tree branches)
+        tree (branch/branch-tree branches)
         rec  (fn [{::branch/keys [children]}]
                (sort cpr children))]
     (::insert-deltas
@@ -137,5 +136,5 @@
              ::insert-deltas branch-deltas}
             (let [insert-index (inc (delta-index/index-of delta-index id insert-id))]
               {::insert-id     entry-delta-id
-               ::insert-deltas (indexed.vector/splice-at insert-index branch-deltas insert-deltas)}))))
+               ::insert-deltas (splittable/splice branch-deltas insert-index insert-deltas)}))))
       nil tree))))

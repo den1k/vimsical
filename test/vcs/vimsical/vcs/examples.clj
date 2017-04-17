@@ -4,8 +4,7 @@
    [vimsical.common.test :refer [uuid]]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.state.vims.branches.delta-index :as branches.delta-index]))
-
+   [vimsical.vcs.state.branches :as state.branches]))
 
 ;; * UUIDs
 
@@ -65,11 +64,11 @@
 ;; * Delta index
 
 (def delta-index
-  {master-id (#'branches.delta-index/new-index [d0 d1 d8])
-   child-id  (#'branches.delta-index/new-index [d2 d3 d7])
-   gchild-id (#'branches.delta-index/new-index [d4 d5 d6])})
+  {master-id (#'state.branches/new-index [d0 d1 d8])
+   child-id  (#'state.branches/new-index [d2 d3 d7])
+   gchild-id (#'state.branches/new-index [d4 d5 d6])})
 
-(s/assert* ::branches.delta-index/delta-index delta-index)
+;; (s/assert* ::state.branches/delta-index delta-index)
 
 
 ;; * Branch tree
