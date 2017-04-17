@@ -8,9 +8,9 @@
 (st/instrument)
 
 (deftest add-deltas-test
-  (t/is (sut/add-deltas {} examples/deltas)))
+  (t/is (sut/add-deltas sut/empty-states examples/deltas)))
 
 (deftest get-deltas-tets
   (let [state (sut/add-deltas {} examples/deltas)]
-    (t/is (= "hi"  (::sut/string (sut/get-file-state state examples/id2 examples/file1-id))))
+    (t/is (= "hi"3  (::sut/string (sut/get-file-state state examples/id2 examples/file1-id))))
     (t/is (= "hi!" (::sut/string (sut/get-file-state state examples/id4 examples/file1-id))))))

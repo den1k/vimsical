@@ -6,6 +6,7 @@
    [vimsical.vcs.op :as op]
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.edit-event :as edit-event]
+   [vimsical.vcs.state.editor :as editor]
    [diffit.vec :as diffit]))
 
 
@@ -21,7 +22,7 @@
         :args (s/cat :e ::edit-event/edit-event)
         :ret  (s/every ::edit-event/edit-event))
 
-(defmulti move-past-edit-event ::edit-event/op)
+(defmulti ^:private move-past-edit-event ::edit-event/op)
 
 (defmethod move-past-edit-event :str/ins
   [{::edit-event/keys [idx diff] :as evt}]
@@ -33,7 +34,7 @@
     (cond-> [evt]
       (pos? idx) (conj {::edit-event/op :crsr/mv ::edit-event/idx idx}))))
 
-(defn move-past-edit-events-xf
+(defn- move-past-edit-events-xf
   []
   (comp (map move-past-edit-event) cat))
 
@@ -45,7 +46,7 @@
 ;; implementation because these fns usually kick in after we've added the
 ;; `move-past-edit-event`
 
-(defmulti post-event-index
+(defmulti ^:private post-event-index
   "Return what should be the index after the event has been applied. Say if we
   insert 3 chars at pos n then the post-event-index is n+3"
   ::edit-event/op)
@@ -62,7 +63,7 @@
   [{::edit-event/keys [idx]}]
   idx)
 
-(defn move-to-next-event
+(defn- move-to-next-event
   [[{:as left idx1 ::edit-event/idx}
     {:as right idx2 ::edit-event/idx op-right ::edit-event/op}]]
   (letfn [(drange [from to]
@@ -78,7 +79,7 @@
              (mapv (fn [idx] {::edit-event/op :crsr/mv ::edit-event/idx idx}))
              (into init))))))
 
-(defn move-to-next-events
+(defn- move-to-next-events
   [events]
   (mapcat move-to-next-event (partition-all 2 1 events)))
 
@@ -107,37 +108,7 @@
      cat)))
 
 
-;; ** Splicing: 1 edit-event -> * edit-events
-
-;; We don't want to always have that because the vcs should splice deltas for
-;; macro events, but in some test cases it is useful to generate every single
-;; insert for a given diff
-
-(defmulti splice-edit-event ::edit-event/op)
-
-(defmethod splice-edit-event :default [e] e)
-
-(defmethod splice-edit-event :str/ins
-  [{::edit-event/keys [op idx diff]}]
-  (let [idxs  (range idx (+ idx (count diff)))
-        chars (seq diff)]
-    (mapv
-     (fn [[idx char]]
-       {::edit-event/op   op
-        ::edit-event/idx  idx
-        ::edit-event/diff (str char)})
-     (map vector idxs chars))))
-
-(defmethod splice-edit-event :str/rem
-  [{::edit-event/keys [op idx amt] :as evt}]
-  (mapv
-   (fn [amt]
-     {::edit-event/op   op
-      ::edit-event/idx (max 0 (- idx amt))
-      ::edit-event/amt 1})
-   (range amt)))
-
-(defn splice-edit-events-xf [] (comp (map splice-edit-event) cat))
+(defn- splice-edit-events-xf [] (comp (map editor/splice-edit-event) cat))
 
 
 ;; * String diff to edit events
@@ -151,7 +122,7 @@
 
 ;; ** diff -> edit-event
 
-(defmulti diffit-edit->edit-event first)
+(defmulti ^:private diffit-edit->edit-event first)
 
 (defmethod diffit-edit->edit-event :+
   [[_ idx chars]]
@@ -161,7 +132,7 @@
   [[_ idx amt]]
   {::edit-event/op :str/rem ::edit-event/idx idx ::edit-event/amt amt})
 
-(defn edit-script->edit-events
+(defn- edit-script->edit-events
   "Retun a seq of edit-events for an edit script. Single events may contain
   insertions and deltions for multiple characters."
   [[_ edits]]
@@ -185,7 +156,7 @@
 
 (s/fdef diffs->edit-events
         :args (s/every ::splice-or-string)
-        :ret (s/every (s/every ::edit-event/edit-event)))
+        :ret  (s/every ::edit-event/edit-event))
 
 (defn diffs->edit-events
   "Take a list of string as varargs and generates a sequence of edit-events with
@@ -220,7 +191,8 @@
          (let [s' (if (vector? splice-or-str) (first splice-or-str) splice-or-str)
                xf (comp
                    (splice-xf splice-or-str)
-                   (move-past-edit-events-xf))]
+                   (move-past-edit-events-xf)
+                   )]
            (if (nil? acc)
              {::s s' ::edit-events []}
              {::s s' ::edit-events

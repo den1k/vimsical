@@ -91,10 +91,12 @@
       (Index. offset (merge m m-other))))
 
   (splice [this idx other]
-    (let [[left right] (splittable/split this idx)]
-      (->  left
-           (splittable/append other)
-           (splittable/append right)))))
+    (if (== (count m) idx)
+      (splittable/append this other)
+      (let [[left right] (splittable/split this idx)]
+        (->  left
+             (splittable/append other)
+             (splittable/append right))))))
 
 (s/def ::index #(instance? Index %))
 
@@ -154,8 +156,14 @@
 
   clojure.lang.IPersistentVector
   (assocN [_ i val]
+    (assert (= i (count v)))
     (let [val-key (f val)
-          index'  (assoc index val-key i)
+          index'  (update index val-key
+                          (fn [prev-i?]
+                            (if (some? prev-i?)
+                              (throw (ex-info "index already assigned" {:i i}))
+                              i)))
+          _ (println "assocN" {:i i :cnt (count v)})
           v'      (conj v val)]
       (vector f index' v')))
 
@@ -187,7 +195,8 @@
   (split [_ idx]
     (let [[index-a index-b] (splittable/split index idx)
           [v-a v-b]         (splittable/split v idx)]
-      [(vector f index-a v-a) (vector f index-b v-b)]))
+      [(vector f index-a v-a)
+       (vector f index-b v-b)]))
   (omit [this idx cnt]
     (let [[l tmp] (splittable/split this idx)
           [_ r]   (splittable/split tmp cnt)]
@@ -196,9 +205,11 @@
 
   splittable/Mergeable
   (splice [this idx other]
-    (let [index' (splittable/splice index idx (.index ^IndexedVector other))
-          v'     (splittable/splice v idx (.v ^IndexedVector other))]
-      (vector f index' v')))
+    (if (== (count this) idx)
+      (splittable/append this other)
+      (let [index' (splittable/splice index idx (.index ^IndexedVector other))
+            v'     (splittable/splice v idx (.v ^IndexedVector other))]
+        (vector f index' v'))))
   (append [this other]
     (when other (assert (vector? other)))
     (if (nil? other)
@@ -268,7 +279,3 @@
         v'  (vec (range 5))]
     (criterium/quick-bench
      (splittable/splice v (rand-int cnt) v'))))
-
-
-
-(require '[clojure.data.avl :as avl])

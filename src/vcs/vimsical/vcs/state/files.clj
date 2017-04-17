@@ -10,8 +10,7 @@
 ;; * Spec
 ;; ** Singe file state
 
-(s/def ::idx nat-int?)
-
+(s/def ::idx (s/or :nil-delta #{-1} :delta nat-int?))
 (s/def ::id->idx (s/map-of (s/nilable ::delta/id) ::idx))
 (s/def ::deltas (s/and ::indexed/vector (s/every ::delta/delta)))
 (s/def ::string string?)
@@ -32,17 +31,13 @@
 
 (s/fdef op-idx->op-id
         :args (s/cat :state ::state :op-idx ::idx)
-        :ret  ::delta/prev-id)
+        :ret ::delta/id)
 
 (defn op-idx->op-id
   [{::keys [deltas id->idx] :as state} op-idx]
-  (or (try
-        (nth deltas op-idx)
-        (catch Throwable _))
-      (reduce-kv
-       (fn [_ id idx]
-         (when (= op-idx idx) (reduced id)))
-       nil id->idx)))
+  (:id (if (== (count deltas) op-idx)
+         (last (.v deltas))
+         (nth deltas op-idx))))
 
 (s/fdef op-id->op-idx
         :args (s/cat :state ::state :op-id ::delta/prev-id)
@@ -52,70 +47,60 @@
   [{::keys [deltas id->idx] :as state} op-id]
   (cond
     ;; First delta
-    (nil? op-id)    0
+    (nil? op-id)    -1
     ;; Moved to a new file
     (empty? deltas) 0
-    :else
-    (or (try (indexed/index-of deltas op-id) (catch Throwable _))
-        (get id->idx op-id)
-        (throw (ex-info "Op idx not found" {:op-id op-id :id->idx id->idx :deltas deltas})))))
+
+    :else (indexed/index-of deltas op-id)
+    ;; (get id->idx op-id)
+    ))
 
 
 ;; ** State update
 
-(s/fdef update-state
+(s/fdef state-add-delta
         :args (s/cat :state ::state :delta ::delta/delta)
         :ret  ::state)
 
-(defmulti ^:private update-state
+(defmulti ^:private state-add-delta
   (fn [state delta]
     (-> delta :op first)))
 
-(defmethod update-state :default [state delta]
+(defmethod state-add-delta :default [state delta]
   (assert false delta)
   state)
 
-(defmethod update-state :crsr/mv
+(defmethod state-add-delta :crsr/mv
   [{::keys [id->idx deltas string] :as state} {:keys [id] :as delta}]
-  (s/assert ::state state)
-  (let [op-id  (-> delta :op second)    ; use conform?
+  (let [op-id  (delta/op-id delta)
         op-idx (op-id->op-idx state op-id)]
-    (s/assert
-     ::state
-     ;; If we think of the index as a caret, after say an insert, it would still
-     ;; be position before the character, so when we retrieve
-     {::id->idx (assoc id->idx id (inc op-idx))
-      ::deltas  deltas
-      ::string  string})))
+    (update state ::id->idx assoc id (inc op-idx))))
 
-(defmethod update-state :str/ins
-  [{::keys [id->idx deltas string] :as state} {:keys [id] :as delta}]
-  (s/assert ::state state)
-  (let [op-id   (-> delta :op second) ; use conform?
-        op-diff (-> delta :op (nth 2))
-        op-idx  (op-id->op-idx state op-id)]
-    (s/assert
-     ::state
-     {::id->idx (assoc id->idx id op-idx)
-      ::deltas  (splittable/splice deltas op-idx (indexed/vec-by :id [delta]))
-      ::string  (splittable/splice string op-idx op-diff)})))
+(defmethod state-add-delta :str/ins
+  [{::keys [id->idx deltas string] :as state} {:keys [id prev-id] :as delta}]
+  (if (nil? prev-id)
+    {::id->idx (assoc id->idx id (count (delta/op-diff delta)))
+     ::deltas  (indexed/vec-by :id [delta])
+     ::string  (delta/op-diff delta)}
+    (let [op-id      (delta/op-id delta)
+          op-diff    (delta/op-diff delta)
+          op-idx     (op-id->op-idx state op-id)
+          op-idx-ins (+ op-idx (count op-diff))]
+      (-> state
+          (update ::id->idx assoc id op-idx-ins)
+          (update ::deltas splittable/splice op-idx-ins (indexed/vec-by :id [delta]))
+          (update ::string splittable/splice op-idx-ins op-diff)))))
 
-(defmethod update-state :str/rem
+(defmethod state-add-delta :str/rem
   [{::keys [id->idx deltas string] :as state} {:keys [id] [_ op-id] :op :as delta}]
-  (s/assert ::state state)
-  (let [op-id  (-> delta :op second) ; use conform?
-        op-idx (op-id->op-idx state op-id)]
-    (try
-      {::id->idx (assoc id->idx id op-idx)
-       ::deltas  (splittable/omit deltas op-idx 1)
-       ::string  (splittable/omit string op-idx 1)}
-      (catch Throwable t
-        (throw
-         (ex-info "?" {[::update-cache :str/rem]
-                       {:op-id  op-id
-                        :op-idx op-idx
-                        :delta  delta
-                        :cache  state}}))))))
+  (let [op-id      (delta/op-id delta)
+        op-amt     (delta/op-amt delta)
+        op-idx     (op-id->op-idx state op-id)
+        op-idx-rem (max 0 (- op-idx op-amt))]
+    (-> state
+        (update ::id->idx assoc id op-idx-rem)
+        (update ::deltas splittable/omit op-idx-rem op-amt)
+        (update ::string splittable/omit op-idx-rem op-amt))))
 
 ;; * API
 
@@ -153,7 +138,7 @@
   (let [file-cache (or (get states prev-id) {file-id empty-state})
         ;; _ (println prev-id file-id file-cache)
         ;; _ (assert (get file-cache file-id)  file-id)
-        state      (update file-cache file-id (fnil update-state empty-state) delta)]
+        state      (update file-cache file-id (fnil state-add-delta empty-state) delta)]
     (assoc states id state)))
 
 (s/fdef add-deltas

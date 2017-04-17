@@ -11,7 +11,9 @@
 
 (deftest str->edit-events
   (diff=
-   (sut/diffs->edit-events "" "foor" "four")
+   (sut/diffs->edit-events ""
+                           "foor"
+                           "four")
    [#:vimsical.vcs.edit-event{:op :str/ins, :idx 0, :diff "foor"}
     #:vimsical.vcs.edit-event{:op :crsr/mv, :idx 4}
     #:vimsical.vcs.edit-event{:op :crsr/mv, :idx 3}

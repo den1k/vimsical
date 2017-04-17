@@ -36,3 +36,9 @@
    :op        op
    :pad       pad
    :meta      {:timestamp timestamp :version current-version}})
+
+
+(defn op-id [{[_ id] :op}] id)
+(defn op-type [{[op] :op}] (assert op) op)
+(defn op-diff [{[_ _ diff] :op}] (assert diff "No diff on this delta") diff)
+(defn op-amt  [{[_ _ amt] :op}] (assert amt "No amt on this delta") amt)

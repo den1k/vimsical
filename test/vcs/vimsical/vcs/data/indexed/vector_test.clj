@@ -83,9 +83,14 @@
 
 (deftest split-test
   (let [{:keys [v vb]} (test-data)
-        [l-v r-v]      (splittable/split v (rand-int (count v)))
-        [l-vb r-vb]    (splittable/split vb (rand-int (count v)))]
+        split-index    (rand-int (count v))
+        split2-index   (rand-int split-index)
+        [l-v r-v]      (splittable/split v split-index)
+        [ll-v lr-v]    (splittable/split l-v split2-index)
+        [l-vb r-vb]    (splittable/split vb split-index)]
     (is (sut/-consistent? l-v))
+    (is (sut/-consistent? ll-v))
+    (is (sut/-consistent? lr-v))
     (is (sut/-consistent? r-v))
     (is (sut/-consistent? l-vb))
     (is (sut/-consistent? r-vb))
@@ -93,19 +98,20 @@
     (is= vb (into l-vb r-vb ))))
 
 (deftest append-test
-  (let [{iv1 :v ivb1 :vb}             (test-data (range 0 10))
-        {iv2 :v ivb2 :vb}             (test-data (range 10 20))
-        {iv-expect :v ivb-expect :vb} (test-data (range 0 20))
-        actual-v                      (splittable/append iv1 iv2)
-        actual-vb                     (splittable/append ivb1 ivb2)]
+  (let [{v1 :v vb1 :vb}             (test-data (range 0 3))
+        {v2 :v vb2 :vb}             (test-data (range 3 6))
+        {v3 :v vb3 :vb}             (test-data (range 6 9))
+        {v-expect :v vb-expect :vb} (test-data (range 0 9))
+        actual-v                    (splittable/append (splittable/append v1 v2) v3)
+        actual-vb                   (splittable/append (splittable/append vb1 vb2) vb3)]
     (is (sut/-consistent? actual-v))
     (is (sut/-consistent? actual-vb))
-    (is= iv-expect  (seq actual-v))
-    (is= ivb-expect (seq actual-vb))
+    (is= v-expect  (seq actual-v))
+    (is= vb-expect (seq actual-vb))
     (are [val idx] (is= idx (sut/index-of actual-v val))
-      {:id 0}  0
-      {:id 10} 10
-      {:id 19} 19)))
+      {:id 0} 0
+      {:id 4} 4
+      {:id 8} 8)))
 
 (deftest split-append-test
   (let [{:keys [v vb]} (test-data)
@@ -119,11 +125,13 @@
 (deftest splice-test
   (let [{:keys [v vb vals]} (test-data)
         idx                 3
-        spliced-v           (sut/vec [{:id 1000}])
-        spliced-vb          (sut/vec-by :id [{:id 1000}])
-        expect              (splittable/splice (vec vals) idx spliced-v)
-        actual-v            (splittable/splice v idx spliced-v)
-        actual-vb           (splittable/splice vb idx spliced-vb)]
+        spliced-v1           (sut/vec [{:id 1000}])
+        spliced-v2           (sut/vec [{:id 2000}])
+        spliced-vb1          (sut/vec-by :id [{:id 1000}])
+        spliced-vb2          (sut/vec-by :id [{:id 2000}])
+        expect              (splittable/splice (splittable/splice (vec vals) idx (seq spliced-v1)) idx (seq spliced-v2))
+        actual-v            (splittable/splice (splittable/splice v idx spliced-v1) idx spliced-v2)
+        actual-vb           (splittable/splice (splittable/splice vb idx spliced-vb1) idx spliced-vb2)]
     (is (sut/-consistent? actual-v))
     (is (sut/-consistent? actual-vb))
     (is= expect (seq actual-v))

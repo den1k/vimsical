@@ -80,3 +80,6 @@
 
 (def vec clojure.core/vec)
 (def vector clojure.core/vector)
+
+
+(splittable/split "abf" 0)
