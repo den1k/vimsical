@@ -79,17 +79,12 @@
    :frontend
    [:vcs :common :cljs :css
     {:source-paths
-     ["src/frontend" "src/styles"]
+     ["src/frontend"]
      :plugins
      [[lein-cljsbuild "1.1.5"
-       :exclusions [org.apache.commons/commons-compress]]
-      [lein-garden "0.2.8"
-       :exclusions [org.clojure/clojure]]]
+       :exclusions [org.apache.commons/commons-compress]]]
      :dependencies
      [[org.clojure/clojurescript "1.9.518"]
-      [garden "1.3.2"]
-      ;; Added this to fix a compilation issue with garden
-      [ns-tracker "0.3.0"]
       ;; Dependency of Google Closure compiler
       ;; Needed for to compile CLJS
       [com.google.guava/guava "21.0"]
@@ -98,19 +93,7 @@
       [reagent "0.6.1"]
       [re-frame "0.9.2"]
       [re-com "2.0.0"]
-      [thi.ng/color "1.2.0"]]
-     :prep-tasks
-     [["garden" "once"]]
-     :garden
-     {:builds
-      [{:id           "dev-styles"
-        ;; common needed for utils
-        :source-paths ["src/frontend" "src/common"]
-        :stylesheet   vimsical.frontend.styles.core/styles
-        :compiler     {:output-to     "resources/public/css/app.css"
-                       :vendors       ["webkit" "moz"]
-                       :auto-prefix   #{:user-select}
-                       :pretty-print? true}}]}}]
+      [thi.ng/color "1.2.0"]]}]
 
    :frontend-dev
    [:frontend
@@ -132,17 +115,21 @@
     {:source-paths
      ["test/frontend" "test/vcs" "test/common"]
      :plugins [[lein-doo "0.1.7"]]}]
+
    ;;
    ;; CSS
    ;;
+   ;; NOTE this profile won't run by itself since it needs some frontend deps
    :css
    {:plugins      [[lein-garden "0.2.8" :exclusions [org.clojure/clojure]]]
-    :dependencies [[garden "1.3.2"]]
+    :dependencies [[garden "1.3.2"]
+                   ;; Added this to fix a compilation issue with garden
+                   [ns-tracker "0.3.0"]]
     :prep-tasks   [["garden" "once"]]
     :garden
     {:builds
      [{:id           "dev-styles"
-       :source-paths ["src/frontend"]
+       :source-paths ["src/frontend" "src/common"]
        :stylesheet   vimsical.frontend.styles.core/styles
        :compiler     {:output-to     "resources/public/css/app.css"
                       :vendors       ["webkit" "moz"]
