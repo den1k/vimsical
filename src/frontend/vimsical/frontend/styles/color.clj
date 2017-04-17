@@ -1,6 +1,6 @@
 (ns vimsical.frontend.styles.color
   (:require [thi.ng.color.core :refer [hsva as-css]]
-            [vimsical.common.util.util :refer [map-vals]]))
+            [vimsical.common.util.core :refer [map-vals]]))
 
 (def type-display-names
   {:text/html       "HTML"

@@ -1,5 +1,5 @@
 (ns vimsical.frontend.timeline.views
-  (:require [vimsical.common.util.util :as util])
+  (:require [vimsical.common.util.core :as util])
   (:refer-clojure :exclude [chunk]))
 
 (defonce tl-height 100)
@@ -124,7 +124,7 @@
          [:div.scaler
           [:svg.timeline-chunks
            {:ref                   "svg"
-            ;:view-box              (util/space-join
+            ;:view-box              (vimsical.common.util.core/space-join
             ;                        start-offset 0 window-dur tl-height)
             :preserve-aspect-ratio "none meet"
             :style                 {:width "100%" :height "100%"}

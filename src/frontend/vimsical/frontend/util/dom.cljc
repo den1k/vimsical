@@ -1,7 +1,7 @@
 (ns vimsical.frontend.util.dom
   "Util.dom is meant to be used exclusively in the browser. To avoid
   double reloads of .clj style fyles through figwheel, we made this a .cljc file."
-  (:require [vimsical.common.util.util :as util]))
+  (:require [vimsical.common.util.core :as util]))
 
 ;; There is a trap when writing DOM event handlers.  This looks innocent enough:
 ;;

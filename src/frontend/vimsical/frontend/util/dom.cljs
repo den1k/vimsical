@@ -1,6 +1,6 @@
 (ns vimsical.frontend.util.dom
   (:require [goog.dom :as gdom]
-            [vimsical.common.util.util :as util]))
+            [vimsical.common.util.core :as util]))
 
 (defn create
   "Creates a DOM node for either CSS or JavaScript."

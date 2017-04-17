@@ -1,6 +1,6 @@
 (ns vimsical.frontend.live-preview.views
   (:require
-   [vimsical.common.util.util :as util]
+   [vimsical.common.util.core :as util]
    [reagent.core :as reagent]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e-handler]]
    [clojure.string :as string])

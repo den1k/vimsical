@@ -1,4 +1,4 @@
-(ns vimsical.common.util.util
+(ns vimsical.common.util.core
   (:refer-clojure :exclude [max min halt-when])
   #?@(:clj
       [
@@ -8,20 +8,12 @@
         [medley.core :as md])]
       :cljs
       [(:require
-        ;[camel-snake-kebab.core :as csk]
         [cljs.core.async :as a]
         [clojure.string :as string]
         [goog.object :as gobj]
         [medley.core :as md]
         [goog.functions :as gfns])
        (:require-macros [cljs.core.async.macros :refer [alt! go-loop]])]))
-
-#?(:cljs
-   (extend-protocol ILookup
-     object
-     (-lookup
-       ([m k] (gobj/get m k))
-       ([m k not-found] (or (gobj/get m k) not-found)))))
 
 (defn- next-item-with-comparator [comparator]
   (let [pos-fn (cond
@@ -92,27 +84,9 @@
    (when (seq coll)
      (apply clojure.core/max coll))))
 
-(defn string->keyword-dash-join [& strings]
-  (keyword (string/join "-" strings)))
-
-(defn keyword-dash-join [& kws]
-  (keyword (string/join "-" (map name kws))))
-
-(defn prefixer-fn [prefix]
-  (fn [string]
-    (string->keyword-dash-join prefix string)))
-
-(defn postfixer-fn [postfix]
-  (fn [string]
-    (string->keyword-dash-join string postfix)))
-
 (defn now []
   #?(:clj  (.getTime (java.util.Date.))
      :cljs (.now js/Date)))
-
-(def intertwine
-  "Like interleave but omits last item"
-  (comp butlast clojure.core/interleave))
 
 (def merge-1
   "One level deep merge."
@@ -140,17 +114,8 @@
 ;; The next 3 fns were snatched from prismatic/plumbing in order to remove the
 ;; dependency and all he warnings that came with it...
 
-(defn dissoc-in
-  "Dissociate this keyseq from m, removing any empty maps created as a result
-   (including at the top-level)."
-  [m [k & ks]]
-  (when m
-    (if-let [res (and ks (dissoc-in (get m k) ks))]
-      (assoc m k res)
-      (let [res (dissoc m k)]
-        (when-not (empty? res)
-          res)))))
 
+(def dissoc-in md/dissoc-in)
 (def map-keys md/map-keys)
 (def map-vals md/map-vals)
 (def interleave-all md/interleave-all)
@@ -171,30 +136,6 @@
              idx
              (recur (inc idx)))
            -1))))))
-
-(defn maybe [pred]
-  (fn [x]
-    (when (pred x) x)))
-
-(defn until
-  "Takes a predicate, a step function and an optional init value and returns
-  a transducer that applies the previous result and the new input to step and
-  terminates once the result satisfies pred."
-  ([pred step] (until pred step nil))
-  ([pred step init]
-   (let [pred  (complement pred)
-         vprev (volatile! init)]
-     (fn [rf]
-       (fn
-         ([] (rf))
-         ([result] (rf result))
-         ([result input]
-          (let [vp  @vprev
-                res (step vp input)]
-            (if (pred res)
-              (do (vreset! vprev res)
-                  (rf result input))
-              (reduced result)))))))))
 
 (defn namespace-keys
   "Namespaces keys in a map if they aren't already namespaced."
@@ -286,11 +227,3 @@
 #?(:cljs
    (defn url-encode [s]
      (js/encodeURIComponent s)))
-
-#?(:cljs
-   (defn ?jsfn
-     "Looks up a field on a js object and, if it exists, invokes it as a function.
-     Returns nil otherwise."
-     [obj k & args]
-     (when-let [f (aget obj k)]
-       (.call f obj args))))

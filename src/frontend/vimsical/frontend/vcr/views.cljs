@@ -8,7 +8,7 @@
    [vimsical.frontend.views.shapes :as shapes]
    [reagent.core :as reagent]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e-handler]]
-   [vimsical.common.util.util :as util]))
+   [vimsical.common.util.core :as util]))
 
 (defn visible-files [files]
   (remove :file/hidden? files))
