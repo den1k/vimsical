@@ -32,3 +32,9 @@ build-clj: clean
 
 build-cljs: clean
 	lein with-profile frontend cljsbuild once prod
+
+# Styles
+#
+
+dev-styles:
+	lein with-profile frontend-dev garden auto

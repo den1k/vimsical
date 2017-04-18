@@ -10,12 +10,12 @@
   (case type
     :equilateral
     (let [[origin-x origin-y] origin
-          side-len    (-> (js/Math.sqrt 3) (/ 2) (* height))
+          side-len    (->> (js/Math.sqrt 3) (/ 2) (* height))
           half-height (/ height 2)
           half-side   (/ side-len 2)]
-      [[(- origin-x half-height) (+ origin-y half-side)]
-       [(+ origin-x half-height) (+ origin-y half-side)]
-       [origin-x (- origin-y half-side)]])))
+      [[(- origin-x half-side) (+ origin-y half-height)]
+       [origin-x (- origin-y half-height)]
+       [(+ origin-x half-side) (+ origin-y half-height)]])))
 
 ;;
 ;; * SVG Components
@@ -24,7 +24,8 @@
 (defn triangle [{:keys [origin height rotate style stroke-width]
                  :or   {rotate 0 stroke-width 0}
                  :as   opts}]
-  (let [height     (- height stroke-width)
+  ;; unclear why x 1.5. Think it should be x 2. But this works better.
+  (let [height     (- height (* stroke-width 1.5))
         points     (polygon :triangle
                             {:origin origin
                              :height height})

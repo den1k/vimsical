@@ -55,10 +55,11 @@
   (let [; todo subs to html/css/js string based on file-type
         text (get {:html "<h1>Live-Preview</h1>"
                    :css  "body {
+                   display: flex;
+                   align-items: center;
+                   justify-content: space-around;
                    background: bisque;
                    color: white;
-                   text-align: center;
-                   margin-top: 50%;
                    font-size: 50px;
                    -webkit-text-stroke: 1px grey;
                    };"

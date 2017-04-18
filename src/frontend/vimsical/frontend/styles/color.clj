@@ -2,25 +2,15 @@
   (:require [thi.ng.color.core :refer [hsva as-css]]
             [vimsical.common.util.core :refer [map-vals]]))
 
-(def type-display-names
-  {:text/html       "HTML"
-   :text/css        "CSS"
-   :text/javascript "JS"})
-
 (def type-colors-timeline
-  {:text/html       "#F3997F"
-   :text/css        "#9CDAF4"
-   :text/javascript "#F5CC72"
-   :ui/pointer      "lightgrey"})
+  {:html       "#F3997F"
+   :css        "#9CDAF4"
+   :javascript "#F5CC72"})
 
-(def type-colors-editors
-  {:text/html       "#F0805F"
-   :text/css        "#32B2E9"
-   :text/javascript "#F2BF4F"})
-
-(defn type-display-name
-  [type]
-  (type-display-names type))
+(def type->colors-editors
+  {:html       "#F0805F"
+   :css        "#32B2E9"
+   :javascript "#F2BF4F"})
 
 (defn type-style
   [type selector-prefix attr val]

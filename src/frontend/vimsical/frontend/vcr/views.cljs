@@ -111,7 +111,7 @@
 (defn- editor-components [{:keys [file/sub-type] :as file}]
   {:file/sub-type sub-type
    :editor-header ^{:key sub-type} [editor-header file]
-   :editor        ^{:key sub-type} [code-editor sub-type]})
+   :editor        ^{:key sub-type} [code-editor {:file-type sub-type}]})
 
 (defn vcr []
   (let [files-subs   (reagent/atom files)
