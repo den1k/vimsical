@@ -2,7 +2,7 @@
   (:require
    [vimsical.common.util.core :as util]
    [reagent.core :as reagent]
-   [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e-handler]]
+   [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]
    [clojure.string :as string])
   (:refer-clojure :exclude [create-node]))
 
