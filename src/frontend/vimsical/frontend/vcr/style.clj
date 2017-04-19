@@ -67,7 +67,7 @@
                             :.tab-checkbox.
                             :background
                             (second %))
-         color/type-colors-editors)
+         color/type->colors-editors)
    [:&.disabled
     {:background-color "rgba(219, 216, 217, 0.9)"}
     [:.tab-checkbox {:background :white}]]])
@@ -99,7 +99,7 @@
                                   :.title
                                   :color
                                   (second %))
-         color/type-colors-editors)
+         color/type->colors-editors)
    [:&.css :&.javascript
     {:z-index    :1
      :position   :relative
@@ -130,8 +130,9 @@
 
 (def vcr
   [:.vcr
-   ;; Styles to prevent code-editors' (Monaco) to overflow and cause scroll bars
-   {:display  "relative"
+   ;; Styles to prevent code-editor from overflowing beyond VCR's boundaries
+   ;; Set here instead of on code-editor to allow widget overflow
+   {:position :relative
     :overflow "hidden"}
    playback
    live-preview-and-editors])

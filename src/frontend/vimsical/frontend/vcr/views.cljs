@@ -7,7 +7,7 @@
    [vimsical.frontend.code-editor.views :refer [code-editor]]
    [vimsical.frontend.views.shapes :as shapes]
    [reagent.core :as reagent]
-   [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e-handler]]
+   [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]
    [vimsical.common.util.core :as util]))
 
 (defn visible-files [files]
@@ -57,10 +57,10 @@
     (fn []
       [:div.control.speed
        (triangle-left {:class    "icon speed-triangle decrease"
-                       :on-click (e-handler :decrease)})
+                       :on-click (e> :decrease)})
        (str @speed "x")
        (triangle-right {:class    "icon speed-triangle increase"
-                        :on-click (e-handler :increase)})])))
+                        :on-click (e> :increase)})])))
 
 (defn- playback-control []
   (let [playing? (reagent/atom false)]
@@ -70,7 +70,7 @@
          [:svg
           {:class    "icon play"        ;; rename to button
            :view-box "0 0 100 100"
-           :on-click (e-handler (reset! playing? true))}
+           :on-click (e> (reset! playing? true))}
           (shapes/triangle {:origin          [50 50]
                             :height          100
                             :stroke-linejoin "round"
@@ -78,7 +78,7 @@
                             :rotate          90})]
          [:svg {:class    "icon pause"  ;; rename to button
                 :view-box "0 0 90 100"
-                :on-click (e-handler (reset! playing? false))}
+                :on-click (e> (reset! playing? false))}
           (let [attrs {:y 0 :width 30 :height 100 :rx 5 :ry 5}]
             [:g
              [:rect (merge {:x 0} attrs)]
@@ -97,7 +97,7 @@
        {:class    (name sub-type)
         :style    (cond-> {:cursor :pointer}
                     hidden? (assoc :color :grey))
-        :on-click (e-handler
+        :on-click (e>
                    (swap! files-subs
                           util/update-when
                           (fn [file] (= (:file/sub-type file) sub-type))
@@ -111,7 +111,7 @@
 (defn- editor-components [{:keys [file/sub-type] :as file}]
   {:file/sub-type sub-type
    :editor-header ^{:key sub-type} [editor-header file]
-   :editor        ^{:key sub-type} [code-editor sub-type]})
+   :editor        ^{:key sub-type} [code-editor {:file-type sub-type}]})
 
 (defn vcr []
   (let [files-subs   (reagent/atom files)

@@ -7,7 +7,7 @@
             [re-com.splits :as splits]
             [reagent.core :as reagent]
             [vimsical.common.util.core :as util]
-            [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e-handler]]))
+            [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]))
 
 (def n-v-split-args-desc
   [{:name :panels :required true :type "vector" :validate-fn vector? :description "coll of markup to go into each panel"}
@@ -102,7 +102,7 @@
                                                         :width  width}
                                                        style)}
                                         (when in-drag? ;; only listen when we are dragging
-                                          {:on-mouse-up    (e-handler (stop-drag))
+                                          {:on-mouse-up    (e> (stop-drag))
                                            :on-mouse-move  (e-> mousemove)
                                            :on-mouse-leave (e-> mouseleave)})
                                         attr))
@@ -128,8 +128,8 @@
                                                   :height         splitter-size}}
                                    resizable? (util/merge-1
                                                {:on-mouse-down (e-> (mousedown idx))
-                                                :on-mouse-over (e-handler (mouseover-split idx))
-                                                :on-mouse-out  (e-handler (mouseout-split))
+                                                :on-mouse-over (e> (mouseover-split idx))
+                                                :on-mouse-out  (e> (mouseout-split))
                                                 :style         (merge
                                                                 {:cursor "row-resize"}
                                                                 (when (current-over? idx)
@@ -228,7 +228,7 @@
                                                       :height height}
                                                      style)}
                                       (when in-drag? ;; only listen when we are dragging
-                                        {:on-mouse-up    (e-handler (stop-drag))
+                                        {:on-mouse-up    (e> (stop-drag))
                                          :on-mouse-move  (e-> mousemove)
                                          :on-mouse-leave (e-> mouseleave)})
                                       attr))
@@ -247,8 +247,8 @@
                                {:class         (str "display-flex " class)
                                 :key           (str "splitter-" idx)
                                 :on-mouse-down (e-> (mousedown idx))
-                                :on-mouse-over (e-handler (mouseover-split idx))
-                                :on-mouse-out  (e-handler (mouseout-split))
+                                :on-mouse-over (e> (mouseover-split idx))
+                                :on-mouse-out  (e> (mouseout-split))
                                 :style         (merge {:width splitter-size}
                                                       {:cursor "col-resize"}
                                                       (when (current-over? idx)
