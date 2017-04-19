@@ -78,7 +78,7 @@
     :flex-direction :column
     :overflow       :hidden}
    [:.info
-    {:transition    "max-height, margin-bottom 0.5s ease"
+    {:transition    "all 0.5s ease"
      :max-height    :60%
      :overflow-y    :hidden
      :padding       "5px 22px 0px 22px"

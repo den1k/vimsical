@@ -8,7 +8,8 @@
             [vimsical.frontend.util.dom :refer-macros [e> e->]]
             [reagent.core :as reagent]
             [vimsical.frontend.views.icons :as icons]
-            [vimsical.frontend.util.dom :as util.dom]))
+            [vimsical.frontend.util.dom :as util.dom]
+            [vimsical.frontend.dev.util :as dev.util]))
 
 (defn play-symbol [opts]
   [shapes/triangle
@@ -100,8 +101,7 @@
                       [:div.playhead]
                       [:div.skimhead]])
                    [:div.speed-control
-                    "1.5x"]]]]))
-  )
+                    "1.5x"]]]])))
 
 ;; temp
 (def person-url
@@ -109,8 +109,7 @@
 
 (defn info-and-editor-container []
   (let [show-info? (reagent/atom true)
-        desc       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent ut leo sit amet mauris tempus luctus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent ut leo sit amet mauris tempus luctus. Nullam placerat metus leo, et faucibus odio mattis a. Nulla ac quam magna. Aliquam vestibulum enim dolor, sit amet volutpat arcu egestas nec. Nullam bibendum volutpat ultricies. Nunc nec vehicula ante. Nam est massa, sollicitudin sit amet felis a, vestibulum viverra nunc. Mauris et tristique turpis, non eleifend nulla. Mauris commodo blandit justo id imperdiet. Phasellus varius eget turpis interdum sodales. Vestibulum ac efficitur metus.\n\nDuis rutrum vel felis eu fringilla. Integer cursus sem eu mauris pulvinar rutrum. Proin magna sapien, pretium in enim a, eleifend fringilla neque. Donec in placerat mi. Sed volutpat auctor ipsum, ac lacinia lorem consectetur eu. Curabitur sit amet faucibus enim. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nam consectetur est sed sem varius, eget dignissim magna tincidunt. Nulla quis urna eu libero pharetra ultrices. Aliquam placerat, nibh eget ultricies pharetra, neque nulla efficitur urna, non pellentesque nisi ex sed ante. Donec varius enim quam, non iaculis neque malesuada ac. Maecenas pretium non mauris in dictum. Proin tincidunt malesuada fermentum. Etiam vitae mi nisi. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.\n\nQuisque pharetra magna ut velit semper vehicula. Pellentesque ultricies ex sed metus suscipit mollis. Nulla facilisi. Vestibulum eget fermentum purus, in consequat arcu. Phasellus bibendum elit eu dolor consectetur, consectetur pretium erat faucibus. Curabitur leo eros, interdum eu odio sit amet, interdum pretium ipsum. Praesent pellentesque, turpis in maximus efficitur, libero nulla accumsan urna, et facilisis neque risus eget quam. Vivamus vel eros vel ligula mattis commodo vel a ante. Praesent mollis est consequat tellus blandit luctus. Fusce fringilla neque convallis ex pulvinar auctor. Vivamus fermentum mattis tincidunt. In in ipsum magna. Praesent nec eleifend arcu. Curabitur vel nisi nec quam tempus condimentum.\n\nSed faucibus orci est, non tincidunt urna efficitur at. Proin bibendum fermentum nisl, a rutrum turpis euismod eget. Sed accumsan magna eget sodales rhoncus. Integer ut lectus et diam suscipit malesuada in quis elit. Nunc suscipit aliquet consectetur. Curabitur luctus varius nulla, ut molestie quam condimentum quis. Aliquam sit amet nulla sed sapien cursus ultrices in et ligula. Aliquam in diam quis magna congue elementum sed non quam. Nullam euismod nibh vel magna pretium sagittis. Praesent nulla elit, vulputate sed porta varius, placerat in est. Cras eget gravida mi. Sed metus nibh, tincidunt sed interdum ac, sodales nec purus. Cras euismod finibus urna, ac ultrices velit posuere vitae. Aliquam erat volutpat. Vivamus pellentesque, lorem a gravida fermentum, arcu ipsum tristique nisl, ut rutrum felis lectus vel ante. Quisque mattis suscipit magna, fringilla euismod arcu rutrum vel. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent ut leo sit amet mauris tempus luctus. Nullam placerat metus leo, et faucibus odio mattis a. Nulla ac quam magna. Aliquam vestibulum enim dolor, sit amet volutpat arcu egestas nec. Nullam bibendum volutpat ultricies. Nunc nec vehicula ante. Nam est massa, sollicitudin sit amet felis a, vestibulum viverra nunc. Mauris et tristique turpis, non eleifend nulla. Mauris commodo blandit justo id imperdiet. Phasellus varius eget turpis interdum sodales. Vestibulum ac efficitur metus.\n\nDuis rutrum vel felis eu fringilla. Integer cursus sem eu mauris pulvinar rutrum. Proin magna sapien, pretium in enim a, eleifend fringilla neque. Donec in placerat mi. Sed volutpat auctor ipsum, ac lacinia lorem consectetur eu. Curabitur sit amet faucibus enim. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nam consectetur est sed sem varius, eget dignissim magna tincidunt. Nulla quis urna eu libero pharetra ultrices. Aliquam placerat, nibh eget ultricies pharetra, neque nulla efficitur urna, non pellentesque nisi ex sed ante. Donec varius enim quam, non iaculis neque malesuada ac. Maecenas pretium non mauris in dictum. Proin tincidunt malesuada fermentum. Etiam vitae mi nisi. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.\n\nQuisque pharetra magna ut velit semper vehicula. Pellentesque ultricies ex sed metus suscipit mollis. Nulla facilisi. Vestibulum eget fermentum purus, in consequat arcu. Phasellus bibendum elit eu dolor consectetur, consectetur pretium erat faucibus. Curabitur leo eros, interdum eu odio sit amet, interdum pretium ipsum. Praesent pellentesque, turpis in maximus efficitur, libero nulla accumsan urna, et facilisis neque risus eget quam. Vivamus vel eros vel ligula mattis commodo vel a ante. Praesent mollis est consequat tellus blandit luctus. Fusce fringilla neque convallis ex pulvinar auctor. Vivamus fermentum mattis tincidunt. In in ipsum magna. Praesent nec eleifend arcu. Curabitur vel nisi nec quam tempus condimentum.\n\nSed faucibus orci est, non tincidunt urna efficitur at. Proin bibendum fermentum nisl, a rutrum turpis euismod eget. Sed accumsan magna eget sodales rhoncus. Integer ut lectus et diam suscipit malesuada in quis elit. Nunc suscipit aliquet consectetur. Curabitur luctus varius nulla, ut molestie quam condimentum quis. Aliquam sit amet nulla sed sapien cursus ultrices in et ligula. Aliquam in diam quis magna congue elementum sed non quam. Nullam euismod nibh vel magna pretium sagittis. Praesent nulla elit, vulputate sed porta varius, placerat in est. Cras eget gravida mi. Sed "
-        ]
+        desc       (dev.util/lorem-ipsum 2)]
     (reagent/create-class
      {:render
       (fn [c]
@@ -129,13 +128,11 @@
            [:div.title-and-creator
             [:div.title.truncate "Pinterest CSS Layout And so much more"]
             [:div.creator.truncate "Jane Blacksmith"]]]
-          (when desc)
-          [:div.desc
-           desc]]
-         [code-editor {:file-type :html
-                       :compact?  true
-                       ;:read-only? true
-                       }]
+          (when desc
+            [:div.desc desc])]
+         [code-editor {:file-type  :html
+                       :compact?   true
+                       :read-only? true}]
          [:div.logo-and-file-type.bar
           [icons/logo-and-type]
           ;; todo dynamic
