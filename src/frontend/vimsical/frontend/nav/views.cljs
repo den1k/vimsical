@@ -25,7 +25,6 @@
                                ;; But the result would be nested under
                                ;; {:app/user ...}
                                )]
-    (println "PULLED:" res)
     [:div.nav
      [:div.logo-and-type
       (str first-name " " last-name)
