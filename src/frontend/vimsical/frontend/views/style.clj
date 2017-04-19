@@ -2,8 +2,9 @@
 
 (def user
   [:.avatar
-   {:position :relative
-    :cursor   :pointer}
+   {:position    :relative
+    :flex-shrink 0
+    :cursor      :pointer}
    [:.pic
     {:position      :absolute
      :object-fit    :cover
@@ -24,11 +25,11 @@
   [:.logo-and-type {:display     :flex
                     :align-items :center
                     :cursor      :pointer}
-   [:.logo {:height :36px
-            :width  :36px}]
-   [:.type {:width       :125px
-            :fill        :#8F9096
-            :margin-left :15px}]])
+   [:.vimsical-logo {:height :36px
+                     :width  :36px}]
+   [:.vimsical-type {:width       :125px
+                     :fill        :#8F9096
+                     :margin-left :15px}]])
 
 (def views
   [user

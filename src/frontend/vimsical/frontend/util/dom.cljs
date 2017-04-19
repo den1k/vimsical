@@ -1,6 +1,8 @@
 (ns vimsical.frontend.util.dom
   (:require [goog.dom :as gdom]
-            [vimsical.common.util.core :as util]))
+            [vimsical.common.util.core :as util]
+            [reagent.core :as reagent])
+  (:refer-clojure :exclude [contains?]))
 
 (defn create
   "Creates a DOM node for either CSS or JavaScript."
@@ -39,3 +41,14 @@
   [elem html]
   (set! (.-innerHTML elem) html)
   elem)
+
+(defn contains? [?parent node]
+  (.contains ?parent node))
+
+(defn view-contains? [v node]
+  (contains? (reagent/dom-node v) node))
+
+(defn view-contains-related-target?
+  "Useful for mouse-events to find out if mouse left component."
+  [v e]
+  (view-contains? v (.-relatedTarget e)))

@@ -16,9 +16,13 @@
      :cursor :pointer}]
 
    [:.bar
+    {:padding "0 25px"}
     [:&.social
      [:.social-buttons
-      {:display :flex}]]
+      {:display :flex}]
+     [:.edit
+      {:font-weight 300
+       :font-size   :22px}]]
     [:&.timeline-container
      [:.play-pause
       {:height :20px}]
@@ -70,13 +74,18 @@
 (def editor-panel
   [:div.info-and-editor-panel
    {:display        :flex
+    :position       :relative
     :flex-direction :column
     :overflow       :hidden}
    [:.info
-    {:height        :50%
-     :padding       :15px
-     :margin-bottom :15px               ;; is this ok?
-     :overflow-y    :scroll}
+    {:transition    "max-height, margin-bottom 0.5s ease"
+     :max-height    :60%
+     :overflow-y    :hidden
+     :padding       "5px 22px 0px 22px"
+     :margin-bottom :15px}
+    [:&.pan-out
+     {:max-height    0
+      :margin-bottom 0}]
     [:.header
      {:display     :flex
       :align-items :center}
@@ -90,35 +99,61 @@
        {:font-size :16px
         :color     :grey}]]]
     [:.desc
-     {:margin-top :12px
-      }]]
+     {:margin-top    :12px
+      :font-size     :1rem
+      :line-height   :1.45
+      :overflow      :hidden
+      :text-overflow :ellipsis}]]
    [:.code-editor
-    {:flex  1
-     :width :100%}]
+    {:flex          1
+     ;; height of .bar
+     :margin-bottom :50px}]
    code-editor
-   [:.logo-and-file-type.bar]
-   [:.active-file-type
-    {:padding       "1px 13px"
-     :border        "1px solid"
-     :border-radius :15px}
-    ;; todo dry
-    [:&.html
-     {:color        (:html color/type->colors-editors)
-      :border-color (:html color/type->colors-editors)}]
-    [:&.css
-     {:color        (:css color/type->colors-editors)
-      :border-color (:css color/type->colors-editors)}]
-    [:&.js
-     {:color        (:javascript color/type->colors-editors)
-      :border-color (:javascript color/type->colors-editors)}]]])
+   [:.logo-and-file-type.bar
+    {:padding    "0 10px"
+     :position   :absolute
+     :width      :100%
+     :bottom     0
+     :background :white}
+    [:.logo-and-type
+     {:width :60%}]
+    [:.active-file-type
+     {:padding       "1px 13px"
+      :border        "1px solid"
+      :border-radius :15px}
+     ;; todo dry
+     [:&.html
+      {:color        (:html color/type->colors-editors)
+       :border-color (:html color/type->colors-editors)}]
+     [:&.css
+      {:color        (:css color/type->colors-editors)
+       :border-color (:css color/type->colors-editors)}]
+     [:&.js
+      {:color        (:javascript color/type->colors-editors)
+       :border-color (:javascript color/type->colors-editors)}]]]])
 
 (def player
   [:.vimsical-frontend-player
-   {:margin-top "20px"                  ;; temp
-    :height     "100vh"}
+   {:margin    "40px"                   ;; todo temp
+    :min-width :700px                   ; max embed width on medium
+    :max-width :1200px
+    :height    "100vh"}
    [:.rc-n-h-split
     ;; todo splitter-child line color
-    {:height :100%}]
+    {:height :100%}
+    [:.rc-n-h-split-splitter
+     {:position :relative}
+     [:.resizer
+      {:z-index 1}                      ;; lift above editor
+      [:.stretcher
+       {:position    :absolute
+        :width       :20px
+        :margin-left :-10px             ;; half-width to center
+        :height      :100%}]
+      [:.divider-line
+       {:position :absolute
+        :height   :100%
+        :width    :1px}]]]]
    [:.bar
     {:height          "50px"
      :display         :flex

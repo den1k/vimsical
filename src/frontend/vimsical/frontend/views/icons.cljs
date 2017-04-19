@@ -28,5 +28,5 @@
   ([opts]
    [:div.logo-and-type
     opts
-    [:span.logo vimsical-logo]
-    [:span.type vimsical-type]]))
+    vimsical-logo
+    vimsical-type]))
