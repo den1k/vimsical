@@ -89,7 +89,7 @@
       ;; Needed for to compile CLJS
       [com.google.guava/guava "21.0"]
       [cljsjs/google-diff-match-patch "20121119-1"]
-      [com.stuartsierra/mapgraph "0.2.1"]
+      [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT"]
       [reagent "0.6.1"]
       [re-frame "0.9.2"]
       [re-com "2.0.0"]
@@ -135,6 +135,7 @@
                       :vendors       ["webkit" "moz"]
                       :auto-prefix   #{:user-select}
                       :pretty-print? true}}]}}
+
    ;;
    ;; Cljs
    ;;
@@ -143,7 +144,7 @@
     {:builds
      [{:id           "prod"
        :jar          true
-       :source-paths ["src/frontend" "src/common" "src/vcs"]
+       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs"]
        :compiler     {:main            vimsical.frontend.core
                       :asset-path      "/js"
                       :externs         ["resources/externs/svg.js"]
@@ -159,7 +160,7 @@
                       :pseudo-names    false}}
       {:id           "dev"
        :figwheel     {:on-jsload vimsical.frontend.core/on-reload}
-       :source-paths ["src/frontend" "src/common" "src/vcs" "dev/frontend"]
+       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs" "dev/frontend"]
        :compiler     {:main                 vimsical.frontend.core
                       :asset-path           "/js/compiled/out"
                       :output-to            "resources/public/js/compiled/vimsical.js"
@@ -175,7 +176,7 @@
                                              {:features-to-install :all
                                               :fn-symbol           "λ"}}}}
       {:id           "test"
-       :source-paths ["src/frontend"  "src/common"  "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
+       :source-paths ["checkouts/mapgraph/src" "src/frontend"  "src/common"  "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
        :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
                       :output-dir     "resources/public/js/compiled/out-test"
                       :main           vimsical.runner
@@ -183,7 +184,7 @@
                       :optimizations  :none
                       :parallel-build true}}
       {:id           "test-advanced"
-       :source-paths ["src/frontend"  "src/common"  "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
+       :source-paths ["checkouts/mapgraph/src" "src/frontend"  "src/common"  "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
        :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
                       :output-dir     "resources/public/js/compiled/out-test-advanced"
                       :main           vimsical.runner

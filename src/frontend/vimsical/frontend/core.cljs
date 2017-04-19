@@ -2,6 +2,7 @@
   (:require [reagent.core :as reagent]
             [re-frame.core :as re-frame]
             [vimsical.frontend.config :as config]
+            [vimsical.frontend.db :as db]
             [vimsical.frontend.app.views :refer [app]]))
 
 (defn dev-setup []
@@ -27,6 +28,6 @@
   []
   (require-js-libs
    #(do
-      ;(re-frame/dispatch-sync [:initialize-db])
+      (re-frame/dispatch-sync [::db/init])
       (dev-setup)
       (mount-root))))
