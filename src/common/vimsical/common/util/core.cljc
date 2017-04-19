@@ -114,7 +114,6 @@
 ;; The next 3 fns were snatched from prismatic/plumbing in order to remove the
 ;; dependency and all he warnings that came with it...
 
-
 (def dissoc-in md/dissoc-in)
 (def map-keys md/map-keys)
 (def map-vals md/map-vals)
@@ -227,3 +226,10 @@
 #?(:cljs
    (defn url-encode [s]
      (js/encodeURIComponent s)))
+
+(defn deep-merge
+  "Like merge, but merges maps recursively."
+  [& maps]
+  (if (every? map? (filter identity maps))
+    (apply merge-with deep-merge maps)
+    (last maps)))
