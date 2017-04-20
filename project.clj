@@ -63,9 +63,9 @@
        :username :env/datomic_login
        :password :env/datomic_password}}
      :dependencies
-     [[com.taoensso/carmine "2.15.0"]
-      [org.immutant/web "2.1.5" :exclusions [ring/ring-core]]
-      [cc.qbits/alia-all "3.3.0"]
+     [[com.taoensso/carmine    "2.15.0"]
+      [org.immutant/web        "2.1.5" :exclusions [ring/ring-core org.jboss.logging/jboss-logging]]
+      [cc.qbits/alia-all       "3.3.0"]
       [com.datomic/datomic-pro "0.9.5544" :exclusions [commons-codec]]]
      :global-vars
      {*warn-on-reflection* true
@@ -134,7 +134,7 @@
    :frontend-test
    [:test :frontend :vcs :common
     {:source-paths
-              ["test/frontend" "test/vcs" "test/common"]
+     ["test/frontend" "test/vcs" "test/common"]
      :plugins [[lein-doo "0.1.7"]]}]
 
    :player
