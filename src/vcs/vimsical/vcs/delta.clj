@@ -9,6 +9,7 @@
 
 (s/def ::id uuid?)
 (s/def ::prev-id (s/nilable ::id))
+(s/def ::op ::op/op)
 (s/def ::pad nat-int?)
 (s/def ::branch-id uuid?)
 (s/def ::file-id uuid?)
@@ -17,11 +18,11 @@
 (s/def ::meta (s/keys :req-un [::timestamp ::version]))
 
 (s/def ::delta
-  (s/keys :req-un [::branch-id ::file-id ::prev-id ::id ::op/op ::pad]
+  (s/keys :req-un [::branch-id ::file-id ::prev-id ::id ::op ::pad]
           :opt-un [::meta]))
 
 (s/def ::new-delta
-  (s/keys :req-un [::branch-id ::file-id ::prev-id ::id ::op/op ::pad ::timestamp]))
+  (s/keys :req-un [::branch-id ::file-id ::prev-id ::id ::op ::pad ::timestamp]))
 
 (s/fdef new-delta
         :args (s/cat :new-delta ::new-delta)
@@ -39,6 +40,6 @@
 
 
 (defn op-id [{[_ id] :op}] id)
-(defn op-type [{[op] :op}] (assert op) op)
-(defn op-diff [{[_ _ diff] :op}] (assert diff "No diff on this delta") diff)
-(defn op-amt  [{[_ _ amt] :op}] (assert amt "No amt on this delta") amt)
+(defn op-type [{[op] :op}] op)
+(defn op-diff [{[_ _ diff] :op}] (assert diff "Not a :str/ins") diff)
+(defn op-amt  [{[_ _ amt] :op}] (assert amt "Not :str/rem") amt)

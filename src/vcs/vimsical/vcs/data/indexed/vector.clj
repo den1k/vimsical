@@ -156,7 +156,8 @@
 
   clojure.lang.IPersistentVector
   (assocN [_ i val]
-    (assert (= i (count v)))
+    (when-not (= i (count v))
+      (throw (ex-info "assocN not appending?" {:i i :val val :v v :index index})))
     (let [val-key (f val)
           index'  (update index val-key
                           (fn [prev-i?]

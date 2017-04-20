@@ -2,7 +2,7 @@
   (:require [clojure.spec :as s]
             [vimsical.vcs.data.splittable :as splittable]
             [vimsical.vcs.branch :as branch]
-            [vimsical.vcs.data.indexed.vector :as indexed.vector]
+            [vimsical.vcs.data.indexed.vector :as indexed]
             [vimsical.vcs.state.branches :as delta-index]))
 
 ;; * Internal
@@ -108,7 +108,7 @@
 (s/fdef inline
         :args (s/cat :delta-index ::delta-index/delta-index
                      :branches (s/every ::branch/branch))
-        :ret  ::indexed.vector/indexed-vector)
+        :ret  ::indexed/vector)
 
 ;; NOTE do a post-traversal of the branch-tree, inlining children in their
 ;; relative desc order (so inserting an earlier branch doesn't require keeping

@@ -38,10 +38,8 @@
 (extend-type clojure.lang.IPersistentVector
   Splittable
   (split [v idx]
-    (println {:split {:v v :idx idx}})
     [(subvec v 0 idx) (subvec v idx)])
   (omit [v idx cnt]
-    (println {:omit {:v v :idx idx :cnt cnt :res (into (subvec v 0 idx) (subvec v (+ (long cnt) (long idx))))}})
     (into (subvec v 0 idx) (subvec v (+ (long cnt) (long idx)))))
 
   Mergeable
@@ -56,10 +54,7 @@
 (extend-type clojure.core.rrb_vector.rrbt.Vector
   Splittable
   (split [v idx]
-    (try
-      [(rrb/subvec v 0 idx) (rrb/subvec v idx)]
-      (catch Throwable t
-        (println {:split {:v v :idx idx :e t}}))))
+    [(rrb/subvec v 0 idx) (rrb/subvec v idx)])
   (omit [v idx cnt]
     (rrb/catvec (rrb/subvec v 0 idx) (rrb/subvec v (+ (long cnt) (long idx)))))
 
@@ -89,10 +84,9 @@
 (s/fdef split
         :args (s/and
                (s/cat :this ::splittable :idx nat-int?)
-               ::idx-in-bounds))
+               ::idx-at-bounds))
 
 (s/fdef splice
         :args (s/and
                (s/cat :this ::mergeable :idx nat-int? :other ::mergeable)
                ::idx-at-bounds))
-(omit [1 2 3] 0 1)

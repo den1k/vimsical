@@ -6,7 +6,7 @@
    [vimsical.vcs.op :as op]
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.edit-event :as edit-event]
-   [vimsical.vcs.state.editor :as editor]
+   [vimsical.vcs.state.files :as files]
    [diffit.vec :as diffit]))
 
 
@@ -108,7 +108,7 @@
      cat)))
 
 
-(defn- splice-edit-events-xf [] (comp (map editor/splice-edit-event) cat))
+(defn- splice-edit-events-xf [] (comp (map #'files/splice-edit-event) cat))
 
 
 ;; * String diff to edit events
@@ -184,17 +184,17 @@
             (if (vector? splice-or-str)
               (splice-edit-events-xf)
               (map identity)))]
-    (move-to-next-events
-     (::edit-events
-      (reduce
-       (fn [{::keys [s edit-events] :as acc} splice-or-str]
-         (let [s' (if (vector? splice-or-str) (first splice-or-str) splice-or-str)
-               xf (comp
-                   (splice-xf splice-or-str)
-                   (move-past-edit-events-xf)
-                   )]
-           (if (nil? acc)
-             {::s s' ::edit-events []}
-             {::s s' ::edit-events
-              (transduce  xf conj edit-events (diff->edit-events s s'))})))
-       nil splices-and-strs)))))
+    (do #_move-to-next-events
+        (::edit-events
+         (reduce
+          (fn [{::keys [s edit-events] :as acc} splice-or-str]
+            (let [s' (if (vector? splice-or-str) (first splice-or-str) splice-or-str)
+                  xf (comp
+                      (splice-xf splice-or-str)
+                      ;; (move-past-edit-events-xf)
+                      )]
+              (if (nil? acc)
+                {::s s' ::edit-events []}
+                {::s s' ::edit-events
+                 (transduce  xf conj edit-events (diff->edit-events s s'))})))
+          nil splices-and-strs)))))

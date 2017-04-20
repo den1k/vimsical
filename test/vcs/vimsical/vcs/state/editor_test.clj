@@ -13,7 +13,7 @@
    [vimsical.vcs.data.gen.diff :as diff]))
 
 
-(st/instrument)
+(st/unstrument)
 
 (def branch-id (uuid :<branch>))
 (def file-id (uuid :<file>))
@@ -24,7 +24,7 @@
    ::sut/delta-id     nil})
 
 (defn test-pad-fn [_] 1)
-(defn test-uuid-fn [{::edit-event/keys [op idx]}] (uuid [op idx]))
+(defn test-uuid-fn [e] (uuid))
 (defn test-timestamp-fn [_] 123)
 
 (def test-effects
@@ -39,22 +39,47 @@
 (def get-string-for-latest-delta-id (comp ::files/string get-state-for-latest-delta-id))
 
 (deftest edit-events->deltas-test
-  (is= "foo"
-       (get-string-for-latest-delta-id
-        (sut/edit-events->deltas
-         files/empty-states
-         test-state
-         test-effects
-         [#:vimsical.vcs.edit-event{:op :str/ins, :idx 0, :diff "foo"}])
-        test-state))
-  (is= "xyz"
-       (get-string-for-latest-delta-id
-        (sut/edit-events->deltas
-         files/empty-states
-         test-state
-         test-effects
-         (diff/diffs->edit-events "" "abc" "xyz"))
-        test-state)))
+  ;; (testing "Simple insert"
+  ;;   (is= "abc"
+  ;;        (get-string-for-latest-delta-id
+  ;;         (sut/edit-events->deltas
+  ;;          files/empty-states
+  ;;          test-state
+  ;;          test-effects
+  ;;          [#:vimsical.vcs.edit-event{:op :str/ins, :idx 0, :diff "a"}
+  ;;           #:vimsical.vcs.edit-event{:op :str/ins, :idx 1, :diff "b"}
+  ;;           #:vimsical.vcs.edit-event{:op :str/ins, :idx 2, :diff "c"}])
+  ;;         test-state)))
+  ;; (testing "Splicing insert"
+  ;;   (is= "abc"
+  ;;        (get-string-for-latest-delta-id
+  ;;         (sut/edit-events->deltas
+  ;;          files/empty-states
+  ;;          test-state
+  ;;          test-effects
+  ;;          [#:vimsical.vcs.edit-event{:op :str/ins, :idx 0, :diff "abc"}])
+  ;;         test-state)))
+
+  (testing "Delete"
+    (is= ""
+         (get-string-for-latest-delta-id
+          (sut/edit-events->deltas
+           files/empty-states
+           test-state
+           test-effects
+           (diff/diffs->edit-events "" "abc" "ab" ;; "azb"
+                                    ))
+          test-state)))
+
+  ;; (is= "xyz"
+  ;;      (get-string-for-latest-delta-id
+  ;;       (sut/edit-events->deltas
+  ;;        files/empty-states
+  ;;        test-state
+  ;;        test-effects
+  ;;        (diff/diffs->edit-events "" "abc" "axyz"))
+  ;;       test-state))
+  )
 
 
 (comment

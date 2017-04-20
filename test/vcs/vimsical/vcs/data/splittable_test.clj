@@ -167,8 +167,7 @@
           (splice! (append! a b2) idx b1)
           (splice! (append! a b2) idx (append! b11 b12))
           (splice! (omit! coll idx cnt) idx b1)
-          (splice! (omit! coll idx cnt) idx (append! b11 b12))
-          )))))
+          (splice! (omit! coll idx cnt) idx (append! b11 b12)))))))
 
 ;; * Tests
 
