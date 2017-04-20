@@ -52,3 +52,31 @@
   "Useful for mouse-events to find out if mouse left component."
   [v e]
   (view-contains? v (.-relatedTarget e)))
+
+;;
+;; * UI Actions
+;;
+
+(defn unfocus []
+  (if-let [sel (.getSelection js/document)]
+    (.empty sel)
+    (.. js/window getSelection removeAllRanges)))
+
+(defn blur []
+  (when-let [el (.-activeElement js/document)]
+    (.blur el)))
+
+(defn clear-active-element []
+  (some-> (.-activeElement js/document)
+          (set-inner-html! "")))
+
+;;
+;; * Key Handlers
+;;
+
+(defn e->key [e]
+  (util/lisp-case-keyword (.-key e)))
+
+(defn handle-key [e key->fn]
+  (when-let [f (-> e e->key key->fn)]
+    (f)))
