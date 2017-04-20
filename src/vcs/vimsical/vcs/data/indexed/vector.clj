@@ -115,7 +115,6 @@
   (print-method (impl/-normalize (.m m) (.offset m)) w))
 
 
-
 ;; * Impl
 
 (defn ^:declared vector ([]) ([v]) ([f index v]))
@@ -164,7 +163,6 @@
                             (if (some? prev-i?)
                               (throw (ex-info "index already assigned" {:i i}))
                               i)))
-          _ (println "assocN" {:i i :cnt (count v)})
           v'      (conj v val)]
       (vector f index' v')))
 
