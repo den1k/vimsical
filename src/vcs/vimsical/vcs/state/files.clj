@@ -1,4 +1,5 @@
 (ns vimsical.vcs.state.files
+  "TODO track cursor position"
   (:require
    [clojure.spec :as s]
    [vimsical.vcs.data.splittable :as splittable]
@@ -30,16 +31,34 @@
 ;; * Internal
 ;; ** Helpers
 
-;; TODO DRY updates so we can more easily switch the underlying data structures
+;; XXX This op is hacky because it reuses the format of the delta/op but with
+;; indexes instead of uuid, this datatype is not valid anywhere else in the vcs
+;; and is only meant to be used internally
+(defmulti ^:private update-state-op-spec first)
+(defmethod update-state-op-spec :str/ins [_] (s/tuple #{:str/ins} nat-int? string?))
+(defmethod update-state-op-spec :str/rem [_] (s/tuple #{:str/rem} nat-int? pos-int?))
+(s/def ::update-op (s/multi-spec update-state-op-spec first))
 
-;; (s/fdef update-state
-;;         :args (s/cat :state ::state :op ::delta/op))
+(s/fdef update-state
+        :args (s/cat :state ::state :op ::update-op :delta ::delta/delta)
+        :ret ::state)
 
-;; (defmulti update-state
-;;   (fn [state [op-type]] op-type))
+(defmulti ^:private update-state
+  (fn [state [op-type] delta] op-type))
 
+(defmethod update-state :str/ins
+  [state  [_ idx diff] {:keys [prev-id] :as delta}]
+  (if (nil? prev-id)
+    (assoc state ::deltas (indexed/vec-by :id [delta]) ::string diff)
+    (-> state
+        (update ::deltas splittable/splice idx (indexed/vec-by :id [delta]))
+        (update ::string splittable/splice idx diff))))
 
-;; ** Player API Internals -- adding existing deltas
+(defmethod update-state :str/rem
+  [state  [_ idx amt] _]
+  (-> state
+      (update ::deltas splittable/omit idx amt)
+      (update ::string splittable/omit idx amt)))
 
 (s/fdef op-id->op-idx
         :args (s/cat :state ::state :op-id ::delta/prev-id)
@@ -57,6 +76,20 @@
       (throw
        (ex-info "Id not found" {:op-id op-id :deltas deltas}))))
 
+
+(s/fdef op-idx->op-id
+        :args (s/cat :state ::state :op-idx ::idx)
+        :ret ::delta/prev-id)
+
+(defn- op-idx->op-id
+  [{::keys [deltas] :as state} op-idx]
+  (let [idx (dec op-idx)]
+    (when (<= 0 idx)
+      (:id (nth deltas idx)))))
+
+
+;; ** Player API Internals -- adding existing deltas
+
 (s/fdef add-delta-rf
         :args (s/cat :state ::state :delta ::delta/delta)
         :ret  ::state)
@@ -69,29 +102,21 @@
 
 (defmethod add-delta-rf :str/ins
   [state {:keys [id prev-id] :as delta}]
-  (if (nil? prev-id)
-    (assoc state
-           ::deltas (indexed/vec-by :id [delta])
-           ::string (delta/op-diff delta))
-    (let [op-id      (delta/op-id delta)
-          op-diff    (delta/op-diff delta)
-          op-idx     (op-id->op-idx state op-id)
-          ;; TODO document that the idx position is like a caret that sits left
-          ;; of the character while still pointing "at it". In order to insert at
-          ;; that character we need to 'skip' over it.
-          op-idx-ins (inc op-idx)]
-      (-> state
-          (update ::deltas splittable/splice op-idx-ins (indexed/vec-by :id [delta]))
-          (update ::string splittable/splice op-idx-ins op-diff)))))
+  (let [op-id      (delta/op-id delta)
+        op-diff    (delta/op-diff delta)
+        op-idx     (op-id->op-idx state op-id)
+        ;; TODO document that the idx position is like a caret that sits left
+        ;; of the character while still pointing "at it". In order to insert at
+        ;; that character we need to 'skip' over it.
+        op-idx-ins (inc op-idx)]
+    (update-state state [:str/ins op-idx-ins op-diff] delta)))
 
 (defmethod add-delta-rf :str/rem
   [{::keys [deltas string] :as state} delta]
   (let [op-id      (delta/op-id delta)
         op-amt     (delta/op-amt delta)
         op-idx     (op-id->op-idx state op-id)]
-    (-> state
-        (update ::deltas splittable/omit op-idx op-amt)
-        (update ::string splittable/omit op-idx op-amt))))
+    (update-state state [:str/rem op-idx op-amt] delta)))
 
 
 ;; ** Editor API internals -- adding edit-events
@@ -125,24 +150,6 @@
    ;; starting from the right, so that the indexes of the previous characters
    ;; don't change
    (reverse (range idx (+ amt idx)))))
-
-(s/fdef op-idx->op-id
-        :args (s/cat :state ::state :op-idx ::idx)
-        :ret ::delta/prev-id)
-
-(defn- op-idx->op-id
-  [{::keys [deltas] :as state} op-idx]
-  (let [idx (dec op-idx)]
-    (try
-      (println {:idx idx :deltas (count deltas)})
-      (when (<= 0 idx)
-        (:id (nth deltas idx)))
-      (catch Throwable t
-        ;; (throw
-        ;;  (ex-info
-        ;;   "op-idx->op-id: Index not found"
-        ;;   {:op-idx op-idx :detlas deltas}))
-        ))))
 
 (s/def ::uuid-fn ifn?)
 (s/def ::pad-fn ifn?)
@@ -187,13 +194,7 @@
                           :op        op
                           :pad       pad
                           :timestamp timestamp})
-           state'       (if (nil? current-delta-id)
-                          (assoc state
-                                 ::deltas (indexed/vec-by :id [delta])
-                                 ::string diff)
-                          (-> state
-                              (update ::deltas splittable/splice idx (indexed/vec-by :id [delta]))
-                              (update ::string splittable/splice idx diff)))]
+           state'       (update-state state [:str/ins idx diff] delta)]
        [state' new-delta-id]))
    ;; Start with the delta-id provided by the `editor-state` as the current id,
    ;; then for each spliced event, ensure that we return the newly created delta-id
@@ -220,9 +221,7 @@
                           :op        op
                           :pad       pad
                           :timestamp timestamp})
-           state'       (-> state
-                            (update ::deltas splittable/omit idx amt)
-                            (update ::string splittable/omit idx amt))]
+           state'       (update-state state [:str/rem idx amt] delta)]
        [state' new-delta-id]))
    [state delta-id] (splice-edit-event edit-event)))
 
