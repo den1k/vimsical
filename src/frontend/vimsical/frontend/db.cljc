@@ -19,21 +19,16 @@
 (re-frame/reg-sub-raw :q sg/pull)
 (re-frame/reg-sub-raw :q* sg/pull-link)
 
-(let [state {:app/user
-                               {:db/id           1
+(let [state {:app/user         {:db/id           1
                                 :user/first-name "Jane"
                                 :user/last-name  "Applecrust"
                                 :user/email      "kalavox@gmail.com"
-                                :user/vimsae     [{:db/id               10
-                                                   :vims/author         [:db/id 1]
-                                                   :vims/title          "NLP Chatbot running on React Fiber"
-                                                   :vims/current-branch {:db/id        100
-                                                                         :branch/title "Master"}}
-                                                  {:db/id               20
-                                                   :vims/author         [:db/id 1]
-                                                   :vims/title          "CatPhotoApp"
-                                                   :vims/current-branch {:db/id        200
-                                                                         :branch/title "Master"}}]}
+                                :user/vimsae     [{:db/id       10
+                                                   :vims/author [:db/id 1]
+                                                   :vims/title  "NLP Chatbot running on React Fiber"}
+                                                  {:db/id       20
+                                                   :vims/author [:db/id 1]
+                                                   :vims/title  "CatPhotoApp"}]}
              :app/quick-search {:db/id              5
                                 :quick-search/show? true}}]
   (def default-db

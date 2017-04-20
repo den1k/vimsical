@@ -123,8 +123,7 @@
           {:class (when-not @show-info? "pan-out")}
           [:div.header
            [user/avatar
-            {:img-url person-url
-             :size    "50px"}]
+            {:img-url person-url}]
            [:div.title-and-creator
             [:div.title.truncate "Pinterest CSS Layout And so much more"]
             [:div.creator.truncate "Jane Blacksmith"]]]
