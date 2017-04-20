@@ -32,24 +32,30 @@
                         ::sut/timestamp-fn test-timestamp-fn}
           string= (fn [expected [states current-delta-id]]
                     (is= expected (sut/get-file-string states current-delta-id file-id)))]
-      (testing "Simple insert"
+      (testing "Spliced insert"
         (string= "abc"
                  (sut/add-edit-events
                   sut/empty-states test-state test-effects
-                  [#:vimsical.vcs.edit-event{:op :str/ins, :idx 0, :diff "a"}
-                   #:vimsical.vcs.edit-event{:op :str/ins, :idx 1, :diff "b"}
-                   #:vimsical.vcs.edit-event{:op :str/ins, :idx 2, :diff "c"}])))
-      (testing "Splicing insert"
+                  (diff/diffs->edit-events "" ["abc"]))))
+      (testing "Unspliced insert"
         (string= "abc"
                  (sut/add-edit-events
                   sut/empty-states test-state test-effects
-                  [#:vimsical.vcs.edit-event{:op :str/ins, :idx 0, :diff "abc"}])))
-
-      (testing "Delete"
-        (string= "ac"
+                  (diff/diffs->edit-events "" "abc"))))
+      (testing "Spliced Delete"
+        (string= "a"
                  (sut/add-edit-events
                   sut/empty-states test-state test-effects
-                  (diff/diffs->edit-events "" "abc" "ac")))
+                  (diff/diffs->edit-events "" ["abc"] ["a"])))
+        (string= "xyz"
+                 (sut/add-edit-events
+                  sut/empty-states test-state test-effects
+                  (diff/diffs->edit-events "" ["abc"] ["xyz"]))))
+      (testing "Unspliced Delete"
+        (string= "a"
+                 (sut/add-edit-events
+                  sut/empty-states test-state test-effects
+                  (diff/diffs->edit-events "" "abc" "a")))
         (string= "xyz"
                  (sut/add-edit-events
                   sut/empty-states test-state test-effects

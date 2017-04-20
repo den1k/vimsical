@@ -22,7 +22,7 @@
 
 ;; ** Files' states by delta id
 
-(s/def ::states (s/map-of ::delta/id (s/map-of ::file/id ::state)))
+(s/def ::states (s/map-of ::delta-id (s/map-of ::file/id ::state)))
 
 (def empty-states {})
 
@@ -152,7 +152,7 @@
 (s/def ::file-id ::file/id)
 (s/def ::branch-id ::branch/id)
 (s/def ::editor-state (s/keys :req [::delta-id ::file-id ::branch-id]))
-(s/def ::current-delta-id ::delta/id)   ; can't be nil
+(s/def ::current-delta-id ::delta-id)
 (s/def ::add-edit-event-rf-ret-state (s/tuple ::state ::current-delta-id))
 
 (s/fdef add-edit-event-rf
@@ -204,7 +204,6 @@
    {:as editor-state ::keys [file-id branch-id delta-id]}
    {:as editor-effects ::keys [pad-fn uuid-fn timestamp-fn]}
    edit-event]
-  #dbg
   (reduce
    (fn add-edit-event-rf-str-rem-rf
      [[state current-delta-id] {:as edit-event ::edit-event/keys [idx amt]}]
@@ -240,7 +239,7 @@
 ;; ** File(s) state -- retrieve the state of file(s) at a specific delta id
 
 (s/fdef get-file-state
-        :args (s/cat :states ::states :delta-id ::delta/id :file-id ::file/id)
+        :args (s/cat :states ::states :delta-id ::delta-id :file-id ::file/id)
         :ret ::state)
 
 (defn get-file-state
@@ -248,7 +247,7 @@
   (get-in states [delta-id file-id]))
 
 (s/fdef get-file-deltas
-        :args (s/cat :states ::states :delta-id ::delta/id :file-id ::file/id)
+        :args (s/cat :states ::states :delta-id ::delta-id :file-id ::file/id)
         :ret ::deltas)
 
 (defn get-file-deltas
@@ -256,7 +255,7 @@
   (get-in states [delta-id file-id ::deltas]))
 
 (s/fdef get-file-string
-        :args (s/cat :states ::states :delta-id ::delta/id :file-id ::file/id)
+        :args (s/cat :states ::states :delta-id ::delta-id :file-id ::file/id)
         :ret ::string)
 
 (defn get-file-string
@@ -264,7 +263,7 @@
   (get-in states [delta-id file-id ::string]))
 
 (s/fdef get-files-states
-        :args (s/cat :states ::states :delta-id ::delta/id)
+        :args (s/cat :states ::states :delta-id ::delta-id)
         :ret  (s/map-of ::file/id ::state))
 
 (defn get-files-states
@@ -272,7 +271,7 @@
   (get states delta-id))
 
 (s/fdef get-files-deltas
-        :args (s/cat :states ::states :delta-id ::delta/id)
+        :args (s/cat :states ::states :delta-id ::delta-id)
         :ret  (s/map-of ::file/id ::deltas))
 
 (defn get-files-deltas
@@ -283,7 +282,7 @@
    {} (get states delta-id)))
 
 (s/fdef get-files-strings
-        :args (s/cat :states ::states :delta-id ::delta/id)
+        :args (s/cat :states ::states :delta-id ::delta-id)
         :ret  (s/map-of ::file/id ::string))
 
 (defn get-files-strings
