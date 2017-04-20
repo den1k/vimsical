@@ -23,7 +23,9 @@
      ["test/backend" "test/frontend" "test/vcs" "test/common"]
      :dependencies
      [[org.clojure/test.check "0.9.0"]
-      [orchestra              "0.2.0"]]}]
+      [orchestra              "0.2.0"]]
+     :global-vars
+     {*warn-on-reflection* false}}]
 
    :uberjar
    {:aot          :all

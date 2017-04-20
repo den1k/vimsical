@@ -17,8 +17,7 @@
 
 ;; * Edit events tests
 
-
-(deftest edit-events->deltas-test
+(deftest add-edit-events-test
   (letfn [(test-pad-fn [_] 1)
           (test-uuid-fn [e] (uuid))
           (test-timestamp-fn [_] 123)]

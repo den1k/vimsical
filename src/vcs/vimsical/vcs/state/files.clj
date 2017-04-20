@@ -163,7 +163,7 @@
 (s/def ::add-edit-event-rf-ret-state (s/tuple ::state ::current-delta-id))
 
 (s/fdef add-edit-event-rf
-        :args (s/cat :state ::add-edit-event-rf-arg-state
+        :args (s/cat :state ::state
                      :editor-state ::editor-state
                      :editor-effects ::editor-effects
                      :edit-event ::edit-event/edit-event)
