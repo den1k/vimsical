@@ -171,7 +171,7 @@
 
 ;; * Tests
 
-(def num-tests 2000)
+(def num-tests 200)
 
 (tc/defspec split-merge-string num-tests (split-and-append-prop gen/string))
 (tc/defspec split-merge-vec num-tests (split-and-append-prop (gen/vector gen/int)))

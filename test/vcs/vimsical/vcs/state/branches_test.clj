@@ -12,7 +12,7 @@
 
 (deftest add-deltas-test
   (let [expected    examples/delta-index
-        batches     (split-at examples/deltas (rand-int (count examples/deltas)))
+        batches     (split-at (rand-int (count examples/deltas)) examples/deltas)
         actual      (reduce sut/add-deltas (sut/new-delta-index) batches)]
     (is= expected actual)))
 

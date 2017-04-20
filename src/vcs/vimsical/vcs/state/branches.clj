@@ -7,7 +7,7 @@
 
 ;; * Spec
 
-(defn sorted-index?
+(defn index-sorted?
   [index]
   (boolean
    (reduce
@@ -17,7 +17,7 @@
     (seq index))))
 
 (s/def ::deltas (s/every ::delta/delta))
-(s/def ::index (s/and ::indexed/indexed-vector ::deltas sorted-index?))
+(s/def ::index (s/and ::indexed/vector ::deltas index-sorted?))
 (s/def ::delta-index (s/map-of :db/id ::index))
 
 
@@ -67,7 +67,7 @@
 (s/fdef index-of
         :args
         (s/or :delta  (s/cat :delta-index ::delta-index :delta ::delta/delta)
-              :params (s/cat :delta-index ::delta-index :branch-id :db/id :delta-id ::delta/id))
+              :params (s/cat :delta-index ::delta-index :branch-id ::branch/id :delta-id ::delta/id))
         :ret  (s/nilable number?))
 
 (defn index-of
