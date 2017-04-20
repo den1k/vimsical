@@ -89,6 +89,7 @@
       ;; Needed for to compile CLJS
       [com.google.guava/guava "21.0"]
       [cljsjs/google-diff-match-patch "20121119-1"]
+      ;; Our mapgraph fork. Must be be symlinked in checkouts.
       [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT"]
       [reagent "0.6.1"]
       [re-frame "0.9.2"]
@@ -102,7 +103,13 @@
      :dependencies
      [[com.cemerick/piggieback "0.2.2-SNAPSHOT"]
       [figwheel-sidecar "0.5.10"]
-      [binaryage/devtools "0.8.3"]]
+      [re-frisk "0.4.4"]
+      ;; needed as a dep for re-frame.trace
+      [binaryage/devtools "0.8.3"]
+      ;; re-frame.trace - clone and install to use
+      ;; https://github.com/Day8/re-frame-trace
+      [day8.re-frame/abra "0.0.9-SNAPSHOT"]
+      [org.clojure/tools.nrepl "0.2.13"]]
      :source-paths
      ["dev/frontend"]
      :repl-options
@@ -113,7 +120,7 @@
    :frontend-test
    [:test :frontend :vcs :common
     {:source-paths
-     ["test/frontend" "test/vcs" "test/common"]
+              ["test/frontend" "test/vcs" "test/common"]
      :plugins [[lein-doo "0.1.7"]]}]
 
    ;;
@@ -127,14 +134,14 @@
                    [ns-tracker "0.3.0"]]
     :prep-tasks   [["garden" "once"]]
     :garden
-    {:builds
-     [{:id           "dev-styles"
-       :source-paths ["src/frontend" "src/common"]
-       :stylesheet   vimsical.frontend.styles.core/styles
-       :compiler     {:output-to     "resources/public/css/app.css"
-                      :vendors       ["webkit" "moz"]
-                      :auto-prefix   #{:user-select}
-                      :pretty-print? true}}]}}
+                  {:builds
+                   [{:id           "dev-styles"
+                     :source-paths ["src/frontend" "src/common"]
+                     :stylesheet   vimsical.frontend.styles.core/styles
+                     :compiler     {:output-to     "resources/public/css/app.css"
+                                    :vendors       ["webkit" "moz"]
+                                    :auto-prefix   #{:user-select}
+                                    :pretty-print? true}}]}}
 
    ;;
    ;; Cljs
@@ -171,12 +178,16 @@
                       ;; This is helpful for keeping source maps up to date when
                       ;; live reloading code.
                       :source-map-timestamp true
-                      :preloads             [devtools.preload]
+                      :closure-defines      {goog.DEBUG                          true
+                                             re_frame.trace.trace_enabled_QMARK_ true}
+                      :preloads             [devtools.preload
+                                             day8.re-frame.trace.preload]
+
                       :external-config      {:devtools/config
                                              {:features-to-install :all
                                               :fn-symbol           "λ"}}}}
       {:id           "test"
-       :source-paths ["checkouts/mapgraph/src" "src/frontend"  "src/common"  "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
+       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
        :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
                       :output-dir     "resources/public/js/compiled/out-test"
                       :main           vimsical.runner
@@ -184,7 +195,7 @@
                       :optimizations  :none
                       :parallel-build true}}
       {:id           "test-advanced"
-       :source-paths ["checkouts/mapgraph/src" "src/frontend"  "src/common"  "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
+       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
        :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
                       :output-dir     "resources/public/js/compiled/out-test-advanced"
                       :main           vimsical.runner
