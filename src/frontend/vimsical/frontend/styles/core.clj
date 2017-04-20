@@ -7,7 +7,8 @@
             [vimsical.frontend.nav.style :refer [nav]]
             [vimsical.frontend.player.style :refer [player]]
             [vimsical.frontend.views.style :refer [views]]
-            [vimsical.frontend.styles.text :refer [text]]))
+            [vimsical.frontend.styles.text :refer [text]]
+            [vimsical.frontend.quick-search.style :refer [quick-search]]))
 
 (def styles
   "Read by garden. See config in project.clj"
@@ -15,10 +16,13 @@
    nav
    vcr
 
+   quick-search
+
    ;; generic views
    views
 
    player
 
+   ;; typography
    text
    ])
