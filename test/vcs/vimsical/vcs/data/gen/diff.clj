@@ -184,16 +184,17 @@
             (if (vector? splice-or-str)
               (splice-edit-events-xf)
               (map identity)))]
-    (move-to-next-events
-     (::edit-events
-      (reduce
-       (fn [{::keys [s edit-events] :as acc} splice-or-str]
-         (let [s' (if (vector? splice-or-str) (first splice-or-str) splice-or-str)
-               xf (comp
-                   (splice-xf splice-or-str)
-                   (move-past-edit-events-xf))]
-           (if (nil? acc)
-             {::s s' ::edit-events []}
-             {::s s' ::edit-events
-              (transduce  xf conj edit-events (diff->edit-events s s'))})))
-       nil splices-and-strs)))))
+    (vec
+     (move-to-next-events
+      (::edit-events
+       (reduce
+        (fn [{::keys [s edit-events] :as acc} splice-or-str]
+          (let [s' (if (vector? splice-or-str) (first splice-or-str) splice-or-str)
+                xf (comp
+                    (splice-xf splice-or-str)
+                    (move-past-edit-events-xf))]
+            (if (nil? acc)
+              {::s s' ::edit-events []}
+              {::s s' ::edit-events
+               (transduce  xf conj edit-events (diff->edit-events s s'))})))
+        nil splices-and-strs))))))

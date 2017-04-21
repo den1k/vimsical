@@ -14,11 +14,14 @@
 ;; ** Singe file state
 
 (s/def ::idx nat-int?)
+(s/def ::idx-range (s/tuple ::idx ::idx))
+(s/def ::amt pos-int?)
+(s/def ::cursor (s/or :idx ::idx :range ::idx-range))
 (s/def ::deltas (s/and ::indexed/vector (s/every ::delta/delta)))
 (s/def ::string string?)
 (s/def ::state (s/keys :req [::deltas ::string]))
 
-(def ^:private empty-state {::deltas (indexed/vector-by :id) ::string ""})
+(def ^:private empty-state {::deltas (indexed/vector-by :id) ::string "" ::cursor 0})
 
 
 ;; ** Files' states by delta id
@@ -35,8 +38,11 @@
 ;; indexes instead of uuid, this datatype is not valid anywhere else in the vcs
 ;; and is only meant to be used internally
 (defmulti ^:private update-state-op-spec first)
-(defmethod update-state-op-spec :str/ins [_] (s/tuple #{:str/ins} nat-int? string?))
-(defmethod update-state-op-spec :str/rem [_] (s/tuple #{:str/rem} nat-int? pos-int?))
+(defmethod update-state-op-spec :str/ins  [_] (s/tuple #{:str/ins} ::idx string?))
+(defmethod update-state-op-spec :str/rem  [_] (s/tuple #{:str/rem} ::idx ::amt))
+(defmethod update-state-op-spec :crsr/mv  [_] (s/tuple #{:crsr/mv} ::idx))
+(defmethod update-state-op-spec :crsr/sel [_] (s/tuple #{:crsr/sel} ::idx-range))
+
 (s/def ::update-op (s/multi-spec update-state-op-spec first))
 
 (s/fdef update-state
@@ -60,6 +66,9 @@
       (update ::deltas splittable/omit idx amt)
       (update ::string splittable/omit idx amt)))
 
+(defmethod update-state :crsr/mv  [state  [_ idx] _]   (assoc state ::cursor idx))
+(defmethod update-state :crsr/sel [state  [_ range] _] (assoc state ::cursor range))
+
 (s/fdef op-id->op-idx
         :args (s/cat :state ::state :op-id ::delta/prev-id)
         :ret  ::idx)
@@ -82,7 +91,7 @@
         :ret ::delta/prev-id)
 
 (defn- op-idx->op-id
-  [{::keys [deltas] :as state} op-idx]
+  [{::keys [deltas] :as state} ^long op-idx]
   (let [idx (dec op-idx)]
     (when (<= 0 idx)
       (:id (nth deltas idx)))))
@@ -98,7 +107,15 @@
   (fn [state delta]
     (-> delta :op first)))
 
-(defmethod add-delta-rf :crsr/mv [state delta] state)
+(defmethod add-delta-rf :crsr/mv [state delta]
+  (let [op-id  (delta/op-id delta)
+        op-idx (op-id->op-idx state op-id)]
+    (update-state state [:crsr/mv op-idx] delta)))
+
+(defmethod add-delta-rf :crsr/sel [state {[_ from-id to-id] :op :as delta}]
+  (let [from-op-idx (op-id->op-idx state from-id)
+        to-op-idx   (op-id->op-idx state to-id)]
+    (update-state state [:crsr/sel [from-op-idx to-op-idx]] delta)))
 
 (defmethod add-delta-rf :str/ins
   [state {:keys [id prev-id] :as delta}]
@@ -150,6 +167,14 @@
    ;; starting from the right, so that the indexes of the previous characters
    ;; don't change
    (reverse (range idx (+ amt idx)))))
+
+(defmethod splice-edit-event :str/rplc
+  [{::edit-event/keys [idx amt diff] :as evt}]
+  (let [evts [{::edit-event/op :str/rem ::edit-event/idx idx ::edit-event/amt amt}
+              {::edit-event/op :str/ins ::edit-event/idx idx ::edit-event/diff diff}]
+        xf   (comp (map splice-edit-event) cat)]
+    (transduce xf conj [] evts)))
+
 
 (s/def ::uuid-fn ifn?)
 (s/def ::pad-fn ifn?)
