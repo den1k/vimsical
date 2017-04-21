@@ -9,7 +9,8 @@
             [reagent.core :as reagent]
             [vimsical.frontend.views.icons :as icons]
             [vimsical.frontend.util.dom :as util.dom]
-            [vimsical.frontend.dev.util :as dev.util]))
+            ;; Can't depend on /dev code in the main build
+            #_[vimsical.frontend.dev.util :as dev.util]))
 
 (defn play-symbol [opts]
   [shapes/triangle
@@ -109,7 +110,7 @@
 
 (defn info-and-editor-container []
   (let [show-info? (reagent/atom true)
-        desc       (dev.util/lorem-ipsum 2)]
+        desc       "" #_ (dev.util/lorem-ipsum 2)]
     (reagent/create-class
      {:render
       (fn [c]

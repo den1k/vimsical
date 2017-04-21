@@ -32,7 +32,7 @@ test-cljs: deps clean
 	lein with-profile +frontend-test,-css doo node test once
 
 test-cljs-advanced: deps clean
-	lein with-profile +dev,+frontend-test,-css doo node test-advanced once
+	lein with-profile +frontend-test,-css doo node test-advanced once
 
 
 # Build
