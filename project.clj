@@ -120,7 +120,7 @@
    :frontend-test
    [:test :frontend :vcs :common
     {:source-paths
-              ["test/frontend" "test/vcs" "test/common"]
+     ["test/frontend" "test/vcs" "test/common"]
      :plugins [[lein-doo "0.1.7"]]}]
 
    ;;
@@ -134,14 +134,14 @@
                    [ns-tracker "0.3.0"]]
     :prep-tasks   [["garden" "once"]]
     :garden
-                  {:builds
-                   [{:id           "dev-styles"
-                     :source-paths ["src/frontend" "src/common"]
-                     :stylesheet   vimsical.frontend.styles.core/styles
-                     :compiler     {:output-to     "resources/public/css/app.css"
-                                    :vendors       ["webkit" "moz"]
-                                    :auto-prefix   #{:user-select}
-                                    :pretty-print? true}}]}}
+    {:builds
+     [{:id           "dev-styles"
+       :source-paths ["src/frontend" "src/common"]
+       :stylesheet   vimsical.frontend.styles.core/styles
+       :compiler     {:output-to     "resources/public/css/app.css"
+                      :vendors       ["webkit" "moz"]
+                      :auto-prefix   #{:user-select}
+                      :pretty-print? true}}]}}
 
    ;;
    ;; Cljs
