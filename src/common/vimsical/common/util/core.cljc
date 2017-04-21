@@ -4,12 +4,12 @@
       [
        (:require
         [clojure.core.async :as a :refer [alt! go-loop]]
-        [clojure.string :as string]
+        [clojure.string :as str]
         [medley.core :as md])]
       :cljs
       [(:require
         [cljs.core.async :as a]
-        [clojure.string :as string]
+        [clojure.string :as str]
         [goog.object :as gobj]
         [medley.core :as md]
         [goog.functions :as gfns]
@@ -244,12 +244,12 @@
 (defn- split-words [s]
   (remove empty?
           (-> s
-              (string/replace #"_|-" " ")
-              (string/replace #"([A-Z])(([A-Z])([a-z0-9]))"
-                              "$1 $2")
-              (string/replace
+              (str/replace #"_|-" " ")
+              (str/replace #"([A-Z])(([A-Z])([a-z0-9]))"
+                           "$1 $2")
+              (str/replace
                #"([a-z])([A-Z])" "$1 $2")
-              (string/split
+              (str/split
                #"[^\w0-9]+"))))
 
 (defn lisp-case
@@ -260,7 +260,7 @@
   [^String s]
   {:pre  [(string? s)]
    :post [(string? %)]}
-  (string/join "-" (map string/lower-case (split-words s))))
+  (str/join "-" (map str/lower-case (split-words s))))
 
 (def lisp-case-keyword
   (comp keyword lisp-case))

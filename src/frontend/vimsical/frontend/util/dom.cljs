@@ -1,7 +1,8 @@
 (ns vimsical.frontend.util.dom
   (:require [goog.dom :as gdom]
             [vimsical.common.util.core :as util]
-            [reagent.core :as reagent])
+            [reagent.core :as reagent]
+            [clojure.string :as str])
   (:refer-clojure :exclude [contains?]))
 
 (defn create
@@ -52,6 +53,12 @@
   "Useful for mouse-events to find out if mouse left component."
   [v e]
   (view-contains? v (.-relatedTarget e)))
+
+(defn open-ext-popup [url & opts]
+  (.open js/window url
+         ;; window name
+         (str (gensym))
+         (str/join ", " (map util/lisp-case opts))))
 
 ;;
 ;; * UI Actions
