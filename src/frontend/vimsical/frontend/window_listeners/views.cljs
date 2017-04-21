@@ -46,10 +46,13 @@
 
 (defn handle-shortcut [e]
   (when-let [shortcut (get-key-combo e)]
-    (.preventDefault e)                 ;; prevent typing
     (case shortcut
-      :option-forwardslash (re-frame/dispatch [::quick-search/toggle])
-      :esc (re-frame/dispatch [::quick-search/close])
+      :option-forwardslash (do
+                             (.preventDefault e) ;; prevent typing
+                             (re-frame/dispatch [::quick-search/toggle]))
+      :esc (do
+             (.preventDefault e)        ;; prevent typing
+             (re-frame/dispatch [::quick-search/close]))
       nil)))
 
 (defn window-listeners []
