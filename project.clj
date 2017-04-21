@@ -86,14 +86,13 @@
      :dependencies
      [[org.clojure/clojurescript "1.9.518"]
       ;; Dependency of Google Closure compiler
-      ;; Needed for to compile CLJS
       [com.google.guava/guava "21.0"]
       [cljsjs/google-diff-match-patch "20121119-1"]
       ;; Our mapgraph fork. Must be be symlinked in checkouts.
-      [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT"]
-      [reagent "0.6.1"]
-      [re-frame "0.9.2"]
-      [re-com "2.0.0"]
+      [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
+      [reagent "0.6.1" :exclusions [org.clojure/clojurescript]]
+      [re-frame "0.9.2" :exclusions [org.clojure/clojurescript]]
+      [re-com "2.0.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
       [thi.ng/color "1.2.0"]]}]
 
    :frontend-dev
@@ -102,13 +101,13 @@
      [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]]
      :dependencies
      [[com.cemerick/piggieback "0.2.2-SNAPSHOT"]
-      [figwheel-sidecar "0.5.10"]
-      [re-frisk "0.4.4"]
+      [figwheel-sidecar "0.5.10" :exclusions [org.clojure/clojurescript]]
+      [re-frisk "0.4.4" :exclusions [re-frame org.clojure/clojurescript]]
       ;; needed as a dep for re-frame.trace
       [binaryage/devtools "0.8.3"]
       ;; re-frame.trace - clone and install to use
       ;; https://github.com/Day8/re-frame-trace
-      [day8.re-frame/abra "0.0.9-SNAPSHOT"]
+      [day8.re-frame/abra "0.0.9-SNAPSHOT" :exclusions [re-frame reagent org.clojure/clojurescript]]
       [org.clojure/tools.nrepl "0.2.13"]]
      :source-paths
      ["dev/frontend"]
