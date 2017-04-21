@@ -22,4 +22,4 @@ infra/.env.sh
 /resources/public/js/compiled
 /.nrepl-port
 /figwheel_server.log
-
+/checkouts
