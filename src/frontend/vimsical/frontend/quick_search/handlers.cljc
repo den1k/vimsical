@@ -4,17 +4,17 @@
 
 (re-frame/reg-event-ctx
  ::clear-console
- (fn [& args]
+ (fn [_]
    #?(:cljs (js/console.clear))))
 
 (re-frame/reg-event-db
- ::toggle
- (fn [db _]
-   (let [link (:app/quick-search db)]
-     (update-in db [link :quick-search/show?] not))))
+  ::toggle
+  (fn [db _]
+    (let [link (:app/quick-search db)]
+      (update-in db [link :quick-search/show?] not))))
 
 (re-frame/reg-event-db
- ::close
- (fn [db _]
-   (let [link (:app/quick-search db)]
-     (assoc-in db [link :quick-search/show?] false))))
+  ::close
+  (fn [db _]
+    (let [link (:app/quick-search db)]
+      (assoc-in db [link :quick-search/show?] false))))

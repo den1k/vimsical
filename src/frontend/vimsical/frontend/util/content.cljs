@@ -1,4 +1,4 @@
-(ns vimsical.frontend.dev.util
+(ns vimsical.frontend.util.content
   (:require [clojure.string :as string]))
 
 (def lorem-ipsum-text
