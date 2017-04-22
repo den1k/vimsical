@@ -11,6 +11,8 @@
    [vimsical.frontend.util.search :as util.search]))
 
 (def commands
+  "Map of command keywords -> map of :title and :dispatch vector. Optionally
+  takes a :close? value which defaults to true (see dispatch-result)."
   (let [defaults
         {["new" "new vims"] {:title "New Vims"} ;; todo dispatch
 
@@ -46,8 +48,10 @@
    (dispatch-result st (:result-idx st)))
   ([st idx]
    (let [{:keys [results]} st
-         dispatch-val (-> st :results (get idx) :dispatch)]
-     (re-frame/dispatch dispatch-val))))
+         {:keys [dispatch close?]
+          :or   {close? true}} (get results idx)] ;; close by default
+     (re-frame/dispatch dispatch)
+     (when close? (re-frame/dispatch [::handlers/close])))))
 
 (defn handle-key
   [state e]
