@@ -66,27 +66,30 @@
   (append [v other]
     (rrb/catvec v other)))
 
+(s/def ::idx nat-int?)
 (s/def ::splittable (fn [x] (and x (satisfies? Splittable x))))
 (s/def ::mergeable (fn [x] (and x (satisfies? Mergeable x))))
 
 (s/def ::cnt-and-idx-in-bounds
   (fn [{:keys [this idx cnt]}]
-    (< (+ cnt idx) (count this))))
+    (and (nat-int? idx)
+         (pos-int? cnt)
+         (< (+ cnt idx) (count this)))))
 
 (s/def ::idx-in-bounds
   (fn [{:keys [this idx]}]
-    (or (zero? idx) (< idx (count this)))))
+    (and (nat-int? idx) (or (zero? idx) (< idx (count this))))))
 
 (s/def ::idx-at-bounds
   (fn [{:keys [this idx]}]
-    (<= 0 idx (count this))))
+    (and (nat-int? idx) (<= 0 idx (count this)))))
 
 (s/fdef split
         :args (s/and
-               (s/cat :this ::splittable :idx nat-int?)
+               (s/cat :this ::splittable :idx ::idx)
                ::idx-at-bounds))
 
 (s/fdef splice
         :args (s/and
-               (s/cat :this ::mergeable :idx nat-int? :other ::mergeable)
+               (s/cat :this ::mergeable :idx ::idx :other ::mergeable)
                ::idx-at-bounds))
