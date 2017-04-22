@@ -2,13 +2,12 @@
   "TODO track cursor position"
   (:require
    [clojure.spec :as s]
-   [vimsical.vcs.data.splittable :as splittable]
+   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.data.indexed.vector :as indexed]
-   [vimsical.vcs.edit-event :as edit-event]
+   [vimsical.vcs.data.splittable :as splittable]
    [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.file :as file]
-   [vimsical.vcs.branch :as branch]))
-
+   [vimsical.vcs.edit-event :as edit-event]
+   [vimsical.vcs.file :as file]))
 
 ;; * Spec
 ;; ** Singe file state
@@ -16,10 +15,10 @@
 (s/def ::idx nat-int?)
 (s/def ::idx-range (s/tuple ::idx ::idx))
 (s/def ::amt pos-int?)
-(s/def ::cursor (s/or :idx ::idx :range ::idx-range))
-(s/def ::deltas (s/and ::indexed/vector (s/every ::delta/delta)))
+(s/def ::cursor (s/or :idx ::idx :idx-range ::idx-range))
+(s/def ::deltas (s/and (s/every ::delta/delta) ::indexed/vector))
 (s/def ::string string?)
-(s/def ::state (s/keys :req [::deltas ::string]))
+(s/def ::state (s/keys :req [::deltas ::string ::cursor]))
 
 (def ^:private empty-state {::deltas (indexed/vector-by :id) ::string "" ::cursor 0})
 
@@ -66,8 +65,8 @@
       (update ::deltas splittable/omit idx amt)
       (update ::string splittable/omit idx amt)))
 
-(defmethod update-state :crsr/mv  [state  [_ idx] _]   (assoc state ::cursor idx))
-(defmethod update-state :crsr/sel [state  [_ range] _] (assoc state ::cursor range))
+(defmethod update-state :crsr/mv  [state  [_ idx] _]       (assoc state ::cursor idx))
+(defmethod update-state :crsr/sel [state  [_ idx-range] _] (assoc state ::cursor idx-range))
 
 (s/fdef op-id->op-idx
         :args (s/cat :state ::state :op-id ::delta/prev-id)
@@ -91,10 +90,10 @@
         :ret ::delta/prev-id)
 
 (defn- op-idx->op-id
-  [{::keys [deltas] :as state} ^long op-idx]
-  (let [idx (dec op-idx)]
-    (when (<= 0 idx)
-      (:id (nth deltas idx)))))
+  [{::keys [deltas] :as state} op-idx]
+  (let [idx (dec (long op-idx))]
+    (when (<= 0 (long idx))
+      (:id (nth deltas (long idx))))))
 
 
 ;; ** Player API Internals -- adding existing deltas

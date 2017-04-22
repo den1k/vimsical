@@ -1,4 +1,3 @@
-
 (ns vimsical.vcs.state.files-test
   (:require [clojure.test :as t :refer [are deftest is testing]]
             [orchestra.spec.test :as st]
@@ -8,7 +7,7 @@
             [vimsical.vcs.data.gen.diff :as diff]
             [vimsical.vcs.edit-event :as edit-event]))
 
-(st/unstrument)
+(st/instrument)
 
 ;; * Deltas tests
 
