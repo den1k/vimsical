@@ -30,7 +30,7 @@
                                                    :vims/author [:db/id 1]
                                                    :vims/title  "CatPhotoApp"}]}
              :app/quick-search {:db/id              5
-                                :quick-search/show? true}}]
+                                :quick-search/show? false}}]
   (def default-db
     (-> (mg/new-db)
         (mg/add-id-attr :db/id)

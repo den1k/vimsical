@@ -8,7 +8,10 @@
    [vimsical.common.util.core :refer [=by] :as util]
    [vimsical.frontend.quick-search.handlers :as handlers]
    [vimsical.frontend.config :as config]
-   [vimsical.frontend.util.search :as util.search]))
+   [vimsical.frontend.util.search :as util.search]
+   [vimsical.frontend.vcr.subs :as vcr.subs]
+   [vimsical.frontend.vcr.handlers :as vcr.handlers]
+   [vimsical.frontend.util.content :as util.content]))
 
 (def commands
   "Map of command keywords -> map of :title and :dispatch vector. Optionally
@@ -19,7 +22,10 @@
          ["play"]           {:title "► Play"} ;; todo dispatch
 
          ["pause"]          {:title "❚❚ Pause"} ;; todo dispatch
-         }
+
+         ["lorem" "ipsum"]  {:title    "Lorem Ipsum"
+                             :dispatch [::vcr.handlers/paste
+                                        (util.content/lorem-ipsum 1)]}}
         dev
         {["clear" "console"] {:title    "Clear JS Console"
                               :dispatch [::handlers/clear-console]}}]
@@ -49,7 +55,7 @@
   ([st idx]
    (let [{:keys [results]} st
          {:keys [dispatch close?]
-          :or   {close? true}} (get results idx)] ;; close by default
+          :or   {close? true}} (get results idx)] ; close by default
      (re-frame/dispatch dispatch)
      (when close? (re-frame/dispatch [::handlers/close])))))
 

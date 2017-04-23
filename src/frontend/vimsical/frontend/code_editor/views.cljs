@@ -2,7 +2,10 @@
   (:require [reagent.core :as r]
             [vimsical.common.util.core :as util]
             [re-frame.core :as re-frame]
-            [vimsical.frontend.code-editor.handlers :as handlers]))
+            [vimsical.frontend.code-editor.handlers :as handlers]
+            [vimsical.frontend.vcr.handlers :as vcr]
+            [vimsical.frontend.vcr.subs :as vcr.subs]
+            [vimsical.frontend.util.re-frame :refer-macros [with-subs]]))
 
 (defn editor-opts
   "https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditorconstructionoptions.html"
@@ -73,8 +76,8 @@
      ;; https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.itextmodelupdateoptions.html
      :model  {:tabSize 2}}))
 
-(defn new-editor [c {:keys [editor model] :as opts}]
-  (doto (js/monaco.editor.create (r/dom-node c) (clj->js editor))
+(defn new-editor [el {:keys [editor model] :as opts}]
+  (doto (js/monaco.editor.create el (clj->js editor))
     (.. getModel (updateOptions (clj->js model)))))
 
 (defn dispose-editor [editor]
@@ -149,6 +152,9 @@
 (defn handle-cursor-change [model e]
   (re-frame/dispatch [::handlers/new-edit-event (parse-selection-event model e)]))
 
+(defn handle-focus [file-type]
+  (re-frame/dispatch [::vcr/active-editor file-type]))
+
 ;; wip todo remove
 (comment
  (sut/diffs->edit-events "" "foor" "four")
@@ -162,21 +168,26 @@
   #:vimsical.vcs.edit-event{:op :str/ins, :idx 2, :diff "u"}
   #:vimsical.vcs.edit-event{:op :crsr/mv, :idx 3}])
 
-(defn code-editor [opts]
-  {:pre [(:file-type opts)]}
-  (let [editor-instance (r/atom nil)]
+(defn code-editor [{:keys [file-type read-only?
+                           editor-sub-key
+                           editor-reg-key]
+                    :as   opts}]
+  {:pre [file-type]}
+  (let [editor (re-frame/subscribe [editor-sub-key file-type])]
     (r/create-class
      {:component-did-mount
       (fn [c]
-        (let [editor (new-editor c (editor-opts opts))
+        (let [editor (new-editor (r/dom-node c) (editor-opts opts))
               model  (.-model editor)]
-          (doto editor
-            (.onDidChangeModelContent #(handle-content-change model %))
-            (.onDidChangeCursorSelection #(handle-cursor-change model %)))
-          (reset! editor-instance editor)))
+          (when-not read-only?
+            (doto editor
+              (.onDidChangeModelContent #(handle-content-change model %))
+              (.onDidChangeCursorSelection #(handle-cursor-change model %))
+              (.onDidFocusEditor #(handle-focus file-type))))
+          (re-frame/dispatch [editor-reg-key file-type editor])))
       :component-will-unmount
       (fn [_]
-        (dispose-editor @editor-instance))
+        (dispose-editor @editor))
       :render
       (fn [_]
         [:div.code-editor])})))

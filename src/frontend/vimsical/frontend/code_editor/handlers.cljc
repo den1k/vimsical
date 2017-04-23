@@ -4,7 +4,20 @@
 
 (re-frame/reg-event-db ::new-edit-event
   (fn [db [_ edit-event]]
+    #?(:cljs (js/console.debug edit-event))
+    db))
+
+(re-frame/reg-event-db ::paste
+  (fn [db [_ editor-instance string]]
     #?(:cljs
-       (util.dom/open-ext-popup "https://youtu.be/zvO2IvL0sBM?t=44s"))))
-
-
+       (let [model (.-model editor-instance)
+             sels  (.. editor-instance -cursor getSelections)]
+         (.pushEditOperations
+          model
+          sels
+          (clj->js
+           [{; if true moves cursor, else makes selection around added text
+             :forceMoveMarkers true
+             :text             string
+             :range            (first sels)}]))))
+    db))
