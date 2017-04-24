@@ -2,6 +2,7 @@
   (:require [reagent.core :as reagent]
             [re-frame.core :as re-frame]
             [vimsical.frontend.db :as db]
+            [vimsical.frontend.ui-db]   ; require to reg-fx
             [vimsical.frontend.app.views :refer [app]]))
 
 

@@ -9,8 +9,8 @@
    [vimsical.frontend.quick-search.handlers :as handlers]
    [vimsical.frontend.config :as config]
    [vimsical.frontend.util.search :as util.search]
-   [vimsical.frontend.vcr.subs :as vcr.subs]
    [vimsical.frontend.vcr.handlers :as vcr.handlers]
+   [vimsical.frontend.code-editor.handlers :as code-editor.handlers]
    [vimsical.frontend.util.content :as util.content]))
 
 (def commands
@@ -24,7 +24,7 @@
          ["pause"]          {:title "❚❚ Pause"} ;; todo dispatch
 
          ["lorem" "ipsum"]  {:title    "Lorem Ipsum"
-                             :dispatch [::vcr.handlers/paste
+                             :dispatch [::code-editor.handlers/paste
                                         (util.content/lorem-ipsum 1)]}
          ["go to" "player"] {:title    "Go to Player"
                              :dispatch [::handlers/go-to :route/player]}
@@ -88,8 +88,7 @@
                        :on-change   (e> (search state value)
                                         (swap! state assoc :result-idx 0))
                        :on-key-down (e->> (handle-key state))
-                       ;:on-blur     (e> (re-frame/dispatch [::handlers/close]))
-                       }]))}))
+                       :on-blur     (e> (re-frame/dispatch [::handlers/close]))}]))}))
 
 (defn results-view [state]
   (let [{:keys [result-idx results]} @state]

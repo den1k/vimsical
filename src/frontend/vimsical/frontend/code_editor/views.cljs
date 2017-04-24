@@ -3,8 +3,8 @@
             [vimsical.common.util.core :as util]
             [re-frame.core :as re-frame]
             [vimsical.frontend.code-editor.handlers :as handlers]
+            [vimsical.frontend.app.data :as app.data]
             [vimsical.frontend.vcr.handlers :as vcr]
-            [vimsical.frontend.vcr.subs :as vcr.subs]
             [vimsical.frontend.util.re-frame :refer-macros [with-subs]]))
 
 (defn editor-opts
@@ -80,9 +80,6 @@
   (doto (js/monaco.editor.create el (clj->js editor))
     (.. getModel (updateOptions (clj->js model)))))
 
-(defn dispose-editor [editor]
-  (.dispose editor))
-
 (defn pos->str-idx
   ; Counts only until where we are
   ; inc's at each line to account for \n
@@ -152,9 +149,6 @@
 (defn handle-cursor-change [model e]
   (re-frame/dispatch [::handlers/new-edit-event (parse-selection-event model e)]))
 
-(defn handle-focus [file-type]
-  (re-frame/dispatch [::vcr/active-editor file-type]))
-
 ;; wip todo remove
 (comment
  (sut/diffs->edit-events "" "foor" "four")
@@ -169,26 +163,25 @@
   #:vimsical.vcs.edit-event{:op :crsr/mv, :idx 3}])
 
 (defn code-editor
-  [{:keys [id file-type read-only? editor-sub-key editor-reg-key]
+  [{:keys [id file-type read-only? editor-reg-key]
     :as   opts}]
-  {:pre [id file-type]}
-  (let [editor (re-frame/subscribe [editor-sub-key id])]
-    (r/create-class
-     {:component-did-mount
-      (fn [c]
-        (let [editor (new-editor (r/dom-node c) (editor-opts opts))
-              model  (.-model editor)]
-          (when-not read-only?
-            (doto editor
-              (.onDidChangeModelContent #(handle-content-change model %))
-              (.onDidChangeCursorSelection #(handle-cursor-change model %))
-              (.onDidFocusEditor #(handle-focus file-type))))
-          (re-frame/dispatch [editor-reg-key id editor])))
-      :component-will-unmount
-      (fn [_]
-        (dispose-editor @editor))
-      :render
-      (fn [_]
-        [:div.code-editor])})))
-
-
+  {:pre [id file-type editor-reg-key]}
+  (r/create-class
+   {:component-did-mount
+    (fn [c]
+      (let [editor (new-editor (r/dom-node c) (editor-opts opts))
+            model  (.-model editor)]
+        (when-not read-only?
+          (doto editor
+            (.onDidChangeModelContent #(handle-content-change model %))
+            (.onDidChangeCursorSelection #(handle-cursor-change model %))
+            (.onDidFocusEditor #(re-frame/dispatch [::handlers/focus
+                                                    ::app.data/active-editor
+                                                    editor]))))
+        (re-frame/dispatch [::handlers/register editor-reg-key id editor])))
+    :component-will-unmount
+    (fn [_]
+      (re-frame/dispatch [::handlers/dispose editor-reg-key id]))
+    :render
+    (fn [_]
+      [:div.code-editor])}))

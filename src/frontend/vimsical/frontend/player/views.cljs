@@ -9,9 +9,7 @@
             [reagent.core :as reagent]
             [vimsical.frontend.views.icons :as icons]
             [vimsical.frontend.util.dom :as util.dom]
-            [vimsical.frontend.util.content :as util.content]
-            [vimsical.frontend.player.handlers :as handlers]
-            [vimsical.frontend.player.subs :as subs]))
+            [vimsical.frontend.util.content :as util.content]))
 
 (defn play-symbol [opts]
   [shapes/triangle
@@ -135,8 +133,7 @@
                        :file-type      :html
                        :compact?       true
                        :read-only?     true
-                       :editor-sub-key ::subs/editor
-                       :editor-reg-key ::handlers/register-editor}]
+                       :editor-reg-key ::editors}]
          [:div.logo-and-file-type.bar
           [icons/logo-and-type]
           ;; todo dynamic

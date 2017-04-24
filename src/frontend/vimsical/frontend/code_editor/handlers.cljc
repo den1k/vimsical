@@ -1,6 +1,36 @@
 (ns vimsical.frontend.code-editor.handlers
   (:require [re-frame.core :as re-frame]
-            [vimsical.frontend.util.dom :as util.dom]))
+            [vimsical.common.util.core :as util]
+            [vimsical.frontend.util.dom :as util.dom]
+            [vimsical.frontend.app.data :as app.data]))
+
+;; todo, move into monaco utils?
+(defn dispose-editor
+  "Dispose Monaco editor"
+  [editor]
+  (.dispose editor))
+
+(re-frame/reg-event-fx
+ ::register
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [db ui-db]} [_ reg-key file-type editor-instance]]
+   {:db    db
+    :ui-db (assoc-in ui-db [reg-key file-type] editor-instance)}))
+
+(re-frame/reg-event-fx
+ ::dispose
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [db ui-db] :as cofx} [_ reg-key file-type]]
+   (-> (get-in ui-db [reg-key file-type])
+       (dispose-editor))
+   {:db    db
+    :ui-db (util/dissoc-in ui-db [reg-key file-type])}))
+
+(re-frame/reg-event-fx
+ ::focus
+ (fn [{:keys [db ui-db]} [_ focus-key editor]]
+   {:db    db
+    :ui-db (assoc ui-db focus-key editor)}))
 
 (re-frame/reg-event-db
  ::new-edit-event
@@ -8,12 +38,14 @@
    #?(:cljs (js/console.debug edit-event))
    db))
 
-(re-frame/reg-event-db
+(re-frame/reg-event-fx
  ::paste
- (fn [db [_ editor-instance string]]
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db] :as cofx} [_ string]]
    #?(:cljs
-      (let [model (.-model editor-instance)
-            sels  (.. editor-instance -cursor getSelections)]
+      (let [editor (::app.data/active-editor ui-db)
+            model  (.-model editor)
+            sels   (.. editor -cursor getSelections)]
         (.pushEditOperations
          model
          sels
@@ -22,4 +54,4 @@
             :forceMoveMarkers true
             :text             string
             :range            (first sels)}]))))
-   db))
+   (dissoc cofx :event)))
