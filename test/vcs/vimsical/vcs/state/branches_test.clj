@@ -1,7 +1,7 @@
 (ns vimsical.vcs.state.branches-test
   (:require [clojure.test :as t :refer [are deftest]]
             [orchestra.spec.test :as st]
-            [vimsical.common.test :refer [is=]]
+            [vimsical.common.test :refer [diff= is=]]
             [vimsical.vcs.examples :as examples]
             [vimsical.vcs.state.branches :as sut]))
 
@@ -17,7 +17,7 @@
     (is= expected actual)))
 
 (deftest index-of-test
-  (are [index branch-uuid delta] (is= index (sut/index-of examples/delta-index delta))
+  (are [index branch-uuid delta] (diff= index (sut/index-of examples/delta-index delta))
     0 examples/master-id examples/d0
     0 examples/child-id  examples/d2
     0 examples/child-id  examples/d2

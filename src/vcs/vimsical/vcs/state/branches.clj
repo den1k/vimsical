@@ -2,23 +2,16 @@
   (:require
    [clojure.spec :as s]
    [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.alg.topo :as topo]
    [vimsical.vcs.data.indexed.vector :as indexed]
    [vimsical.vcs.delta :as delta]))
 
+
 ;; * Spec
 
-(defn index-sorted?
-  [index]
-  (boolean
-   (reduce
-    (fn [{:keys [id] :as left}
-         {:keys [prev-id] :as right}]
-      (if (= id prev-id) right (reduced false)))
-    (seq index))))
-
 (s/def ::deltas (s/every ::delta/delta))
-(s/def ::index (s/and ::indexed/vector ::deltas index-sorted?))
-(s/def ::delta-index (s/map-of :db/id ::index))
+(s/def ::index (s/and ::indexed/vector ::deltas topo/sorted?))
+(s/def ::delta-index (s/map-of ::branch/id ::index))
 
 
 ;; * Internal
