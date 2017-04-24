@@ -11,10 +11,10 @@
   (fn [db [_ file-type]]
     (assoc-in db [:app/vcr :vcr/active-editor] file-type)))
 
-(re-frame/reg-event-db ::paste
-  (fn [db [_ string]]
+(re-frame/reg-event-fx ::paste
+  (fn [{:keys [db]} [_ string]]
     (let [active-editor-instance (subs/active-editor-instance db)]
-      (re-frame/dispatch [::code-editor.handlers/paste
-                          active-editor-instance
-                          string]))
-    db))
+      {:db       db
+       :dispatch [::code-editor.handlers/paste
+                  active-editor-instance
+                  string]})))
