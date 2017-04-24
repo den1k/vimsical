@@ -12,24 +12,24 @@
       (get (active-editor db))))
 
 (re-frame/reg-sub
- ::editors-by-file-type
- (fn [db _]
-   (editors-by-type db)))
+  ::editors-by-file-type
+  (fn [db _]
+    (editors-by-type db)))
 
 (re-frame/reg-sub
- ::file-type->editor
- :<- [::editors-by-file-type]
- (fn [ef [_ file-type]]
-   (get ef file-type)))
+  ::file-type->editor
+  :<- [::editors-by-file-type]
+  (fn [ef [_ file-type]]
+    (get ef file-type)))
 
 (re-frame/reg-sub
- ::active-editor
- (fn [db _]
-   (active-editor db)))
+  ::active-editor
+  (fn [db _]
+    (active-editor db)))
 
 (re-frame/reg-sub
- ::active-editor-instance
- :<- [::active-editor]
- :<- [::editors-by-file-type]
- (fn [[active ef]]
-   (get ef active)))
+  ::active-editor-instance
+  :<- [::active-editor]
+  :<- [::editors-by-file-type]
+  (fn [[active ef]]
+    (get ef active)))

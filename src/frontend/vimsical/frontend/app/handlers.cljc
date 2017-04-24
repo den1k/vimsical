@@ -8,15 +8,7 @@
  (fn [db [_ vims]]
    (assoc db :app/vims (mg/ref-to db vims))))
 
-#_(re-frame/reg-cofx
-   ::open-vims-time
-   (fn [cofx arg]
-     #?(:cljs (js/console.debug :INJECT cofx "ARG" arg))
-     (assoc cofx :time 123)))
-
-#_(re-frame/reg-event-fx
-   ::open-vims
-   [(re-frame/inject-cofx ::open-vims-time :CFX-ARG)]
-   (fn [{:keys [db time] :as cofx} [_ vims]]
-
-     {:db (assoc db :app/vims (mg/ref-to db vims))}))
+(re-frame/reg-event-db
+ ::route
+ (fn [db [_ route]]
+   (assoc db :app/route route)))

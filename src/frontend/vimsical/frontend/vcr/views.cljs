@@ -117,7 +117,8 @@
    ^{:key sub-type} [editor-header file]
    :editor
    ^{:key sub-type} [code-editor
-                     {:file-type      sub-type
+                     {:id             sub-type
+                      :file-type      sub-type
                       :editor-sub-key ::subs/file-type->editor
                       :editor-reg-key ::handlers/register-editor}]})
 

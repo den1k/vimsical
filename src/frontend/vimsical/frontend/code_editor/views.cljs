@@ -168,12 +168,11 @@
   #:vimsical.vcs.edit-event{:op :str/ins, :idx 2, :diff "u"}
   #:vimsical.vcs.edit-event{:op :crsr/mv, :idx 3}])
 
-(defn code-editor [{:keys [file-type read-only?
-                           editor-sub-key
-                           editor-reg-key]
-                    :as   opts}]
-  {:pre [file-type]}
-  (let [editor (re-frame/subscribe [editor-sub-key file-type])]
+(defn code-editor
+  [{:keys [id file-type read-only? editor-sub-key editor-reg-key]
+    :as   opts}]
+  {:pre [id file-type]}
+  (let [editor (re-frame/subscribe [editor-sub-key id])]
     (r/create-class
      {:component-did-mount
       (fn [c]
@@ -184,7 +183,7 @@
               (.onDidChangeModelContent #(handle-content-change model %))
               (.onDidChangeCursorSelection #(handle-cursor-change model %))
               (.onDidFocusEditor #(handle-focus file-type))))
-          (re-frame/dispatch [editor-reg-key file-type editor])))
+          (re-frame/dispatch [editor-reg-key id editor])))
       :component-will-unmount
       (fn [_]
         (dispose-editor @editor))

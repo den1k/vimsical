@@ -9,7 +9,9 @@
             [reagent.core :as reagent]
             [vimsical.frontend.views.icons :as icons]
             [vimsical.frontend.util.dom :as util.dom]
-            [vimsical.frontend.util.content :as util.content]))
+            [vimsical.frontend.util.content :as util.content]
+            [vimsical.frontend.player.handlers :as handlers]
+            [vimsical.frontend.player.subs :as subs]))
 
 (defn play-symbol [opts]
   [shapes/triangle
@@ -129,9 +131,12 @@
             [:div.creator.truncate "Jane Blacksmith"]]]
           (when desc
             [:div.desc desc])]
-         [code-editor {:file-type  :html
-                       :compact?   true
-                       :read-only? true}]
+         [code-editor {:id             (gensym ::__)
+                       :file-type      :html
+                       :compact?       true
+                       :read-only?     true
+                       :editor-sub-key ::subs/editor
+                       :editor-reg-key ::handlers/register-editor}]
          [:div.logo-and-file-type.bar
           [icons/logo-and-type]
           ;; todo dynamic

@@ -5,10 +5,12 @@
    [re-frame.core :as re-frame]
    [re-frame.interop :as interop]))
 
-(defn add-to [db k entity]
-  (-> db
-      (mg/add entity)
-      (assoc k (mg/ref-to db entity))))
+(defn add-to [db k v]
+  (if-let [ref (mg/ref-to db v)]
+    (-> db
+        (mg/add v)
+        (assoc k ref))
+    (assoc db k v)))
 
 (defn add-linked-entities
   "Takes a map of link-keys->entities, normalizes entities and creates links for
@@ -30,7 +32,8 @@
                                                    :vims/author [:db/id 1]
                                                    :vims/title  "CatPhotoApp"}]}
              :app/quick-search {:db/id              5
-                                :quick-search/show? false}}]
+                                :quick-search/show? false}
+             :app/route        :route/vcr}]
   (def default-db
     (-> (mg/new-db)
         (mg/add-id-attr :db/id)
