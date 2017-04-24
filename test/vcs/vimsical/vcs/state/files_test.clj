@@ -3,11 +3,12 @@
             [orchestra.spec.test :as st]
             [vimsical.common.test :refer [uuid is=]]
             [vimsical.vcs.examples :as examples]
+            [vimsical.vcs.alg.topo :as topo]
             [vimsical.vcs.state.files :as sut]
             [vimsical.vcs.data.gen.diff :as diff]
             [vimsical.vcs.edit-event :as edit-event]))
 
-(st/instrument)
+(st/unstrument)
 
 ;; * Deltas tests
 
@@ -29,35 +30,37 @@
           test-effects {::sut/pad-fn       test-pad-fn
                         ::sut/uuid-fn      test-uuid-fn
                         ::sut/timestamp-fn test-timestamp-fn}
-          string= (fn [expected [states current-delta-id]]
+          string= (fn [expected [states deltas current-delta-id]]
+                    (is (seq deltas))
+                    (is (topo/sorted? deltas))
                     (is= expected (sut/get-file-string states current-delta-id file-id)))]
       (testing "Spliced insert"
         (string= "abc"
                  (sut/add-edit-events
-                  sut/empty-states test-state test-effects
+                  sut/empty-states test-effects [] file-id branch-id nil
                   (diff/diffs->edit-events "" ["abc"]))))
       (testing "Unspliced insert"
         (string= "abc"
                  (sut/add-edit-events
-                  sut/empty-states test-state test-effects
+                  sut/empty-states test-effects [] file-id branch-id nil
                   (diff/diffs->edit-events "" "abc"))))
       (testing "Spliced Delete"
         (string= "a"
                  (sut/add-edit-events
-                  sut/empty-states test-state test-effects
+                  sut/empty-states test-effects [] file-id branch-id nil
                   (diff/diffs->edit-events "" ["abc"] ["a"])))
         (string= "xyz"
                  (sut/add-edit-events
-                  sut/empty-states test-state test-effects
+                  sut/empty-states test-effects [] file-id branch-id nil
                   (diff/diffs->edit-events "" ["abc"] ["xyz"]))))
       (testing "Unspliced Delete"
         (string= "a"
                  (sut/add-edit-events
-                  sut/empty-states test-state test-effects
+                  sut/empty-states test-effects [] file-id branch-id nil
                   (diff/diffs->edit-events "" "abc" "a")))
         (string= "xyz"
                  (sut/add-edit-events
-                  sut/empty-states test-state test-effects
+                  sut/empty-states test-effects [] file-id branch-id nil
                   (diff/diffs->edit-events "" "abc" "xyz")))))))
 
 

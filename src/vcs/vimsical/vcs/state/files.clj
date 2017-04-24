@@ -5,6 +5,7 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.data.indexed.vector :as indexed]
    [vimsical.vcs.data.splittable :as splittable]
+   [vimsical.vcs.alg.topo :as topo]
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.edit-event :as edit-event]
    [vimsical.vcs.file :as file]))
@@ -19,6 +20,7 @@
 (s/def ::deltas (s/and (s/every ::delta/delta) ::indexed/vector))
 (s/def ::string string?)
 (s/def ::state (s/keys :req [::deltas ::string ::cursor]))
+(s/def ::new-deltas (s/and (s/every ::delta/delta) topo/sorted?))
 
 (def ^:private empty-state {::deltas (indexed/vector-by :id) ::string "" ::cursor 0})
 
@@ -32,6 +34,8 @@
 
 ;; * Internal
 ;; ** Helpers
+
+;; *** State update
 
 ;; XXX This op is hacky because it reuses the format of the delta/op but with
 ;; indexes instead of uuid, this datatype is not valid anywhere else in the vcs
@@ -68,6 +72,9 @@
 (defmethod update-state :crsr/mv  [state  [_ idx] _]       (assoc state ::cursor idx))
 (defmethod update-state :crsr/sel [state  [_ idx-range] _] (assoc state ::cursor idx-range))
 
+
+;; *** Indexes and ids
+
 (s/fdef op-id->op-idx
         :args (s/cat :state ::state :op-id ::delta/prev-id)
         :ret  ::idx)
@@ -94,6 +101,8 @@
   (let [idx (dec (long op-idx))]
     (when (<= 0 (long idx))
       (:id (nth deltas (long idx))))))
+
+(defn prev-delta-id [deltas start-delta-id] (or (-> deltas peek :id) start-delta-id))
 
 
 ;; ** Player API Internals -- adding existing deltas
@@ -182,79 +191,91 @@
 (s/def ::delta-id ::delta/prev-id)
 (s/def ::file-id ::file/id)
 (s/def ::branch-id ::branch/id)
-(s/def ::editor-state (s/keys :req [::delta-id ::file-id ::branch-id]))
-(s/def ::current-delta-id ::delta-id)
-(s/def ::add-edit-event-rf-ret-state (s/tuple ::state ::current-delta-id))
+(s/def ::current-str-op-id ::delta-id)
+(s/def ::add-edit-event-rf-ret-state (s/tuple ::state (s/every ::delta/delta) ::current-str-op-id))
 
 (s/fdef add-edit-event-rf
         :args (s/cat :state ::state
-                     :editor-state ::editor-state
                      :editor-effects ::editor-effects
+                     :deltas (s/every ::delta/delta)
+                     :file-id ::file/id
+                     :branch-id ::branch/id
+                     :delta-id ::delta/prev-id
                      :edit-event ::edit-event/edit-event)
         :ret ::add-edit-event-rf-ret-state)
 
 (defmulti ^:private add-edit-event-rf
-  (fn [state editor-state editor-effects edit-event]
+  (fn [state editor-effects deltas file-id branch-id delta-id edit-event]
     (-> edit-event ::edit-event/op)))
 
 (defmethod add-edit-event-rf :str/ins
-  [state
-   {:as editor-state ::keys [file-id branch-id delta-id]}
-   {:as editor-effects ::keys [pad-fn uuid-fn timestamp-fn]}
-   edit-event]
+  [state {:as editor-effects ::keys [pad-fn uuid-fn timestamp-fn]} deltas file-id branch-id delta-id edit-event]
   (reduce
    (fn add-edit-event-str-ins-rf
-     [[state current-delta-id] {:as edit-event ::edit-event/keys [idx diff]}]
+     [[state deltas] {:as edit-event ::edit-event/keys [idx diff]}]
      (let [op-id        (op-idx->op-id state idx)
            op           [:str/ins op-id diff]
+           prev-id      (prev-delta-id deltas delta-id)
            new-delta-id (uuid-fn edit-event)
            pad          (pad-fn edit-event)
            timestamp    (timestamp-fn edit-event)
            delta        (delta/new-delta
                          {:branch-id branch-id
                           :file-id   file-id
-                          :prev-id   current-delta-id
+                          :prev-id   prev-id
                           :id        new-delta-id
                           :op        op
                           :pad       pad
                           :timestamp timestamp})
+           deltas'      (conj deltas delta)
            state'       (update-state state [:str/ins idx diff] delta)]
-       [state' new-delta-id]))
+       [state' deltas' new-delta-id]))
    ;; Start with the delta-id provided by the `editor-state` as the current id,
    ;; then for each spliced event, ensure that we return the newly created delta-id
-   [state delta-id] (splice-edit-event edit-event)))
+   [state deltas delta-id] (splice-edit-event edit-event)))
 
 (defmethod add-edit-event-rf :str/rem
-  [state
-   {:as editor-state ::keys [file-id branch-id delta-id]}
-   {:as editor-effects ::keys [pad-fn uuid-fn timestamp-fn]}
-   edit-event]
+  [state {:as editor-effects ::keys [pad-fn uuid-fn timestamp-fn]} deltas file-id branch-id delta-id edit-event]
   (reduce
    (fn add-edit-event-rf-str-rem-rf
-     [[state current-delta-id] {:as edit-event ::edit-event/keys [idx amt]}]
+     [[state deltas delta-id] {:as edit-event ::edit-event/keys [idx amt]}]
      (let [op-id        (op-idx->op-id state idx)
            op           [:str/rem op-id amt]
+           prev-id      (prev-delta-id deltas delta-id)
            new-delta-id (uuid-fn edit-event)
            pad          (pad-fn edit-event)
            timestamp    (timestamp-fn edit-event)
            delta        (delta/new-delta
                          {:branch-id branch-id
                           :file-id   file-id
-                          :prev-id   current-delta-id
+                          :prev-id   prev-id
                           :id        new-delta-id
                           :op        op
                           :pad       pad
                           :timestamp timestamp})
+           deltas'      (conj deltas delta)
            state'       (update-state state [:str/rem idx amt] delta)]
-       [state' new-delta-id]))
-   [state delta-id] (splice-edit-event edit-event)))
+       [state' deltas' new-delta-id]))
+   [state deltas delta-id] (splice-edit-event edit-event)))
 
 (defmethod add-edit-event-rf :crsr/mv
-  [state
-   {:as editor-state ::keys [file-id branch-id delta-id]}
-   {:as editor-effects ::keys [pad-fn uuid-fn timestamp-fn]}
-   {:as edit-event ::edit-event/keys [idx]}]
-  [state (op-idx->op-id state idx)])
+  [state {:as editor-effects ::keys [pad-fn uuid-fn timestamp-fn]} deltas file-id branch-id delta-id {:as edit-event ::edit-event/keys [idx]}]
+  (let [op-id        (op-idx->op-id state idx)
+        op           [:crsr/mv op-id]
+        prev-id      (prev-delta-id deltas delta-id)
+        new-delta-id (uuid-fn edit-event)
+        pad          (pad-fn edit-event)
+        timestamp    (timestamp-fn edit-event)
+        delta        (delta/new-delta
+                      {:branch-id branch-id
+                       :file-id   file-id
+                       :prev-id   prev-id
+                       :id        new-delta-id
+                       :op        op
+                       :pad       pad
+                       :timestamp timestamp})
+        deltas'      (conj deltas delta)]
+    [state deltas' op-id]))
 
 
 ;; * Public API
@@ -357,43 +378,52 @@
 
 (s/fdef add-edit-event
         :args (s/cat :states ::states
-                     :editor-state ::editor-state
                      :editor-effects ::editor-effects
+                     :deltas (s/every ::delta/delta)
+                     :file-id ::file/id
+                     :branch-id ::branch/id
+                     :delta-id ::delta/prev-id
                      :edit-event ::edit-event/edit-event)
-        :ret (s/tuple ::states ::current-delta-id))
+        :ret (s/tuple ::states ::new-deltas ::current-str-op-id))
 
 (defn add-edit-event
   "Update `states` by adding the given `edit-event`. The `editor-state` should
   contain the pointers the editor used to retrieve its files' states at the time
   the `edit-event` was created.
 
-  Return a map of `::states` with the updated `states` and `::current-delta-id`
+  Return a map of `::states` with the updated `states` and `::current-str-op-id`
   a value for the latest delta id that was created as part of the processing of
   `edit-event`.
 
   Note that this fn handles splicing `edit-event` into multiple deltas when
   required."
-  [states {:as editor-state ::keys [file-id delta-id]} editor-effects edit-event]
-  (let [state-by-file-id   (get states delta-id {file-id empty-state})
-        state              (get state-by-file-id file-id)
-        rf                 (fnil add-edit-event-rf empty-state)
-        [state' delta-id'] (rf state editor-state editor-effects edit-event)
-        state-by-file-id'  (assoc state-by-file-id file-id state')
-        states'            (assoc states delta-id' state-by-file-id')]
-    [states' delta-id']))
+  ([states editor-effects file-id branch-id delta-id edit-event]
+   (add-edit-event states editor-effects [] file-id branch-id delta-id edit-event))
+  ([states editor-effects deltas file-id branch-id delta-id edit-event]
+   (let [state-by-file-id           (get states delta-id {file-id empty-state})
+         state                      (get state-by-file-id file-id)
+         rf                         (fnil add-edit-event-rf empty-state)
+         [state' deltas' delta-id'] (rf state editor-effects deltas file-id branch-id delta-id edit-event)
+         state-by-file-id'          (assoc state-by-file-id file-id state')
+         states'                    (assoc states delta-id' state-by-file-id')]
+     [states' deltas' delta-id'])))
 
 (s/fdef add-edit-events
         :args (s/cat :states ::states
-                     :editor-state ::editor-state
                      :editor-effects ::editor-effects
+                     :deltas (s/every ::delta/delta)
+                     :file-id ::file/id
+                     :branch-id ::branch/id
+                     :delta-id ::delta/prev-id
                      :edit-events (s/every ::edit-event/edit-event))
-        :ret (s/tuple ::states ::current-delta-id))
+        :ret (s/tuple ::states ::new-deltas ::current-str-op-id))
 
 (defn add-edit-events
-  [states {:as editor-state ::keys [delta-id]} editor-effects edit-events]
-  (reduce
-   (fn add-edit-events-rf
-     [[states current-delta-id] edit-event]
-     (let [editor-state' (assoc editor-state ::delta-id current-delta-id)]
-       (add-edit-event states editor-state' editor-effects edit-event)))
-   [states delta-id] edit-events))
+  ([states editor-effects file-id branch-id delta-id edit-events]
+   (add-edit-events states editor-effects [] file-id branch-id delta-id edit-events))
+  ([states editor-effects deltas file-id branch-id delta-id edit-events]
+   (reduce
+    (fn add-edit-events-rf
+      [[states deltas delta-id] edit-event]
+      (add-edit-event states editor-effects deltas file-id branch-id delta-id edit-event))
+    [states deltas delta-id] edit-events)))
