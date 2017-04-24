@@ -133,7 +133,7 @@
                        :file-type      :html
                        :compact?       true
                        :read-only?     true
-                       :editor-reg-key ::editors}]
+                       :editor-reg-key :player/editor}]
          [:div.logo-and-file-type.bar
           [icons/logo-and-type]
           ;; todo dynamic

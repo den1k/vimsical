@@ -8,9 +8,7 @@
    [vimsical.frontend.views.shapes :as shapes]
    [reagent.core :as reagent]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]
-   [vimsical.common.util.core :as util]
-   [vimsical.frontend.vcr.handlers :as handlers]
-   [vimsical.frontend.vcr.ui :as ui]))
+   [vimsical.common.util.core :as util]))
 
 (defn visible-files [files]
   (remove :file/hidden? files))
@@ -119,7 +117,7 @@
    ^{:key sub-type} [code-editor
                      {:id             sub-type
                       :file-type      sub-type
-                      :editor-reg-key ::ui/editors}]})
+                      :editor-reg-key :vcr/editors}]})
 
 (defn vcr []
   (let [files-subs   (reagent/atom files)

@@ -9,7 +9,6 @@
    [vimsical.frontend.quick-search.handlers :as handlers]
    [vimsical.frontend.config :as config]
    [vimsical.frontend.util.search :as util.search]
-   [vimsical.frontend.vcr.handlers :as vcr.handlers]
    [vimsical.frontend.code-editor.handlers :as code-editor.handlers]
    [vimsical.frontend.util.content :as util.content]))
 

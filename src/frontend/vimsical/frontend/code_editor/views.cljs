@@ -3,8 +3,6 @@
             [vimsical.common.util.core :as util]
             [re-frame.core :as re-frame]
             [vimsical.frontend.code-editor.handlers :as handlers]
-            [vimsical.frontend.app.ui :as app.ui]
-            [vimsical.frontend.vcr.handlers :as vcr]
             [vimsical.frontend.util.re-frame :refer-macros [with-subs]]))
 
 (defn editor-opts
@@ -176,7 +174,7 @@
             (.onDidChangeModelContent #(handle-content-change model %))
             (.onDidChangeCursorSelection #(handle-cursor-change model %))
             (.onDidFocusEditor #(re-frame/dispatch [::handlers/focus
-                                                    ::app.ui/active-editor
+                                                    :app/active-editor
                                                     editor]))))
         (re-frame/dispatch [::handlers/register editor-reg-key id editor])))
     :component-will-unmount
