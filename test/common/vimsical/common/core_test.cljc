@@ -2,8 +2,8 @@
   (:require
    [vimsical.common.core :as sut]
    [clojure.test :as t]
-   [orchestra.spec.test :as st]))
+   #?(:clj [orchestra.spec.test :as st])))
+
+#?(:clj (st/instrument))
 
 (t/deftest core-test (t/is true))
-
-(st/instrument)

@@ -1,4 +1,5 @@
 (ns vimsical.common.uuid
+  (:refer-clojure :exclude [uuid])
   (:require
    [clojure.spec :as s]
    #?(:cljs [cljs-uuid-utils.core :as uuid]))

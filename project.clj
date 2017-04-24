@@ -12,7 +12,7 @@
   {:dev
    {:dependencies
     ;; Help CIDER find the Java code in Clojure
-    [[org.clojure/clojure "1.9.0-alpha14" :classifier "sources"]]
+    [[org.clojure/clojure "1.9.0-alpha15" :classifier "sources"]]
     :plugins
     [[lein-pprint  "1.1.2"]             ; lein with-profile frontend-dev pprint
      [lein-environ "1.1.0"]]}
@@ -41,9 +41,8 @@
      [org.clojure/data.avl        "0.0.17"]
      [diffit                      "1.0.0"]
      ;; TODO remove this
-     [com.stuartsierra/mapgraph      "0.2.1"]
-     [re-frame                       "0.9.2"]]}
-
+     [com.stuartsierra/mapgraph   "0.2.1"]
+     [re-frame                    "0.9.2"]]}
    ;;
    ;; Common
    ;;
@@ -51,11 +50,12 @@
    {:source-paths
     ["src/common"]
     :dependencies
-    [[com.cognitect/transit-cljs "0.8.239"]
-     [org.clojure/core.async "0.3.442" :exclusions [org.clojure/tools.reader]]
-     [com.stuartsierra/component "0.3.1"]
-     [medley "0.8.4"]
-     [environ "1.1.0"]]}
+    [[com.cognitect/transit-cljs          "0.8.239"]
+     [org.clojure/core.async              "0.3.442" :exclusions [org.clojure/tools.reader]]
+     [com.stuartsierra/component          "0.3.1"]
+     [medley                              "0.8.4"]
+     [environ                             "1.1.0"]
+     [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]]}
    ;;
    ;; Backend
    ;;
@@ -82,9 +82,7 @@
     {:dependencies
      [[criterium "0.4.4"]]
      :source-paths
-     ["dev/backend"]
-     :dependencies
-     [[diffit "1.0.0"]]}]
+     ["dev/backend"]}]
 
    :backend-test
    [:test :backend :vcs :common

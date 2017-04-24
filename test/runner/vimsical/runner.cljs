@@ -10,7 +10,9 @@
    [doo.runner :refer-macros [doo-all-tests doo-tests]]
    [vimsical.common.core-test]
    [vimsical.frontend.core-test]
-   [vimsical.vcs.core-test]))
+   ;; TODO cljc conversion
+   ;; [vimsical.vcs.core-test]
+   ))
 
 ;;
 ;; Filter namespaces that start with "vimsical" and end with "-test"
