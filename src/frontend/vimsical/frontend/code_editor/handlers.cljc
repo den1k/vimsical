@@ -2,7 +2,7 @@
   (:require [re-frame.core :as re-frame]
             [vimsical.common.util.core :as util]
             [vimsical.frontend.util.dom :as util.dom]
-            [vimsical.frontend.app.data :as app.data]))
+            [vimsical.frontend.app.ui :as app.ui]))
 
 ;; todo, move into monaco utils?
 (defn dispose-editor
@@ -43,7 +43,7 @@
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db] :as cofx} [_ string]]
    #?(:cljs
-      (let [editor (::app.data/active-editor ui-db)
+      (let [editor (::app.ui/active-editor ui-db)
             model  (.-model editor)
             sels   (.. editor -cursor getSelections)]
         (.pushEditOperations

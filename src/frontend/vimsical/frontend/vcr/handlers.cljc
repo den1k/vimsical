@@ -1,6 +1,6 @@
 (ns vimsical.frontend.vcr.handlers
   (:require [re-frame.core :as re-frame]
-            [vimsical.frontend.vcr.data :as data]
+            [vimsical.frontend.vcr.ui :as data]
             [vimsical.frontend.code-editor.handlers :as code-editor.handlers]))
 
 (defn editors-by-type [db]
