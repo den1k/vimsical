@@ -88,7 +88,8 @@
               [:input.input {:type        "text"
                              :auto-focus  true
                              :value       query
-                             :on-change   (e> (search state value))
+                             :on-change   (e> (search state value)
+                                              (swap! state assoc :result-idx 0))
                              :on-key-down (e->> (handle-key state))
                              :on-blur     (e> (re-frame/dispatch [::handlers/close]))}]
               (when results

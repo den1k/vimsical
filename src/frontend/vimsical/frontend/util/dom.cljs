@@ -84,6 +84,10 @@
 (defn e->key [e]
   (util/lisp-case-keyword (.-key e)))
 
-(defn handle-key [e key->fn]
+(defn handle-key
+  "Takes a dom-event and a hash-map of key-name -> thunk.
+  If a match is found, calls thunk and prevents event."
+  [e key->fn]
   (when-let [f (-> e e->key key->fn)]
+    (.preventDefault e)
     (f)))
