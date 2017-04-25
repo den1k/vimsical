@@ -76,70 +76,96 @@
    ;;
    ;; Frontend
    ;;
+
+   :-frontend-config
+   {:source-paths
+    ["src/frontend"]
+    :plugins
+    [[lein-cljsbuild "1.1.5"
+      :exclusions [org.apache.commons/commons-compress]]]
+    :dependencies
+    [[org.clojure/clojurescript "1.9.518"]
+     ;; Dependency of Google Closure compiler
+     [com.google.guava/guava "21.0"]
+     ;; Our mapgraph fork. Must be be symlinked in checkouts.
+     [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
+     [reagent "0.6.1" :exclusions [org.clojure/clojurescript]]
+     [re-frame "0.9.2" :exclusions [org.clojure/clojurescript]]
+     [re-com "2.0.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
+     [thi.ng/color "1.2.0"]]}
+
+   :-frontend-dev-config
+   {:source-paths
+    ["dev/frontend"]
+    :plugins
+    [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]]
+    :dependencies
+    [[com.cemerick/piggieback "0.2.2-SNAPSHOT"]
+     [figwheel-sidecar "0.5.10" :exclusions [org.clojure/clojurescript]]
+     [re-frisk "0.4.4" :exclusions [re-frame org.clojure/clojurescript]]
+     ;; needed as a dep for re-frame.trace
+     [binaryage/devtools "0.8.3"]
+     ;; re-frame.trace - clone and install to use
+     ;; https://github.com/Day8/re-frame-trace
+     [day8.re-frame/abra "0.0.9-SNAPSHOT" :exclusions [re-frame reagent org.clojure/clojurescript]]
+     [org.clojure/tools.nrepl "0.2.13"]]
+    :repl-options
+    {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
+
    :frontend
-   [:vcs :common :cljs :css
-    {:source-paths
-     ["src/frontend"]
-     :plugins
-     [[lein-cljsbuild "1.1.5"
-       :exclusions [org.apache.commons/commons-compress]]]
-     :dependencies
-     [[org.clojure/clojurescript "1.9.518"]
-      ;; Dependency of Google Closure compiler
-      [com.google.guava/guava "21.0"]
-      ;; Our mapgraph fork. Must be be symlinked in checkouts.
-      [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
-      [reagent "0.6.1" :exclusions [org.clojure/clojurescript]]
-      [re-frame "0.9.2" :exclusions [org.clojure/clojurescript]]
-      [re-com "2.0.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
-      [thi.ng/color "1.2.0"]]}]
+   [:vcs :common :cljs :css :-frontend-config]
 
    :frontend-dev
-   [:frontend
-    {:plugins
-     [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]]
-     :dependencies
-     [[com.cemerick/piggieback "0.2.2-SNAPSHOT"]
-      [figwheel-sidecar "0.5.10" :exclusions [org.clojure/clojurescript]]
-      [re-frisk "0.4.4" :exclusions [re-frame org.clojure/clojurescript]]
-      ;; needed as a dep for re-frame.trace
-      [binaryage/devtools "0.8.3"]
-      ;; re-frame.trace - clone and install to use
-      ;; https://github.com/Day8/re-frame-trace
-      [day8.re-frame/abra "0.0.9-SNAPSHOT" :exclusions [re-frame reagent org.clojure/clojurescript]]
-      [org.clojure/tools.nrepl "0.2.13"]]
-     :source-paths
-     ["dev/frontend"]
-     :repl-options
-     {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
-     :figwheel
-     {:css-dirs ["resources/public/css"]}}]
+   [:frontend :-frontend-dev-config]
 
    :frontend-test
    [:test :frontend :vcs :common
     {:source-paths
-     ["test/frontend" "test/vcs" "test/common"]
+              ["test/frontend" "test/vcs" "test/common"]
      :plugins [[lein-doo "0.1.7"]]}]
+
+   :player
+   [:vcs :common :css-player :-frontend-config]
+
+   :player-dev
+   [:player :-frontend-dev-config]
 
    ;;
    ;; CSS
    ;;
-   ;; NOTE this profile won't run by itself since it needs some frontend deps
-   :css
+   ;; NOTE these profiles won't run by themselves since they need some frontend deps
+   ;; Example: `lein with-profile frontend-dev garden auto`
+
+   :-css-dev-config
    {:plugins      [[lein-garden "0.2.8" :exclusions [org.clojure/clojure]]]
     :dependencies [[garden "1.3.2"]
                    ;; Added this to fix a compilation issue with garden
                    [ns-tracker "0.3.0"]]
-    :prep-tasks   [["garden" "once"]]
-    :garden
-    {:builds
-     [{:id           "dev-styles"
-       :source-paths ["src/frontend" "src/common"]
-       :stylesheet   vimsical.frontend.styles.core/styles
-       :compiler     {:output-to     "resources/public/css/app.css"
-                      :vendors       ["webkit" "moz"]
-                      :auto-prefix   #{:user-select}
-                      :pretty-print? true}}]}}
+    :prep-tasks   [["garden" "once"]]}
+
+   :css
+   [:-css-dev-config
+    {:garden
+     {:builds
+      [{:id           "dev-styles"
+        :source-paths ["src/frontend" "src/common"]
+        :stylesheet   vimsical.frontend.styles.core/styles
+        :compiler     {:output-to     "resources/public/css/app.css"
+                       :vendors       ["webkit" "moz"]
+                       :auto-prefix   #{:user-select}
+                       :pretty-print? true}}]}}]
+
+   :css-player
+   [:-css-dev-config
+    {:garden
+     {:builds
+      [{:id           "dev-styles-player"
+        :source-paths ["src/frontend" "src/common"]
+        :stylesheet   vimsical.frontend.player.style/embed-styles
+        :compiler     {:output-to     "resources/public/css/player.css"
+                       :vendors       ["webkit" "moz"]
+                       :auto-prefix   #{:user-select}
+                       :pretty-print? true}}]}}]
 
    ;;
    ;; Cljs
@@ -170,6 +196,27 @@
                       :asset-path           "/js/compiled/out"
                       :output-to            "resources/public/js/compiled/vimsical.js"
                       :output-dir           "resources/public/js/compiled/out"
+                      :optimizations        :none
+                      :parallel-build       true
+                      ;; Add cache busting timestamps to source map urls.
+                      ;; This is helpful for keeping source maps up to date when
+                      ;; live reloading code.
+                      :source-map-timestamp true
+                      :closure-defines      {goog.DEBUG                          true
+                                             re_frame.trace.trace_enabled_QMARK_ true}
+                      :preloads             [devtools.preload
+                                             day8.re-frame.trace.preload]
+
+                      :external-config      {:devtools/config
+                                             {:features-to-install :all
+                                              :fn-symbol           "λ"}}}}
+      {:id           "player-dev"
+       :figwheel     {:on-jsload vimsical.frontend.player.dev/on-reload}
+       :source-paths ["checkouts/mapgraph/src" "dev/frontend" "src/frontend" "src/common" "src/vcs" "dev/frontend"]
+       :compiler     {:main                 vimsical.frontend.player.core
+                      :asset-path           "/js/compiled/player/out"
+                      :output-to            "resources/public/js/compiled/vimsical-player.js"
+                      :output-dir           "resources/public/js/compiled/player/out"
                       :optimizations        :none
                       :parallel-build       true
                       ;; Add cache busting timestamps to source map urls.

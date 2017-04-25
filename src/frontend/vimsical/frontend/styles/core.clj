@@ -2,7 +2,7 @@
   "Core namespace for generating the the app.css stylesheet. Separate source-
   path from frontend because otherwise figwheel double reloads for .css and
   .cljs files."
-  (:require [vimsical.frontend.app.style :refer [app]]
+  (:require [vimsical.frontend.app.style :as app]
             [vimsical.frontend.vcr.style :refer [vcr]]
             [vimsical.frontend.nav.style :refer [nav]]
             [vimsical.frontend.player.style :refer [player]]
@@ -12,7 +12,7 @@
 
 (def styles
   "Read by garden. See config in project.clj"
-  [app
+  [app/defaults
    nav
    vcr
 

@@ -1,6 +1,8 @@
 (ns vimsical.frontend.player.style
-  (:require [vimsical.frontend.live-preview.style :refer [live-preview]]
+  (:require [vimsical.frontend.app.style :as app]
+            [vimsical.frontend.live-preview.style :refer [live-preview]]
             [vimsical.frontend.code-editor.style :refer [code-editor]]
+            [vimsical.frontend.views.style :as views]
             [vimsical.frontend.styles.color :as color]))
 
 (def preview-panel
@@ -137,11 +139,9 @@
 
 (def player
   [:.vimsical-frontend-player
-   {:margin     "40px"                   ;; todo temp
-    :min-width  :700px                   ; max embed width on medium
-    :max-width  :1200px
-    :height     "100vh"
-    :box-shadow "0 1px 10px rgba(171,165,165,0.7)"}
+   {:min-width :700px                   ; max embed width on medium
+    :max-width :1200px
+    :height    "100vh"}
    [:.rc-n-h-split
     ;; todo splitter-child line color
     {:height :100%}
@@ -165,3 +165,20 @@
      :align-items     :center}]
    preview-panel
    editor-panel])
+
+(def embed-styles
+  "Standalone styles for the embedded version of Player.
+  Required in project.clj."
+  [:#player
+   {:width  :100vw
+    :height :100vh}
+   [app/defaults
+    views/avatar
+    views/user
+    views/icons
+    player]
+   ;; overwrite player styles to fill entire iframe
+   [:.vimsical-frontend-player
+    {:max-width :initial
+     :width     :100vw
+     :height    :100vh}]])

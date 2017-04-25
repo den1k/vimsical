@@ -11,16 +11,17 @@
 
 #?(:clj
    (def figwheel-config
-        {:figwheel-options {:css-dirs         ["resources/public/css"]
-                            :reload-clj-files {:clj false :cljc true}
-                            :server-port      3449}
-         :build-ids        ["dev"]
-         :all-builds       cljs-builds}))
+     ;; todo separate resource path for player
+     {:figwheel-options {:css-dirs         ["resources/public/css"]
+                         :reload-clj-files {:clj false :cljc true}
+                         :server-port      3450}
+      :build-ids        ["player-dev"]
+      :all-builds       cljs-builds}))
 
 #?(:clj
    (defn start-dev
      []
-     (println "Starting client dev build with figwheel...")
+     (println "Starting client player dev build with figwheel...")
      (ra/start-figwheel! figwheel-config)
      (ra/cljs-repl)))
 

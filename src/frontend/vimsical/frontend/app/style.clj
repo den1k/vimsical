@@ -3,8 +3,8 @@
 (def app-font-family
   "-apple-system, BlinkMacSystemFont, \".SFNSText-Regular\", \"San Francisco\", \"Roboto\", \"Segoe UI\", \"Helvetica Neue\", \"Lucida Grande\", sans-serif")
 
-(def app
-  [["@font-face"
+(def defaults
+  [#_["@font-face"
     {:font-family "FiraCode-Retina"
      :src         "url(\"/fonts/FiraCode-Retina.otf\") format(\"opentype\")"}]
 
