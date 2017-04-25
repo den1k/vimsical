@@ -12,14 +12,13 @@
 (defn descending? [comparison-result] (== (var-get #'sut/desc) comparison-result))
 
 (deftest comparator-test
-  (let [cpr (sut/new-branch-comparator examples/delta-index)]
-    (are [pred left right] (is (pred (cpr left right)))
-      ascending?  examples/master examples/child
-      ascending?  examples/master examples/gchild
-      ascending?  examples/child  examples/gchild
-      descending? examples/child  examples/master
-      descending? examples/gchild examples/master
-      descending? examples/gchild examples/child)))
+  (let [cpr (sut/new-branch-comparator examples/deltas-by-branch-id)]
+    (are [pred left right] (is (pred (cpr left right))) ascending?  examples/master examples/child
+         ascending?  examples/master examples/gchild
+         ascending?  examples/child  examples/gchild
+         descending? examples/child  examples/master
+         descending? examples/gchild examples/master
+         descending? examples/gchild examples/child)))
 
 (deftest inlining-test
-  (is= examples/deltas (sut/inline examples/delta-index examples/branches)))
+  (is= examples/deltas (sut/inline examples/deltas-by-branch-id examples/branches)))

@@ -4,7 +4,9 @@
    [vimsical.common.test :refer [uuid]]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.state.branches :as state.branches]))
+   [vimsical.vcs.state.branches :as state.branches]
+   [vimsical.vcs.state.branch-pointers :as state.branch-pointers]
+   [vimsical.vcs.data.indexed.vector :as indexed]))
 
 ;; * UUIDs
 
@@ -61,27 +63,24 @@
    gchild-id {file1-id d5 file2-id d6}})
 
 
-;; * Delta index
+;; * Branches
 
-(def delta-index
-  {master-id (#'state.branches/new-index [d0 d1 d8])
-   child-id  (#'state.branches/new-index [d2 d3 d7])
-   gchild-id (#'state.branches/new-index [d4 d5 d6])})
+(def deltas-by-branch-id
+  {master-id (indexed/vec-by :id [d0 d1 d8])
+   child-id  (indexed/vec-by :id [d2 d3 d7])
+   gchild-id (indexed/vec-by :id [d4 d5 d6])})
 
-;; (s/assert* ::state.branches/delta-index delta-index)
+(s/assert* ::state.branches/deltas-by-branch-id deltas-by-branch-id)
+
+(def branch-pointers-by-branch-id
+  {master-id {::state.branch-pointers/start (:id d0) ::state.branch-pointers/end (:id d8)}
+   child-id  {::state.branch-pointers/start (:id d2) ::state.branch-pointers/end (:id d7)}
+   gchild-id {::state.branch-pointers/start (:id d4) ::state.branch-pointers/end (:id d6)}})
+
+(s/assert* ::state.branch-pointers/branch-pointers-by-branch-id branch-pointers-by-branch-id)
 
 
 ;; * Branch tree
 
 (def branch-tree
   (assoc master ::branch/children [(assoc child ::branch/children [gchild])]))
-
-;; (def state
-;;   (let [[d1 d2 d3]
-;;         [{:branch-id #uuid :branch, :file-id #uuid :file, :prev-id nil,                :id #uuid [:str/ins 0], :op [:str/ins nil "f"], :pad 1, :meta {:timestamp 123, :version 0.3}}
-;;          {:branch-id #uuid :branch, :file-id #uuid :file, :prev-id #uuid [:str/ins 0], :id #uuid [:str/ins 1], :op [:str/ins #uuid [:str/ins 0] "u"], :pad 1, :meta {:timestamp 123, :version 0.3}}
-;;          {:branch-id #uuid :branch, :file-id #uuid :file, :prev-id #uuid [:str/ins 1], :id #uuid [:str/ins 2], :op [:str/ins #uuid [:str/ins 1] "n"], :pad 1, :meta {:timestamp 123, :version 0.3}}]]
-;;     {d1 {:latest-deltas    {:<branch-id> {:<file-id> d1}}
-;;          :branch-tree      :<branch-tree>
-;;          :deltas-by-branch {#uuid :branch [d1]}
-;;          :string-by-file {}}}))

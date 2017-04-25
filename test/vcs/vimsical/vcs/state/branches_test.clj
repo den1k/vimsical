@@ -8,16 +8,16 @@
 (st/instrument)
 
 (deftest constructor-test
-  (is= examples/delta-index (sut/new-delta-index examples/deltas)))
+  (diff= examples/deltas-by-branch-id (sut/add-deltas sut/empty-deltas-by-branch-id examples/deltas)))
 
 (deftest add-deltas-test
-  (let [expected    examples/delta-index
+  (let [expected    examples/deltas-by-branch-id
         batches     (split-at (rand-int (count examples/deltas)) examples/deltas)
-        actual      (reduce sut/add-deltas (sut/new-delta-index) batches)]
-    (is= expected actual)))
+        actual      (reduce sut/add-deltas sut/empty-deltas-by-branch-id batches)]
+    (diff= expected actual)))
 
 (deftest index-of-test
-  (are [index branch-uuid delta] (diff= index (sut/index-of examples/delta-index delta))
+  (are [index branch-uuid delta] (is= index (sut/index-of-delta examples/deltas-by-branch-id delta))
     0 examples/master-id examples/d0
     0 examples/child-id  examples/d2
     0 examples/child-id  examples/d2

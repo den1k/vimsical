@@ -1,4 +1,5 @@
 (ns vimsical.common.test
+  #?(:cljs (:refer-clojure :exclude [uuid]))
   (:require
    [clojure.data :as data]
    [clojure.test :as t]

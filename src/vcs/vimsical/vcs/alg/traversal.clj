@@ -1,9 +1,10 @@
 (ns vimsical.vcs.alg.traversal
-  (:require [clojure.spec :as s]
-            [vimsical.vcs.data.splittable :as splittable]
-            [vimsical.vcs.branch :as branch]
-            [vimsical.vcs.data.indexed.vector :as indexed]
-            [vimsical.vcs.state.branches :as delta-index]))
+  (:require
+   [clojure.spec :as s]
+   [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.data.indexed.vector :as indexed]
+   [vimsical.vcs.data.splittable :as splittable]
+   [vimsical.vcs.state.branches :as state.branches]))
 
 ;; * Internal
 
@@ -11,7 +12,7 @@
 (def ^:private asc -1)
 (def ^:private desc 1)
 
-(defn- reduce-tree
+(defn reduce-tree
   "Depth-first reduction of a tree.
 
   `rec` is a fn of `tree` that should return the recursive part of the tree or
@@ -29,15 +30,34 @@
 
 (comment
   (assert
-   (= [0 1 2 3 4 5])
-   (reduce-tree
-    :children
-    (fn f [acc {:keys [id]}]
-      (conj acc id))
-    [] {:id        5
-        :children [{:id 2 :children [{:id 1 :children [{:id 0}]}]}
-                   {:id 4 :children [{:id 3}]}]})))
+   (= [0 1 2 3 4 5]
+      (reduce-tree
+       :children
+       (fn f [acc {:keys [id]}]
+         (conj acc id))
+       [] {:id        5
+           :children [{:id 2 :children [{:id 1 :children [{:id 0}]}]}
+                      {:id 4 :children [{:id 3}]}]}))))
 
+
+(defn update-tree
+  [rec rf f tree]
+  (if-some [rec-tree (rec tree)]
+    (f (rf tree (mapv (partial update-tree rec rf f) rec-tree)))
+    (f tree)))
+
+(comment
+  (assert
+   (= {:id        6
+       :children [{:id 3 :children [{:id 2 :children [{:id 1}]}]}
+                  {:id 5 :children [{:id 4}]}]}
+      (update-tree
+       :children
+       (fn [node children] (assoc node :children children))
+       (fn [node] (update node :id inc))
+       {:id        5
+        :children [{:id 2 :children [{:id 1 :children [{:id 0}]}]}
+                   {:id 4 :children [{:id 3}]}]}) )))
 
 ;; * Branch comparator
 
@@ -47,7 +67,7 @@
                        :ret  #{-1 0 1}))
 
 (s/fdef new-branch-comparator
-        :args (s/cat :delta-index ::delta-index/delta-index)
+        :args (s/cat :deltas-by-branch-id ::state.branches/deltas-by-branch-id)
         ;;
         ;; NOTE this doesn't work because fspec will exercise the :args spec and
         ;; invoke the comparator with it, so the comparators args spec needs to
@@ -62,19 +82,19 @@
         )
 
 (defn new-branch-comparator
-  [delta-index]
+  [deltas-by-branch-id]
   (letfn [(compare-relative-depth [common-ancestor a b]
             (let [depth-a          (branch/relative-depth common-ancestor a)
                   depth-b          (branch/relative-depth common-ancestor b)
                   depth-comparison (compare depth-a depth-b)]
               (when-not (zero? depth-comparison)
                 depth-comparison)))
-          (branch-entry-index [delta-index {::branch/keys [entry-delta-id] :keys [db/id]}]
-            (delta-index/index-of delta-index id entry-delta-id))
+          (branch-entry-index [deltas-by-branch-id {::branch/keys [entry-delta-id] :keys [db/id]}]
+            (state.branches/index-of-delta deltas-by-branch-id id entry-delta-id))
           (compare-entry-deltas [common-ancestor a b]
             (compare
-             (branch-entry-index delta-index a)
-             (branch-entry-index delta-index b)))]
+             (branch-entry-index deltas-by-branch-id a)
+             (branch-entry-index deltas-by-branch-id b)))]
     (fn branch-comparator
       [a b]
       (let [common-ancestor (branch/common-ancestor a b)]
@@ -106,7 +126,7 @@
 ;; * Branch inlining
 
 (s/fdef inline
-        :args (s/cat :delta-index ::delta-index/delta-index
+        :args (s/cat :deltas-by-branch-id ::state.branches/deltas-by-branch-id
                      :branches (s/every ::branch/branch))
         :ret  ::indexed/vector)
 
@@ -117,8 +137,8 @@
 (defn inline
   "Does a reduce-tree traversal of the branch tree, reducing over children
   branches and inlining their deltas in a single indexed vector."
-  [delta-index branches]
-  (let [cpr  (new-branch-comparator delta-index)
+  [deltas-by-branch-id branches]
+  (let [cpr  (new-branch-comparator deltas-by-branch-id)
         tree (branch/branch-tree branches)
         rec  (fn [{::branch/keys [children]}]
                (sort cpr children))]
@@ -130,11 +150,11 @@
            {:as           branch
             :keys         [db/id]
             ::branch/keys [entry-delta-id]}]
-        (let [branch-deltas (delta-index/get-deltas delta-index branch)]
+        (let [branch-deltas (state.branches/get-deltas deltas-by-branch-id branch)]
           (if (nil? acc)
             {::insert-id     entry-delta-id
              ::insert-deltas branch-deltas}
-            (let [insert-index (inc (delta-index/index-of delta-index id insert-id))]
+            (let [insert-index (inc (state.branches/index-of-delta deltas-by-branch-id id insert-id))]
               {::insert-id     entry-delta-id
                ::insert-deltas (splittable/splice branch-deltas insert-index insert-deltas)}))))
       nil tree))))

@@ -2,18 +2,22 @@
   (:require [clojure.test :as t :refer [are deftest is testing]]
             [orchestra.spec.test :as st]
             [vimsical.common.test :refer [uuid is=]]
+            [vimsical.vcs.editor :as editor]
             [vimsical.vcs.examples :as examples]
             [vimsical.vcs.alg.topo :as topo]
             [vimsical.vcs.state.files :as sut]
             [vimsical.vcs.data.gen.diff :as diff]
             [vimsical.vcs.edit-event :as edit-event]))
 
-(st/unstrument)
+(st/instrument)
+
 
 ;; * Deltas tests
 
 (deftest add-deltas-test
-  (t/is (sut/add-deltas sut/empty-states examples/deltas)))
+  (let [states                          (sut/add-deltas sut/empty-state-by-file-id examples/deltas)
+        {::sut/keys [deltas] :as state} (get states examples/file1-id)]
+    (t/is (seq deltas))))
 
 
 ;; * Edit events tests
@@ -24,57 +28,39 @@
           (test-timestamp-fn [_] 123)]
     (let [branch-id    (uuid :<branch>)
           file-id      (uuid :<file>)
-          test-state   {::sut/branch-id branch-id
-                        ::sut/file-id   file-id
-                        ::sut/delta-id  nil}
-          test-effects {::sut/pad-fn       test-pad-fn
-                        ::sut/uuid-fn      test-uuid-fn
-                        ::sut/timestamp-fn test-timestamp-fn}
-          string= (fn [expected [states deltas current-delta-id]]
-                    (is (seq deltas))
-                    (is (topo/sorted? deltas))
-                    (is= expected (sut/get-file-string states current-delta-id file-id)))]
+          test-effects {::editor/pad-fn       test-pad-fn
+                        ::editor/uuid-fn      test-uuid-fn
+                        ::editor/timestamp-fn test-timestamp-fn}
+          string= (fn [expected [states deltas]]
+                    (let [{::sut/keys [files string]} (get states file-id)]
+                      (is (seq deltas))
+                      (is (topo/sorted? deltas))
+                      (is= expected string)))]
       (testing "Spliced insert"
         (string= "abc"
                  (sut/add-edit-events
-                  sut/empty-states test-effects [] file-id branch-id nil
+                  sut/empty-state-by-file-id test-effects file-id branch-id nil
                   (diff/diffs->edit-events "" ["abc"]))))
       (testing "Unspliced insert"
         (string= "abc"
                  (sut/add-edit-events
-                  sut/empty-states test-effects [] file-id branch-id nil
+                  sut/empty-state-by-file-id test-effects file-id branch-id nil
                   (diff/diffs->edit-events "" "abc"))))
       (testing "Spliced Delete"
         (string= "a"
                  (sut/add-edit-events
-                  sut/empty-states test-effects [] file-id branch-id nil
+                  sut/empty-state-by-file-id test-effects file-id branch-id nil
                   (diff/diffs->edit-events "" ["abc"] ["a"])))
         (string= "xyz"
                  (sut/add-edit-events
-                  sut/empty-states test-effects [] file-id branch-id nil
+                  sut/empty-state-by-file-id test-effects file-id branch-id nil
                   (diff/diffs->edit-events "" ["abc"] ["xyz"]))))
       (testing "Unspliced Delete"
         (string= "a"
                  (sut/add-edit-events
-                  sut/empty-states test-effects [] file-id branch-id nil
+                  sut/empty-state-by-file-id test-effects file-id branch-id nil
                   (diff/diffs->edit-events "" "abc" "a")))
         (string= "xyz"
                  (sut/add-edit-events
-                  sut/empty-states test-effects [] file-id branch-id nil
+                  sut/empty-state-by-file-id test-effects file-id branch-id nil
                   (diff/diffs->edit-events "" "abc" "xyz")))))))
-
-
-;; * Accessors tests
-
-(deftest get-deltas-tets
-  (let [state (sut/add-deltas {} examples/deltas)]
-    (t/are [s id] (t/is (= s (::sut/string (sut/get-file-state state id examples/file1-id))))
-      "h"   examples/id0
-      "h"   examples/id1
-      "hi"  examples/id2
-      "hi"  examples/id3
-      "hi!" examples/id4
-      "hi!" examples/id5
-      "hi"  examples/id6
-      "h"   examples/id7
-      "hey" examples/id8)))

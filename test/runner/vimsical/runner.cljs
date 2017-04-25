@@ -9,7 +9,7 @@
    [cljs.test :as test]
    [doo.runner :refer-macros [doo-all-tests doo-tests]]
    [vimsical.common.core-test]
-   [vimsical.frontend.core-test]
+   [vimsical.vcs.data.dll-test]
    ;; TODO cljc conversion
    ;; [vimsical.vcs.core-test]
    ))

@@ -18,14 +18,13 @@
      [lein-environ "1.1.0"]]}
 
    :test
-   [:backend :frontend :vcs :common
-    {:source-paths
-     ["test/backend" "test/frontend" "test/vcs" "test/common"]
-     :dependencies
-     [[org.clojure/test.check "0.9.0"]
-      [orchestra              "0.2.0"]]
-     :global-vars
-     {*warn-on-reflection* false}}]
+   {:source-paths
+    ["test/backend" "test/frontend" "test/vcs" "test/common"]
+    :dependencies
+    [[org.clojure/test.check "0.9.0"]
+     [orchestra              "0.2.0"]]
+    :global-vars
+    {*warn-on-reflection* false *unchecked-math* false}}
 
    :uberjar
    {:aot          :all

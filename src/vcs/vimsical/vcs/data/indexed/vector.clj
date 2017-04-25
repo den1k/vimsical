@@ -91,7 +91,7 @@
       (Index. offset (merge m m-other))))
 
   (splice [this idx other]
-    (if (== (count m) idx)
+    (if (== (count m) (long idx))
       (splittable/append this other)
       (let [[left right] (splittable/split this idx)]
         (->  left
@@ -204,7 +204,7 @@
 
   splittable/Mergeable
   (splice [this idx other]
-    (if (== (count this) idx)
+    (if (== (count this) (long idx))
       (splittable/append this other)
       (let [index' (splittable/splice index idx (.index ^IndexedVector other))
             v'     (splittable/splice v idx (.v ^IndexedVector other))]
@@ -238,7 +238,6 @@
 (s/def ::vector-like (s/or :seq seq? :vec clojure.core/vector? :sequ sequential?))
 (s/def ::vector (s/and vector? -consistent?))
 
-(s/explain ::vector (vector))
 
 ;; ** By value
 
