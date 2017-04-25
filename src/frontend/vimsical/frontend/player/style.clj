@@ -137,10 +137,11 @@
 
 (def player
   [:.vimsical-frontend-player
-   {:margin    "40px"                   ;; todo temp
-    :min-width :700px                   ; max embed width on medium
-    :max-width :1200px
-    :height    "100vh"}
+   {:margin     "40px"                   ;; todo temp
+    :min-width  :700px                   ; max embed width on medium
+    :max-width  :1200px
+    :height     "100vh"
+    :box-shadow "0 1px 10px rgba(171,165,165,0.7)"}
    [:.rc-n-h-split
     ;; todo splitter-child line color
     {:height :100%}

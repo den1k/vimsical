@@ -87,7 +87,6 @@
      [[org.clojure/clojurescript "1.9.518"]
       ;; Dependency of Google Closure compiler
       [com.google.guava/guava "21.0"]
-      [cljsjs/google-diff-match-patch "20121119-1"]
       ;; Our mapgraph fork. Must be be symlinked in checkouts.
       [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
       [reagent "0.6.1" :exclusions [org.clojure/clojurescript]]
