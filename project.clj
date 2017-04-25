@@ -86,13 +86,13 @@
      :dependencies
      [[org.clojure/clojurescript "1.9.518"]
       ;; Dependency of Google Closure compiler
-      ;; Needed for to compile CLJS
       [com.google.guava/guava "21.0"]
       [cljsjs/google-diff-match-patch "20121119-1"]
-      [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT"]
-      [reagent "0.6.1"]
-      [re-frame "0.9.2"]
-      [re-com "2.0.0"]
+      ;; Our mapgraph fork. Must be be symlinked in checkouts.
+      [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
+      [reagent "0.6.1" :exclusions [org.clojure/clojurescript]]
+      [re-frame "0.9.2" :exclusions [org.clojure/clojurescript]]
+      [re-com "2.0.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
       [thi.ng/color "1.2.0"]]}]
 
    :frontend-dev
@@ -101,8 +101,14 @@
      [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]]
      :dependencies
      [[com.cemerick/piggieback "0.2.2-SNAPSHOT"]
-      [figwheel-sidecar "0.5.10"]
-      [binaryage/devtools "0.8.3"]]
+      [figwheel-sidecar "0.5.10" :exclusions [org.clojure/clojurescript]]
+      [re-frisk "0.4.4" :exclusions [re-frame org.clojure/clojurescript]]
+      ;; needed as a dep for re-frame.trace
+      [binaryage/devtools "0.8.3"]
+      ;; re-frame.trace - clone and install to use
+      ;; https://github.com/Day8/re-frame-trace
+      [day8.re-frame/abra "0.0.9-SNAPSHOT" :exclusions [re-frame reagent org.clojure/clojurescript]]
+      [org.clojure/tools.nrepl "0.2.13"]]
      :source-paths
      ["dev/frontend"]
      :repl-options
@@ -159,8 +165,8 @@
                       ;; externs. Defaults to false.
                       :pseudo-names    false}}
       {:id           "dev"
-       :figwheel     {:on-jsload vimsical.frontend.core/on-reload}
-       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs" "dev/frontend"]
+       :figwheel     {:on-jsload vimsical.frontend.dev/on-reload}
+       :source-paths ["checkouts/mapgraph/src" "dev/frontend" "src/frontend" "src/common" "src/vcs" "dev/frontend"]
        :compiler     {:main                 vimsical.frontend.core
                       :asset-path           "/js/compiled/out"
                       :output-to            "resources/public/js/compiled/vimsical.js"
@@ -171,12 +177,16 @@
                       ;; This is helpful for keeping source maps up to date when
                       ;; live reloading code.
                       :source-map-timestamp true
-                      :preloads             [devtools.preload]
+                      :closure-defines      {goog.DEBUG                          true
+                                             re_frame.trace.trace_enabled_QMARK_ true}
+                      :preloads             [devtools.preload
+                                             day8.re-frame.trace.preload]
+
                       :external-config      {:devtools/config
                                              {:features-to-install :all
                                               :fn-symbol           "λ"}}}}
       {:id           "test"
-       :source-paths ["checkouts/mapgraph/src" "src/frontend"  "src/common"  "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
+       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
        :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
                       :output-dir     "resources/public/js/compiled/out-test"
                       :main           vimsical.runner
@@ -184,7 +194,7 @@
                       :optimizations  :none
                       :parallel-build true}}
       {:id           "test-advanced"
-       :source-paths ["checkouts/mapgraph/src" "src/frontend"  "src/common"  "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
+       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
        :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
                       :output-dir     "resources/public/js/compiled/out-test-advanced"
                       :main           vimsical.runner

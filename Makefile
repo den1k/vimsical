@@ -1,4 +1,17 @@
-.PHONY: clean test test-clj test-cljs test-cljs-advanced
+.PHONY: clean test test-clj test-cljs test-cljs-advanced lein-deps deps
+
+#
+# TODO Get deps
+#
+
+checkouts/mapgraph/:
+	exit 1 "Clone mapgraph and add a symlink at ./checkouts/mapgraph"
+
+lein-deps:
+	lein with-profile backend-test,frontend-test,dev,user deps
+
+deps: checkouts/mapgraph/
+
 
 # Lein
 #
@@ -12,13 +25,13 @@ clean:
 
 test: test-clj test-cljs test-cljs-advanced
 
-test-clj: clean
+test-clj: deps clean
 	lein with-profile backend-test test
 
-test-cljs: clean
+test-cljs: deps clean
 	lein with-profile +frontend-test,-css doo node test once
 
-test-cljs-advanced: clean
+test-cljs-advanced: deps clean
 	lein with-profile +frontend-test,-css doo node test-advanced once
 
 
@@ -27,14 +40,14 @@ test-cljs-advanced: clean
 
 build: build-clj build-cljs
 
-build-clj: clean
+build-clj: deps clean
 	lein with-profile backend uberjar
 
-build-cljs: clean
+build-cljs: deps clean
 	lein with-profile frontend cljsbuild once prod
 
 # Styles
 #
 
-dev-styles:
+dev-styles: deps
 	lein with-profile frontend-dev garden auto

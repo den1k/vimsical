@@ -9,7 +9,7 @@
             [reagent.core :as reagent]
             [vimsical.frontend.views.icons :as icons]
             [vimsical.frontend.util.dom :as util.dom]
-            [vimsical.frontend.dev.util :as dev.util]))
+            [vimsical.frontend.util.content :as util.content]))
 
 (defn play-symbol [opts]
   [shapes/triangle
@@ -109,7 +109,7 @@
 
 (defn info-and-editor-container []
   (let [show-info? (reagent/atom true)
-        desc       (dev.util/lorem-ipsum 2)]
+        desc       (util.content/lorem-ipsum 2)]
     (reagent/create-class
      {:render
       (fn [c]
@@ -123,8 +123,7 @@
           {:class (when-not @show-info? "pan-out")}
           [:div.header
            [user/avatar
-            {:img-url person-url
-             :size    "50px"}]
+            {:img-url person-url}]
            [:div.title-and-creator
             [:div.title.truncate "Pinterest CSS Layout And so much more"]
             [:div.creator.truncate "Jane Blacksmith"]]]

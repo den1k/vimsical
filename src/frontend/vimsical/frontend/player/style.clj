@@ -89,6 +89,9 @@
     [:.header
      {:display     :flex
       :align-items :center}
+     [:.avatar
+      {:height :50px
+       :width  :50px}]
      [:div.title-and-creator
       {:margin-left :10px
        :line-height 1.2}

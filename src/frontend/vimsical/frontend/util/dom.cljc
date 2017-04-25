@@ -28,4 +28,7 @@
      "Event handler macro. Makes e (event) and target available in the body."
      ([& body]
       `(fn e># [~'e]
-         ~@body))))
+         (let [~'target (.-target ~'e)
+               ~'value (.-value ~'target)
+               ~'inner-html (.-innerHTML ~'target)]
+           ~@body)))))

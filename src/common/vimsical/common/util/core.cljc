@@ -12,7 +12,8 @@
         [clojure.string :as string]
         [goog.object :as gobj]
         [medley.core :as md]
-        [goog.functions :as gfns])
+        [goog.functions :as gfns]
+        [goog.string :as gstr])
        (:require-macros [cljs.core.async.macros :refer [alt! go-loop]])]))
 
 (defn- next-item-with-comparator [comparator]
@@ -233,3 +234,37 @@
   (if (every? map? (filter identity maps))
     (apply merge-with deep-merge maps)
     (last maps)))
+
+;;
+;; * String & Keyword Manipulation
+;;
+
+;; from https://github.com/expez/superstring/blob/master/src/superstring/core.cljs
+
+(defn- split-words [s]
+  (remove empty?
+          (-> s
+              (string/replace #"_|-" " ")
+              (string/replace #"([A-Z])(([A-Z])([a-z0-9]))"
+                              "$1 $2")
+              (string/replace
+               #"([a-z])([A-Z])" "$1 $2")
+              (string/split
+               #"[^\w0-9]+"))))
+
+(defn lisp-case
+  "Lower case s and separate words with dashes.
+  foo bar => foo-bar
+  camelCase => camel-case
+  This is also referred to as kebab-case in some circles."
+  [^String s]
+  {:pre  [(string? s)]
+   :post [(string? %)]}
+  (string/join "-" (map string/lower-case (split-words s))))
+
+(def lisp-case-keyword
+  (comp keyword lisp-case))
+
+#?(:cljs
+   (defn norm-str [s]
+     (some-> s not-empty gstr/collapseWhitespace)))

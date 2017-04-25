@@ -1,6 +1,6 @@
 (ns vimsical.frontend.views.style)
 
-(def user
+(def avatar
   [:.avatar
    {:position    :relative
     :flex-shrink 0
@@ -21,6 +21,16 @@
      :height        :15px
      :margin-left   :72%}]])
 
+(def user
+  [:.user
+   {:display     :flex
+    :align-items :center}
+   [:.name
+    {:display     :flex
+     :margin-left :10px}
+    [:.last-name
+     {:margin-left :5px}]]])
+
 (def icons
   [:.logo-and-type {:display     :flex
                     :align-items :center
@@ -32,5 +42,6 @@
                      :margin-left :15px}]])
 
 (def views
-  [user
+  [avatar
+   user
    icons])
