@@ -3,19 +3,8 @@
    [vimsical.common.util.core :as util]
    [reagent.core :as reagent]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]
-   [clojure.string :as string])
-  (:refer-clojure :exclude [create-node]))
-
-(def prefix-ns
-  (let [ns-str (namespace ::_)]
-    (fn prefix
-      ([kw]
-       (str ns-str "/" (name kw)))
-      ([kw1 kw2]
-       (str ns-str "/" (name kw1) "." (name kw2)))
-      ([kw1 kw2 & kws]
-       (str ns-str "/" (name kw1) "." (name kw2) "."
-            (transduce (comp (map name) (interpose ".")) str kws))))))
+   [re-frame.core :as re-frame]
+   [vimsical.frontend.live-preview.handlers :as handlers]))
 
 (def iframe-sandbox-opts
   "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe"
@@ -26,32 +15,11 @@
                    "allow-same-origin"
                    "allow-scripts"))
 
-(defmulti update-node!
-  (fn [content-type _ _] content-type)
-  :default :css-or-javascript)
-
-(defn- document-ready? [iframe]
-  (some-> iframe .-contentDocument .-readyState (identical? "complete")))
-
-(defmethod update-node! :html
-  [_ iframe text]
-  (when (document-ready? iframe)
-    (-> iframe .-contentDocument .-body (util.dom/set-inner-html! text))))
-
-(defmethod update-node! :css-or-javascript
-  [content-type iframe text]
-  (when (document-ready? iframe)
-    (let [doc      (-> iframe .-contentDocument)
-          old-node (.getElementById doc (prefix-ns content-type))
-          new-node (util.dom/create content-type {:id (prefix-ns content-type)} text)]
-      (some-> old-node util.dom/remove!)
-      (util.dom/append! (.-head doc) new-node))))
-
 ;;
 ;; * Components
 ;;
 
-(defn preview-node [{:keys [iframe-node file-type]}]
+(defn preview-node [{:keys [file-type parent-ui-reg-key]}]
   (let [; todo subs to html/css/js string based on file-type
         text (get {:html "<h1>Live-Preview</h1>"
                    :css  "body {
@@ -68,29 +36,30 @@
                   file-type)]
     (fn [c]
       (when text
-        (update-node! file-type iframe-node text))
+        (re-frame/dispatch
+         [::handlers/update-node parent-ui-reg-key file-type text]))
       [:div])))
 
-(defn live-preview []
-  (let [iframe-node (atom nil)          ;; regular atom. only set once
-        ;; todo subs to files
-        filetypes   #{:html :css :javascript}]
+(defn live-preview [{:keys [ui-reg-key]}]
+  (let [;; todo subs to files
+        filetypes #{:html :css :javascript}]
     (reagent/create-class
      {; component should maybe never update? TBD
       ;:should-component-update (fn [_ _ _] false)
       :render
       (fn [c]
         [:div.live-preview
-         (when-let [iframe-node @iframe-node]
-           (doall
-            (for [ft filetypes]
-              ^{:key (prefix-ns :preview-node ft)}
-              [preview-node {:iframe-node iframe-node
-                             :file-type   ft}])))
          [:iframe.iframe
-          {:key     (prefix-ns "iframe")
+          {:key     ::iframe            ; ref only works when key is present
            :ref     (fn [node]
-                      (when (and node (nil? @iframe-node))
-                        (reset! iframe-node node)
-                        (.forceUpdate c)))
-           :sandbox iframe-sandbox-opts}]])})))
+                      (if node
+                        ; sync to make sure iframe is available before preview-nodes render
+                        (do (re-frame/dispatch-sync
+                             [::handlers/register-iframe ui-reg-key node]))
+                        (re-frame/dispatch
+                         [::handlers/dispose-iframe ui-reg-key])))
+           :sandbox iframe-sandbox-opts}]
+         (for [ft filetypes]
+           ^{:key (str ::preview-node- ft)}
+           [preview-node {:parent-ui-reg-key ui-reg-key
+                          :file-type         ft}])])})))

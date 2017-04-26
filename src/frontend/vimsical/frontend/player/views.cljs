@@ -129,11 +129,11 @@
             [:div.creator.truncate "Jane Blacksmith"]]]
           (when desc
             [:div.desc desc])]
-         [code-editor {:id             (gensym ::__)
-                       :file-type      :html
-                       :compact?       true
-                       :read-only?     true
-                       :editor-reg-key :player/editor}]
+         [code-editor {:id         (gensym ::__)
+                       :file-type  :html
+                       :compact?   true
+                       :read-only? true
+                       :ui-reg-key :player/editor}]
          [:div.logo-and-file-type.bar
           [icons/logo-and-type]
           ;; todo dynamic

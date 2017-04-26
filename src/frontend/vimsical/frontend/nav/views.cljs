@@ -84,7 +84,7 @@
               :anchor title-html])])))))
 
 (defn nav []
-  (let [show-popup? (reagent/atom true)]
+  (let [show-popup? (reagent/atom false)]
     (with-queries
      [{:user/keys [first-name last-name vimsae] :as user}
       [:app/user
@@ -112,7 +112,7 @@
 
        [:div.auth-or-user
         {:on-click (e> (swap! show-popup? not))}
-        (if false                       ;'logged-in?
+        (if true                        ;'logged-in?
           [:div.user.ac
            [auth.views/logout-popover-anchor
             {:showing? show-popup?
