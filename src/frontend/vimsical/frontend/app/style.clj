@@ -28,12 +28,42 @@
    [:.app
     {:font-family     app-font-family
      :color           :#4c4f59
-     :width           :100vw
-     :height          :100vh
      :display         :flex
      :flex-direction  :column
      :justify-content :flex-start
      :background      :#fff}]
+
+
+   ;; flex-box
+
+   [:.jc
+    {:display         :flex
+     :justify-content :center}]
+
+   [:.jsb
+    {:display         :flex
+     :justify-content :space-between}]
+
+   [:.jsa
+    {:display         :flex
+     :justify-content :space-around}]
+
+   [:.ac
+    {:display     :flex
+     :align-items :center}]
+
+   [:.asc
+    {:display    :flex
+     :align-self :center}]
+
+   [:.dc
+    {:display        :flex
+     :flex-direction :column}]
+
+   [:.f1
+    {:display :flex
+     :flex    :1}]
+
 
    [:input
     {:border-radius  :5px

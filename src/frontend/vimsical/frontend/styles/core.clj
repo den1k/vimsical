@@ -9,7 +9,8 @@
             [vimsical.frontend.views.style :refer [views]]
             [vimsical.frontend.styles.text :refer [text]]
             [vimsical.frontend.quick-search.style :refer [quick-search]]
-            [vimsical.frontend.landing.style :refer [landing]]))
+            [vimsical.frontend.landing.style :refer [landing]]
+            [vimsical.frontend.user.style :refer [user]]))
 
 (def styles
   "Read by garden. See config in project.clj"
@@ -20,10 +21,12 @@
 
    quick-search
 
+   ;; reusuable views
+   user
+   player
+
    ;; generic views
    views
-
-   player
 
    ;; typography
    text

@@ -1,21 +1,11 @@
 (ns vimsical.frontend.landing.style
   (:require [garden.stylesheet :refer [at-media]]))
 
-(def frc
-  {:display     :flex
-   :align-items :center})
-
-(def fcc
-  (assoc frc :flex-direction :column))
-
 (def landing
   [:.landing
-   fcc
-   {:align-self :center
-    :flex       :1
-    :min-width  :960px
-    :max-width  (str (* 1.5 960) "px")
-    :width      :100vw}
+   {:min-width :960px
+    :max-width (str (* 1.5 960) "px")
+    :width     :100vw}
    [:.container
     ["> div"
      {:margin-top :200px}]
@@ -30,7 +20,6 @@
     [:.waitlist
      {:margin-top :1em}
      [:.form
-      frc
       [:.email
        {:height :50px
         :border "1px solid hsl(0, 0%, 93%)"}]
@@ -43,19 +32,15 @@
        :line-height :20px
        :text-align  :center}]]
     [:.video-and-waitlist
-     {:display :flex
-      :flex    :1
-      :padding "0 40px"}
+     {:padding "0 40px"}
      [:.demo-video-wrapper
-      {:flex        :0.7
-       :height      :100%
-       :align-items :center
-       :box-shadow  "0 5px 30px hsla(0,0%,0%,0.3)"}
+      {:flex       :0.7
+       :height     :100%
+       :box-shadow "0 5px 30px hsla(0,0%,0%,0.3)"}
       [:video.demo-video
        {:width   :100%
         :display :block}]]
      [:.text-and-waitlist
-      fcc
       {:flex            :0.3
        :justify-content :space-around
        :margin-left     :60px}
@@ -68,7 +53,6 @@
        [:.auto-rec
         {:margin-top :1em}]]
       [:.top-waitlist
-       fcc
        [:.join-prompt
         {:font-size      :25px
          :margin-top     :1rem
@@ -81,14 +65,9 @@
       :font-size   :50px
       :text-align  :center}]
     [:.platform
-     {:display     :flex
-      :align-items :center}
      [:.text
-      {:display         :flex
-       :flex-direction  :column
-       :flex            :0.4
-       :justify-content :center
-       :padding         "0 20px"}
+      {:flex    :0.4
+       :padding "0 20px"}
       [:.title
        {:font-size :50px}]
       [:.desc
@@ -96,13 +75,11 @@
         :font-weight :300
         :font-size   :24px}]]
      [:.img-wrapper
-      {:flex-direction  :column
-       :height          :100%
-       :display         :flex
-       :flex            :0.6
-       :justify-content :center
-       :overflow        :hidden
-       :box-shadow      "0 5px 15px hsla(0,0%,0%,0.3)"}
+      {:height     :100%
+       :display    :flex
+       :flex       :0.6
+       :overflow   :hidden
+       :box-shadow "0 5px 15px hsla(0,0%,0%,0.3)"}
       [:.img
        {:width :152%}]]]
     (at-media
@@ -111,7 +88,6 @@
      [:.player
       {:box-shadow ["0 10px 30px hsla(0,0%,0%,0.3)"]}])
     [:.player
-     fcc
      {:margin  "0 auto"
       :width   :960px
       :padding "30px 40px"}
@@ -138,7 +114,6 @@
        :width      :100%
        :border     "1px solid hsla(0, 0%, 0%, 0.1)"}]]
     [:.bottom-waitlist
-     fcc
      {:margin-top    :80px
       :margin-bottom :200px}
      [:.join-prompt
@@ -148,10 +123,7 @@
      [:.waitlist
       {:margin-top :1.5rem}]]
     [:.footer-logo
-     {:display         :flex
-      :align-items     :center
-      :justify-content :center
-      :margin          "15px auto"}
+     {:margin "15px auto"}
      [:.vimsical-logo
       {:height :45px
        :width  :45px}]

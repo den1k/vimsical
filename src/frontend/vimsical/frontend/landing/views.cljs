@@ -35,7 +35,7 @@
     (fn []
       (let [{:keys [success error email]} @state]
         [:div.waitlist
-         [:div.form
+         [:div.form.ac
           [:input.email {:type        "email"
                          :name        "email"
                          :placeholder "Email address"
@@ -55,14 +55,14 @@
 ;; * Component
 
 (defn landing []
-  [:div.landing
+  [:div.landing.asc.dc.ac
    [:div.container
     [:div.codecasts-easy-stmt
      [:span.codecasts
       "Codecasts. "]
      "Finally easy."]
-    [:div.video-and-waitlist
-     [:div.demo-video-wrapper
+    [:div.video-and-waitlist.f1
+     [:div.demo-video-wrapper.ac
       [:video.demo-video
        {:controls  false
         :auto-play true
@@ -74,14 +74,14 @@
         :loop      true
         :preload   "auto"
         :src       "video/watch-and-interact.m4v"}]]
-     [:div.text-and-waitlist
+     [:div.text-and-waitlist.dc.ac
       [:div.text
        [:span.just-code
         "Code & Interact."]
        [:br]
        [:div.auto-rec
         "Vimsical automatically records as you speak or type."]]
-      [:div.top-waitlist
+      [:div.top-waitlist.dc.ac
        [:div.join-prompt
         "Join the waitlist"]
        [waitlist]]]]
@@ -89,7 +89,7 @@
      [:span.community-created
       "Community-Created "]
      "Interactive Codecasts"]
-    [:div.platform
+    [:div.platform.ac
      [:div.text
       [:div.title
        "Platform"]
@@ -103,11 +103,11 @@
        "Join a community of coders who empower each other by talking "
        [:i "with"]
        " code."]]
-     [:div.img-wrapper
+     [:div.img-wrapper.dc.jc
       [:img.img
        {:src "img/platform-crop.png"}]]]
     [:div.process-control-stmt]
-    [:div.player
+    [:div.player.dc.ac
      [:div.text
       [:div.title
        "Player"]
@@ -122,11 +122,11 @@
         system that records every change you make. "
        "And more. Stay tuned for integrations to watch and record in your
         favorite editor."]]]
-    [:div.bottom-waitlist
+    [:div.bottom-waitlist.dc.ac
      [:div.join-prompt
       "Join the waitlist"]
      [waitlist]]
     [icons/logo-and-type
-     {:class :footer-logo}]]])
+     {:class "footer-logo jc ac"}]]])
 
 

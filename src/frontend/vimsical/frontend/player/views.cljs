@@ -4,7 +4,7 @@
             [vimsical.frontend.code-editor.views :refer [code-editor]]
             [vimsical.frontend.views.splits :as splits]
             [vimsical.frontend.views.shapes :as shapes]
-            [vimsical.frontend.views.user :as user]
+            [vimsical.frontend.user.views :as user]
             [vimsical.frontend.util.dom :refer-macros [e> e->]]
             [reagent.core :as reagent]
             [vimsical.frontend.views.icons :as icons]
@@ -57,7 +57,7 @@
   (let [liked    (reagent/atom false)
         playing? (reagent/atom false)]
     (fn []
-      [:div.preview-panel
+      [:div.preview-panel.jsb.dc
        [:div.bar.social
 
         [re-com/h-box
@@ -71,8 +71,8 @@
                      :md-icon-name "zmdi-time" :tooltip "watch later" :class "watch-later"]]]
         [:div.edit
          "Edit on Vimsical"]]
-       [:div.preview-container
-        [:div.play-button-overlay
+       [:div.preview-container.f1
+        [:div.play-button-overlay.jc.ac
          [play-button]]
         [live-preview]]
        [re-com/h-box
@@ -95,7 +95,7 @@
                         :gap-width     60
                         :border-radius 10}])]
                    (let [dur 1e2]
-                     [:div.timeline
+                     [:div.timeline.ac.f1
                       [:div.progress.left]
                       [:div.progress.passed]
                       [:div.playhead]
@@ -113,7 +113,7 @@
     (reagent/create-class
      {:render
       (fn [c]
-        [:div.info-and-editor-panel
+        [:div.info-and-editor-panel.dc
          {:on-mouse-enter (e>
                            (reset! show-info? true))
           :on-mouse-out   (e>
@@ -121,7 +121,7 @@
                              (reset! show-info? false)))}
          [:div.info
           {:class (when-not @show-info? "pan-out")}
-          [:div.header
+          [:div.header.ac
            [user/avatar
             {:img-url person-url}]
            [:div.title-and-creator
