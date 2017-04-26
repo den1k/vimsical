@@ -3,12 +3,9 @@
   events by diffing strings."
   (:require
    [clojure.spec :as s]
-   [vimsical.vcs.op :as op]
-   [vimsical.vcs.delta :as delta]
+   [diffit.vec :as diffit]
    [vimsical.vcs.edit-event :as edit-event]
-   [vimsical.vcs.state.files :as files]
-   [diffit.vec :as diffit]))
-
+   [vimsical.vcs.state.files :as files]))
 
 ;; * Edit events
 
@@ -137,13 +134,6 @@
   insertions and deltions for multiple characters."
   [[_ edits]]
   (into [] (map diffit-edit->edit-event) edits))
-
-(comment
-  (edit-script->edit-events
-   (diffit/diff "ac" "caaaab"))
-  [#:vimsical.vcs.edit-event{:op :str/ins, :idx 0, :diff "c"}
-   #:vimsical.vcs.edit-event{:op :str/ins, :idx 2, :diff "aaab"}
-   #:vimsical.vcs.edit-event{:op :str/rem, :idx 6, :amt 1}])
 
 
 ;; * Diff API

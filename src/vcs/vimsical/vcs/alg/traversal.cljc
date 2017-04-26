@@ -9,8 +9,8 @@
 ;; * Internal
 
 ;; Can never remember those!
-(def ^:private asc -1)
-(def ^:private desc 1)
+(def asc -1)
+(def desc 1)
 
 (defn reduce-tree
   "Depth-first reduction of a tree.
@@ -106,7 +106,7 @@
           (some? common-ancestor)
           (or (compare-relative-depth common-ancestor a b)
               (compare-entry-deltas common-ancestor a b)
-              (throw (ex-info "Entry deltas not found???")))
+              (throw (ex-info "Entry deltas not found???" {})))
 
           (and (zero? (branch/depth a))
                (pos?  (branch/depth b))) asc

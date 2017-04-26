@@ -1,35 +1,18 @@
 (ns vimsical.common.test
-  #?(:cljs (:refer-clojure :exclude [uuid]))
-  (:require
-   [clojure.data :as data]
-   [clojure.test :as t]
-   [vimsical.common.uuid :as uuid])
-  #?(:clj (:import (java.util UUID))))
-
-
-;; * Assertions
-
-(defmacro is=
-  ([expected actual]
-   `(t/is (~'= ~expected ~actual)))
-  ([expected actual second]
-   `(t/is (~'= ~expected ~actual ~second)))
-  ([expected actual second third]
-   `(t/is (~'= ~expected ~actual ~second ~third))))
-
-(defmacro isnt=
-  ([expected actual]
-   `(t/is (~'not= ~expected ~actual)))
-  ([expected actual second]
-   `(t/is (~'not= ~expected ~actual ~second)))
-  ([expected actual second third]
-   `(t/is (~'not= ~expected ~actual ~second ~third))))
-
-(defn diff=
-  [expected actual]
-  (let [[only-in-expected only-in-actual] (data/diff expected actual)]
-    (t/is (nil? only-in-expected))
-    (t/is (nil? only-in-actual))))
+  #?@(:clj
+      [(:require
+        [net.cgrand.macrovich :as macros]
+        [clojure.data :as data]
+        [clojure.test :as t :refer [is]]
+        [vimsical.common.uuid :as uuid])
+       (:import java.util.UUID)]
+      :cljs
+      [(:require
+        [clojure.data :as data]
+        [clojure.test :as t :refer-macros [is]]
+        [vimsical.common.uuid :as uuid])
+       (:require-macros [net.cgrand.macrovich :as macros])
+       (:refer-clojure :exclude [uuid])]))
 
 ;; * UUID
 

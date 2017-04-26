@@ -3,7 +3,7 @@
    [vimsical.vcs.core :as sut]
    [clojure.test :as t :refer [deftest is are testing]]
    [orchestra.spec.test :as st]
-   [vimsical.common.test :refer [is= diff= uuid uuid-gen]]
+   [vimsical.common.test :refer [uuid uuid-gen]]
    [vimsical.vcs.editor :as editor]
    [vimsical.vcs.examples :as examples]
    [vimsical.vcs.edit-event :as edit-event]
@@ -13,7 +13,7 @@
    [vimsical.vcs.state.timeline :as state.timeline]
    [vimsical.vcs.data.gen.diff :as diff]))
 
-(st/unstrument)
+(st/instrument)
 
 
 ;; * Integration tests
@@ -58,7 +58,7 @@
           (is (some? last-css-delta))
           (testing "files"
             ;; NOTE test with prev-id because the last id is a crsr mv
-            (is= expect-html (sut/file-string vcs (uuid :html) (:prev-id last-html-delta)))
-            (is= nil (sut/file-string vcs (uuid :css) (:prev-id last-html-delta)))
-            (is= expect-html (sut/file-string vcs (uuid :html) (:prev-id last-css-delta)))
-            (is= expect-css (sut/file-string vcs (uuid :css) (:prev-id last-css-delta)))))))))
+            (is (= expect-html (sut/file-string vcs (uuid :html) (:prev-id last-html-delta))))
+            (is (nil? (sut/file-string vcs (uuid :css) (:prev-id last-html-delta))))
+            (is (= expect-html (sut/file-string vcs (uuid :html) (:prev-id last-css-delta))))
+            (is (= expect-css (sut/file-string vcs (uuid :css) (:prev-id last-css-delta))))))))))

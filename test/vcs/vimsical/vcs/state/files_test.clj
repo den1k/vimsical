@@ -1,7 +1,7 @@
 (ns vimsical.vcs.state.files-test
   (:require [clojure.test :as t :refer [are deftest is testing]]
             [orchestra.spec.test :as st]
-            [vimsical.common.test :refer [uuid is=]]
+            [vimsical.common.test :refer [uuid]]
             [vimsical.vcs.editor :as editor]
             [vimsical.vcs.examples :as examples]
             [vimsical.vcs.alg.topo :as topo]
@@ -35,7 +35,7 @@
                     (let [{::sut/keys [files string]} (get states file-id)]
                       (is (seq deltas))
                       (is (topo/sorted? deltas))
-                      (is= expected string)))]
+                      (is (= expected string))))]
       (testing "Spliced insert"
         (string= "abc"
                  (sut/add-edit-events

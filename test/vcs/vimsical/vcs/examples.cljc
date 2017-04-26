@@ -3,10 +3,10 @@
    [clojure.spec :as s]
    [vimsical.common.test :refer [uuid]]
    [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.data.indexed.vector :as indexed]
    [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.state.branches :as state.branches]
    [vimsical.vcs.state.branch-pointers :as state.branch-pointers]
-   [vimsical.vcs.data.indexed.vector :as indexed]))
+   [vimsical.vcs.state.branches :as state.branches]))
 
 ;; * UUIDs
 
@@ -35,7 +35,7 @@
 
 (def branches [master child gchild])
 
-(s/assert* (s/coll-of ::branch/branch) branches)
+#_(s/assert* (s/coll-of ::branch/branch) branches)
 
 
 ;; * Deltas
@@ -52,7 +52,7 @@
 
 (def deltas [d0 d1 d2 d3 d4 d5 d6 d7 d8])
 
-(s/assert* (s/coll-of ::delta/delta) deltas)
+#_(s/assert* (s/coll-of ::delta/delta) deltas)
 
 
 ;; * Latest file deltas
@@ -70,7 +70,7 @@
    child-id  (indexed/vec-by :id [d2 d3 d7])
    gchild-id (indexed/vec-by :id [d4 d5 d6])})
 
-(s/assert* ::state.branches/deltas-by-branch-id deltas-by-branch-id)
+#_(s/assert* ::state.branches/deltas-by-branch-id deltas-by-branch-id)
 
 (def branch-pointers-by-branch-id
   {master-id {::state.branch-pointers/start (:id d0) ::state.branch-pointers/end (:id d8)}

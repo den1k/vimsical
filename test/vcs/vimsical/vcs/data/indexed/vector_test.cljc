@@ -1,11 +1,18 @@
 (ns vimsical.vcs.data.indexed.vector-test
-  (:require
-   [clojure.spec :as s]
-   [clojure.test :refer [is are deftest testing]]
-   [orchestra.spec.test :as st]
-   [vimsical.common.test :refer [is= isnt=]]
-   [vimsical.vcs.data.splittable :as splittable]
-   [vimsical.vcs.data.indexed.vector :as sut]))
+  #?@(:clj
+      [(:require
+        [clojure.spec :as s]
+        [clojure.test :refer [are deftest is testing]]
+        [orchestra.spec.test :as st]
+        [vimsical.vcs.data.indexed.vector :as sut]
+        [vimsical.vcs.data.splittable :as splittable])]
+      :cljs
+      [(:require
+        [cljs.test :refer-macros [are deftest is testing]]
+        [clojure.spec :as s]
+        [clojure.spec.test :as st]
+        [vimsical.vcs.data.indexed.vector :as sut]
+        [vimsical.vcs.data.splittable :as splittable])]))
 
 (st/instrument)
 
@@ -38,48 +45,48 @@
 
 (deftest vector-test
   (let [{:keys [v]} (test-data)]
-    (are [val idx] (is= idx (sut/index-of v val))
+    (are [val idx] (is (= idx (sut/index-of v val)))
       {:id 0}  0
       {:id 50} 5
       {:id 90} 9)))
 
 (deftest vector-by-test
   (let [{:keys [vb]} (test-data)]
-    (are [k idx] (is= idx (sut/index-of vb k))
+    (are [k idx] (is (= idx (sut/index-of vb k)))
       0  0
       50 5
       90 9)))
 
 (deftest nth-test
   (let [{:keys [v vb]} (test-data)]
-    (are [val idx] (do (is= val (nth v idx))
-                       (is= val (nth vb idx)))
+    (are [val idx] (do (is (= val (nth v idx)))
+                       (is (= val (nth vb idx))))
       {:id 0}  0
       {:id 50} 5
       {:id 90} 9)))
 
 (deftest next-test
   (testing "equality"
-    (is= (-> [:z :a :b :c]
-             sut/vec
-             next)
-         (-> [:a :b]
-             sut/vec
-             (conj :c))
-         (-> [:z :a :b]
-             sut/vec
-             next
-             (conj :c))))
+    (is (= (-> [:z :a :b :c]
+               sut/vec
+               next)
+           (-> [:a :b]
+               sut/vec
+               (conj :c))
+           (-> [:z :a :b]
+               sut/vec
+               next
+               (conj :c)))))
   (testing "internal state"
     (let [v  (next (sut/vec [:a :b :c]))
           v' (conj v :d)]
       (testing "next"
-        (is= (.v v) [:b :c])
-        (is= 0 (sut/index-of v :b)))
+        (is (= #?(:clj (.v v) :cljs (.-v v)) [:b :c]))
+        (is (= 0 (sut/index-of v :b))))
       (testing "next + conj"
-        (is= (.v v') [:b :c :d])
-        (is= 0 (sut/index-of v' :b))
-        (is= 2 (sut/index-of v' :d))))))
+        (is (= #?(:clj (.v v') :cljs (.-v v')) [:b :c :d]))
+        (is (= 0 (sut/index-of v' :b)))
+        (is (= 2 (sut/index-of v' :d)))))))
 
 (deftest split-test
   (let [{:keys [v vb]} (test-data)
@@ -94,8 +101,8 @@
     (is (sut/-consistent? r-v))
     (is (sut/-consistent? l-vb))
     (is (sut/-consistent? r-vb))
-    (is= v (into l-v r-v))
-    (is= vb (into l-vb r-vb ))))
+    (is (= v (into l-v r-v)))
+    (is (= vb (into l-vb r-vb )))))
 
 (deftest append-test
   (let [{v1 :v vb1 :vb}             (test-data (range 0 3))
@@ -106,9 +113,9 @@
         actual-vb                   (splittable/append (splittable/append vb1 vb2) vb3)]
     (is (sut/-consistent? actual-v))
     (is (sut/-consistent? actual-vb))
-    (is= v-expect  (seq actual-v))
-    (is= vb-expect (seq actual-vb))
-    (are [val idx] (is= idx (sut/index-of actual-v val))
+    (is (= v-expect  (seq actual-v)))
+    (is (= vb-expect (seq actual-vb)))
+    (are [val idx] (is (= idx (sut/index-of actual-v val)))
       {:id 0} 0
       {:id 4} 4
       {:id 8} 8)))
@@ -119,8 +126,8 @@
         vb'            (apply splittable/append (splittable/split vb (rand-int (count v))))]
     (is (sut/-consistent? v'))
     (is (sut/-consistent? vb'))
-    (is= v v')
-    (is= vb vb')))
+    (is (= v v'))
+    (is (= vb vb'))))
 
 (deftest splice-test
   (let [{:keys [v vb vals]} (test-data)
@@ -134,15 +141,15 @@
         actual-vb           (splittable/splice (splittable/splice vb idx spliced-vb1) idx spliced-vb2)]
     (is (sut/-consistent? actual-v))
     (is (sut/-consistent? actual-vb))
-    (is= expect (seq actual-v))
-    (is= expect (seq actual-vb))))
+    (is (= expect (seq actual-v)))
+    (is (= expect (seq actual-vb)))))
 
 (deftest index-of-test
   (let [{:keys [key->val v vb]} (update-test-data (test-data))]
-    (are [idx k] (do (is= idx (sut/index-of v (key->val k)))
-                     (is= (key->val k) (nth v idx))
-                     (is= idx (sut/index-of vb k))
-                     (is= (key->val k) (nth vb idx)))
+    (are [idx k] (do (is (= idx (sut/index-of v (key->val k))))
+                     (is (= (key->val k) (nth v idx)))
+                     (is (= idx (sut/index-of vb k)))
+                     (is (= (key->val k) (nth vb idx))))
       0  0
       5  50
       9  90

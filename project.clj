@@ -36,8 +36,7 @@
    :vcs
    {:source-paths ["src/vcs"]
     :dependencies
-    [[org.clojure/core.rrb-vector "0.0.11"]
-     [org.clojure/data.avl        "0.0.17"]
+    [[org.clojure/data.avl        "0.0.17"]
      [diffit                      "1.0.0"]
      ;; TODO remove this
      [com.stuartsierra/mapgraph   "0.2.1"]
@@ -54,7 +53,8 @@
      [com.stuartsierra/component          "0.3.1"]
      [medley                              "0.8.4"]
      [environ                             "1.1.0"]
-     [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]]}
+     [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
+     [net.cgrand/macrovich                "0.2.0"]]}
    ;;
    ;; Backend
    ;;
@@ -102,13 +102,13 @@
     :dependencies
     [[org.clojure/clojurescript "1.9.518"]
      ;; Dependency of Google Closure compiler
-     [com.google.guava/guava "21.0"]
+     [com.google.guava/guava    "21.0"]
      ;; Our mapgraph fork. Must be be symlinked in checkouts.
      [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
-     [reagent "0.6.1" :exclusions [org.clojure/clojurescript]]
-     [re-frame "0.9.2" :exclusions [org.clojure/clojurescript]]
-     [re-com "2.0.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
-     [thi.ng/color "1.2.0"]]}
+     [reagent                   "0.6.1" :exclusions [org.clojure/clojurescript]]
+     [re-frame                  "0.9.2" :exclusions [org.clojure/clojurescript]]
+     [re-com                    "2.0.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
+     [thi.ng/color              "1.2.0"]]}
 
    :-frontend-dev-config
    {:source-paths
@@ -117,13 +117,13 @@
     [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]]
     :dependencies
     [[com.cemerick/piggieback "0.2.2-SNAPSHOT"]
-     [figwheel-sidecar "0.5.10" :exclusions [org.clojure/clojurescript]]
-     [re-frisk "0.4.4" :exclusions [re-frame org.clojure/clojurescript]]
+     [figwheel-sidecar        "0.5.10" :exclusions [org.clojure/clojurescript]]
+     [re-frisk                "0.4.4" :exclusions [re-frame org.clojure/clojurescript]]
      ;; needed as a dep for re-frame.trace
-     [binaryage/devtools "0.8.3"]
+     [binaryage/devtools      "0.8.3"]
      ;; re-frame.trace - clone and install to use
      ;; https://github.com/Day8/re-frame-trace
-     [day8.re-frame/abra "0.0.9-SNAPSHOT" :exclusions [re-frame reagent org.clojure/clojurescript]]
+     [day8.re-frame/abra      "0.0.9-SNAPSHOT" :exclusions [re-frame reagent org.clojure/clojurescript]]
      [org.clojure/tools.nrepl "0.2.13"]]
     :repl-options
     {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
@@ -154,7 +154,7 @@
 
    :-css-dev-config
    {:plugins      [[lein-garden "0.2.8" :exclusions [org.clojure/clojure]]]
-    :dependencies [[garden "1.3.2"]
+    :dependencies [[garden     "1.3.2"]
                    ;; Added this to fix a compilation issue with garden
                    [ns-tracker "0.3.0"]]
     :prep-tasks   [["garden" "once"]]}

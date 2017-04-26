@@ -19,16 +19,15 @@
 #?(:clj
    (def build-id
      "Takes command line args as build ids."
-     (first *command-line-args*)))
+     (or (first *command-line-args*) "dev")))
+
+#?(:clj (def port
+          (case build-id
+            "dev"        3449
+            "player-dev" 3450)))
 
 #?(:clj
-   (def config
-     (let [build-id (first *command-line-args*)
-           port     (case build-id
-                      "dev" 3449
-                      "player-dev" 3450)]
-       {:build-id build-id
-        :port     port})))
+   (def config {:build-id build-id :port port}))
 
 #?(:clj
    (def figwheel-config

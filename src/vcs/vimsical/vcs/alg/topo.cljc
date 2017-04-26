@@ -5,7 +5,6 @@
    [clojure.spec :as s]
    [vimsical.common.coll :as coll]
    [vimsical.common.core :refer [=by]]
-   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]))
 
 

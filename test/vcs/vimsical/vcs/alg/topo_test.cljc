@@ -1,10 +1,16 @@
 (ns vimsical.vcs.alg.topo-test
-  (:require
-   [clojure.test :refer [deftest is testing]]
-   [orchestra.spec.test :as st]
-   [vimsical.common.test :refer [uuid]]
-   [vimsical.vcs.alg.topo :as sut]
-   [vimsical.vcs.branch :as branch]))
+  #?@(:clj
+      [(:require
+        [clojure.test :as t :refer [deftest is testing]]
+        [orchestra.spec.test :as st]
+        [vimsical.common.test :refer [uuid]]
+        [vimsical.vcs.alg.topo :as sut])]
+      :cljs
+      [(:require
+        [cljs.test :as t :refer [deftest is testing]]
+        [clojure.spec.test :as st]
+        [vimsical.common.test :refer [uuid]]
+        [vimsical.vcs.alg.topo :as sut])]))
 
 (st/instrument)
 

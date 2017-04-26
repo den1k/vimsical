@@ -1,10 +1,7 @@
 (ns vimsical.vcs.data.splittable
-  (:refer-clojure :exclude [remove])
   (:require
-   [clojure.spec :as s]
-   [clojure.core.rrb-vector :as rrb])
-  (:import
-   (clojure.core.rrb_vector.rrbt Vector)))
+   [clojure.spec :as s]))
+
 
 ;; * Split
 
@@ -18,31 +15,42 @@
   (splice [_ idx other] "Insert `other` at idx. NOTE that for performance reasons, implementations should inline their implementations of `append` when `idx` is `(count this)`")
   (append [_ other] "An alternative to `concat` for mergrables that doesn't require implementing lazy-seq."))
 
-;; * Types
 
-(extend-type String
-  Splittable
+;; * Default implementations
+
+(extend-protocol Splittable
+  #?(:clj String :cljs string)
   (split [s idx]
     [(subs s 0 idx) (subs s idx)])
   (omit [s idx cnt]
     (str (subs s 0 idx) (subs s (+ (long cnt) (long idx)))))
 
-  Mergeable
+  #?(:clj clojure.lang.IPersistentVector :cljs PersistentVector)
+  (split [v idx]
+    [(subvec v 0 idx) (subvec v idx)])
+  (omit [v idx cnt]
+    (into (subvec v 0 idx) (subvec v (+ (long cnt) (long idx))))))
+
+
+#?(:cljs
+   (extend-protocol Splittable
+     Subvec
+     (split [v idx]
+       [(subvec v 0 idx) (subvec v idx)])
+     (omit [v idx cnt]
+       (into (subvec v 0 idx) (subvec v (+ (long cnt) (long idx)))))))
+
+
+(extend-protocol Mergeable
+  #?(:clj String :cljs string)
   (splice [s idx other]
     (if (== (count s) idx)
       (str s other)
       (str (subs s 0 idx) other (subs s idx))))
   (append [s other]
-    (str s other)))
+    (str s other))
 
-(extend-type clojure.lang.IPersistentVector
-  Splittable
-  (split [v idx]
-    [(subvec v 0 idx) (subvec v idx)])
-  (omit [v idx cnt]
-    (into (subvec v 0 idx) (subvec v (+ (long cnt) (long idx)))))
-
-  Mergeable
+  #?(:clj clojure.lang.IPersistentVector :cljs PersistentVector)
   (splice [v idx other]
     (if (== (count v) idx)
       (into v other)
@@ -51,20 +59,17 @@
     (assert (vector? other))
     (into v other)))
 
-(extend-type clojure.core.rrb_vector.rrbt.Vector
-  Splittable
-  (split [v idx]
-    [(rrb/subvec v 0 idx) (rrb/subvec v idx)])
-  (omit [v idx cnt]
-    (rrb/catvec (rrb/subvec v 0 idx) (rrb/subvec v (+ (long cnt) (long idx)))))
+#?(:cljs
+   (extend-protocol Mergeable
+     Subvec
+     (splice [v idx other]
+       (if (== (count v) idx)
+         (into v other)
+         (into (into (subvec v 0 idx) other) (subvec v idx))))
+     (append [v other]
+       (assert (vector? other))
+       (into v other))))
 
-  Mergeable
-  (splice [v idx other]
-    (if (== (count v) idx)
-      (rrb/catvec v other)
-      (rrb/catvec (rrb/subvec v 0 idx) other (rrb/subvec v idx))))
-  (append [v other]
-    (rrb/catvec v other)))
 
 (s/def ::idx nat-int?)
 (s/def ::splittable (fn [x] (and x (satisfies? Splittable x))))

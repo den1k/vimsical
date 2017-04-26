@@ -1,11 +1,10 @@
 (ns vimsical.vcs.branch
-  (:refer-clojure :exclude [ancestors])
+  (:refer-clojure :exclude [ancestors common-ancestors])
   (:require
    [clojure.spec :as s]
    [vimsical.common.core :as common :refer [=by some-val]]
    [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.file :as file]
-   [clojure.spec :as s]))
+   [vimsical.vcs.file :as file]))
 
 ;; * Spec
 
@@ -55,16 +54,6 @@
   Expects branch to be *fully denormalized*, i.e. each branch contains its
   parent recursively."
   [branch] (not-empty (lineage [] branch)))
-
-(defn common-ancestor
-  "Return the common ancestor of the given branches if any."
-  [branch-a branch-b]
-  (let [ancestors-a (ancestors branch-a)
-        ancestors-b (ancestors branch-b)]
-    (some-val
-     (fn [ancestor-a]
-       (some-val (=by :db/id ancestor-a) ancestors-b))
-     ancestors-a)))
 
 (defn common-ancestor
   "Return the common ancestor of the given branches if any."

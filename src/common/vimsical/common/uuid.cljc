@@ -1,9 +1,12 @@
 (ns vimsical.common.uuid
-  (:refer-clojure :exclude [uuid])
-  (:require
-   [clojure.spec :as s]
-   #?(:cljs [cljs-uuid-utils.core :as uuid]))
-  #?(:clj (:import (java.util UUID))))
+  #?@(:clj
+      [(:require [clojure.spec :as s])
+       (:import java.util.UUID)]
+      :cljs
+      [(:refer-clojure :exclude [uuid])
+       (:require
+        [cljs-uuid-utils.core :as uuid]
+        [clojure.spec :as s])]))
 
 (s/def :db/uuid uuid?)
 
