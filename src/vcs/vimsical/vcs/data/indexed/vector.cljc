@@ -47,19 +47,18 @@
    (deftype Index [^long offset ^clojure.lang.IPersistentMap m]
 
      clojure.lang.IPersistentCollection
-     (empty [_]
-       (Index. 0 (impl/index)))
-     (equiv [this other]
-       (or (identical? this other)
-           (if (instance? Index other)
-             (= (impl/-normalize m offset)
-                (impl/-normalize (.m ^Index other) (.offset ^Index  other)))
-             false)))
+     (empty [_] (Index. 0 (impl/index)))
+
+     (equiv [_ other]
+       (if (instance? Index other)
+         (= (impl/-normalize m offset)
+            (impl/-normalize (.m ^Index other) (.offset ^Index  other)))
+         false))
 
      clojure.lang.ISeq
-     (seq [this] (seq m))
+     (seq [_] (seq m))
      (first [_] (first m))
-     (next [m] (next m))
+     (next [_] (next m))
      (more [this] (or (.next ^clojure.lang.ISeq m) (empty this)))
 
      clojure.lang.IPersistentMap
@@ -103,6 +102,9 @@
 
 #?(:cljs
    (deftype Index [offset m]
+     Object
+     (toString [this]
+       (pr-str* (impl/-normalize m offset)))
 
      IEmptyableCollection
      (-empty [_] (Index. 0 (impl/index)))
@@ -111,8 +113,8 @@
      (-equiv [this other]
        (or (identical? this other)
            (if (instance? Index other)
-             (= (impl/-normalize m offset)
-                (impl/-normalize (.-m other) (.-offset other)))
+             (-equiv (impl/-normalize m offset)
+                     (impl/-normalize (.-m other) (.-offset other)))
              false)))
 
      ISeq
@@ -120,10 +122,10 @@
      (-rest [this] (or (next m) (empty this)))
 
      ISeqable
-     (-seq [this] (seq m))
+     (-seq [_] (seq m))
 
      INext
-     (-next [m] (next m))
+     (-next [_] (next m))
 
      IAssociative
      (-assoc [_ val i]
@@ -163,7 +165,7 @@
 
 (defn- index
   ([] (Index. 0 (impl/index)))
-  ([vals] (index identity vals))
+  ([vals] (Index. 0 (impl/index identity vals)))
   ([f vals] (Index. 0 (impl/index f vals))))
 
 
@@ -193,12 +195,12 @@
 
      clojure.lang.ISeq
      (first [_] (first v))
-     (next [this]
-       (when (seq v)
-         (let [val     (first v)
-               val-key (f val)
-               index'  (dissoc index val-key)
-               v'      (clojure.core/vec (next v))]
+     (next [_]
+       (when-some [nv (next v)]
+         (let [old-val     (first v)
+               old-val-key (f old-val)
+               index'      (dissoc index old-val-key)
+               v'          (impl/vec nv)]
            (vector f index' v'))))
      (more [this]
        (or (.next this) (empty this)))
@@ -207,12 +209,13 @@
 
      clojure.lang.IPersistentCollection
      (empty [_]
-       (vector f (empty index) (empty v)))
-     (equiv [_ other]
-       (if (instance? IndexedVector other)
-         (and (= v (.v ^IndexedVector other))
-              (= index (.index ^IndexedVector other)))
-         false))
+       (vector f (index) (impl/vector)))
+     (equiv [this other]
+       (or (identical? this other)
+           (if (instance? IndexedVector other)
+             (and (= v (.v ^IndexedVector other))
+                  (= index (.index ^IndexedVector other)))
+             false)))
 
      clojure.lang.Counted
      (count [_] (count v))
@@ -282,35 +285,44 @@
            (vector f index' v'))))))
 
 #?(:cljs
-   (deftype IndexedVector [f index v]
+   (deftype IndexedVector [f ^Index index v]
+     Object
+     (toString [this]
+       (pr-str* v))
 
      ISeqable
      (-seq [this] (when (seq v) this))
 
+     ASeq
      ISeq
      (-first [_] (first v))
      (-rest [this] (or (next this) (empty this)))
 
      INext
-     (-next [this]
-       (when-some [val (next v)]
-         (let [val-key (f val)
-               index'  (dissoc index val-key)
-               v'      (clojure.core/vec (next v))]
+     (-next [_]
+       (when-some [nv (next v)]
+         (let [old-val     (first v)
+               old-val-key (f old-val)
+               index'      (dissoc index old-val-key)
+               v'          (impl/vec nv)]
            (vector f index' v'))))
 
      ICollection
      (-conj [this val]
-       (-assoc-n this (count v) val))
+       (if (nil? val)
+         this
+         (-assoc-n this (count v) val)))
 
      IEmptyableCollection
-     (-empty [_] (vector f (empty index) (empty v)))
+     (-empty [_]
+       (vector f (index) (impl/vector)))
 
+     ISequential
      IEquiv
      (-equiv [this other]
        (or (identical? this other)
            (if (instance? IndexedVector other)
-             (and (= v (.-v other)) (= index (.-index other)))
+             (and (-equiv v (.-v other)) (-equiv index (.-index other)))
              false)))
 
      ICounted
@@ -373,7 +385,7 @@
            (vector f index' v'))))
      (append [this other]
        (when other (assert (vector? other)))
-       (if (nil? other)
+       (if (empty? other)
          this
          (let [index' (splittable/append index (.-index other))
                v'     (splittable/append v (.-v other))]
@@ -416,7 +428,8 @@
         :ret ::vector)
 
 (defn vector
-  ([] (vector identity (index) (impl/vector)))
+  ([]
+   (IndexedVector. identity (index) (impl/vector)))
   ([f index v]
    (IndexedVector. f index (impl/vec v))))
 

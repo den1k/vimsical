@@ -6,7 +6,7 @@
 
   :clean-targets
   ^{:protect false}
-  ["resources/public/js/compiled" "target"]
+  ["resources/public/js/compiled/" "target/"]
 
   :profiles
   {:dev

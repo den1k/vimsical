@@ -43,6 +43,11 @@
   (is (s/valid? ::sut/vector (sut/vector)))
   (is (s/valid? ::sut/vector (sut/vec []))))
 
+(deftest conversion-idempotency-test
+  (let [expected [1 2 3]
+        actual   (sut/vec expected)]
+    (is (= expected (vec actual)))))
+
 (deftest vector-test
   (let [{:keys [v]} (test-data)]
     (are [val idx] (is (= idx (sut/index-of v val)))

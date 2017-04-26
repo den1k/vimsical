@@ -22,9 +22,7 @@
 ;; map types in cljs, `extend` didn't seem to work as expected
 
 (extend-protocol IIndex
-  #?@(:clj  [clojure.lang.IPersistentMap]
-      :cljs [cljs.core/PersistentHashMap
-             cljs.core/PersistentArrayMap])
+  #?(:clj clojure.lang.IPersistentMap :cljs PersistentArrayMap)
   (-init [m f vals]
     (persistent!
      (reduce
@@ -40,16 +38,41 @@
           (assoc! m v (+ ^long offset ^long i)))
         (transient (empty m)) m)))))
 
+#?(:cljs
+   (extend-protocol IIndex
+     PersistentHashMap
+     (-init [m f vals]
+       (persistent!
+        (reduce
+         (fn [m [i val]]
+           (assoc! m (f val) i))
+         (transient (empty m)) (map-indexed clojure.core/vector vals))))
+     (-normalize [m offset]
+       (if (zero? ^long offset)
+         m
+         (persistent!
+          (reduce-kv
+           (fn [m v i]
+             (assoc! m v (+ ^long offset ^long i)))
+           (transient (empty m)) m))))))
 
 (extend-protocol splittable/Splittable
-  #?@(:clj  [clojure.lang.IPersistentMap]
-      :cljs [cljs.core/PersistentArrayMap
-             cljs.core/PersistentHashMap])
+  #?(:clj clojure.lang.IPersistentMap :cljs PersistentArrayMap)
   (split [m idx]
     (->> (seq m)
          (sort-by second)
          (split-at idx)
-         (mapv (partial into {})))))
+         (mapv (partial into (empty m))))))
+
+#?(:cljs
+   (extend-protocol splittable/Splittable
+     PersistentHashMap
+     (split [m idx]
+       (->> (seq m)
+            (sort-by second)
+            (split-at idx)
+            (mapv (partial into (empty m)))))))
+
 
 ;; * Vector
 
