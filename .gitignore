@@ -10,6 +10,7 @@ checkouts
 
 resources/public/js
 resources/public/css/app.css
+resources/public/css/player.css
 
 infra/.env
 infra/.env.sh
