@@ -8,7 +8,9 @@
    [vimsical.common.util.core :refer [=by] :as util]
    [vimsical.frontend.quick-search.handlers :as handlers]
    [vimsical.frontend.config :as config]
-   [vimsical.frontend.util.search :as util.search]))
+   [vimsical.frontend.util.search :as util.search]
+   [vimsical.frontend.code-editor.handlers :as code-editor.handlers]
+   [vimsical.frontend.util.content :as util.content]))
 
 (def commands
   "Map of command keywords -> map of :title and :dispatch vector. Optionally
@@ -19,7 +21,15 @@
          ["play"]           {:title "► Play"} ;; todo dispatch
 
          ["pause"]          {:title "❚❚ Pause"} ;; todo dispatch
-         }
+
+         ["lorem" "ipsum"]  {:title    "Lorem Ipsum"
+                             :dispatch [::code-editor.handlers/paste
+                                        (util.content/lorem-ipsum 1)]}
+         ["go to" "player"] {:title    "Go to Player"
+                             :dispatch [::handlers/go-to :route/player]}
+
+         ["go to" "vcr"]    {:title    "Go to VCR"
+                             :dispatch [::handlers/go-to :route/vcr]}}
         dev
         {["clear" "console"] {:title    "Clear JS Console"
                               :dispatch [::handlers/clear-console]}}]
@@ -49,7 +59,7 @@
   ([st idx]
    (let [{:keys [results]} st
          {:keys [dispatch close?]
-          :or   {close? true}} (get results idx)] ;; close by default
+          :or   {close? true}} (get results idx)] ; close by default
      (re-frame/dispatch dispatch)
      (when close? (re-frame/dispatch [::handlers/close])))))
 
@@ -60,6 +70,42 @@
                         :arrow-up   #(move state :up)
                         :enter      #(dispatch-result @state)
                         :escape     #(re-frame/dispatch [::handlers/close])}))
+
+(defn input [state]
+  (reagent/create-class
+   {:component-did-mount
+    (fn [c]
+      (when (not-empty (:query @state))
+        (.select (reagent/dom-node c))))
+    :render
+    (fn [_]
+      (let [{:keys [result-idx query results]} @state]
+        [:input.input {:id          "IPD"
+                       :type        "text"
+                       :auto-focus  true
+                       :value       query
+                       :on-change   (e> (search state value)
+                                        (swap! state assoc :result-idx 0))
+                       :on-key-down (e->> (handle-key state))
+                       :on-blur     (e> (re-frame/dispatch [::handlers/close]))}]))}))
+
+(defn results-view [state]
+  (let [{:keys [result-idx results]} @state]
+    [:div.search-results
+     (for [[idx cmd-map] (map-indexed vector results)
+           :let [{:keys [title]} cmd-map
+                 is-selected? (= idx result-idx)]]
+       [:div.search-result
+        {:class         (when is-selected? "selected")
+         :on-mouse-down (e>
+                         ;; needed to for quick search to close
+                         ;; don't ask why
+                         (.preventDefault e)
+                         (dispatch-result @state idx)
+                         ;(transact-cmd this cmd-map)
+                         )
+         :key           title}
+        [:span title]])]))
 
 (defn quick-search []
   (let [state (reagent/atom {:result-idx 0
@@ -74,24 +120,6 @@
           [:div.quick-search-container
            (when show?
              [:div.quick-search
-              [:input.input {:type        "text"
-                             :auto-focus  true
-                             :value       query
-                             :on-change   (e> (search state value))
-                             :on-key-down (e->> (handle-key state))
-                             :on-blur     (e> (re-frame/dispatch [::handlers/close]))}]
+              [input state]
               (when results
-                (for [[idx cmd-map] (map-indexed vector results)
-                      :let [{:keys [title]} cmd-map
-                            is-selected? (= idx result-idx)]]
-                  [:div.search-result
-                   {:class         (when is-selected? "selected")
-                    :on-mouse-down (e>
-                                    ;; needed to for quick search to close
-                                    ;; don't ask why
-                                    (.preventDefault e)
-                                    (dispatch-result @state idx)
-                                    ;(transact-cmd this cmd-map)
-                                    )
-                    :key           title}
-                   [:span title]]))])])))))
+                [results-view state])])])))))

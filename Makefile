@@ -51,3 +51,7 @@ build-cljs: deps clean
 
 dev-styles: deps
 	lein with-profile frontend-dev garden auto
+
+
+dev-styles-player: deps
+	lein with-profile player-dev garden auto

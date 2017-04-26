@@ -50,9 +50,6 @@
       :option-forwardslash (do
                              (.preventDefault e) ;; prevent typing
                              (re-frame/dispatch [::quick-search/toggle]))
-      :esc (do
-             (.preventDefault e)        ;; prevent typing
-             (re-frame/dispatch [::quick-search/close]))
       nil)))
 
 (defn window-listeners []

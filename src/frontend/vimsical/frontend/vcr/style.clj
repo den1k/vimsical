@@ -129,10 +129,12 @@
    code-editor])
 
 (def vcr
-  [:.vcr
-   ;; Styles to prevent code-editor from overflowing beyond VCR's boundaries
-   ;; Set here instead of on code-editor to allow widget overflow
-   {:position :relative
-    :overflow "hidden"}
-   playback
-   live-preview-and-editors])
+  [:.route-vcr
+   {:height :100vh}
+   [:.vcr
+    ;; Styles to prevent code-editor from overflowing beyond VCR's boundaries
+    ;; Set here instead of on code-editor to allow widget overflow
+    {:position :relative
+     :overflow "hidden"}
+    playback
+    live-preview-and-editors]])

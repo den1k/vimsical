@@ -9,7 +9,8 @@
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
    [vimsical.common.util.core :refer [=by] :as util]
    [vimsical.frontend.app.handlers :as app]
-   [vimsical.frontend.views.user :as user]))
+   [vimsical.frontend.user.views :as user.views]
+   [vimsical.frontend.auth.views :as auth.views]))
 
 (defn limit-title-length? [e]
   (let [txt             (-> e .-target .-innerHTML)
@@ -73,7 +74,7 @@
                    (if editing?
                      ""
                      title-placeholder))]]
-          [:div.vims-info
+          [:div.vims-info.jc.ac
            (if-not editable-title?
              title-html
              [re-com/popover-tooltip
@@ -82,31 +83,42 @@
               :showing? show-tooltip?
               :anchor title-html])])))))
 
-(defn nav
-  []
-  (with-queries
-   [{:user/keys [first-name last-name vimsae] :as user}
-    [:app/user
-     [:db/id
-      :user/first-name
-      :user/last-name
-      :user/email
-      {:user/vimsae [:db/id :vims/title]}]]
+(defn nav []
+  (let [show-popup? (reagent/atom true)]
+    (with-queries
+     [{:user/keys [first-name last-name vimsae] :as user}
+      [:app/user
+       [:db/id
+        :user/first-name
+        :user/last-name
+        :user/email
+        {:user/vimsae [:db/id :vims/title]}]]
 
-    {:vims/keys [title] :as app-vims} [:app/vims
-                                       [:db/id
-                                        :vims/title]]]
-    [:div.main-nav
-     [:div.logo-and-type
-      [:span.logo icons/vimsical-logo]
-      [:span.type icons/vimsical-type]]
-     (when app-vims
-       [vims-info])
-     #_[:div.vims-list
-        (for [{:vims/keys [title] :as vims} vimsae]
-          ^{:key title}
-          [:div.vims-title
-           {:on-click (e> (re-frame/dispatch [::app/open-vims vims]))}
-           title])]
-     [user/avatar-full-name
-      {:user user}]]))
+      {:vims/keys [title] :as app-vims} [:app/vims
+                                         [:db/id
+                                          :vims/title]]]
+      [:div.main-nav.ac.jsb
+       [:div.logo-and-type
+        [:span.logo icons/vimsical-logo]
+        [:span.type icons/vimsical-type]]
+       (when app-vims
+         [vims-info])
+       #_[:div.vims-list
+          (for [{:vims/keys [title] :as vims} vimsae]
+            ^{:key title}
+            [:div.vims-title
+             {:on-click (e> (re-frame/dispatch [::app/open-vims vims]))}
+             title])]
+
+       [:div.auth-or-user
+        {:on-click (e> (swap! show-popup? not))}
+        (if false                       ;'logged-in?
+          [:div.user.ac
+           [auth.views/logout-popover-anchor
+            {:showing? show-popup?
+             :anchor   [user.views/avatar {:user user}]}]
+           [user.views/full-name {:user user}]]
+          [:div.auth
+           [auth.views/login-popover-anchor
+            {:showing? show-popup?
+             :anchor   [:div.button "login"]}]])]])))

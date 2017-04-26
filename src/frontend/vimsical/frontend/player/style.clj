@@ -1,14 +1,14 @@
 (ns vimsical.frontend.player.style
-  (:require [vimsical.frontend.live-preview.style :refer [live-preview]]
+  (:require [vimsical.frontend.app.style :as app]
+            [vimsical.frontend.live-preview.style :refer [live-preview]]
             [vimsical.frontend.code-editor.style :refer [code-editor]]
+            [vimsical.frontend.user.style :refer [user]]
+            [vimsical.frontend.views.style :as views]
             [vimsical.frontend.styles.color :as color]))
 
 (def preview-panel
   [:.preview-panel
-   {:width           :100%
-    :display         :flex
-    :flex-direction  :column
-    :justify-content :space-between}
+   {:width :100%}
 
    [:.play-symbol :.pause-symbol
     {:fill   :black                     ;; temp
@@ -28,10 +28,7 @@
       {:height :20px}]
 
      [:.timeline
-      {:display     :flex
-       :align-items :center
-       :flex        1
-       :position    :relative}
+      {:position :relative}
       [:.progress
        {:height        :8px
         :width         :100%
@@ -51,17 +48,12 @@
         :background    :black
         :position      :absolute}]]]]
    [:.preview-container
-    {:display  :flex
-     :position :relative
-     :flex     1}
+    {:position :relative}
     [:.play-button-overlay
-     {:position        :absolute
-      :width           :100%
-      :height          :100%
-      :display         :flex
-      :justify-content :center
-      :align-items     :center
-      :pointer-events  :none}
+     {:position       :absolute
+      :width          :100%
+      :height         :100%
+      :pointer-events :none}
 
      [:.play-button
       {:cursor         :pointer
@@ -73,10 +65,8 @@
 
 (def editor-panel
   [:div.info-and-editor-panel
-   {:display        :flex
-    :position       :relative
-    :flex-direction :column
-    :overflow       :hidden}
+   {:position :relative
+    :overflow :hidden}
    [:.info
     {:transition    "all 0.5s ease"
      :max-height    :60%
@@ -87,8 +77,6 @@
      {:max-height    0
       :margin-bottom 0}]
     [:.header
-     {:display     :flex
-      :align-items :center}
      [:.avatar
       {:height :50px
        :width  :50px}]
@@ -137,8 +125,7 @@
 
 (def player
   [:.vimsical-frontend-player
-   {:margin    "40px"                   ;; todo temp
-    :min-width :700px                   ; max embed width on medium
+   {:min-width :700px                   ; max embed width on medium
     :max-width :1200px
     :height    "100vh"}
    [:.rc-n-h-split
@@ -164,3 +151,19 @@
      :align-items     :center}]
    preview-panel
    editor-panel])
+
+(def embed-styles
+  "Standalone styles for the embedded version of Player.
+  Required in project.clj."
+  [:#player
+   {:width  :100vw
+    :height :100vh}
+   [app/defaults
+    views/icons
+    user
+    player]
+   ;; overwrite player styles to fill entire iframe
+   [:.vimsical-frontend-player
+    {:max-width :initial
+     :width     :100vw
+     :height    :100vh}]])

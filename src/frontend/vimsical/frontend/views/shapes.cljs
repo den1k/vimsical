@@ -24,8 +24,7 @@
 (defn triangle [{:keys [origin height rotate style stroke-width]
                  :or   {rotate 0 stroke-width 0}
                  :as   opts}]
-  ;; unclear why x 1.5. Think it should be x 2. But this works better.
-  (let [height     (- height (* stroke-width 1.5))
+  (let [height     (- height (* stroke-width 2))
         points     (polygon :triangle
                             {:origin origin
                              :height height})

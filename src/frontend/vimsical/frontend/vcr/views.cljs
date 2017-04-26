@@ -109,9 +109,15 @@
      [:div.title title]]))
 
 (defn- editor-components [{:keys [file/sub-type] :as file}]
-  {:file/sub-type sub-type
-   :editor-header ^{:key sub-type} [editor-header file]
-   :editor        ^{:key sub-type} [code-editor {:file-type sub-type}]})
+  {:file/sub-type
+   sub-type
+   :editor-header
+   ^{:key sub-type} [editor-header file]
+   :editor
+   ^{:key sub-type} [code-editor
+                     {:id             sub-type
+                      :file-type      sub-type
+                      :editor-reg-key :vcr/editors}]})
 
 (defn vcr []
   (let [files-subs   (reagent/atom files)

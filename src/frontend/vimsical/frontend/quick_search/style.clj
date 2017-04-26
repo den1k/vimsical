@@ -29,13 +29,19 @@
        :width         :100%
        :text-align    :baseline
        :font-size     :1.6rem}]
-     [:.search-result
-      {:width           :100%
-       :padding         :10px
-       :display         :flex
-       :justify-content :space-between
-       :color           :snow
-       :background      :black
-       :cursor          :pointer}
-      [:&.selected :&:hover
-       {:background :grey}]]]))
+     [:.search-results
+      {:display        :flex
+       :flex-direction :column
+       :align-items    :stretch
+       :width          :100%}
+      [:.search-result
+       {:width           :100%
+        :padding         :10px
+        :display         :flex
+        :justify-content :space-between
+        :align-items     :center
+        :color           :snow
+        :background      :black
+        :cursor          :pointer}
+       [:&.selected :&:hover
+        {:background :grey}]]]]))

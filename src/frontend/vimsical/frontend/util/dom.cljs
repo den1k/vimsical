@@ -1,7 +1,8 @@
 (ns vimsical.frontend.util.dom
   (:require [goog.dom :as gdom]
             [vimsical.common.util.core :as util]
-            [reagent.core :as reagent])
+            [reagent.core :as reagent]
+            [clojure.string :as str])
   (:refer-clojure :exclude [contains?]))
 
 (defn create
@@ -53,6 +54,12 @@
   [v e]
   (view-contains? v (.-relatedTarget e)))
 
+(defn open-ext-popup [url & opts]
+  (.open js/window url
+         ;; window name
+         (str (gensym))
+         (str/join ", " (map util/lisp-case opts))))
+
 ;;
 ;; * UI Actions
 ;;
@@ -77,6 +84,10 @@
 (defn e->key [e]
   (util/lisp-case-keyword (.-key e)))
 
-(defn handle-key [e key->fn]
+(defn handle-key
+  "Takes a dom-event and a hash-map of key-name -> thunk.
+  If a match is found, calls thunk and prevents event."
+  [e key->fn]
   (when-let [f (-> e e->key key->fn)]
+    (.preventDefault e)
     (f)))
