@@ -1,12 +1,19 @@
 (ns vimsical.vcs.data.gen.diff-test
-  (:require
-   [clojure.test :as t :refer [deftest testing is are]]
-   [orchestra.spec.test :as st]
-   [vimsical.vcs.data.gen.diff :as sut]
-   [vimsical.vcs.edit-event :as edit-event]))
+  #?@(:clj
+      [(:require
+        [clojure.test :as t :refer [deftest is]]
+        [orchestra.spec.test :as st]
+        [vimsical.vcs.data.gen.diff :as sut]
+        [vimsical.vcs.edit-event :as edit-event])]
+      :cljs
+      [(:require
+        [clojure.spec.test :as st]
+        [clojure.test :as t :refer-macros [deftest is]]
+        [vimsical.vcs.data.gen.diff :as sut]
+        [vimsical.vcs.edit-event :as edit-event])]))
+
 
 (st/instrument)
-
 
 (deftest str->edit-events
   (is (= (sut/diffs->edit-events "" "foor" "four")

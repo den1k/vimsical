@@ -1,13 +1,24 @@
 (ns vimsical.vcs.state.files-test
-  (:require [clojure.test :as t :refer [are deftest is testing]]
-            [orchestra.spec.test :as st]
-            [vimsical.common.test :refer [uuid]]
-            [vimsical.vcs.editor :as editor]
-            [vimsical.vcs.examples :as examples]
-            [vimsical.vcs.alg.topo :as topo]
-            [vimsical.vcs.state.files :as sut]
-            [vimsical.vcs.data.gen.diff :as diff]
-            [vimsical.vcs.edit-event :as edit-event]))
+  #?@(:clj
+      [(:require
+        [clojure.test :as t :refer [deftest is testing]]
+        [orchestra.spec.test :as st]
+        [vimsical.common.test :refer [uuid]]
+        [vimsical.vcs.alg.topo :as topo]
+        [vimsical.vcs.data.gen.diff :as diff]
+        [vimsical.vcs.editor :as editor]
+        [vimsical.vcs.examples :as examples]
+        [vimsical.vcs.state.files :as sut])]
+      :cljs
+      [(:require
+        [clojure.spec.test :as st]
+        [clojure.test :as t :refer-macros [deftest is testing]]
+        [vimsical.common.test :refer [uuid]]
+        [vimsical.vcs.alg.topo :as topo]
+        [vimsical.vcs.data.gen.diff :as diff]
+        [vimsical.vcs.editor :as editor]
+        [vimsical.vcs.examples :as examples]
+        [vimsical.vcs.state.files :as sut])]))
 
 (st/instrument)
 

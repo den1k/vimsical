@@ -1,9 +1,16 @@
 (ns vimsical.vcs.branch-test
-  (:require
-   [clojure.test :as t :refer [are deftest is]]
-   [orchestra.spec.test :as st]
-   [vimsical.vcs.branch :as sut]
-   [vimsical.vcs.examples :as examples]))
+  #?@(:clj
+      [(:require
+        [clojure.test :as t :refer [are deftest is]]
+        [orchestra.spec.test :as st]
+        [vimsical.vcs.branch :as sut]
+        [vimsical.vcs.examples :as examples])]
+      :cljs
+      [(:require
+        [clojure.spec.test :as st]
+        [clojure.test :as t :refer-macros [are deftest is]]
+        [vimsical.vcs.branch :as sut]
+        [vimsical.vcs.examples :as examples])]))
 
 (st/instrument)
 
