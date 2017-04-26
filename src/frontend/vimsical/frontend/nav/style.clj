@@ -1,22 +1,18 @@
 (ns vimsical.frontend.nav.style
-  (:require [vimsical.frontend.styles.color :refer [colors]]))
+  (:require [vimsical.frontend.styles.color :refer [colors]]
+            [vimsical.frontend.auth.style :refer [auth]]))
 
 (def nav
-  [[:.route-landing
+  [auth
+   [:.route-landing
     [:.main-nav
      {:border :none}]]
-  ;; bootstrap clear-fix breaks styles for .nav class
+   ;; bootstrap clear-fix breaks styles for .nav class
    [:.main-nav
-    {:border-bottom   "solid 2px #eceff3"
-     :background      :white
-     :display         :flex
-     :align-items     :center
-     :padding         "8px 25px"
-     :justify-content :space-between}
-    [:.vims-info {:display         :flex
-                  :justify-content :center
-                  :align-items     :center
-                  :margin-left     :80px}
+    {:border-bottom "solid 2px #eceff3"
+     :background    :white
+     :padding       "8px 25px"}
+    [:.vims-info {:margin-left :80px}
      [:* {:white-space :nowrap}]
 
      [:.title {:font-size      :1rem

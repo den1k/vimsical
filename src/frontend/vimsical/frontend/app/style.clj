@@ -64,6 +64,9 @@
     {:display :flex
      :flex    :1}]
 
+   [:a
+    {:color           "#337ab7 !important"
+     :text-decoration :none}]
 
    [:input
     {:border-radius  :5px
@@ -76,7 +79,10 @@
      :font-size      :18px
      :padding        "13px 20px"}]
 
-   [:.button
+   [:.popover
+    {:font-family (str app-font-family " !important")}]
+
+   [:.button :.input-button
     {:color           (:grey colors)
      :cursor          :pointer
      :background      :white
@@ -89,8 +95,9 @@
      :padding         "10px 14px"
      :outline         :none}
     [:&:hover
-     {:color (str (:darkgrey colors) " !important")}]
-    [:&.active
-     {:color (str (:darkgrey colors) " !important")}]
+     {:color  (str (:darkgrey colors) " !important")
+      :border (str "1px solid " (:grey colors))}]
     [:.btn-title
-     {:white-space :nowrap}]]])
+     {:white-space :nowrap}]]
+   ["input:-webkit-autofill"
+    {:box-shadow "0 0 0px 1000px white inset"}]])
