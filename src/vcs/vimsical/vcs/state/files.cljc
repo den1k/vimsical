@@ -2,13 +2,13 @@
   "Keep track of the deltas, string and cursor position for files."
   (:require
    [clojure.spec :as s]
-   [vimsical.vcs.editor :as editor]
+   [vimsical.vcs.alg.topo :as topo]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.data.indexed.vector :as indexed]
    [vimsical.vcs.data.splittable :as splittable]
-   [vimsical.vcs.alg.topo :as topo]
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.edit-event :as edit-event]
+   [vimsical.vcs.editor :as editor]
    [vimsical.vcs.file :as file]))
 
 ;; * Spec

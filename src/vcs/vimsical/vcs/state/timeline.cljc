@@ -1,15 +1,14 @@
 (ns vimsical.vcs.state.timeline
   (:require
+   [clojure.data.avl :as avl]
    [clojure.spec :as s]
-   [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.alg.traversal :as traversal]
+   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.data.dll :as dll]
    [vimsical.vcs.data.indexed.vector :as indexed]
-   [vimsical.vcs.state.chunks :as state.chunks]
+   [vimsical.vcs.delta :as delta]
    [vimsical.vcs.state.branches :as state.branches]
-   [clojure.data.avl :as avl]))
-
+   [vimsical.vcs.state.chunks :as state.chunks]))
 
 ;; * Specs
 

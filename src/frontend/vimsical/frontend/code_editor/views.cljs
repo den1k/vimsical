@@ -1,12 +1,12 @@
 (ns vimsical.frontend.code-editor.views
-  (:require [reagent.core :as r]
-            [vimsical.common.util.core :as util]
-            [re-frame.core :as re-frame]
-            [vimsical.vcs.edit-event :as edit-event]
-            [vimsical.frontend.code-editor.handlers :as handlers]
-            [vimsical.frontend.vcs.handlers :as vcs.handlers]
-            [vimsical.frontend.vcs.subs :as vcs.subs]
-            [vimsical.frontend.util.re-frame :refer-macros [with-subs]]))
+  (:require
+   [reagent.core :as r]
+   [re-frame.core :as re-frame]
+   [vimsical.common.util.core :as util]
+   [vimsical.vcs.edit-event :as edit-event]
+   [vimsical.frontend.code-editor.handlers :as handlers]
+   [vimsical.frontend.vcs.handlers :as vcs.handlers]
+   [vimsical.frontend.vcs.subs :as vcs.subs]))
 
 (defn editor-opts
   "https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditorconstructionoptions.html"

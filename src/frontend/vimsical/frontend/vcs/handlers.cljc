@@ -1,14 +1,12 @@
 (ns vimsical.frontend.vcs.handlers
   (:require
-   [re-frame.core :as re-frame]
    [com.stuartsierra.mapgraph :as mg]
+   [re-frame.core :as re-frame]
    [vimsical.common.util.core :as util]
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.vcs.core :as vcs]
-   [vimsical.vcs.editor :as editor]
-   [vimsical.vcs.branch :as branch]))
-
+   [vimsical.vcs.editor :as editor]))
 
 ;; TODO parametrize vims
 (defn init-vims

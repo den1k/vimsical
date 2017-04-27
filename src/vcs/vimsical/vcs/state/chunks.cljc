@@ -1,13 +1,10 @@
 (ns vimsical.vcs.state.chunks
+  (:refer-clojure :exclude [chunk])
   (:require
    [clojure.data.avl :as avl]
-   [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.data.dll :as dll]
-   [vimsical.vcs.delta :as delta]
    [vimsical.common.util.core :as util]
-   [vimsical.common.uuid :refer [uuid]])
-  (:refer-clojure :exclude [chunk]))
-
+   [vimsical.common.uuid :refer [uuid]]
+   [vimsical.vcs.data.dll :as dll]))
 
 ;; * Partitioning
 

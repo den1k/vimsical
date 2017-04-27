@@ -1,7 +1,8 @@
 (ns vimsical.vcs.data.dll
   "A generic Doubly Linked List implemented on top of hash-map."
-  (:require [clojure.pprint :as pprint :refer [pprint]])
-  (:refer-clojure :rename {update clj-update} :exclude [replace #?(:cljs update)]))
+  (:refer-clojure :exclude [replace update])
+  #?(:clj (:require [clojure.pprint :as pprint])))
+
 
 (defprotocol PDoublyLinkedList
   (make-key [this x])
@@ -98,8 +99,8 @@
                   (let [m    (-> m
                                  (dissoc node-key)
                                  (cond->
-                                     prev (clj-update prev assoc :next next)
-                                     next (clj-update next assoc :prev prev)))
+                                     prev (clojure.core/update prev assoc :next next)
+                                     next (clojure.core/update next assoc :prev prev)))
                         head (if (= head node-key) next head)
                         tail (if (= tail node-key) prev tail)]
                     (DoublyLinkedList. m head tail kfn))))
@@ -147,8 +148,8 @@
           (let [m    (-> m
                          (dissoc node-key)
                          (cond->
-                             prev (clj-update prev assoc :next next)
-                             next (clj-update next assoc :prev prev)))
+                             prev (clojure.core/update prev assoc :next next)
+                             next (clojure.core/update next assoc :prev prev)))
                 head (if (= head node-key) next head)
                 tail (if (= tail node-key) prev tail)]
             (DoublyLinkedList. m head tail kfn))))
@@ -230,9 +231,9 @@
                          :existing-node exists})))
       (let [m    (-> m
                      (assoc x-key (make-node node-key node-next x))
-                     (clj-update node-key assoc :next x-key)
+                     (clojure.core/update node-key assoc :next x-key)
                      (cond->
-                         node-next (clj-update node-next assoc :prev x-key)))
+                         node-next (clojure.core/update node-next assoc :prev x-key)))
             tail (if (= node-key tail) x-key tail)]
         (DoublyLinkedList. m head tail kfn))))
   (add-before [_ node-val x]
@@ -251,9 +252,9 @@
                          :existing-node exists})))
       (let [m    (-> m
                      (assoc x-key (make-node node-prev node-key x))
-                     (clj-update node-key assoc :prev x-key)
+                     (clojure.core/update node-key assoc :prev x-key)
                      (cond->
-                         node-prev (clj-update node-prev assoc :next x-key)))
+                         node-prev (clojure.core/update node-prev assoc :next x-key)))
             head (if (= node-key head) x-key head)]
         (DoublyLinkedList. m head tail kfn))))
   (replace [_ node-val x]
@@ -269,8 +270,8 @@
                      (dissoc node-key)
                      (assoc x-key (make-node node-prev node-next x))
                      (cond->
-                         node-prev (clj-update node-prev assoc :next x-key)
-                         node-next (clj-update node-next assoc :prev x-key)))
+                         node-prev (clojure.core/update node-prev assoc :next x-key)
+                         node-next (clojure.core/update node-next assoc :prev x-key)))
             head (if (= head node-key) x-key head)
             tail (if (= node-key tail) x-key tail)]
         (DoublyLinkedList. m head tail kfn))))
