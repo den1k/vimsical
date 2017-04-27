@@ -307,6 +307,13 @@
                v'          (impl/vec nv)]
            (vector f index' v'))))
 
+     IReduce
+     (-reduce [_ f]
+       (-reduce v f))
+
+     (-reduce [_ f start]
+       (-reduce v f start))
+
      ICollection
      (-conj [this val]
        (if (nil? val)
