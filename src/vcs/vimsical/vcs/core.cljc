@@ -44,6 +44,10 @@
                            ::state.branches/deltas-by-branch-id
                            ::state-by-delta-id]))
 
+(s/fdef empty-vcs
+        :args (s/cat :branches (s/every ::branch/branch))
+        :ret ::vcs)
+
 (defn empty-vcs
   [branches]
   (letfn [(master-branch [branches] (first (filter branch/master? branches)))]
