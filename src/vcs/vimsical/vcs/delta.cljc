@@ -3,6 +3,26 @@
    [clojure.spec :as s]
    [vimsical.vcs.op :as op]))
 
+;; * Consistency checks
+
+(declare op-type op-id)
+
+(defn ops-point-to-str-id?
+  "Return true if every op-id in `deltas` points to a delta id whose op was of
+  str/ins type."
+  [deltas]
+  (letfn [(str-op? [delta] (= :str/ins (op-type delta)))]
+    (let [str-deltas-by-id (->> deltas (filter str-op?) (group-by :id))]
+      (reduce
+       (fn [_ delta]
+         (if-some [op-id' (op-id delta)]
+           (if (nil? (get str-deltas-by-id op-id'))
+             (reduced false)
+             true)
+           true))
+       {} deltas))))
+
+
 ;; * Spec
 
 (def current-version 0.3)

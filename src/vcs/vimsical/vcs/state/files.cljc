@@ -14,16 +14,16 @@
 ;; * Spec
 ;; ** Singe file state
 
-(s/def ::idx nat-int?)
-(s/def ::idx-range (s/tuple ::idx ::idx))
-(s/def ::amt pos-int?)
-(s/def ::cursor (s/or :idx ::idx :idx-range ::idx-range))
-(s/def ::deltas (s/and (s/every ::delta/delta) ::indexed/vector))
+(s/def ::cursor (s/or :idx ::edit-event/idx :idx-range ::edit-event/range))
+(s/def ::deltas (s/every ::delta/delta :kind indexed/vector?))
 (s/def ::string string?)
 (s/def ::state (s/keys :req [::deltas ::string ::cursor]))
-(s/def ::new-deltas (s/and (s/every ::delta/delta) topo/sorted?))
+(s/def ::new-deltas (s/every ::delta/delta :kind vector?))
 
-(def empty-state {::deltas (indexed/vector-by :id) ::string "" ::cursor 0})
+(def ^:private empty-state
+  {::deltas (indexed/vector-by :id)
+   ::string ""
+   ::cursor 0})
 
 
 ;; ** State by file id
@@ -42,10 +42,10 @@
 ;; indexes instead of uuid, this datatype is not valid anywhere else in the vcs
 ;; and is only meant to be used internally
 (defmulti ^:private update-state-op-spec first)
-(defmethod update-state-op-spec :str/ins  [_] (s/tuple #{:str/ins} ::idx string?))
-(defmethod update-state-op-spec :str/rem  [_] (s/tuple #{:str/rem} ::idx ::amt))
-(defmethod update-state-op-spec :crsr/mv  [_] (s/tuple #{:crsr/mv} ::idx))
-(defmethod update-state-op-spec :crsr/sel [_] (s/tuple #{:crsr/sel} ::idx-range))
+(defmethod update-state-op-spec :str/ins  [_] (s/tuple #{:str/ins} ::edit-event/idx string?))
+(defmethod update-state-op-spec :str/rem  [_] (s/tuple #{:str/rem} ::edit-event/idx ::edit-event/amt))
+(defmethod update-state-op-spec :crsr/mv  [_] (s/tuple #{:crsr/mv} ::edit-event/idx))
+(defmethod update-state-op-spec :crsr/sel [_] (s/tuple #{:crsr/sel} ::edit-event/range))
 
 (s/def ::update-op (s/multi-spec update-state-op-spec first))
 
@@ -86,7 +86,7 @@
 
 (s/fdef op-id->op-idx
         :args (s/cat :state ::state :op-id ::delta/prev-id)
-        :ret  ::idx)
+        :ret  ::edit-event/idx)
 
 (defn- op-id->op-idx
   [{::keys [deltas] :as state} op-id]
@@ -102,7 +102,7 @@
 
 
 (s/fdef op-idx->op-id
-        :args (s/cat :state ::state :op-idx ::idx)
+        :args (s/cat :state ::state :op-idx ::edit-event/idx)
         :ret ::delta/prev-id)
 
 (defn- op-idx->op-id
@@ -335,7 +335,7 @@
   (let [state                      (get state-by-file-id file-id)
         rf                         (fnil add-edit-event-rf empty-state)
         [state' deltas' delta-id'] (rf state editor-effects deltas file-id branch-id delta-id edit-event)
-        state-by-file-id'                    (assoc state-by-file-id file-id state')]
+        state-by-file-id'          (assoc state-by-file-id file-id state')]
     [state-by-file-id' deltas' delta-id']))
 
 (s/def ::add-edit-event-acc
