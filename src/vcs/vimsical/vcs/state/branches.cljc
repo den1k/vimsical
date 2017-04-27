@@ -23,25 +23,31 @@
   ([] (indexed/vector-by :id))
   ([deltas] (indexed/vec-by :id deltas)))
 
+(def conj-deltas (fnil conj (new-vector)))
+
 (defn- update-deltas
   [deltas delta]
-  (conj deltas delta))
-
-(defn- update-deltas-by-branch-id
-  [deltas-by-branch-id {:keys [branch-id] :as delta}]
-  {:pre [branch-id]}
-  (update deltas-by-branch-id branch-id (fnil update-deltas (new-vector)) delta))
+  (conj-deltas deltas delta))
 
 
 ;; * API
 
+(s/fdef add-delta
+  :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id :deltas ::delta/delta)
+  :ret ::deltas-by-branch-id)
+
+(defn add-delta
+  [deltas-by-branch-id {:keys [branch-id] :as delta}]
+  {:pre [branch-id]}
+  (update deltas-by-branch-id branch-id update-deltas delta))
+
 (s/fdef add-deltas
-        :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id :deltas (s/every ::delta/delta))
-        :ret ::deltas-by-branch-id)
+  :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id :deltas (s/every ::delta/delta))
+  :ret ::deltas-by-branch-id)
 
 (defn add-deltas
   [deltas-by-branch-id deltas]
-  (reduce update-deltas-by-branch-id deltas-by-branch-id deltas))
+  (reduce add-delta deltas-by-branch-id deltas))
 
 (s/fdef get-deltas
         :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id

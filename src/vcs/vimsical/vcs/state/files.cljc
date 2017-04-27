@@ -23,7 +23,7 @@
 (s/def ::state (s/keys :req [::deltas ::string ::cursor]))
 (s/def ::new-deltas (s/and (s/every ::delta/delta) topo/sorted?))
 
-(def ^:private empty-state {::deltas (indexed/vector-by :id) ::string "" ::cursor 0})
+(def empty-state {::deltas (indexed/vector-by :id) ::string "" ::cursor 0})
 
 
 ;; ** State by file id
@@ -317,8 +317,8 @@
   (update state-by-file-id file-id (fnil add-delta-rf empty-state) delta))
 
 (s/fdef add-deltas
-        :args (s/cat :state-by-file-id ::state-by-file-id :deltas (s/every ::delta/delta))
-        :ret ::state-by-file-id)
+  :args (s/cat :state-by-file-id ::state-by-file-id :deltas (s/every ::delta/delta))
+  :ret ::state-by-file-id)
 
 (defn add-deltas
   [state-by-file-id deltas]
@@ -338,14 +338,17 @@
         state-by-file-id'                    (assoc state-by-file-id file-id state')]
     [state-by-file-id' deltas' delta-id']))
 
+(s/def ::add-edit-event-acc
+  (s/tuple ::state-by-file-id ::new-deltas ::current-str-op-id))
+
 (s/fdef add-edit-event
-        :args (s/cat :state-by-file-id ::state-by-file-id
-                     :editor-effects ::editor/effects
-                     :file-id ::file/id
-                     :branch-id ::branch/id
-                     :delta-id ::delta/prev-id
-                     :edit-event ::edit-event/edit-event)
-        :ret (s/tuple ::state-by-file-id ::new-deltas ::current-str-op-id))
+  :args (s/cat :state-by-file-id ::state-by-file-id
+               :editor-effects ::editor/effects
+               :file-id ::file/id
+               :branch-id ::branch/id
+               :delta-id ::delta/prev-id
+               :edit-event ::edit-event/edit-event)
+  :ret ::add-edit-event-acc)
 
 (defn add-edit-event
   "Update `state-by-file-id` by adding the given `edit-event`. The `editor-state` should

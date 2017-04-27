@@ -38,9 +38,9 @@
   [deltas]
   (transduce (map :pad) + 0 deltas))
 
-(s/fdef update-deltas
-        :args (s/cat :timeline ::timeline :deltas ::deltas)
-        :ret ::timeline)
+(s/fdef update-chunks
+  :args (s/cat :timeline ::timeline :deltas ::deltas)
+  :ret ::timeline)
 
 (defn- update-chunks
   [{::keys [chunks cur-chunk] :as timeline} deltas]
@@ -48,8 +48,8 @@
     (assoc timeline ::chunks chunks')))
 
 (s/fdef update-deltas
-        :args (s/cat :timeline ::timeline :deltas-by-branch-id ::state.branches/deltas-by-branch-id :branches ::branches :deltas ::deltas)
-        :ret ::timeline)
+  :args (s/cat :timeline ::timeline :deltas-by-branch-id ::state.branches/deltas-by-branch-id :branches ::branches :deltas ::deltas)
+  :ret ::timeline)
 
 (defn- update-deltas
   [timeline deltas-by-branch-id branches deltas]
@@ -66,7 +66,21 @@
 
 ;; * API
 
-(s/fdef add-detlas
+(s/fdef add-delta
+        :args (s/cat :timeline ::timeline
+                     :deltas-by-branch-id ::state.branches/deltas-by-branch-id
+                     :branches ::branches
+                     :deltas ::delta/delta)
+        :ret ::timeline)
+
+(defn add-delta
+  [{::keys [duration chunks cur-chunk] :as timeline} deltas-by-branch-id branches delta]
+  (-> timeline
+      (update-deltas deltas-by-branch-id branches [delta])
+      (update-chunks [delta])
+      (update-duration [delta])))
+
+(s/fdef add-deltas
         :args (s/cat :timeline ::timeline
                      :deltas-by-branch-id ::state.branches/deltas-by-branch-id
                      :branches ::branches

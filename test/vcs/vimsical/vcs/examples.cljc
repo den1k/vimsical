@@ -35,7 +35,7 @@
 
 (def branches [master child gchild])
 
-#_(s/assert* (s/coll-of ::branch/branch) branches)
+(s/assert* (s/coll-of ::branch/branch) branches)
 
 
 ;; * Deltas
@@ -52,7 +52,7 @@
 
 (def deltas [d0 d1 d2 d3 d4 d5 d6 d7 d8])
 
-#_(s/assert* (s/coll-of ::delta/delta) deltas)
+(s/assert* (s/coll-of ::delta/delta) deltas)
 
 
 ;; * Latest file deltas
@@ -70,7 +70,7 @@
    child-id  (indexed/vec-by :id [d2 d3 d7])
    gchild-id (indexed/vec-by :id [d4 d5 d6])})
 
-#_(s/assert* ::state.branches/deltas-by-branch-id deltas-by-branch-id)
+(s/assert* ::state.branches/deltas-by-branch-id deltas-by-branch-id)
 
 (def branch-pointers-by-branch-id
   {master-id {::state.branch-pointers/start (:id d0) ::state.branch-pointers/end (:id d8)}
