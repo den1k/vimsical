@@ -25,7 +25,7 @@
 
 (defn- update-deltas
   [deltas delta]
-  (splittable/append deltas (new-vector [delta])))
+  (conj deltas delta))
 
 (defn- update-deltas-by-branch-id
   [deltas-by-branch-id {:keys [branch-id] :as delta}]

@@ -57,9 +57,17 @@
   (fn [state [op-type] delta] op-type))
 
 (defmethod update-state :str/ins
-  [state  [_ idx diff] {:keys [prev-id] :as delta}]
-  (if (nil? prev-id)
+  [{::keys [deltas] :as state}  [_ idx diff] {:keys [prev-id] :as delta}]
+  (cond
+    (nil? prev-id)
     (assoc state ::deltas (indexed/vec-by :id [delta]) ::string diff)
+
+    (== idx (count deltas))
+    (-> state
+        (update ::deltas conj delta)
+        (update ::string str diff))
+
+    :else
     (-> state
         (update ::deltas splittable/splice idx (indexed/vec-by :id [delta]))
         (update ::string splittable/splice idx diff))))
