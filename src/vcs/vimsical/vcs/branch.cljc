@@ -9,8 +9,7 @@
 ;; * Spec
 
 (s/def ::branch
-  (s/keys :req [:db/id]
-          :opt [::parent ::files]))
+  (s/keys :req [:db/id] :opt [::parent ::files]))
 
 
 ;; ** Attributes
@@ -20,7 +19,7 @@
 (s/def ::name (s/nilable string?))
 (s/def ::start-delta-id (s/nilable ::delta/id))
 (s/def ::entry-delta-id (s/nilable ::delta/id))
-(s/def ::created-at inst?)
+(s/def ::created-at nat-int?)
 
 ;; ** Relations
 

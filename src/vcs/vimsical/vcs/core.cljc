@@ -14,19 +14,15 @@
   invalid if that id pointed to a crsr delta."
   (:require
    [clojure.spec :as s]
-   [vimsical.vcs.data.indexed.vector :as indexed.vector]
-   [vimsical.vcs.data.dll :as dll]
-   [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.editor :as editor]
    [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.delta :as delta]
    [vimsical.vcs.edit-event :as edit-event]
+   [vimsical.vcs.editor :as editor]
    [vimsical.vcs.file :as file]
-   [vimsical.vcs.state.files :as state.files]
-   [vimsical.vcs.state.chunks :as state.chunks]
    [vimsical.vcs.state.branch-pointers :as state.branch-pointers]
    [vimsical.vcs.state.branches :as state.branches]
+   [vimsical.vcs.state.files :as state.files]
    [vimsical.vcs.state.timeline :as state.timeline]))
-
 
 ;; * State
 

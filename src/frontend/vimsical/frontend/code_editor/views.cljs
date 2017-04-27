@@ -2,7 +2,10 @@
   (:require [reagent.core :as r]
             [vimsical.common.util.core :as util]
             [re-frame.core :as re-frame]
+            [vimsical.vcs.edit-event :as edit-event]
             [vimsical.frontend.code-editor.handlers :as handlers]
+            [vimsical.frontend.vcs.handlers :as vcs.handlers]
+            [vimsical.frontend.vcs.subs :as vcs.subs]
             [vimsical.frontend.util.re-frame :refer-macros [with-subs]]))
 
 (defn editor-opts
@@ -10,7 +13,7 @@
   [{:keys [file-type compact? read-only? custom-opts]
     :or   {read-only? false}}]
   (let [defaults
-        {:value                (name file-type)
+        {:value                ""
          :language             (name file-type)
          :readOnly             read-only?
 
@@ -111,11 +114,11 @@
 (defn parse-content-event [model e]
   (let [{:keys [diff idx added deleted]
          :as   e-state} (content-event-state model e)
-        event-type (content-event-type e-state)]
+        event-type      (content-event-type e-state)]
     (case event-type
-      :str/ins {:op event-type :diff diff :idx idx}
-      :str/rem {:op event-type :idx idx :amt deleted}
-      :str/rplc {:op event-type :diff diff :idx idx :amt deleted})))
+      :str/ins  {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
+      :str/rem  {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
+      :str/rplc {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx ::edit-event/amt deleted})))
 
 ;;
 ;; * Cursor & Selection change
@@ -138,30 +141,21 @@
 (defn parse-selection-event [model e]
   (let [{:keys [selection? start-idx end-idx]} (selection-event-state model e)]
     (if-not selection?
-      {:op :crsr/mv :idx start-idx}
-      {:op :crsr/sel :range [start-idx end-idx]})))
+      {::edit-event/op :crsr/mv ::edit-event/idx start-idx}
+      {::edit-event/op :crsr/sel ::edit-event/range [start-idx end-idx]})))
 
-(defn handle-content-change [model e]
-  (re-frame/dispatch [::handlers/new-edit-event (parse-content-event model e)]))
+(defn handle-content-change [model {:keys [db/id] :as file} e]
+  (re-frame/dispatch [::vcs.handlers/add-edit-event id  (parse-content-event model e)]))
 
-(defn handle-cursor-change [model e]
-  (re-frame/dispatch [::handlers/new-edit-event (parse-selection-event model e)]))
+(defn handle-cursor-change [model {:keys [db/id] :as file} e]
+  (re-frame/dispatch [::vcs.handlers/add-edit-event id (parse-selection-event model e)]))
 
-;; wip todo remove
-;; (comment
-;;  (sut/diffs->edit-events "" "foor" "four")
-;;  [#:vimsical.vcs.edit-event{:op :str/ins, :idx 0, :diff "foor"}
-;;   #:vimsical.vcs.edit-event{:op :crsr/mv, :idx 4}
-;;   #:vimsical.vcs.edit-event{:op :crsr/mv, :idx 3}
-;;   #:vimsical.vcs.edit-event{:op :crsr/mv, :idx 2}
-;;   #:vimsical.vcs.edit-event{:op :str/rem, :idx 2, :amt 1}
-;;   #:vimsical.vcs.edit-event{:op :crsr/mv, :idx 1}
-;;   #:vimsical.vcs.edit-event{:op :crsr/mv, :idx 2}
-;;   #:vimsical.vcs.edit-event{:op :str/ins, :idx 2, :diff "u"}
-;;   #:vimsical.vcs.edit-event{:op :crsr/mv, :idx 3}])
+(defn editor-focus-handler [editor]
+  (fn [_]
+    (re-frame/dispatch [::handlers/focus :app/active-editor editor])))
 
 (defn code-editor
-  [{:keys [id file-type read-only? editor-reg-key]
+  [{:keys [id file file-type read-only? editor-reg-key]
     :as   opts}]
   {:pre [id file-type editor-reg-key]}
   (r/create-class
@@ -171,15 +165,14 @@
             model  (.-model editor)]
         (when-not read-only?
           (doto editor
-            (.onDidChangeModelContent #(handle-content-change model %))
-            (.onDidChangeCursorSelection #(handle-cursor-change model %))
-            (.onDidFocusEditor #(re-frame/dispatch [::handlers/focus
-                                                    :app/active-editor
-                                                    editor]))))
+            (.onDidChangeModelContent #(handle-content-change model file %))
+            (.onDidChangeCursorSelection #(handle-cursor-change model file %))
+            (.onDidFocusEditor (editor-focus-handler editor))))
         (re-frame/dispatch [::handlers/register editor-reg-key id editor])))
     :component-will-unmount
     (fn [_]
       (re-frame/dispatch [::handlers/dispose editor-reg-key id]))
     :render
     (fn [_]
+      (println {:string (count (deref (re-frame/subscribe [::vcs.subs/file-string file])))})
       [:div.code-editor])}))
