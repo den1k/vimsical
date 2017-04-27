@@ -1,13 +1,14 @@
 (ns vimsical.frontend.vcr.views
   (:require
    [re-com.core :as re-com]
+   [re-frame.core :as re-frame]
    [vimsical.frontend.views.splits :as splits]
    [vimsical.frontend.timeline.views :refer [timeline]]
    [vimsical.frontend.live-preview.views :refer [live-preview]]
    [vimsical.frontend.code-editor.views :refer [code-editor]]
-   [vimsical.frontend.util.re-frame :refer [with-queries]]
    [vimsical.frontend.views.shapes :as shapes]
    [vimsical.vcs.file :as file]
+   [vimsical.frontend.vcr.subs :as subs]
    [reagent.core :as reagent]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]
    [vimsical.common.util.core :as util]))
@@ -122,32 +123,29 @@
                                       :editor-reg-key :vcr/editors}]})
 
 (defn vcr []
-  (fn []
-    (with-queries [{:vims/keys [branches] :as res} [:app/vims [{:vims/branches ['* {:vimsical.vcs.branch/files ['*]}]}]]]
-      (let [master                 (first branches)
-            files                  (:vimsical.vcs.branch/files master)
-            editor-comps           (->> files (map editor-components) editor-components-by-file-type)
-            playing?               false
-            visible-files          (visible-files files)
-            visi-components        (views-for-files visible-files editor-comps)
-            visible-editor-headers (mapv :editor-header visi-components)
-            visible-editors        (mapv :editor visi-components)]
-        (println {:visible-files visible-files})
-        [re-com/v-box
-         :class "vcr"
-         :size "100%"
-         :children
-         [[playback]
-          [splits/n-h-split
-           :class "live-preview-and-editors"
-           :panels [[live-preview]
-                    [splits/n-v-split
-                     :height "100%"
-                     :splitter-size "31px"
-                     :panels visible-editors
-                     :splitter-children visible-editor-headers
-                     :margin "0"]]
-           :splitter-child [editor-tabs files]
-           :splitter-size "34px"
-           :initial-split 60
-           :margin "0"]]]))))
+  (let [files                  (deref (re-frame/subscribe [::subs/files]))
+        editor-comps           (->> files (map editor-components) editor-components-by-file-type)
+        playing?               false
+        visible-files          (visible-files files)
+        visi-components        (views-for-files visible-files editor-comps)
+        visible-editor-headers (mapv :editor-header visi-components)
+        visible-editors        (mapv :editor visi-components)]
+    (println {:visible-files visible-files})
+    [re-com/v-box
+     :class "vcr"
+     :size "100%"
+     :children
+     [[playback]
+      [splits/n-h-split
+       :class "live-preview-and-editors"
+       :panels [[live-preview]
+                [splits/n-v-split
+                 :height "100%"
+                 :splitter-size "31px"
+                 :panels visible-editors
+                 :splitter-children visible-editor-headers
+                 :margin "0"]]
+       :splitter-child [editor-tabs files]
+       :splitter-size "34px"
+       :initial-split 60
+       :margin "0"]]]))

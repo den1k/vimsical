@@ -14,6 +14,6 @@
 
 (re-frame/reg-sub
  ::file-string
- :< [::vims-vcs]
+ :<- [::vims-vcs]
  (fn [vcs [_ {:keys [db/id] :as file}]]
    (vcs/file-string vcs id)))
