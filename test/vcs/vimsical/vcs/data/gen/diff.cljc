@@ -4,8 +4,14 @@
   (:require
    [clojure.spec :as s]
    [diffit.vec :as diffit]
+   [vimsical.common.test :refer [uuid]]
    [vimsical.vcs.edit-event :as edit-event]
-   [vimsical.vcs.state.files :as files]))
+   [vimsical.vcs.editor :as editor]
+   [vimsical.vcs.state.files :as state.files]
+   [vimsical.vcs.core :as vcs]
+   [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.file :as file]
+   [vimsical.vcs.delta :as delta]))
 
 ;; * Edit events
 
@@ -105,7 +111,7 @@
      cat)))
 
 
-(defn- splice-edit-events-xf [] (comp (map #'files/splice-edit-event) cat))
+(defn- splice-edit-events-xf [] (comp (map #'state.files/splice-edit-event) cat))
 
 
 ;; * String diff to edit events
@@ -188,3 +194,20 @@
               {::s s' ::edit-events
                (transduce  xf conj edit-events (diff->edit-events s s'))})))
         nil splices-and-strs))))))
+
+(s/fdef diffs->deltas
+        :args (s/cat :vcs ::vcs/vcs
+                     :effects ::editor/effects
+                     :file-id ::file/id
+                     :strs (s/* ::splice-or-string))
+        :ret ::vcs/vcs)
+
+(defn diffs->deltas
+  [vcs effects file-id & strs]
+  (assert (string? (first strs)))
+  (assert (every? vector? (next strs)))
+  (letfn [(splice-strs [strs] (mapv (fn [str] (if (vector? str) str [str])) strs))]
+    (reduce
+     (fn [vcs edit-event]
+       (vcs/add-edit-event vcs effects file-id edit-event))
+     vcs (apply diffs->edit-events (splice-strs strs)))))

@@ -1,18 +1,9 @@
 (ns vimsical.common.test
   #?@(:clj
-      [(:require
-        [net.cgrand.macrovich :as macros]
-        [clojure.data :as data]
-        [clojure.test :as t :refer [is]]
-        [vimsical.common.uuid :as uuid])
+      [(:require [vimsical.common.uuid :as uuid])
        (:import java.util.UUID)]
       :cljs
-      [(:require
-        [clojure.data :as data]
-        [clojure.test :as t :refer-macros [is]]
-        [vimsical.common.uuid :as uuid])
-       (:require-macros [net.cgrand.macrovich :as macros])
-       (:refer-clojure :exclude [uuid])]))
+      [(:require [vimsical.common.uuid :as uuid])]))
 
 ;; * UUID
 

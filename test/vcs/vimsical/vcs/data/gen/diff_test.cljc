@@ -15,7 +15,7 @@
 
 (st/instrument)
 
-(deftest str->edit-events
+(deftest diffs->edit-events
   (is (= (sut/diffs->edit-events "" "foor" "four")
          [{::edit-event/op :str/ins, ::edit-event/idx 0, ::edit-event/diff "foor"}
           {::edit-event/op :crsr/mv, ::edit-event/idx 4}

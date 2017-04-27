@@ -245,6 +245,8 @@
    (fn add-edit-event-rf-str-rem-rf
      [[state deltas delta-id] {:as edit-event ::edit-event/keys [idx amt]}]
      (let [op-id        (op-idx->op-id state idx)
+           ;; NOTE shouln't we use the following for the delta-id we return?
+           ;; prev-op-id   (op-idx->op-id state (+ idx amt))
            op           [:str/rem op-id amt]
            prev-id      (prev-delta-id deltas delta-id)
            new-delta-id (uuid-fn edit-event)
