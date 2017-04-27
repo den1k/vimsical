@@ -274,6 +274,27 @@
         deltas'      (conj deltas delta)]
     [state deltas' op-id]))
 
+(defmethod add-edit-event-rf :crsr/sel
+  [state {:as editor-effects ::editor/keys [pad-fn uuid-fn timestamp-fn]} deltas file-id branch-id delta-id {:as edit-event [from-idx to-idx] ::edit-event/range}]
+  (let [from-id      (op-idx->op-id state from-idx)
+        to-id        (op-idx->op-id state to-idx)
+        op           [:crsr/sel from-id to-id]
+        prev-id      (prev-delta-id deltas delta-id)
+        new-delta-id (uuid-fn edit-event)
+        pad          (pad-fn edit-event)
+        timestamp    (timestamp-fn edit-event)
+        delta        (delta/new-delta
+                      {:branch-id branch-id
+                       :file-id   file-id
+                       :prev-id   prev-id
+                       :id        new-delta-id
+                       :op        op
+                       :pad       pad
+                       :timestamp timestamp})
+        deltas'      (conj deltas delta)]
+    ;; XXX is this correct?
+    [state deltas' to-id]))
+
 
 ;; ** Updates
 
