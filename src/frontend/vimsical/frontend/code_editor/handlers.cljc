@@ -1,7 +1,7 @@
 (ns vimsical.frontend.code-editor.handlers
-  (:require [re-frame.core :as re-frame]
-            [vimsical.common.util.core :as util]
-            [vimsical.frontend.util.dom :as util.dom]))
+  (:require
+   [re-frame.core :as re-frame]
+   [vimsical.common.util.core :as util]))
 
 ;; todo, move into monaco utils?
 (defn dispose-editor
@@ -28,12 +28,6 @@
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [db ui-db] :as cofx} [_ focus-key editor]]
    {:ui-db (assoc ui-db focus-key editor)}))
-
-(re-frame/reg-event-db
- ::new-edit-event
- (fn [db [_ edit-event]]
-   #?(:cljs (js/console.debug edit-event))
-   db))
 
 (re-frame/reg-event-fx
  ::paste

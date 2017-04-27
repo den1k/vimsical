@@ -3,7 +3,10 @@
    [com.stuartsierra.mapgraph :as mg]
    [com.stuartsierra.subgraph :as sg]
    [re-frame.core :as re-frame]
-   [re-frame.interop :as interop]))
+   [vimsical.vcs.branch :as branch]
+   [vimsical.common.util.core :as util]
+   [vimsical.vcs.file :as file]
+   [vimsical.common.test :refer [uuid]]))
 
 (defn add-to [db k v]
   (if-let [ref (mg/ref-to db v)]
@@ -21,17 +24,25 @@
 (re-frame/reg-sub-raw :q sg/pull)
 (re-frame/reg-sub-raw :q* sg/pull-link)
 
-(let [state {:app/user         {:db/id           1
+(defn new-vims
+  [author-ref title]
+  (let [files    [{:db/id (uuid :file-html) ::file/type :text ::file/sub-type :html}
+                  {:db/id (uuid :file-css) ::file/type :text ::file/sub-type :css}
+                  {:db/id (uuid :file-js) ::file/type :text ::file/sub-type :javascript}]
+        branches [{:db/id (uuid :branch-master) ::branch/name "master" ::branch/start-delta-id nil ::branch/entry-delta-id nil ::branch/created-at (util/now) ::branch/files files}]]
+    {:db/id         (uuid title)
+     :vims/author   author-ref
+     :vims/title    title
+     :vims/branches branches}))
+
+(let [state {:app/user         {:db/id           (uuid :user)
                                 :user/first-name "Jane"
                                 :user/last-name  "Applecrust"
                                 :user/email      "kalavox@gmail.com"
-                                :user/vimsae     [{:db/id       10
-                                                   :vims/author [:db/id 1]
-                                                   :vims/title  "NLP Chatbot running on React Fiber"}
-                                                  {:db/id       20
-                                                   :vims/author [:db/id 1]
-                                                   :vims/title  "CatPhotoApp"}]}
-             :app/quick-search {:db/id              5
+                                :user/vimsae     [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
+                                                  (new-vims [:db/id (uuid :user)] "CatPhotoApp")]}
+             :app/vims         [:db/id (uuid "CatPhotoApp")]
+             :app/quick-search {:db/id              (uuid :quick-search)
                                 :quick-search/show? false}
              :app/route        :route/vcr}]
   (def default-db
