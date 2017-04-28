@@ -3,10 +3,7 @@
    [reagent.core :as r]
    [re-frame.core :as re-frame]
    [vimsical.common.util.core :as util]
-   [vimsical.vcs.edit-event :as edit-event]
    [vimsical.frontend.code-editor.handlers :as handlers]
-   [vimsical.frontend.vcs.handlers :as vcs.handlers]
-   [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.vcs.file :as file]))
 
 (defn editor-opts
@@ -84,78 +81,14 @@
   (doto (js/monaco.editor.create el (clj->js editor))
     (.. getModel (updateOptions (clj->js model)))))
 
-(defn pos->str-idx
-  ; Counts only until where we are
-  ; inc's at each line to account for \n
-  ; dec column because monaco returns col after event
-  [line column lines]
-  (transduce (comp (take (dec line))
-                   (map #(inc (.-length %)))) + (dec column) lines))
-
-;;
-;; * Content change
-;;
-
-(defn- content-event-state [model e]
-  (let [range         (.-range e)
-        diff          (.-text e)
-        added-count   (.-length diff)
-        deleted-count (.-rangeLength e)
-        start-line    (.-startLineNumber range)
-        start-column  (.-startColumn range)
-        lines         (.getLinesContent model)]
-    {:idx     (pos->str-idx start-line start-column lines)
-     :diff    diff
-     :added   (when-not (zero? added-count) added-count)
-     :deleted (when-not (zero? deleted-count) deleted-count)}))
-
-(defn content-event-type [{:keys [added deleted]}]
-  (or
-   (and deleted (if added :str/rplc :str/rem))
-   (and added :str/ins)))
-
-(defn parse-content-event [model e]
-  (let [{:keys [diff idx added deleted]
-         :as   e-state} (content-event-state model e)
-        event-type (content-event-type e-state)]
-    (case event-type
-      :str/ins {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
-      :str/rem {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
-      :str/rplc {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx ::edit-event/amt deleted})))
-
-;;
-;; * Cursor & Selection change
-;;
-
-(defn- selection-event-state [model e]
-  (let [sel          (.-selection e)
-        start-line   (.-startLineNumber sel)
-        start-column (.-startColumn sel)
-        end-line     (.-endLineNumber sel)
-        end-column   (.-endColumn sel)
-        lines        (.getLinesContent model)
-        selection?   (or (not (identical? start-column end-column))
-                         (not (identical? start-line end-line)))]
-    {:selection? selection?
-     :start-idx  (pos->str-idx start-line start-column lines)
-     :end-idx    (when selection? (pos->str-idx end-line end-column lines))
-     :lines      lines}))
-
-(defn parse-selection-event [model e]
-  (let [{:keys [selection? start-idx end-idx]} (selection-event-state model e)]
-    (if-not selection?
-      {::edit-event/op :crsr/mv ::edit-event/idx start-idx}
-      {::edit-event/op :crsr/sel ::edit-event/range [start-idx end-idx]})))
-
-(defn handle-content-change [model {:keys [db/id] :as file} e]
-  (re-frame/dispatch [::vcs.handlers/add-edit-event id (parse-content-event model e)]))
-
-(defn handle-cursor-change [model {:keys [db/id] :as file} e]
-  (re-frame/dispatch [::vcs.handlers/add-edit-event id (parse-selection-event model e)]))
-
-(defn editor-focus-handler [editor]
-  (fn [_]
-    (re-frame/dispatch [::handlers/focus :app/active-editor editor])))
+(defn setup-event-handlers [editor reg-key file]
+  (doto editor
+    (.onDidChangeModelContent
+     #(re-frame/dispatch [::handlers/text-change reg-key file %]))
+    (.onDidChangeCursorSelection
+     #(re-frame/dispatch [::handlers/selection-change reg-key file %]))
+    (.onDidFocusEditor
+     #(re-frame/dispatch [::handlers/focus :app/active-editor editor]))))
 
 (defn code-editor
   [{:keys [file read-only? editor-reg-key]
@@ -167,12 +100,8 @@
       (let [editor (new-editor (r/dom-node c) (editor-opts opts))
             model  (.-model editor)]
         (when-not read-only?
-          (doto editor
-            (.onDidChangeModelContent #(handle-content-change model file %))
-            (.onDidChangeCursorSelection #(handle-cursor-change model file %))
-            (.onDidFocusEditor (editor-focus-handler editor))))
-        (re-frame/dispatch [::handlers/register editor-reg-key file editor])
-        (re-frame/dispatch [::handlers/init editor-reg-key file])))
+          (setup-event-handlers editor editor-reg-key file))
+        (re-frame/dispatch [::handlers/register editor-reg-key file editor])))
     :component-will-unmount
     (fn [_]
       (re-frame/dispatch [::handlers/dispose editor-reg-key file]))
