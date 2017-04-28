@@ -6,15 +6,18 @@
    [vimsical.vcs.edit-event :as edit-event]
    [vimsical.frontend.code-editor.handlers :as handlers]
    [vimsical.frontend.vcs.handlers :as vcs.handlers]
-   [vimsical.frontend.vcs.subs :as vcs.subs]))
+   [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.vcs.file :as file]))
 
 (defn editor-opts
   "https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditorconstructionoptions.html"
-  [{:keys [file-type compact? read-only? custom-opts]
+  [{:keys [file compact? read-only? custom-opts]
     :or   {read-only? false}}]
-  (let [defaults
+  (let [sub-type
+        (::file/sub-type file)
+        defaults
         {:value                ""
-         :language             (name file-type)
+         :language             (name sub-type)
          :readOnly             read-only?
 
          :theme                "vs"     ; default
@@ -155,9 +158,9 @@
     (re-frame/dispatch [::handlers/focus :app/active-editor editor])))
 
 (defn code-editor
-  [{:keys [id file file-type read-only? editor-reg-key]
+  [{:keys [file read-only? editor-reg-key]
     :as   opts}]
-  {:pre [id file-type editor-reg-key]}
+  {:pre [editor-reg-key]}
   (r/create-class
    {:component-did-mount
     (fn [c]

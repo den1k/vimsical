@@ -98,9 +98,9 @@
       {:class (when hidden? "disabled")
        :key   sub-type}
       [:div.tab-checkbox
-       {:class    (name sub-type)
-        :style    (cond-> {:cursor :pointer}
-                    hidden? (assoc :color :grey))
+       {:class (name sub-type)
+        :style (cond-> {:cursor :pointer}
+                 hidden? (assoc :color :grey))
         ;; :on-click (e>
         ;;            (swap! files
         ;;                   util/update-when
@@ -117,20 +117,20 @@
   {::file/sub-type sub-type
    :editor-header  ^{:key sub-type} [editor-header file]
    :editor         ^{:key sub-type} [code-editor
-                                     {:id             sub-type
-                                      :file           file
-                                      :file-type      sub-type
+                                     {:file           file
                                       :editor-reg-key :vcr/editors}]})
 
 (defn vcr []
-  (let [files                  (deref (re-frame/subscribe [::subs/files]))
+  (let [files                  (deref (re-frame/subscribe [::subs/files
+                                                           ['*
+                                                            {::file/libs
+                                                             ['*]}]]))
         editor-comps           (->> files (map editor-components) editor-components-by-file-type)
         playing?               false
         visible-files          (visible-files files)
         visi-components        (views-for-files visible-files editor-comps)
         visible-editor-headers (mapv :editor-header visi-components)
         visible-editors        (mapv :editor visi-components)]
-    (println {:visible-files visible-files})
     [re-com/v-box
      :class "vcr"
      :size "100%"
@@ -138,7 +138,9 @@
      [[playback]
       [splits/n-h-split
        :class "live-preview-and-editors"
-       :panels [[live-preview]
+       :panels [[live-preview
+                 {:ui-reg-key :vcr/live-preview
+                  :files      files}]
                 [splits/n-v-split
                  :height "100%"
                  :splitter-size "31px"
