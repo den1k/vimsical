@@ -8,7 +8,7 @@
  (fn [[_ pattern]]
    (re-frame/subscribe
     [:q*
-     [{:vims/branches ['* {:vimsical.vcs.branch/files [(or pattern '*)]}]}]
+     [{:vims/branches ['* {:vimsical.vcs.branch/files (or pattern '[*])}]}]
      :app/vims]))
  (fn [{:vims/keys [branches]}]
    (->> branches first ::branch/files)))

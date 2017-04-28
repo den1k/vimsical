@@ -114,10 +114,10 @@
 (defn parse-content-event [model e]
   (let [{:keys [diff idx added deleted]
          :as   e-state} (content-event-state model e)
-        event-type      (content-event-type e-state)]
+        event-type (content-event-type e-state)]
     (case event-type
-      :str/ins  {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
-      :str/rem  {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
+      :str/ins {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
+      :str/rem {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
       :str/rplc {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx ::edit-event/amt deleted})))
 
 ;;
@@ -145,7 +145,7 @@
       {::edit-event/op :crsr/sel ::edit-event/range [start-idx end-idx]})))
 
 (defn handle-content-change [model {:keys [db/id] :as file} e]
-  (re-frame/dispatch [::vcs.handlers/add-edit-event id  (parse-content-event model e)]))
+  (re-frame/dispatch [::vcs.handlers/add-edit-event id (parse-content-event model e)]))
 
 (defn handle-cursor-change [model {:keys [db/id] :as file} e]
   (re-frame/dispatch [::vcs.handlers/add-edit-event id (parse-selection-event model e)]))
@@ -168,11 +168,11 @@
             (.onDidChangeModelContent #(handle-content-change model file %))
             (.onDidChangeCursorSelection #(handle-cursor-change model file %))
             (.onDidFocusEditor (editor-focus-handler editor))))
-        (re-frame/dispatch [::handlers/register editor-reg-key id editor])))
+        (re-frame/dispatch [::handlers/register editor-reg-key file editor])
+        (re-frame/dispatch [::handlers/init editor-reg-key file])))
     :component-will-unmount
     (fn [_]
-      (re-frame/dispatch [::handlers/dispose editor-reg-key id]))
+      (re-frame/dispatch [::handlers/dispose editor-reg-key file]))
     :render
     (fn [_]
-      (println {:string (count (deref (re-frame/subscribe [::vcs.subs/file-string file])))})
       [:div.code-editor])}))

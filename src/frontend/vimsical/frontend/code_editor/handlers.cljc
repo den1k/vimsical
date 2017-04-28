@@ -1,7 +1,8 @@
 (ns vimsical.frontend.code-editor.handlers
   (:require
    [re-frame.core :as re-frame]
-   [vimsical.common.util.core :as util]))
+   [vimsical.common.util.core :as util]
+   [vimsical.frontend.vcs.subs :as vcs.subs]))
 
 ;; todo, move into monaco utils?
 (defn dispose-editor
@@ -9,19 +10,32 @@
   [editor]
   (.dispose editor))
 
+(defn update-editor [{:keys [db ui-db]} [_ reg-key {:keys [db/id] :as file}]]
+  (let [editor (get-in ui-db [reg-key id])
+        string (-> db
+                   (vcs.subs/vims-vcs)
+                   (vcs.subs/file-string file))]
+    (.setValue editor string)
+    nil))
+
 (re-frame/reg-event-fx
  ::register
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [db ui-db]} [_ reg-key id editor-instance]]
+ (fn [{:keys [db ui-db]} [_ reg-key {:keys [db/id] :as file} editor-instance]]
    {:ui-db (assoc-in ui-db [reg-key id] editor-instance)}))
 
 (re-frame/reg-event-fx
  ::dispose
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [db ui-db] :as cofx} [_ reg-key id]]
+ (fn [{:keys [db ui-db] :as cofx} [_ reg-key {:keys [db/id] :as file}]]
    (-> (get-in ui-db [reg-key id])
        (dispose-editor))
    {:ui-db (util/dissoc-in ui-db [reg-key id])}))
+
+(re-frame/reg-event-fx
+ ::init
+ [(re-frame/inject-cofx :ui-db)]
+ update-editor)
 
 (re-frame/reg-event-fx
  ::focus
@@ -44,4 +58,5 @@
           [{; if true moves cursor, else makes selection around added text
             :forceMoveMarkers true
             :text             string
-            :range            (first sels)}]))))))
+            :range            (first sels)}]))))
+   nil))

@@ -24,11 +24,16 @@
 (re-frame/reg-sub-raw :q sg/pull)
 (re-frame/reg-sub-raw :q* sg/pull-link)
 
+
+;; todo fully ns's keys for libs
 (defn new-vims
   [author-ref title]
-  (let [files    [{:db/id (uuid :file-html) ::file/type :text ::file/sub-type :html}
+  (let [js-libs  [{:db/id     (uuid :lib-js-jquery)
+                   :lib/title "jQuery"
+                   :lib/src   "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"}]
+        files    [{:db/id (uuid :file-html) ::file/type :text ::file/sub-type :html}
                   {:db/id (uuid :file-css) ::file/type :text ::file/sub-type :css}
-                  {:db/id (uuid :file-js) ::file/type :text ::file/sub-type :javascript}]
+                  {:db/id (uuid :file-js) ::file/type :text ::file/sub-type :javascript ::file/libs js-libs}]
         branches [{:db/id (uuid :branch-master) ::branch/name "master" ::branch/start-delta-id nil ::branch/entry-delta-id nil ::branch/created-at (util/now) ::branch/files files}]]
     {:db/id         (uuid title)
      :vims/author   author-ref
@@ -45,6 +50,7 @@
              :app/quick-search {:db/id              (uuid :quick-search)
                                 :quick-search/show? false}
              :app/route        :route/vcr}]
+
   (def default-db
     (-> (mg/new-db)
         (mg/add-id-attr :db/id)
