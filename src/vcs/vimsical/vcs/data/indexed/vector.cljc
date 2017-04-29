@@ -205,14 +205,27 @@
      (more [this]
        (or (.next this) (empty this)))
      (cons [this val]
-       (.assocN this (count v) val))
+       (let [i       (count v)
+             val-key (f val)
+             index'  (update index val-key
+                             (fn [prev-i?]
+                               (if (some? prev-i?)
+                                 (throw (ex-info "index already assigned" {:i i}))
+                                 i)))
+             v'      (conj v val)]
+         (vector f index' v')))
+
+     java.lang.Iterable
+     ;; XXX This might be a bit risky in cases where someone would call remove()
+     ;; on the vector's iterator, our index would go out of sync.
+     (iterator [_] (.iterator v))
 
      clojure.lang.IPersistentCollection
      (empty [_]
        (vector f (index) (impl/vector)))
      (equiv [this other]
        (or (identical? this other)
-           (if (instance? IndexedVector other)
+            (if (instance? IndexedVector other)
              (and (= v (.v ^IndexedVector other))
                   (= index (.index ^IndexedVector other)))
              false)))
@@ -220,17 +233,20 @@
      clojure.lang.Counted
      (count [_] (count v))
 
+     clojure.lang.IPersistentMap
+     (assoc [this i val] (.assocN this i val))
+     (valAt [this i] (.nth this i))
+
      clojure.lang.IPersistentVector
      (assocN [_ i val]
-       (when-not (= i (count v))
-         (throw (ex-info "assocN not appending?" {:i i :val val :v v :index index})))
+       (when (and (= identity f) (not= i (count v)))
+         ;; Unsupported for now...
+         (throw
+          (ex-info
+           "Cannot update a value that will change the key." {:f f :val val :i i :val-at-i (get v i)})))
        (let [val-key (f val)
-             index'  (update index val-key
-                             (fn [prev-i?]
-                               (if (some? prev-i?)
-                                 (throw (ex-info "index already assigned" {:i i}))
-                                 i)))
-             v'      (conj v val)]
+             index'  (assoc index val-key i)
+             v'      (assoc v i val)]
          (vector f index' v')))
 
      clojure.lang.Indexed
@@ -308,21 +324,23 @@
            (vector f index' v'))))
 
      IReduce
-     (-reduce [_ f]
-       (-reduce v f))
-
-     (-reduce [_ f start]
-       (-reduce v f start))
+     (-reduce [_ f] (-reduce v f))
+     (-reduce [_ f start] (-reduce v f start))
 
      ICollection
      (-conj [this val]
-       (if (nil? val)
-         this
-         (-assoc-n this (count v) val)))
+       (let [i       (count v)
+             val-key (f val)
+             index'  (update index val-key
+                             (fn [prev-i?]
+                               (if (some? prev-i?)
+                                 (throw (ex-info "index already assigned" {:i i}))
+                                 i)))
+             v'      (conj v val)]
+         (vector f index' v')))
 
      IEmptyableCollection
-     (-empty [_]
-       (vector f (index) (impl/vector)))
+     (-empty [_] (vector f (index) (impl/vector)))
 
      ISequential
      IEquiv
@@ -335,17 +353,22 @@
      ICounted
      (-count [_] (count v))
 
+     IAssociative
+     (-assoc [this i val] (-assoc-n this i val))
+
+     ILookup
+     (-lookup [this i] (-nth this i))
+
      IVector
      (-assoc-n [_ i val]
-       (when-not (= i (count v))
-         (throw (ex-info "assoc-n not appending?" {:i i :val val :v v :index index})))
+       (when (and (= identity f) (not= i (count v)))
+         ;; Unsupported for now...
+         (throw
+          (ex-info
+           "Cannot update a value that will change the key." {:f f :val val :i i :val-at-i (get v i)})))
        (let [val-key (f val)
-             index'  (update index val-key
-                             (fn [prev-i?]
-                               (if (some? prev-i?)
-                                 (throw (ex-info "index already assigned" {:i i}))
-                                 i)))
-             v'      (conj v val)]
+             index'  (assoc index val-key i)
+             v'      (assoc v i val)]
          (vector f index' v')))
 
      IIndexed

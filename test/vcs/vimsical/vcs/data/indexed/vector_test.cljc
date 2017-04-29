@@ -70,6 +70,13 @@
       {:id 50} 5
       {:id 90} 9)))
 
+(deftest update-test
+  (let [{:keys [v vb]} (test-data)]
+    (is (thrown?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (= {:id 0 :foo :bar} (first (update v 0 assoc :foo :bar)))))
+    (is (= {:id 0 :foo :bar} (first (update vb 0 assoc :foo :bar))))))
+
 (deftest next-test
   (testing "equality"
     (is (= (-> [:z :a :b :c]
