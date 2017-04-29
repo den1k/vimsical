@@ -3,7 +3,8 @@
       [(:require [vimsical.common.uuid :as uuid])
        (:import java.util.UUID)]
       :cljs
-      [(:require [vimsical.common.uuid :as uuid])]))
+      [(:refer-clojure :exclude [uuid])
+       (:require [vimsical.common.uuid :as uuid])]))
 
 ;; * UUID
 

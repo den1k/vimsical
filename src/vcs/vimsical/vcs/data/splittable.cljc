@@ -1,4 +1,5 @@
 (ns vimsical.vcs.data.splittable
+  (:refer-clojure :exclude [interleave])
   (:require
    [clojure.spec :as s]))
 
@@ -98,3 +99,28 @@
         :args (s/and
                (s/cat :this ::mergeable :idx ::idx :other ::mergeable)
                ::idx-at-bounds))
+
+(defn splits
+  ([splittable indexes] (splits splittable [] indexes))
+  ([splittable acc [index & indexes]]
+   (if (nil? index)
+     (cond-> acc (some? splittable) (conj splittable))
+     (let [[l r] (split splittable index)]
+       (recur r (conj acc l) (map #(- % index) indexes))))))
+
+
+(defn interleave
+  "Like `clojure.core/interleave` but non-lazy and doesn't stop at the shortest
+  seq."
+  [& colls]
+  (loop [colls colls
+         acc  (transient [])]
+    (if (not-any? seq colls)
+      (persistent! acc)
+      (recur
+       (map next colls)
+       (reduce
+        (fn [acc coll]
+          (cond-> acc
+            (seq coll) (conj! (first coll))))
+        acc colls)))))
