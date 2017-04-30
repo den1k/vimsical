@@ -5,6 +5,7 @@
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]
    [re-frame.core :as re-frame]
    [vimsical.frontend.live-preview.handlers :as handlers]
+   [vimsical.vcs.branch :as branch]
    [vimsical.frontend.vcs.subs :as vcs.subs]))
 
 (def iframe-sandbox-opts
@@ -20,19 +21,19 @@
 ;; * Components
 ;;
 
-(defn preview-node [{:keys [ui-reg-key file]}]
+(defn preview-node [{:keys [ui-reg-key branch file]}]
   (let [string (re-frame/subscribe [::vcs.subs/file-string file])]
     (fn []
-      (re-frame/dispatch [::handlers/update-preview-node ui-reg-key file @string])
+      (re-frame/dispatch [::handlers/update-preview-node ui-reg-key branch file @string])
       [:div])))
 
-(defn live-preview [{:keys [files ui-reg-key]}]
+(defn live-preview [{:keys [branch ui-reg-key]}]
   (reagent/create-class
    {; component should maybe never update? TBD
     ;:should-component-update (fn [_ _ _] false)
     :render
     (fn [c]
-      (re-frame/dispatch [::handlers/init ui-reg-key files]) ; re-init on every render
+      (re-frame/dispatch [::handlers/init ui-reg-key branch]) ; re-init on every render
       [:div.live-preview
        [:iframe.iframe
         {:key     ::iframe              ; ref only works when key is present
@@ -44,7 +45,8 @@
                       (re-frame/dispatch-sync
                        [::handlers/dispose-iframe ui-reg-key])))
          :sandbox iframe-sandbox-opts}]
-       (for [file files]
+       (for [file (::branch/files branch)]
          ^{:key (:db/id file)}
          [preview-node {:ui-reg-key ui-reg-key
+                        :branch     branch
                         :file       file}])])}))

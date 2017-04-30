@@ -7,6 +7,7 @@
    [vimsical.frontend.live-preview.views :refer [live-preview]]
    [vimsical.frontend.code-editor.views :refer [code-editor]]
    [vimsical.frontend.views.shapes :as shapes]
+   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]
    [vimsical.frontend.vcr.subs :as subs]
    [reagent.core :as reagent]
@@ -121,10 +122,8 @@
                                       :editor-reg-key :vcr/editors}]})
 
 (defn vcr []
-  (let [files                  (deref (re-frame/subscribe [::subs/files
-                                                           ['*
-                                                            {::file/libs
-                                                             ['*]}]]))
+  (let [{:as           branch
+         ::branch/keys [files libs]} @(re-frame/subscribe [::subs/branch [{::branch/files ['*]} {::branch/libs ['*]}]])
         editor-comps           (->> files (map editor-components) editor-components-by-file-type)
         playing?               false
         visible-files          (visible-files files)
@@ -140,7 +139,7 @@
        :class "live-preview-and-editors"
        :panels [[live-preview
                  {:ui-reg-key :vcr/live-preview
-                  :files      files}]
+                  :branch     branch}]
                 [splits/n-v-split
                  :height "100%"
                  :splitter-size "31px"

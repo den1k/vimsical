@@ -6,6 +6,7 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.common.util.core :as util]
    [vimsical.vcs.file :as file]
+   [vimsical.vcs.lib :as lib]
    [vimsical.common.test :refer [uuid]]))
 
 (defn add-to [db k v]
@@ -28,13 +29,15 @@
 ;; todo fully ns's keys for libs
 (defn new-vims
   [author-ref title]
-  (let [js-libs  [{:db/id     (uuid :lib-js-jquery)
-                   :lib/title "jQuery"
-                   :lib/src   "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"}]
+  (let [js-libs  [{:db/id         (uuid :lib-js-jquery)
+                   ::lib/title    "jQuery"
+                   ::lib/type     :text
+                   ::lib/sub-type :javascript
+                   ::lib/src      "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"}]
         files    [{:db/id (uuid :file-html) ::file/type :text ::file/sub-type :html}
                   {:db/id (uuid :file-css) ::file/type :text ::file/sub-type :css}
                   {:db/id (uuid :file-js) ::file/type :text ::file/sub-type :javascript ::file/libs js-libs}]
-        branches [{:db/id (uuid :branch-master) ::branch/name "master" ::branch/start-delta-id nil ::branch/entry-delta-id nil ::branch/created-at (util/now) ::branch/files files}]]
+        branches [{:db/id (uuid :branch-master) ::branch/name "master" ::branch/start-delta-id nil ::branch/entry-delta-id nil ::branch/created-at (util/now) ::branch/files files ::branch/libs js-libs}]]
     {:db/id         (uuid title)
      :vims/author   author-ref
      :vims/title    title

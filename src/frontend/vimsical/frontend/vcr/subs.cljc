@@ -12,3 +12,13 @@
      :app/vims]))
  (fn [{:vims/keys [branches]}]
    (->> branches first ::branch/files)))
+
+(re-frame/reg-sub
+ ::branch
+ (fn [[_ pattern]]
+   (re-frame/subscribe
+    [:q*
+     [{:vims/branches (or pattern '[*])}]
+     :app/vims]))
+ (fn [{:vims/keys [branches]}]
+   (->> branches first)))
