@@ -56,8 +56,9 @@
         [:div.live-preview
          [:iframe.iframe
           (iframe-attrs opts)]
-         (for [file (::branch/files branch)]
-           ^{:key (:db/id file)}
-           [preview-node-dispatch {:ui-reg-key ui-reg-key
-                                   :branch     branch
-                                   :file       file}])])})))
+         (when-not static?
+           (for [file (::branch/files branch)]
+             ^{:key (:db/id file)}
+             [preview-node-dispatch {:ui-reg-key ui-reg-key
+                                     :branch     branch
+                                     :file       file}]))])})))
