@@ -264,6 +264,14 @@
        [state' deltas' new-delta-id]))
    [state deltas delta-id] (splice-edit-event edit-event)))
 
+(defmethod add-edit-event-rf :str/rplc
+  [state editor-effects deltas file-id branch-id delta-id edit-event]
+  (reduce
+   (fn add-edit-event-rf-str-rplc-rf
+     [[state deltas delta-id] edit-event]
+     (add-edit-event-rf state editor-effects deltas file-id branch-id delta-id edit-event))
+   [state deltas delta-id] (splice-edit-event edit-event)))
+
 (defmethod add-edit-event-rf :crsr/mv
   [state {:as editor-effects ::editor/keys [pad-fn uuid-fn timestamp-fn]} deltas file-id branch-id delta-id {:as edit-event ::edit-event/keys [idx]}]
   (let [op-id        (op-idx->op-id state idx)
