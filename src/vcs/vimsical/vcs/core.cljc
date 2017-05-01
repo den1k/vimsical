@@ -1,6 +1,6 @@
 (ns vimsical.vcs.core
   "* TODO
-  - support add-delta(s) for reads
+
   - constant time next-delta look up for playback scheduling
   - add branch/start end to chunks using branch-pointers
   - update chunks inside branches
@@ -89,6 +89,11 @@
    (or (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id file-id ::state.files/string])
        "")))
 
+(defn file-cursor
+  ([{::keys [delta-id] :as vcs} file-id] (file-string vcs file-id delta-id))
+  ([vcs file-id delta-id]
+   (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id file-id ::state.files/cursor])))
+
 
 ;; *** Timeline
 
@@ -98,7 +103,7 @@
 
 
 ;; ** Reading vims
-;;
+
 (defn add-delta
   [{:as vcs ::keys [branches branch-id delta-id state-by-delta-id timeline]} {:keys [id] :as delta}]
   (let [state                         (get state-by-delta-id delta-id)

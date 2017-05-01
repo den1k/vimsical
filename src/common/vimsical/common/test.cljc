@@ -1,10 +1,23 @@
 (ns vimsical.common.test
   #?@(:clj
-      [(:require [vimsical.common.uuid :as uuid])
+      [(:require
+        [vimsical.common.uuid :as uuid]
+        [clojure.test :as t]
+        [clojure.data :as data])
        (:import java.util.UUID)]
       :cljs
       [(:refer-clojure :exclude [uuid])
        (:require [vimsical.common.uuid :as uuid])]))
+
+;; * Helpers
+
+;; Only use this when working through tests,
+#?(:clj
+   (defn diff=
+     [expected actual]
+     (let [[only-in-expected only-in-actual] (data/diff expected actual)]
+       (t/is (nil? only-in-expected))
+       (t/is (nil? only-in-actual)))))
 
 ;; * UUID
 
