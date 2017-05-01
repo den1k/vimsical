@@ -9,11 +9,36 @@
    [vimsical.vcs.lib :as lib]
    [vimsical.common.test :refer [uuid]]))
 
+(defn- entities? [db coll]
+  (boolean
+   (when (coll? coll)
+     (every? (partial mg/entity? db) coll))))
+
+(defn- ref-or-refs [db x]
+  (cond
+    (mg/entity? db x) (mg/ref-to db x)
+    (entities? db x) (mapv (partial mg/ref-to db) x)
+    :else nil))
+
+(defmulti add
+  (fn [db entity-or-entities]
+    (cond
+      (mg/entity? db entity-or-entities) :entity
+      (entities? db entity-or-entities) :entities)))
+
+(defmethod add :entity
+  ([db entity]
+   (mg/add db entity)))
+
+(defmethod add :entities
+  ([db entities]
+   (apply mg/add db entities)))
+
 (defn add-to [db k v]
-  (if-let [ref (mg/ref-to db v)]
+  (if-let [rors (ref-or-refs db v)]
     (-> db
-        (mg/add v)
-        (assoc k ref))
+        (add v)
+        (assoc k rors))
     (assoc db k v)))
 
 (defn add-linked-entities
@@ -52,6 +77,7 @@
                :app/vims         [:db/id (uuid "CatPhotoApp")]
                :app/quick-search {:db/id              (uuid :quick-search)
                                   :quick-search/show? false}
+               :app/libs         js-libs
                :app/route        :route/vcr}]
 
   (def default-db
