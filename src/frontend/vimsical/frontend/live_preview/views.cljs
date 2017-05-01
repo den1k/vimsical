@@ -1,6 +1,6 @@
 (ns vimsical.frontend.live-preview.views
   "Live-Preview is in charge of previewing the result of the current code state.
-  On mount it creates a static html string and sets it as `src` on iframe. The
+  On mount it creates a static markup string and sets it as `src` on iframe. The
   html loads css and js libs and css files in the head, and user written js
   alongside user-written markup in body. With `static?` true, that's the end of
   the story, otherwise:
@@ -9,7 +9,12 @@
   so that the now loaded html can be changed without overwriting the js
   - it renders additional components with subscriptions to file changes
   - these nodes trigger incremental updates for css and html files and iframe
-   `src` resets for js changes (this wipes js state from memory)"
+   `src` resets for js changes (this wipes js state from memory)
+
+   Why the static markup?
+   To avoid ghost JavaScript we must be able to reload the iframe. This happens
+   automaticallly when we make blob, give it a URL and set it as `src` on iframe.
+   We can also reload the iframe manually without having to reinject any of our code."
   (:require
    [vimsical.common.util.core :as util]
    [reagent.core :as reagent]

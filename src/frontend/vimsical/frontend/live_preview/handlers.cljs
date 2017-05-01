@@ -25,7 +25,7 @@
   (reagent.dom.server/render-to-static-markup
    [file-node file]))
 
-(defn- iframe-html [{:keys [files libs]}]
+(defn- iframe-markup [{:keys [files libs]}]
   (let [by-subtype (group-by ::file/sub-type files)]
     [:html
      [:head
@@ -47,9 +47,9 @@
          :dangerouslySetInnerHTML {:__html
                                    body-string}}])]))
 
-(defn- iframe-html-markup [{:keys [files libs] :as opts}]
+(defn- iframe-markup-string [{:keys [files libs] :as opts}]
   (reagent.dom.server/render-to-static-markup
-   (iframe-html opts)))
+   (iframe-markup opts)))
 
 (defn update-iframe-src
   [{:keys [db ui-db]} [_ ui-reg-key {::branch/keys [files libs]}]]
@@ -58,7 +58,7 @@
                         (assoc file :file/string (-> db
                                                      (vcs.subs/vims-vcs)
                                                      (vcs.subs/file-string file))))
-        markup        (iframe-html-markup {:files files :libs libs})
+        markup        (iframe-markup-string {:files files :libs libs})
         prev-blob-url (get-in ui-db [ui-reg-key ::src-blob-url])
         blob-url      (util.dom/blob-url markup "text/html")]
     (some-> prev-blob-url util.dom/revoke-blob-url)
