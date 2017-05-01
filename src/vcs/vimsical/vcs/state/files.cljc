@@ -308,6 +308,9 @@
     [state' deltas' to-id]))
 
 
+
+;; * API
+
 ;; ** Updates
 
 ;; *** Adding deltas -- reading a vims
@@ -375,3 +378,24 @@
      [[state-by-file-id deltas delta-id] edit-event]
      (add-edit-event* state-by-file-id editor-effects deltas file-id branch-id delta-id edit-event))
    [state-by-file-id [] delta-id] edit-events))
+
+
+;; ** Queries
+
+(s/fdef deltas :args (s/cat :state-by-file-id ::state-by-file-id :file-id ::file/id) :ret  (s/every ::delta/delta) )
+
+(defn deltas
+  [state-by-file-id file-id]
+  (get-in state-by-file-id [file-id ::deltas]))
+
+(s/fdef string :args (s/cat :state-by-file-id ::state-by-file-id :file-id ::file/id) :ret  (s/nilable string?))
+
+(defn string
+  [state-by-file-id file-id]
+  (get-in state-by-file-id [file-id ::string]))
+
+(s/fdef cursor :args (s/cat :state-by-file-id ::state-by-file-id :file-id ::file/id) :ret  nat-int?)
+
+(defn cursor
+  [state-by-file-id file-id]
+  (get-in state-by-file-id [file-id ::cursor]))

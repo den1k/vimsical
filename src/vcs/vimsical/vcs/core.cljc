@@ -121,22 +121,30 @@
 
 ;; * Queries
 
-;; TODO move the accessors to state.files
+(defn- state-by-file-id
+  [vcs delta-id]
+  (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id]))
 
 (defn file-deltas
   ([{::keys [delta-id] :as vcs} file-id] (file-deltas vcs file-id delta-id))
   ([vcs file-id delta-id]
-   (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id file-id ::state.files/deltas])))
+   (-> vcs
+       (state-by-file-id delta-id)
+       (state.files/deltas file-id))))
 
 (defn file-string
   ([{::keys [delta-id] :as vcs} file-id] (file-string vcs file-id delta-id))
   ([vcs file-id delta-id]
-   (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id file-id ::state.files/string])))
+   (-> vcs
+       (state-by-file-id delta-id)
+       (state.files/string file-id))))
 
 (defn file-cursor
   ([{::keys [delta-id] :as vcs} file-id] (file-cursor vcs file-id delta-id))
   ([vcs file-id delta-id]
-   (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id file-id ::state.files/cursor])))
+   (-> vcs
+       (state-by-file-id delta-id)
+       (state.files/cursor file-id))))
 
 (defn timeline-delta-at-time [{::keys [timeline]} time]
   (state.timeline/delta-at-absolute-time timeline time))
