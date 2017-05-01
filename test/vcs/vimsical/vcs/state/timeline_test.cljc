@@ -1,28 +1,22 @@
-(ns vimsical.vcs.state.timeline2-test
+(ns vimsical.vcs.state.timeline-test
   #?@(:clj
       [(:require
-        [clojure.test :as t :refer [are deftest is testing]]
-        [clojure.data.avl :as avl]
+        [clojure.test :as t :refer [deftest is are testing]]
         [orchestra.spec.test :as st]
-        [vimsical.vcs.examples :as examples]
+        [vimsical.common.test :refer [uuid uuid-gen]]
         [vimsical.vcs.branch :as branch]
-        [vimsical.vcs.data.indexed.vector :as indexed]
         [vimsical.vcs.state.branches :as state.branches]
-        [vimsical.common.test :refer [uuid uuid-gen diff=]]
-        [vimsical.vcs.state.timeline2 :as sut]
-        [vimsical.vcs.state.chunk :as chunk])]
+        [vimsical.vcs.state.chunk :as chunk]
+        [vimsical.vcs.state.timeline :as sut])]
       :cljs
       [(:require
         [clojure.spec.test :as st]
-        [clojure.data.avl :as avl]
-        [clojure.test :as t :refer-macros [are deftest is testing]]
-        [vimsical.vcs.branch :as branch]
-        [vimsical.vcs.data.indexed.vector :as indexed]
-        [vimsical.vcs.state.branches :as state.branches]
-        [vimsical.vcs.examples :as examples]
+        [clojure.test :as t :refer-macros [deftest is are testing]]
         [vimsical.common.test :refer [uuid uuid-gen]]
-        [vimsical.vcs.state.timeline2 :as sut]
-        [vimsical.vcs.state.chunk :as chunk])]))
+        [vimsical.vcs.branch :as branch]
+        [vimsical.vcs.state.branches :as state.branches]
+        [vimsical.vcs.state.chunk :as chunk]
+        [vimsical.vcs.state.timeline :as sut])]))
 
 (st/instrument)
 
@@ -68,7 +62,6 @@
   (state.branches/add-deltas state.branches/empty-deltas-by-branch-id deltas))
 
 (defn dissoc-chunk-ids [coll]
-  (println coll)
   (cond
     (sequential? coll)
     (mapv dissoc-chunk-ids coll)
@@ -82,11 +75,12 @@
     (::chunk/id coll) (dissoc coll ::chunk/id)
 
     :else
-    (do (assert (map? coll))
-        (reduce-kv
-         (fn [coll k chunks]
-           (assoc coll k (dissoc-chunk-ids chunks)))
-         (empty coll) coll))))
+    (do
+      (assert (map? coll))
+      (reduce-kv
+       (fn [coll k chunks]
+         (assoc coll k (dissoc-chunk-ids chunks)))
+       (empty coll) coll))))
 
 (deftest add-delta-test
   (let [{[chk0 chk1
@@ -101,7 +95,6 @@
                            (fn [[deltas-by-branch-id timeline] delta]
                              (let [deltas-by-branch-id' (state.branches/add-delta deltas-by-branch-id delta)
                                    timeline'            (sut/add-delta timeline deltas-by-branch-id' branches uuid-fn delta)]
-                               ;; (println timeline')
                                [deltas-by-branch-id' timeline']))
                            [state.branches/empty-deltas-by-branch-id sut/empty-timeline] deltas))]
     (testing "chunks-by-branch-id"
@@ -110,7 +103,7 @@
             [chunk4 chunk5 :as b1-2-chunks] [(chunk/new-chunk chk4 1 [d6 d7] true) (chunk/new-chunk chk5 1 [d8] false)]
             expect                          {(uuid :b0) b0-chunks (uuid :b1-1) b1-1-chunks (uuid :b1-2) b1-2-chunks}
             actual                          (::sut/chunks-by-branch-id actual)]
-        (diff= (dissoc-chunk-ids expect) (dissoc-chunk-ids actual))))
+        (is (= (dissoc-chunk-ids expect) (dissoc-chunk-ids actual)))))
     (testing "chunks-by-absolute-start-time"
       (let [expect {0 (chunk/new-chunk (uuid :chk0) 0 [d0] false)
                     ;; b1-1, f0
@@ -126,13 +119,19 @@
                     ;; b0, f1
                     8 (chunk/new-chunk (uuid :chk0) 0 [d2] false)}
             actual (::sut/chunks-by-absolute-start-time actual)]
-        ;; (clojure.pprint/pprint
-        ;;  {:expect expect
-        ;;   :expect-d (dissoc-chunk-ids expect)
-        ;;   :actual actual
-        ;;   :actual-d (dissoc-chunk-ids actual)})
-        (diff= (dissoc-chunk-ids expect) (dissoc-chunk-ids actual))))
-    ))
-
-;; {0 #:vimsical.vcs.state.chunk{:branch-id #uuid "5906a033-6cb2-49fc-ab76-2fdd071ea9f7", :file-id #uuid "5906a033-eaa2-4313-8172-5564dc9a8677", :delta-branch-off-id nil, :duration 2, :delta-end-id #uuid "5906a033-c74e-4d61-ae32-4a1c137f1142", :deltas-by-relative-time {1 {:branch-id #uuid "5906a033-6cb2-49fc-ab76-2fdd071ea9f7", :file-id #uuid "5906a033-eaa2-4313-8172-5564dc9a8677", :id #uuid "5906a033-7e2b-479f-8d11-c96fbe1e025e", :prev-id nil, :op [:str/ins nil h], :pad 1, :meta {:timestamp 1, :version 1.0}}, 2 {:branch-id #uuid "5906a033-6cb2-49fc-ab76-2fdd071ea9f7", :file-id #uuid "5906a033-eaa2-4313-8172-5564dc9a8677", :id #uuid "5906a033-c74e-4d61-ae32-4a1c137f1142", :prev-id #uuid "5906a033-7e2b-479f-8d11-c96fbe1e025e", :op [:str/ins #uuid "5906a033-7e2b-479f-8d11-c96fbe1e025e" h], :pad 1, :meta {:timestamp 1, :version 1.0}}}, :delta-start-id #uuid "5906a033-7e2b-479f-8d11-c96fbe1e025e", :id #uuid "59074eb2-f4b9-4c16-af5b-ccb2d6743834", :count 2, :depth 0},
-;;  2 #:vimsical.vcs.state.chunk{:branch-id #uuid "5906a033-6cb2-49fc-ab76-2fdd071ea9f7", :file-id #uuid "5906a033-06c6-42e8-99c0-2a6d90d1aed6", :duration 1, :delta-end-id #uuid "5906a033-a084-4402-a97f-ff9f26a73d3d", :deltas-by-relative-time {1 {:branch-id #uuid "5906a033-6cb2-49fc-ab76-2fdd071ea9f7", :file-id #uuid "5906a033-06c6-42e8-99c0-2a6d90d1aed6", :id #uuid "5906a033-a084-4402-a97f-ff9f26a73d3d", :prev-id #uuid "5906a033-c74e-4d61-ae32-4a1c137f1142", :op [:str/ins #uuid "5906a033-c74e-4d61-ae32-4a1c137f1142" h], :pad 1, :meta {:timestamp 1, :version 1.0}}}, :delta-start-id #uuid "5906a033-a084-4402-a97f-ff9f26a73d3d", :id #uuid "59074eb2-2c82-48d0-a69e-89c27641bd00", :count 1, :depth 0}}
+        (is (= (dissoc-chunk-ids expect) (dissoc-chunk-ids actual)))))
+    (testing "timeline-duration"
+      (let [expect (reduce + (map :pad deltas))
+            actual (sut/duration actual)]
+        (is (= expect actual))))
+    (testing "delta-at-absolute-time"
+      (are [delta-id t] (is (= delta-id (:id (sut/delta-at-absolute-time actual t))))
+        (uuid :d0) 1
+        (uuid :d3) 2
+        (uuid :d4) 3
+        (uuid :d5) 4
+        (uuid :d1) 5
+        (uuid :d6) 6
+        (uuid :d7) 7
+        (uuid :d8) 8
+        (uuid :d2) 9))))

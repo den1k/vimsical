@@ -100,7 +100,6 @@
              (rf (rf result [@prev-input nil]))
              (rf result)))
           ([result input]
-           (println "IN" input)
            (if (pos? (vswap! cnt inc))
              (rf result [@prev-input (vreset! prev-input input)])
              (do (vreset! prev-input input) result)))))))

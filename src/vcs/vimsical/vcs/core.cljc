@@ -44,10 +44,18 @@
                 ::state.deltas/deltas]))
 
 ;; State indexed by delta id
-(s/def ::state-by-delta-id (s/every-kv ::delta-id ::state))
+(s/def ::state-by-delta-id
+  (s/every-kv ::delta-id ::state))
 
 ;; Top-level
-(s/def ::vcs (s/keys :opt [::branch-id ::delta-id ::timeline ::state-by-delta-id]))
+(s/def ::vcs
+  (s/keys
+   :req [::branches ::timeline ::state-by-delta-id]
+   :opt [::branch-id ::delta-id]))
+
+
+;; * Updates
+;; ** Initilization
 
 (s/fdef empty-vcs
         :args (s/cat :branches (s/every ::branch/branch))
@@ -63,49 +71,10 @@
      ::timeline          state.timeline/empty-timeline}))
 
 
-;; * Internal
-
-;; * API
-
-;; ** State accessors
-
-;; *** Deltas
-
-(defn deltas
-  ([{::keys [delta-id] :as vcs}] (deltas vcs delta-id))
-  ([vcs delta-id]
-   (get-in vcs [::state-by-delta-id delta-id ::state.deltas/deltas])))
-
-(defn delta-at-time
-  [{::keys [timeline] :as vcs} time]
-  (state.timeline/delta-at-time timeline time))
-
-
-;; *** Files
-
-(defn file-string
-  ([{::keys [delta-id] :as vcs} file-id] (file-string vcs file-id delta-id))
-  ([vcs file-id delta-id]
-   (or (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id file-id ::state.files/string])
-       "")))
-
-(defn file-cursor
-  ([{::keys [delta-id] :as vcs} file-id] (file-string vcs file-id delta-id))
-  ([vcs file-id delta-id]
-   (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id file-id ::state.files/cursor])))
-
-
-;; *** Timeline
-
-(defn timeline-duration
-  [{::keys [timeline] :as vcs}]
-  (get timeline ::state.timeline/duration 0))
-
-
-;; ** Reading vims
+;; ** Reading (existing vims deltas')
 
 (defn add-delta
-  [{:as vcs ::keys [branches branch-id delta-id state-by-delta-id timeline]} {:keys [id] :as delta}]
+  [{:as vcs ::keys [branches branch-id delta-id state-by-delta-id timeline]} uuid-fn {:keys [id] :as delta}]
   (let [state                         (get state-by-delta-id delta-id)
         files-state-by-file-id        (get state ::state.files/state-by-file-id state.files/empty-state-by-file-id)
         deltas-by-branch-id           (get state ::state.branches/deltas-by-branch-id state.branches/empty-deltas-by-branch-id)
@@ -113,25 +82,25 @@
         files-state-by-file-id'       (state.files/add-delta files-state-by-file-id delta)
         deltas-by-branch-id'          (state.branches/add-delta deltas-by-branch-id delta)
         branch-pointers-by-branch-id' (state.branch-pointers/add-delta branch-pointers-by-branch-id delta)
-        timeline'                     (state.timeline/add-delta timeline deltas-by-branch-id' branches delta)]
+        timeline'                     (state.timeline/add-delta timeline deltas-by-branch-id' branches uuid-fn delta)]
     (-> vcs
         (assoc-in [::state-by-delta-id id ::state.files/state-by-file-id] files-state-by-file-id')
         (assoc-in [::state-by-delta-id id ::state.branch-pointers/branch-pointers-by-branch-id] branch-pointers-by-branch-id')
         (assoc-in [::state-by-delta-id id ::state.branches/deltas-by-branch-id] deltas-by-branch-id')
         (assoc ::delta-id id ::timeline timeline'))))
 
-(defn add-deltas [vcs deltas]
-  (reduce add-delta vcs deltas))
 
-
-;; * Writing vims
+;; ** Writing (events from the editor)
 
 (s/fdef add-edit-event
         :args (s/cat :vcs ::vcs :effects ::editor/effects :file-id ::file/id :edit-event ::edit-event/edit-event)
         :ret ::vcs)
 
 (defn add-edit-event
-  [{:as vcs ::keys [branches branch-id delta-id state-by-delta-id timeline]} effects file-id edit-event]
+  [{:as vcs ::keys [branches branch-id delta-id state-by-delta-id timeline]}
+   {:as effects ::editor/keys [uuid-fn]}
+   file-id
+   edit-event]
   (let [state                                       (get state-by-delta-id delta-id)
         all-deltas                                  (get state ::state.deltas/deltas state.deltas/empty-deltas)
         files-state-by-file-id                      (get state ::state.files/state-by-file-id state.files/empty-state-by-file-id)
@@ -141,10 +110,36 @@
         all-deltas'                                 (state.deltas/add-deltas all-deltas deltas')
         deltas-by-branch-id'                        (state.branches/add-deltas deltas-by-branch-id deltas')
         branch-pointers-by-branch-id'               (state.branch-pointers/add-deltas branch-pointers-by-branch-id deltas')
-        timeline'                                   (state.timeline/add-deltas timeline deltas-by-branch-id' branches deltas')]
+        timeline'                                   (state.timeline/add-deltas timeline deltas-by-branch-id' branches uuid-fn deltas')]
     (-> vcs
         (assoc-in [::state-by-delta-id delta-id' ::state.deltas/deltas] all-deltas')
         (assoc-in [::state-by-delta-id delta-id' ::state.files/state-by-file-id] files-state-by-file-id')
         (assoc-in [::state-by-delta-id delta-id' ::state.branch-pointers/branch-pointers-by-branch-id] branch-pointers-by-branch-id')
         (assoc-in [::state-by-delta-id delta-id' ::state.branches/deltas-by-branch-id] deltas-by-branch-id')
         (assoc ::delta-id delta-id' ::timeline timeline'))))
+
+
+;; * Queries
+
+;; TODO move the accessors to state.files
+
+(defn file-deltas
+  ([{::keys [delta-id] :as vcs} file-id] (file-deltas vcs file-id delta-id))
+  ([vcs file-id delta-id]
+   (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id file-id ::state.files/deltas])))
+
+(defn file-string
+  ([{::keys [delta-id] :as vcs} file-id] (file-string vcs file-id delta-id))
+  ([vcs file-id delta-id]
+   (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id file-id ::state.files/string])))
+
+(defn file-cursor
+  ([{::keys [delta-id] :as vcs} file-id] (file-cursor vcs file-id delta-id))
+  ([vcs file-id delta-id]
+   (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id file-id ::state.files/cursor])))
+
+(defn timeline-delta-at-time [{::keys [timeline]} time]
+  (state.timeline/delta-at-absolute-time timeline time))
+
+(defn timeline-duration [{::keys [timeline]}]
+  (state.timeline/duration timeline))

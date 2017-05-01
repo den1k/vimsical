@@ -113,7 +113,7 @@
             the branches fully denormalized (include their ancestors
             recursively through ::branch/parent)?"
               {:branch-a a :branch-b b}))))
-        (catch #?(:clj Throwable :cljs default) t
+        (catch #?(:clj Throwable :cljs :default) t
             (throw (ex-info "Branch comparison error" {:t t :a a :b b})))))))
 
 
