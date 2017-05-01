@@ -1,7 +1,7 @@
 (ns vimsical.vcs.state.timeline-test
   #?@(:clj
       [(:require
-        [clojure.test :as t :refer [deftest is are testing]]
+        [clojure.test :as t :refer [are deftest is testing]]
         [orchestra.spec.test :as st]
         [vimsical.common.test :refer [uuid uuid-gen]]
         [vimsical.vcs.branch :as branch]
@@ -11,7 +11,7 @@
       :cljs
       [(:require
         [clojure.spec.test :as st]
-        [clojure.test :as t :refer-macros [deftest is are testing]]
+        [clojure.test :as t :refer-macros [are deftest is testing]]
         [vimsical.common.test :refer [uuid uuid-gen]]
         [vimsical.vcs.branch :as branch]
         [vimsical.vcs.state.branches :as state.branches]

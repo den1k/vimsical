@@ -2,7 +2,6 @@
   "Keep track of the deltas, string and cursor position for files."
   (:require
    [clojure.spec :as s]
-   [vimsical.vcs.alg.topo :as topo]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.data.indexed.vector :as indexed]
    [vimsical.vcs.data.splittable :as splittable]

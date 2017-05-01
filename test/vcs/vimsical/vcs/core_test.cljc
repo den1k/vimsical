@@ -1,10 +1,9 @@
 (ns vimsical.vcs.core-test
   #?@(:clj
       [(:require
-        [clojure.test.check :as tc]     ; fixes cider test report
-        [clojure.test :as t :refer [deftest is are testing]]
+        [clojure.test :as t :refer [are deftest is testing]]
         [orchestra.spec.test :as st]
-        [vimsical.common.test :refer [uuid-fixture uuid uuid-gen]]
+        [vimsical.common.test :refer [uuid uuid-fixture uuid-gen]]
         [vimsical.vcs.core :as sut]
         [vimsical.vcs.data.gen.diff :as diff]
         [vimsical.vcs.delta :as delta]
@@ -13,8 +12,8 @@
       :cljs
       [(:require
         [clojure.spec.test :as st]
-        [clojure.test :as t :refer-macros [deftest is are testing]]
-        [vimsical.common.test :refer [uuid-fixture uuid uuid-gen]]
+        [clojure.test :as t :refer-macros [are deftest is testing]]
+        [vimsical.common.test :refer [uuid uuid-fixture uuid-gen]]
         [vimsical.vcs.core :as sut]
         [vimsical.vcs.data.gen.diff :as diff]
         [vimsical.vcs.delta :as delta]
