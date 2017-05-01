@@ -281,8 +281,9 @@
                        :op        op
                        :pad       pad
                        :timestamp timestamp})
-        deltas'      (conj deltas delta)]
-    [state deltas' op-id]))
+        deltas'      (conj deltas delta)
+        state'       (update-state state [:crsr/mv idx] delta)]
+    [state' deltas' op-id]))
 
 (defmethod add-edit-event-rf :crsr/sel
   [state {:as editor-effects ::editor/keys [pad-fn uuid-fn timestamp-fn]} deltas file-id branch-id delta-id {:as edit-event [from-idx to-idx] ::edit-event/range}]
@@ -301,9 +302,10 @@
                        :op        op
                        :pad       pad
                        :timestamp timestamp})
-        deltas'      (conj deltas delta)]
+        deltas'      (conj deltas delta)
+        state'       (update-state state [:crsr/sel from-idx to-idx] delta)]
     ;; XXX is this correct?
-    [state deltas' to-id]))
+    [state' deltas' to-id]))
 
 
 ;; ** Updates
