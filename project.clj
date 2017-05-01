@@ -37,11 +37,8 @@
    :vcs
    {:source-paths ["src/vcs"]
     :dependencies
-    [[org.clojure/data.avl "0.0.17"]
-     [diffit "1.0.0"]
-     ;; TODO remove this
-     [com.stuartsierra/mapgraph "0.2.1"]
-     [re-frame "0.9.2"]]}
+    [[org.clojure/data.avl        "0.0.17"]
+     [diffit                      "1.0.0"]]}
    ;;
    ;; Common
    ;;
