@@ -88,7 +88,7 @@
          files             [{:db/id (uuid :file-html) ::file/type :text ::file/sub-type :html ::file/compiler (:html compilers-by-type)}
                             {:db/id (uuid :file-css) ::file/type :text ::file/sub-type :css ::file/compiler (:css compilers-by-type)}
                             {:db/id (uuid :file-js) ::file/type :text ::file/sub-type :javascript ::file/lang-version "5" ::file/compiler (:javascript compilers-by-type)}]
-         branches          [{:db/id (uuid :branch-master) ::branch/name "master" ::branch/start-delta-id nil ::branch/entry-delta-id nil ::branch/created-at (util/now) ::branch/files files ::branch/libs (:javascript libs-by-type)}]]
+         branches          [{:db/id (uuid :branch-master) ::branch/name "master" ::branch/start-delta-id nil ::branch/branch-off-delta-id nil ::branch/created-at (util/now) ::branch/files files ::branch/libs (:javascript libs-by-type)}]]
      {:db/id         (uuid title)
       :vims/author   author-ref
       :vims/title    title
@@ -123,7 +123,6 @@
                  :app/libs         js-libs
                  :app/compilers    compilers
                  :app/route        :route/vcr}]
-
   (def default-db
     (-> (mg/new-db)
         (mg/add-id-attr :db/id)

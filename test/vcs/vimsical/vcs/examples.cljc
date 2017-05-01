@@ -30,8 +30,8 @@
 ;; * Branches
 
 (def master {:db/id master-id})
-(def child  {:db/id child-id  ::branch/parent master ::branch/entry-delta-id id1 ::branch/start-deltas-id id2})
-(def gchild {:db/id gchild-id ::branch/parent child  ::branch/entry-delta-id id3 ::branch/start-deltas-id id4})
+(def child  {:db/id child-id  ::branch/parent master ::branch/branch-off-delta-id id1 ::branch/start-deltas-id id2})
+(def gchild {:db/id gchild-id ::branch/parent child  ::branch/branch-off-delta-id id3 ::branch/start-deltas-id id4})
 
 (def branches [master child gchild])
 

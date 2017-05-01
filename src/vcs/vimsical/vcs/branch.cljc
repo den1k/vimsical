@@ -20,7 +20,7 @@
 (s/def :db/id ::id)
 (s/def ::name string?)
 (s/def ::start-delta-id (s/nilable ::delta/id))
-(s/def ::entry-delta-id (s/nilable ::delta/id))
+(s/def ::branch-off-delta-id (s/nilable ::delta/id))
 (s/def ::created-at nat-int?)
 
 ;; ** Relations

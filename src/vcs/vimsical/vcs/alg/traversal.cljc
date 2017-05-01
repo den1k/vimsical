@@ -80,47 +80,50 @@
                   depth-comparison (compare depth-a depth-b)]
               (when-not (zero? depth-comparison)
                 depth-comparison)))
-          (branch-entry-index [deltas-by-branch-id {::branch/keys [entry-delta-id] :keys [db/id]}]
-            (state.branches/index-of-delta deltas-by-branch-id id entry-delta-id))
+          (branch-entry-index [deltas-by-branch-id {::branch/keys [branch-off-delta-id] :keys [db/id]}]
+            (state.branches/index-of-delta deltas-by-branch-id id branch-off-delta-id))
           (compare-entry-deltas [common-ancestor a b]
             (compare
              (branch-entry-index deltas-by-branch-id a)
              (branch-entry-index deltas-by-branch-id b)))]
     (fn branch-comparator
       [a b]
-      (let [common-ancestor (branch/common-ancestor a b)]
-        (cond
-          (branch/parent? a b) asc
+      (try
+        (let [common-ancestor (branch/common-ancestor a b)]
+          (cond
+            (branch/parent? a b) asc
 
-          (branch/parent? b a) desc
+            (branch/parent? b a) desc
 
-          (some? common-ancestor)
-          (or (compare-relative-depth common-ancestor a b)
-              (compare-entry-deltas common-ancestor a b)
-              (throw (ex-info "Entry deltas not found???" {})))
+            (some? common-ancestor)
+            (or (compare-relative-depth common-ancestor a b)
+                (compare-entry-deltas common-ancestor a b)
+                (throw (ex-info "Entry deltas not found???" {})))
 
-          (and (zero? (branch/depth a))
-               (pos?  (branch/depth b))) asc
+            (and (zero? (branch/depth a))
+                 (pos?  (branch/depth b))) asc
 
-          (and (pos?  (branch/depth a))
-               (zero? (branch/depth b))) desc
+            (and (pos?  (branch/depth a))
+                 (zero? (branch/depth b))) desc
 
-          :else
-          (throw
-           (ex-info
-            "Can't compare branches with no master or no common ancestor, are
+            :else
+            (throw
+             (ex-info
+              "Can't compare branches with no master or no common ancestor, are
             the branches fully denormalized (include their ancestors
             recursively through ::branch/parent)?"
-            {:branch-a a :branch-b b})))))))
+              {:branch-a a :branch-b b}))))
+        (catch #?(:clj Throwable :cljs default) t
+            (throw (ex-info "Branch comparison error" {:t t :a a :b b})))))))
 
 
 ;; * Branch inlining
 
-(defn child-has-entry-delta-id?
-  [{::branch/keys [parent entry-delta-id]}]
-  (or (nil? parent) (some? entry-delta-id)))
+(defn child-has-branch-off-delta-id?
+  [{::branch/keys [parent branch-off-delta-id]}]
+  (or (nil? parent) (some? branch-off-delta-id)))
 
-(s/def ::branch (s/and ::branch/branch child-has-entry-delta-id?))
+(s/def ::branch (s/and ::branch/branch child-has-branch-off-delta-id?))
 (s/def ::branches (s/every ::branch))
 
 (s/fdef inline
@@ -150,7 +153,7 @@
                (state.branches/get-deltas deltas-by-branch-id branch)))
       (fn post [{:keys [db/id] ::branch/keys [deltas children] :as branch}]
         (let [children-deltas    (mapv ::branch/deltas children)
-              branch-off-ids     (mapv ::branch/entry-delta-id children)
+              branch-off-ids     (mapv ::branch/branch-off-delta-id children)
               branch-off-indexes (mapv
                                   (fn [delta-id]
                                     ;; We want to insert _after_ the entry delta

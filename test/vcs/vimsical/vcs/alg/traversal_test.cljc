@@ -74,8 +74,8 @@
   (testing "Multiple children"
     (let [branches
           [{:db/id (uuid :b0)}
-           {:db/id (uuid :b1-1) ::branch/parent {:db/id (uuid :b0)} ::branch/entry-delta-id (uuid :d0) }
-           {:db/id (uuid :b1-2) ::branch/parent {:db/id (uuid :b0)} ::branch/entry-delta-id (uuid :d1)}]
+           {:db/id (uuid :b1-1) ::branch/parent {:db/id (uuid :b0)} ::branch/branch-off-delta-id (uuid :d0) }
+           {:db/id (uuid :b1-2) ::branch/parent {:db/id (uuid :b0)} ::branch/branch-off-delta-id (uuid :d1)}]
 
           [d00 d01 d02
            d10 d11 d12
