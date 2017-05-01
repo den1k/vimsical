@@ -25,34 +25,34 @@
 (re-frame/reg-sub-raw :q sg/pull)
 (re-frame/reg-sub-raw :q* sg/pull-link)
 
-
-;; todo fully ns's keys for libs
 (defn new-vims
-  [author-ref title]
-  (let [js-libs  [{:db/id         (uuid :lib-js-jquery)
-                   ::lib/title    "jQuery"
-                   ::lib/type     :text
-                   ::lib/sub-type :javascript
-                   ::lib/src      "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"}]
-        files    [{:db/id (uuid :file-html) ::file/type :text ::file/sub-type :html}
-                  {:db/id (uuid :file-css) ::file/type :text ::file/sub-type :css}
-                  {:db/id (uuid :file-js) ::file/type :text ::file/sub-type :javascript ::file/libs js-libs}]
-        branches [{:db/id (uuid :branch-master) ::branch/name "master" ::branch/start-delta-id nil ::branch/entry-delta-id nil ::branch/created-at (util/now) ::branch/files files ::branch/libs js-libs}]]
-    {:db/id         (uuid title)
-     :vims/author   author-ref
-     :vims/title    title
-     :vims/branches branches}))
+  ([author-ref title] (new-vims author-ref title {}))
+  ([author-ref title {:keys [libs] :as opts}]
+   (let [libs-by-type (group-by ::lib/sub-type libs)
+         files        [{:db/id (uuid :file-html) ::file/type :text ::file/sub-type :html}
+                       {:db/id (uuid :file-css) ::file/type :text ::file/sub-type :css}
+                       {:db/id (uuid :file-js) ::file/type :text ::file/sub-type :javascript}]
+         branches     [{:db/id (uuid :branch-master) ::branch/name "master" ::branch/start-delta-id nil ::branch/entry-delta-id nil ::branch/created-at (util/now) ::branch/files files ::branch/libs (:javascript libs-by-type)}]]
+     {:db/id         (uuid title)
+      :vims/author   author-ref
+      :vims/title    title
+      :vims/branches branches})))
 
-(let [state {:app/user         {:db/id           (uuid :user)
-                                :user/first-name "Jane"
-                                :user/last-name  "Applecrust"
-                                :user/email      "kalavox@gmail.com"
-                                :user/vimsae     [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
-                                                  (new-vims [:db/id (uuid :user)] "CatPhotoApp")]}
-             :app/vims         [:db/id (uuid "CatPhotoApp")]
-             :app/quick-search {:db/id              (uuid :quick-search)
-                                :quick-search/show? false}
-             :app/route        :route/vcr}]
+(let [js-libs [{:db/id         (uuid :lib-js-jquery)
+                ::lib/title    "jQuery"
+                ::lib/type     :text
+                ::lib/sub-type :javascript
+                ::lib/src      "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"}]
+      state   {:app/user         {:db/id           (uuid :user)
+                                  :user/first-name "Jane"
+                                  :user/last-name  "Applecrust"
+                                  :user/email      "kalavox@gmail.com"
+                                  :user/vimsae     [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
+                                                    (new-vims [:db/id (uuid :user)] "CatPhotoApp" {:libs js-libs})]}
+               :app/vims         [:db/id (uuid "CatPhotoApp")]
+               :app/quick-search {:db/id              (uuid :quick-search)
+                                  :quick-search/show? false}
+               :app/route        :route/vcr}]
 
   (def default-db
     (-> (mg/new-db)
