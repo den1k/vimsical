@@ -83,9 +83,7 @@
    :backend-test
    [:test :backend :vcs :common
     {:source-paths
-     ["test/backend" "test/vcs" "test/common"]
-     :dependencies
-     [[org.clojure/test.check "0.9.0"]]}]
+     ["test/backend" "test/vcs" "test/common"]}]
    ;;
    ;; Frontend
    ;;
