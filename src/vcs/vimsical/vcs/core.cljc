@@ -23,8 +23,6 @@
    [vimsical.vcs.edit-event :as edit-event]
    [vimsical.vcs.editor :as editor]
    [vimsical.vcs.file :as file]
-   [vimsical.vcs.state.branch-pointers :as state.branch-pointers]
-   [vimsical.vcs.state.branches :as state.branches]
    [vimsical.vcs.state.deltas :as state.deltas]
    [vimsical.vcs.state.files :as state.files]
    [vimsical.vcs.state.timeline :as state.timeline]))
@@ -38,10 +36,7 @@
 ;; State
 (s/def ::branches (s/every ::branch/branch))
 (s/def ::state
-  (s/keys :req [::state.files/state-by-file-id
-                ::state.branch-pointers/branch-pointers-by-branch-id
-                ::state.branches/deltas-by-branch-id
-                ::state.deltas/deltas]))
+  (s/keys :req [::state.files/state-by-file-id ::state.deltas/deltas]))
 
 ;; State indexed by delta id
 (s/def ::state-by-delta-id
@@ -77,16 +72,10 @@
   [{:as vcs ::keys [branches branch-id delta-id state-by-delta-id timeline]} uuid-fn {:keys [id] :as delta}]
   (let [state                         (get state-by-delta-id delta-id)
         files-state-by-file-id        (get state ::state.files/state-by-file-id state.files/empty-state-by-file-id)
-        deltas-by-branch-id           (get state ::state.branches/deltas-by-branch-id state.branches/empty-deltas-by-branch-id)
-        branch-pointers-by-branch-id  (get state ::state.branch-pointers/branch-pointers-by-branch-id state.branch-pointers/empty-branch-pointers-by-branch-id)
         files-state-by-file-id'       (state.files/add-delta files-state-by-file-id delta)
-        deltas-by-branch-id'          (state.branches/add-delta deltas-by-branch-id delta)
-        branch-pointers-by-branch-id' (state.branch-pointers/add-delta branch-pointers-by-branch-id delta)
-        timeline'                     (state.timeline/add-delta timeline deltas-by-branch-id' branches uuid-fn delta)]
+        timeline'                     (state.timeline/add-delta timeline branches uuid-fn delta)]
     (-> vcs
         (assoc-in [::state-by-delta-id id ::state.files/state-by-file-id] files-state-by-file-id')
-        (assoc-in [::state-by-delta-id id ::state.branch-pointers/branch-pointers-by-branch-id] branch-pointers-by-branch-id')
-        (assoc-in [::state-by-delta-id id ::state.branches/deltas-by-branch-id] deltas-by-branch-id')
         (assoc ::delta-id id ::timeline timeline'))))
 
 
@@ -104,46 +93,49 @@
   (let [state                                       (get state-by-delta-id delta-id)
         all-deltas                                  (get state ::state.deltas/deltas state.deltas/empty-deltas)
         files-state-by-file-id                      (get state ::state.files/state-by-file-id state.files/empty-state-by-file-id)
-        deltas-by-branch-id                         (get state ::state.branches/deltas-by-branch-id state.branches/empty-deltas-by-branch-id)
-        branch-pointers-by-branch-id                (get state ::state.branch-pointers/branch-pointers-by-branch-id state.branch-pointers/empty-branch-pointers-by-branch-id)
         [files-state-by-file-id' deltas' delta-id'] (state.files/add-edit-event files-state-by-file-id effects file-id branch-id delta-id edit-event)
         all-deltas'                                 (state.deltas/add-deltas all-deltas deltas')
-        deltas-by-branch-id'                        (state.branches/add-deltas deltas-by-branch-id deltas')
-        branch-pointers-by-branch-id'               (state.branch-pointers/add-deltas branch-pointers-by-branch-id deltas')
-        timeline'                                   (state.timeline/add-deltas timeline deltas-by-branch-id' branches uuid-fn deltas')]
+        timeline'                                   (state.timeline/add-deltas timeline branches uuid-fn deltas')]
     (-> vcs
         (assoc-in [::state-by-delta-id delta-id' ::state.deltas/deltas] all-deltas')
         (assoc-in [::state-by-delta-id delta-id' ::state.files/state-by-file-id] files-state-by-file-id')
-        (assoc-in [::state-by-delta-id delta-id' ::state.branch-pointers/branch-pointers-by-branch-id] branch-pointers-by-branch-id')
-        (assoc-in [::state-by-delta-id delta-id' ::state.branches/deltas-by-branch-id] deltas-by-branch-id')
         (assoc ::delta-id delta-id' ::timeline timeline'))))
 
 
 ;; * Queries
 
-(defn- state-by-file-id
+(defn- delta-id->state
+  [vcs delta-id]
+  (get-in vcs [::state-by-delta-id delta-id]))
+
+(defn- delta-id->state-by-file-id
   [vcs delta-id]
   (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id]))
+
+(defn deltas
+  ([{::keys [delta-id] :as vcs}] (deltas vcs delta-id))
+  ([vcs delta-id]
+   (-> vcs (delta-id->state delta-id) ::state.deltas/deltas)))
 
 (defn file-deltas
   ([{::keys [delta-id] :as vcs} file-id] (file-deltas vcs file-id delta-id))
   ([vcs file-id delta-id]
    (-> vcs
-       (state-by-file-id delta-id)
+       (delta-id->state-by-file-id delta-id)
        (state.files/deltas file-id))))
 
 (defn file-string
   ([{::keys [delta-id] :as vcs} file-id] (file-string vcs file-id delta-id))
   ([vcs file-id delta-id]
    (-> vcs
-       (state-by-file-id delta-id)
+       (delta-id->state-by-file-id delta-id)
        (state.files/string file-id))))
 
 (defn file-cursor
   ([{::keys [delta-id] :as vcs} file-id] (file-cursor vcs file-id delta-id))
   ([vcs file-id delta-id]
    (-> vcs
-       (state-by-file-id delta-id)
+       (delta-id->state-by-file-id delta-id)
        (state.files/cursor file-id))))
 
 (defn timeline-delta-at-time [{::keys [timeline]} time]
@@ -151,3 +143,6 @@
 
 (defn timeline-duration [{::keys [timeline]}]
   (state.timeline/duration timeline))
+
+(defn timeline-chunks-by-absolute-start-time [{::keys [timeline]}]
+  (state.timeline/chunks-by-absolute-start-time timeline))

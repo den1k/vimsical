@@ -20,7 +20,6 @@
 
 (st/instrument)
 
-;; NOTE deltas aren't valid in terms of their string ops
 (def deltas
   [{:branch-id (uuid :b0),   :file-id (uuid :f0), :id (uuid :d0) :prev-id nil,        :op [:str/ins nil        "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
    {:branch-id (uuid :b0),   :file-id (uuid :f0), :id (uuid :d1) :prev-id (uuid :d0), :op [:str/ins (uuid :d0) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
@@ -39,7 +38,6 @@
    {:db/id (uuid :b1-1) ::branch/parent {:db/id (uuid :b0) ::branch/branch-off-delta-id (uuid :d0)}}
    {:db/id (uuid :b1-2) ::branch/parent {:db/id (uuid :b0) ::branch/branch-off-delta-id (uuid :d1)}}])
 
-
 (deftest add-delta-to-chunks-by-branch-id-test
   (let [{[chk0 chk1
           chk2 chk3
@@ -47,7 +45,7 @@
          uuid-fn     :f} (uuid-gen)
         [d0 d1 d2
          d3 d4 d5
-         d6 d7 d8]    deltas
+         d6 d7 d8]       deltas
         expect           {(uuid :b0)   [(chunk/new-chunk chk0 0 [d0 d1] true) (chunk/new-chunk chk1 0 [d2] false)]
                           (uuid :b1-1) [(chunk/new-chunk chk2 1 [d3 d4] true) (chunk/new-chunk chk3 1 [d5] false)]
                           (uuid :b1-2) [(chunk/new-chunk chk4 1 [d6 d7] true) (chunk/new-chunk chk5 1 [d8] false)]}
@@ -58,11 +56,10 @@
     (is (= expect actual))))
 
 
-(def deltas-by-branch-id
-  (state.branches/add-deltas state.branches/empty-deltas-by-branch-id deltas))
-
 (defn dissoc-chunk-ids [coll]
   (cond
+    (nil? coll) nil
+
     (sequential? coll)
     (mapv dissoc-chunk-ids coll)
 
@@ -90,13 +87,7 @@
         [d0 d1 d2
          d3 d4 d5
          d6 d7 d8]       deltas
-        actual           (second
-                          (reduce
-                           (fn [[deltas-by-branch-id timeline] delta]
-                             (let [deltas-by-branch-id' (state.branches/add-delta deltas-by-branch-id delta)
-                                   timeline'            (sut/add-delta timeline deltas-by-branch-id' branches uuid-fn delta)]
-                               [deltas-by-branch-id' timeline']))
-                           [state.branches/empty-deltas-by-branch-id sut/empty-timeline] deltas))]
+        actual           (sut/add-deltas sut/empty-timeline branches uuid-fn deltas)]
     (testing "chunks-by-branch-id"
       (let [[chunk0 chunk1 :as b0-chunks]   [(chunk/new-chunk chk0 0 [d0 d1] true) (chunk/new-chunk chk1 0 [d2] false)]
             [chunk2 chunk3 :as b1-1-chunks] [(chunk/new-chunk chk2 1 [d3 d4] true) (chunk/new-chunk chk3 1 [d5] false)]
@@ -134,4 +125,6 @@
         (uuid :d6) 6
         (uuid :d7) 7
         (uuid :d8) 8
-        (uuid :d2) 9))))
+        (uuid :d2) 9))
+    (testing "next-delta"
+      )))

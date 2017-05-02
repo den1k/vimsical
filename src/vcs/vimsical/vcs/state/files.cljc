@@ -331,8 +331,8 @@
   (update state-by-file-id file-id (fnil add-delta-rf empty-state) delta))
 
 (s/fdef add-deltas
-  :args (s/cat :state-by-file-id ::state-by-file-id :deltas (s/every ::delta/delta))
-  :ret ::state-by-file-id)
+        :args (s/cat :state-by-file-id ::state-by-file-id :deltas (s/every ::delta/delta))
+        :ret ::state-by-file-id)
 
 (defn add-deltas
   [state-by-file-id deltas]
@@ -356,13 +356,13 @@
   (s/tuple ::state-by-file-id ::new-deltas ::current-str-op-id))
 
 (s/fdef add-edit-event
-  :args (s/cat :state-by-file-id ::state-by-file-id
-               :editor-effects ::editor/effects
-               :file-id ::file/id
-               :branch-id ::branch/id
-               :delta-id ::delta/prev-id
-               :edit-event ::edit-event/edit-event)
-  :ret ::add-edit-event-acc)
+        :args (s/cat :state-by-file-id ::state-by-file-id
+                     :editor-effects ::editor/effects
+                     :file-id ::file/id
+                     :branch-id ::branch/id
+                     :delta-id ::delta/prev-id
+                     :edit-event ::edit-event/edit-event)
+        :ret ::add-edit-event-acc)
 
 (defn add-edit-event
   "Update `state-by-file-id` by adding the given `edit-event`. The `editor-state` should
