@@ -79,8 +79,10 @@
   [[delta & deltas]]
   (letfn [(kfn [{:keys [id]}] id)
           (prev-kfn [{:keys [prev-id]}] prev-id)
-          (seen? [ks-set delta]
-            (ks-set (prev-kfn delta)))]
+          (seen? [ks-set delta*]
+            (if-some [prev-id (prev-kfn delta*)]
+              (ks-set prev-id)
+              (= delta delta*)))]
     (boolean
      (reduce
       (fn [ks-set delta]
@@ -88,3 +90,25 @@
           (conj! ks-set (kfn delta))
           (reduced false)))
       (transient #{(kfn delta)}) deltas))))
+
+
+(s/fdef valid-ops?
+        :args (s/cat :deltas (s/every ::delta/delta))
+        :ref  boolean?)
+
+(defn valid-ops?
+  "Return true if every op in deltas points to a `:str/ins` delta-id."
+  [[delta & deltas]]
+  (letfn [(seen? [ks-set delta*]
+            (if-some [op-id (delta/op-id delta*)]
+              (ks-set op-id)
+              true))]
+    (boolean
+     (reduce
+      (fn [ks-set {:keys [id] :as delta}]
+        (if (seen? ks-set delta)
+          (cond-> ks-set
+            (= :str/ins (delta/op-type delta))
+            (conj! id))
+          (reduced false)))
+      (transient #{(:id delta)}) deltas))))

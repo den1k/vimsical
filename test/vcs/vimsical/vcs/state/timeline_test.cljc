@@ -1,20 +1,24 @@
 (ns vimsical.vcs.state.timeline-test
   #?@(:clj
       [(:require
+        [clojure.spec :as s]
         [clojure.test :as t :refer [are deftest is testing]]
         [orchestra.spec.test :as st]
         [vimsical.common.test :refer [uuid uuid-gen]]
         [vimsical.vcs.branch :as branch]
         [vimsical.vcs.state.branches :as state.branches]
+        [vimsical.vcs.state.deltas :as state.deltas]
         [vimsical.vcs.state.chunk :as chunk]
         [vimsical.vcs.state.timeline :as sut])]
       :cljs
       [(:require
+        [clojure.spec :as s]
         [clojure.spec.test :as st]
         [clojure.test :as t :refer-macros [are deftest is testing]]
         [vimsical.common.test :refer [uuid uuid-gen]]
         [vimsical.vcs.branch :as branch]
         [vimsical.vcs.state.branches :as state.branches]
+        [vimsical.vcs.state.deltas :as state.deltas]
         [vimsical.vcs.state.chunk :as chunk]
         [vimsical.vcs.state.timeline :as sut])]))
 
@@ -32,6 +36,8 @@
    {:branch-id (uuid :b1-2), :file-id (uuid :f0), :id (uuid :d6) :prev-id (uuid :d5), :op [:str/ins (uuid :d1) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
    {:branch-id (uuid :b1-2), :file-id (uuid :f0), :id (uuid :d7) :prev-id (uuid :d6), :op [:str/ins (uuid :d6) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
    {:branch-id (uuid :b1-2), :file-id (uuid :f1), :id (uuid :d8) :prev-id (uuid :d7), :op [:str/ins (uuid :d7) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}])
+
+(s/assert* ::state.deltas/deltas deltas)
 
 (def branches
   [{:db/id (uuid :b0)}
@@ -79,7 +85,7 @@
          (assoc coll k (dissoc-chunk-ids chunks)))
        (empty coll) coll))))
 
-(deftest add-delta-test
+(deftest add-deltas-test
   (let [{[chk0 chk1
           chk2 chk3
           chk4 chk5] :seq

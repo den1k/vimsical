@@ -5,10 +5,7 @@
    [vimsical.vcs.delta :as delta]))
 
 (s/def ::deltas
-  (s/and
-   (s/every ::delta/delta :kind vector?)
-   topo/sorted?
-   delta/ops-point-to-str-id?))
+  (s/and (s/every ::delta/delta :kind vector?) topo/sorted? delta/ops-point-to-str-id?))
 
 (def empty-deltas [])
 
@@ -18,4 +15,4 @@
 
 (defn add-deltas
   [deltas deltas']
-  (into deltas (vec deltas')))
+  (into deltas deltas'))

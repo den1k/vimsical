@@ -2,16 +2,14 @@
   "Keep track of the deltas for a branch"
   (:require
    [clojure.spec :as s]
-   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.alg.topo :as topo]
+   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.data.indexed.vector :as indexed]
-   [vimsical.vcs.data.splittable :as splittable]
    [vimsical.vcs.delta :as delta]))
-
 
 ;; * Spec
 
-(s/def ::deltas (s/and ::indexed/vector (s/every ::delta/delta) topo/sorted?))
+(s/def ::deltas (s/and ::indexed/vector (s/every ::delta/delta) topo/sorted? topo/valid-ops?))
 (s/def ::deltas-by-branch-id (s/every-kv ::branch/id ::deltas))
 
 (def empty-deltas-by-branch-id {})
