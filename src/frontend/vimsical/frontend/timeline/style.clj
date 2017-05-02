@@ -3,7 +3,7 @@
 (def timeline
   [:.timeline {:align-self :center
                :text-align :center
-               ;:flex       1
+                                        ;:flex       1
                :height     :34px
                :width      :95%
                :background "blue"}

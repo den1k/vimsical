@@ -20,7 +20,8 @@
 (s/def ::delta-branch-off-id ::delta/prev-id)
 (s/def ::branch-id ::branch/id)
 (s/def ::file-id ::file/id)
-
+(s/def ::branch-start? boolean?)
+(s/def ::branch-end? boolean?)
 
 
 (s/def ::deltas
@@ -55,6 +56,12 @@
                 ::branch-id
                 ::file-id]
           :opt [::delta-branch-off-id]))
+
+(s/def ::timeline-annotations
+  (s/keys :opt [::branch-start? ::branch-end?]))
+
+(s/def ::annotated-chunk
+  (s/merge ::chunk ::timeline-annotations))
 
 
 ;; * API
@@ -108,19 +115,31 @@
           (update ::delta-start-id (fnil identity id))
           (update ::deltas-by-relative-time (fnil assoc (avl/sorted-map)) t delta)))))
 
+(defn with-bounds [chunk start? end?]
+  (when chunk
+    (cond-> chunk
+      (true? start?) (assoc ::branch-start? start?)
+      (true? end?)   (assoc ::branch-end? end?))))
+
 (s/fdef split-at-delta-index
         :args (s/cat :chunk ::chunk :uuid-fn ifn? :index nat-int?)
         :ret  (s/tuple (s/nilable ::chunk)
                        (s/nilable ::chunk)))
 
 (defn split-at-delta-index
-  [{::keys [count depth delta-branch-off-id deltas-by-relative-time]} uuid-fn index]
+  [{::keys [count depth delta-branch-off-id deltas-by-relative-time branch-start? branch-end?]} uuid-fn index]
   {:pre [(< index count)]}
   ;; XXX This is easy and helps with correctness but it would be much more
   ;; efficient to split the underlying deltas and update the chunk
   (let [[left-deltas right-deltas] (mapv vals (avl/split-at index deltas-by-relative-time))
-        left-chunk                 (when (seq left-deltas) (new-chunk (uuid-fn) depth left-deltas (some? delta-branch-off-id)))
-        right-chunk                (when (seq right-deltas) (new-chunk (uuid-fn) depth right-deltas false))]
+        left-chunk                 (when (seq left-deltas)
+                                     (with-bounds
+                                       (new-chunk (uuid-fn) depth left-deltas (some? delta-branch-off-id))
+                                       branch-start? false))
+        right-chunk                (when (seq right-deltas)
+                                     (with-bounds
+                                       (new-chunk (uuid-fn) depth right-deltas false)
+                                       false branch-end?))]
     [left-chunk right-chunk]))
 
 

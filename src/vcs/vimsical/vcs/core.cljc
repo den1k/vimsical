@@ -117,6 +117,11 @@
   ([vcs delta-id]
    (-> vcs (delta-id->state delta-id) ::state.deltas/deltas)))
 
+(defn file-ids
+  ([{::keys [delta-id] :as vcs}] (file-ids vcs delta-id))
+  ([vcs delta-id]
+   (-> vcs (delta-id->state-by-file-id delta-id) keys)))
+
 (defn file-deltas
   ([{::keys [delta-id] :as vcs} file-id] (file-deltas vcs file-id delta-id))
   ([vcs file-id delta-id]

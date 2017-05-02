@@ -4,7 +4,7 @@
         [clojure.spec :as s]
         [clojure.test :as t :refer [are deftest is testing]]
         [orchestra.spec.test :as st]
-        [vimsical.common.test :refer [uuid uuid-gen]]
+        [vimsical.common.test :refer [diff= uuid uuid-gen]]
         [vimsical.vcs.branch :as branch]
         [vimsical.vcs.state.branches :as state.branches]
         [vimsical.vcs.state.deltas :as state.deltas]
@@ -44,6 +44,10 @@
    {:db/id (uuid :b1-1) ::branch/parent {:db/id (uuid :b0) ::branch/branch-off-delta-id (uuid :d0)}}
    {:db/id (uuid :b1-2) ::branch/parent {:db/id (uuid :b0) ::branch/branch-off-delta-id (uuid :d1)}}])
 
+(defn chunks-vec
+  [a b]
+  [(chunk/with-bounds a true nil) (chunk/with-bounds b nil true)])
+
 (deftest add-delta-to-chunks-by-branch-id-test
   (let [{[chk0 chk1
           chk2 chk3
@@ -52,15 +56,14 @@
         [d0 d1 d2
          d3 d4 d5
          d6 d7 d8]       deltas
-        expect           {(uuid :b0)   [(chunk/new-chunk chk0 0 [d0 d1] true) (chunk/new-chunk chk1 0 [d2] false)]
-                          (uuid :b1-1) [(chunk/new-chunk chk2 1 [d3 d4] true) (chunk/new-chunk chk3 1 [d5] false)]
-                          (uuid :b1-2) [(chunk/new-chunk chk4 1 [d6 d7] true) (chunk/new-chunk chk5 1 [d8] false)]}
+        expect           {(uuid :b0)   (chunks-vec (chunk/new-chunk chk0 0 [d0 d1] true) (chunk/new-chunk chk1 0 [d2] false))
+                          (uuid :b1-1) (chunks-vec (chunk/new-chunk chk2 1 [d3 d4] true) (chunk/new-chunk chk3 1 [d5] false))
+                          (uuid :b1-2) (chunks-vec (chunk/new-chunk chk4 1 [d6 d7] true) (chunk/new-chunk chk5 1 [d8] false))}
         actual           (reduce
                           (fn [cbb delta]
                             (sut/add-delta-to-chunks-by-branch-id cbb branches uuid-fn delta))
                           nil  deltas)]
-    (is (= expect actual))))
-
+    (diff= expect actual)))
 
 (defn dissoc-chunk-ids [coll]
   (cond
@@ -95,28 +98,28 @@
          d6 d7 d8]       deltas
         actual           (sut/add-deltas sut/empty-timeline branches uuid-fn deltas)]
     (testing "chunks-by-branch-id"
-      (let [[chunk0 chunk1 :as b0-chunks]   [(chunk/new-chunk chk0 0 [d0 d1] true) (chunk/new-chunk chk1 0 [d2] false)]
-            [chunk2 chunk3 :as b1-1-chunks] [(chunk/new-chunk chk2 1 [d3 d4] true) (chunk/new-chunk chk3 1 [d5] false)]
-            [chunk4 chunk5 :as b1-2-chunks] [(chunk/new-chunk chk4 1 [d6 d7] true) (chunk/new-chunk chk5 1 [d8] false)]
+      (let [[chunk0 chunk1 :as b0-chunks]   (chunks-vec (chunk/new-chunk chk0 0 [d0 d1] true) (chunk/new-chunk chk1 0 [d2] false))
+            [chunk2 chunk3 :as b1-1-chunks] (chunks-vec (chunk/new-chunk chk2 1 [d3 d4] true) (chunk/new-chunk chk3 1 [d5] false))
+            [chunk4 chunk5 :as b1-2-chunks] (chunks-vec (chunk/new-chunk chk4 1 [d6 d7] true) (chunk/new-chunk chk5 1 [d8] false))
             expect                          {(uuid :b0) b0-chunks (uuid :b1-1) b1-1-chunks (uuid :b1-2) b1-2-chunks}
             actual                          (::sut/chunks-by-branch-id actual)]
         (is (= (dissoc-chunk-ids expect) (dissoc-chunk-ids actual)))))
     (testing "chunks-by-absolute-start-time"
-      (let [expect {0 (chunk/new-chunk (uuid :chk0) 0 [d0] false)
+      (let [expect {0 (chunk/with-bounds (chunk/new-chunk (uuid :chk0) 0 [d0] false) true false)
                     ;; b1-1, f0
-                    1 (chunk/new-chunk (uuid :chk1) 1 [d3 d4] true)
+                    1 (chunk/with-bounds (chunk/new-chunk (uuid :chk1) 1 [d3 d4] true) true false)
                     ;; b1-1, f1
-                    3 (chunk/new-chunk (uuid :chk2) 1 [d5] false)
+                    3 (chunk/with-bounds (chunk/new-chunk (uuid :chk2) 1 [d5] false) false true)
                     ;; b0, f0
-                    4 (chunk/new-chunk (uuid :chk) 0 [d1] false)
+                    4 (chunk/with-bounds (chunk/new-chunk (uuid :chk) 0 [d1] false) false false)
                     ;; b1-2, f0
-                    5 (chunk/new-chunk (uuid :chk1) 1 [d6 d7] true)
+                    5 (chunk/with-bounds (chunk/new-chunk (uuid :chk1) 1 [d6 d7] true) true false)
                     ;; b1-2, f1
-                    7 (chunk/new-chunk (uuid :chk1) 1 [d8] false)
+                    7 (chunk/with-bounds (chunk/new-chunk (uuid :chk1) 1 [d8] false) false true)
                     ;; b0, f1
-                    8 (chunk/new-chunk (uuid :chk0) 0 [d2] false)}
+                    8 (chunk/with-bounds (chunk/new-chunk (uuid :chk0) 0 [d2] false) false true)}
             actual (::sut/chunks-by-absolute-start-time actual)]
-        (is (= (dissoc-chunk-ids expect) (dissoc-chunk-ids actual)))))
+        (diff= (dissoc-chunk-ids expect) (dissoc-chunk-ids actual))))
     (testing "timeline-duration"
       (let [expect (reduce + (map :pad deltas))
             actual (sut/duration actual)]

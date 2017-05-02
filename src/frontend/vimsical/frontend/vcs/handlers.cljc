@@ -23,7 +23,7 @@
 (defn add-edit-event
   [db [_ file-id edit-event]]
   (let [{:vims/keys [vcs] :as res} (mg/pull-link db queries/vims-vcs :app/vims)
-        effects                    {::editor/pad-fn       (constantly 1)
+        effects                    {::editor/pad-fn       (constantly 1000)
                                     ::editor/uuid-fn      (fn [_e] (uuid))
                                     ::editor/timestamp-fn (fn [_e] (util/now))}
         vcs'                       (vcs/add-edit-event vcs effects file-id edit-event)]

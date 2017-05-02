@@ -5,6 +5,7 @@
    [vimsical.frontend.views.splits :as splits]
    [vimsical.frontend.timeline.views :refer [timeline]]
    [vimsical.frontend.live-preview.views :refer [live-preview]]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.code-editor.views :refer [code-editor]]
    [vimsical.frontend.views.shapes :as shapes]
    [vimsical.vcs.branch :as branch]
@@ -138,7 +139,7 @@
      :class "vcr"
      :size "100%"
      :children
-     [[playback]
+     [
       [splits/n-h-split
        :class "live-preview-and-editors"
        :panels [[live-preview
@@ -153,4 +154,5 @@
        :splitter-child [editor-tabs files]
        :splitter-size "34px"
        :initial-split 60
-       :margin "0"]]]))
+       :margin "0"]
+      [playback]]]))

@@ -83,6 +83,23 @@
 (s/def ::deltas-by-branch-id ::state.branches/deltas-by-branch-id)
 (s/def ::chunks-by-branch-id (s/every-kv ::branch/id (s/every ::chunk/chunk :kind vector?)))
 
+(defn annotate-chunk-start [chunk]
+  (-> chunk
+      (dissoc ::chunk/branch-end?)
+      (assoc ::chunk/branch-start? true)))
+
+(defn annotate-chunk-end [chunk]
+  (-> chunk
+      (dissoc ::chunk/branch-start?)
+      (assoc ::chunk/branch-end? true)))
+
+(defn annotate-single-chunk [chunk]
+  (-> chunk
+      (assoc ::chunk/branch-start? true ::chunk/branch-end? true)))
+
+(defn remove-annotations [chunk]
+  (dissoc chunk ::chunk/branch-start? ::chunk/branch-end?))
+
 ;; XXX more efficient way to get the depth
 (defn add-delta-to-chunks-by-branch-id
   [chunks-by-branch-id
@@ -102,14 +119,29 @@
                 (update chunks last-index chunk/add-delta delta)))
             (update-chunks [chunks uuid-fn delta]
               (cond
-                (conj-onto-last-chunk? chunks delta)
-                (conj-onto-last-chunk chunks delta)
+                (conj-onto-last-chunk? chunks delta) (conj-onto-last-chunk chunks delta)
                 :else
-                (let [branch-off? (first-chunk-in-branch? chunks-by-branch-id delta)
-                      chunk'      (chunk/new-chunk (uuid-fn) depth [delta] branch-off?)
-                      f           (fnil conj [])]
-                  (f chunks chunk'))))]
-      (update chunks-by-branch-id branch-id update-chunks uuid-fn delta))))
+                (let [branch-start? (first-chunk-in-branch? chunks-by-branch-id delta)
+                      chunk'        (chunk/new-chunk (uuid-fn) depth [delta] branch-start?)
+                      f             (fnil conj [])]
+                  (f chunks chunk'))))
+            (annotate-branch-start-and-end [chunks]
+              (case (count chunks)
+                0 chunks
+                1 (update chunks 0 annotate-single-chunk)
+                (let [first-index       0
+                      last-index        (max 0 (dec (count chunks)))
+                      before-last-index (max 0 (dec last-index))]
+                  (cond-> chunks
+                    true (update first-index annotate-chunk-start)
+
+                    (< first-index before-last-index last-index)
+                    (update before-last-index remove-annotations)
+
+                    true (update last-index  annotate-chunk-end)))))]
+      (-> chunks-by-branch-id
+          (update branch-id update-chunks uuid-fn delta)
+          (update branch-id annotate-branch-start-and-end)))))
 
 
 ;; * Timeline state
