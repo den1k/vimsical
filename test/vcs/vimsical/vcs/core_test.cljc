@@ -68,10 +68,10 @@
             (uuid :html) 3 "<bod"))
         (testing "cursor"
           (are [file-id delta-index cursor] (is (= cursor (sut/file-cursor vcs file-id (->> delta-index (nth all-deltas) :id))))
-            (uuid :html) 0 1
-            (uuid :html) 1 2
-            (uuid :html) 2 3
-            (uuid :html) 3 4)))
+            (uuid :html) 0 0
+            (uuid :html) 1 1
+            (uuid :html) 2 2
+            (uuid :html) 3 3)))
       (testing "timeline"
         (is (= (sut/timeline-duration vcs) (count all-edit-events)))
         (is (= 2 (count (sut/timeline-chunks-by-absolute-start-time vcs)))))
@@ -97,13 +97,13 @@
         expect-html    "<body><h1>Hello</h1></body>"
         expect-css     "body { color: orange; }"
         vcs            (-> (sut/empty-vcs branches)
-                           (diff/diffs->deltas
+                           (diff/diffs->vcs
                             editor-effects (uuid :html)
                             ""
                             ["<body></body>"]
                             ["<body><h1>YO</h1></body>"]
                             [expect-html])
-                           (diff/diffs->deltas
+                           (diff/diffs->vcs
                             editor-effects (uuid :css)
                             ""
                             ["body { color: red; }"]

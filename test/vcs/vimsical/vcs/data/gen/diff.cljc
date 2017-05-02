@@ -4,14 +4,12 @@
   (:require
    [clojure.spec :as s]
    [diffit.vec :as diffit]
-   [vimsical.common.test :refer [uuid]]
+   [vimsical.vcs.core :as vcs]
+   [vimsical.vcs.delta :as delta]
    [vimsical.vcs.edit-event :as edit-event]
    [vimsical.vcs.editor :as editor]
-   [vimsical.vcs.state.files :as state.files]
-   [vimsical.vcs.core :as vcs]
-   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]
-   [vimsical.vcs.delta :as delta]))
+   [vimsical.vcs.state.files :as state.files]))
 
 ;; * Edit events
 
@@ -194,14 +192,14 @@
                (transduce  xf conj edit-events (diff->edit-events s s'))})))
         nil splices-and-strs))))))
 
-(s/fdef diffs->deltas
+(s/fdef diffs->vcs
         :args (s/cat :vcs ::vcs/vcs
                      :effects ::editor/effects
                      :file-id ::file/id
                      :strs (s/* ::splice-or-string))
         :ret ::vcs/vcs)
 
-(defn diffs->deltas
+(defn diffs->vcs
   [vcs effects file-id & strs]
   (assert (string? (first strs)))
   (assert (every? vector? (next strs)))
