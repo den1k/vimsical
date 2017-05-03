@@ -7,7 +7,7 @@
    [vimsical.frontend.player.views :refer [player]]
    [vimsical.frontend.quick-search.views :refer [quick-search]]
    [vimsical.frontend.window-listeners.views :refer [window-listeners]]
-   [vimsical.frontend.util.re-frame :refer-macros [with-subs with-queries]]
+   [vimsical.frontend.util.re-frame :refer-macros [with-subs]]
    [vimsical.frontend.app.subs :as subs]))
 
 (defn app []

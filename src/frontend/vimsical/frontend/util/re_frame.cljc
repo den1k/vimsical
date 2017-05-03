@@ -1,4 +1,25 @@
-(ns vimsical.frontend.util.re-frame)
+(ns vimsical.frontend.util.re-frame
+  (:require [clojure.spec :as s]))
+
+(defn <sub
+  [sub]
+  (deref (re-frame.core/subscribe sub)))
+
+(defn- rewrite-query? [qexpr]
+  (and (= 2 (count qexpr))
+       (let [[?link ?pattern] qexpr]
+         (and (keyword? ?link)
+              (vector? ?pattern)))))
+
+(defn- rewrite-link-query [[link pattern]]
+  {:link    link
+   :pattern [{[link '_] pattern}]})
+
+(defn <sub-query [qexpr]
+  (if (rewrite-query? qexpr)
+    (let [{:keys [link pattern]} (rewrite-link-query qexpr)]
+      (get (<sub [:q pattern]) link))
+    (<sub [:q qexpr])))
 
 #?(:clj
    (defn- sub-deref
@@ -15,26 +36,3 @@
      [bindings & body]
      `(let [~@(apply concat (map binding-sub-deref (partition 2 bindings)))]
         ~@body)))
-
-#?(:clj
-   (defn- link-joins->query [[link joins]]
-     [:q*
-      joins
-      link]))
-
-#?(:clj
-   (defn- binding-link-joins->query [[binding link-joins]]
-     [binding (link-joins->query link-joins)]))
-
-#?(:clj
-   (defmacro with-queries
-     [bindings & body]
-     `(let [~@(apply concat (map (comp binding-sub-deref
-                                       binding-link-joins->query)
-                                 (partition 2 bindings)))]
-        ~@body)))
-
-
-#_(macroexpand
-   '(with-queries [app-user [:app/user [:user/first-name
-                                        {:user/vimsae [:vims/title]}]]]))

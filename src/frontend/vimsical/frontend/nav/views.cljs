@@ -4,7 +4,7 @@
    [reagent.core :as reagent]
    [re-com.core :as re-com]
    [vimsical.frontend.views.icons :as icons]
-   [vimsical.frontend.util.re-frame :refer-macros [with-subs with-queries]]
+   [vimsical.frontend.util.re-frame :refer [<sub <sub-query] :refer-macros [with-subs]]
    [vimsical.frontend.util.dom :refer-macros [e-> e->> e>]]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
    [vimsical.common.util.core :refer [=by] :as util]
@@ -47,78 +47,80 @@
                                 title-too-long?
                                 hovering?)))]
     (fn []
-      (with-queries
-       [user [:app/user [:db/id]]
+      (let
+       [user            (<sub-query [:app/user [:db/id]])
 
-        {:vims/keys [title author] :as vims} [:app/vims
-                                              [:vims/title
-                                               {:vims/author [:db/id]}]]]
-        (let [{:keys [editing? title-too-long?]}
-              @state
-              editable-title?
-              (=by :db/id user author)
-              title-html
-              [:div.title
-               (when editable-title?
-                 {:content-editable                  true
-                  :suppress-content-editable-warning true
-                  :on-mouse-enter                    #(swap! state assoc :hovering? true)
-                  :on-mouse-leave                    #(swap! state assoc :hovering? false)
-                  :on-key-down                       (e-> keydown-handler)
-                  :on-click                          #(swap! state assoc :editing? true)
-                  :on-blur                           (e>
-                                                      (swap! state assoc :editing? false)
-                                                      (re-frame/dispatch
-                                                       [:vims/set-title (util/norm-str inner-html)]))})
-               (or title
-                   (if editing?
-                     ""
-                     title-placeholder))]]
-          [:div.vims-info.jc.ac
-           (if-not editable-title?
-             title-html
-             [re-com/popover-tooltip
-              :label (if title-too-long? "Title is too long!" "Click to edit")
-              :position :below-center
-              :showing? show-tooltip?
-              :anchor title-html])])))))
+        {:vims/keys [title author] :as vims}
+        (<sub-query [:app/vims
+                     [:vims/title
+                      {:vims/author [:db/id]}]])
+
+        {:keys [editing? title-too-long?]} @state
+
+        editable-title? (=by :db/id user author)
+        title-html
+                        [:div.title
+                         (when editable-title?
+                           {:content-editable                  true
+                            :suppress-content-editable-warning true
+                            :on-mouse-enter                    #(swap! state assoc :hovering? true)
+                            :on-mouse-leave                    #(swap! state assoc :hovering? false)
+                            :on-key-down                       (e-> keydown-handler)
+                            :on-click                          #(swap! state assoc :editing? true)
+                            :on-blur                           (e>
+                                                                (swap! state assoc :editing? false)
+                                                                (re-frame/dispatch
+                                                                 [:vims/set-title (util/norm-str inner-html)]))})
+                         (or title
+                             (if editing?
+                               ""
+                               title-placeholder))]]
+        [:div.vims-info.jc.ac
+         (if-not editable-title?
+           title-html
+           [re-com/popover-tooltip
+            :label (if title-too-long? "Title is too long!" "Click to edit")
+            :position :below-center
+            :showing? show-tooltip?
+            :anchor title-html])]))))
 
 (defn nav []
-  (let [show-popup? (reagent/atom false)]
-    (with-queries
-     [{:user/keys [first-name last-name vimsae] :as user}
-      [:app/user
-       [:db/id
-        :user/first-name
-        :user/last-name
-        :user/email
-        {:user/vimsae [:db/id :vims/title]}]]
+  (let
+   [show-popup? (reagent/atom false)
+    {:user/keys [first-name last-name vimsae] :as user}
+    (<sub-query [:app/user
+                 [:db/id
+                  :user/first-name
+                  :user/last-name
+                  :user/email
+                  {:user/vimsae [:db/id :vims/title]}]])
 
-      {:vims/keys [title] :as app-vims} [:app/vims
-                                         [:db/id
-                                          :vims/title]]]
-      [:div.main-nav.ac.jsb
-       [:div.logo-and-type
-        [:span.logo icons/vimsical-logo]
-        [:span.type icons/vimsical-type]]
-       (when app-vims
-         [vims-info])
-       #_[:div.vims-list
-          (for [{:vims/keys [title] :as vims} vimsae]
-            ^{:key title}
-            [:div.vims-title
-             {:on-click (e> (re-frame/dispatch [::app/open-vims vims]))}
-             title])]
+    {:vims/keys [title] :as app-vims} (<sub-query [:app/vims
+                                                   [:db/id
+                                                    :vims/title]])
+    ]
+    [:div.main-nav.ac.jsb
+     [:div.logo-and-type
+      [:span.logo icons/vimsical-logo]
+      [:span.type icons/vimsical-type]]
+     (when app-vims
+       [vims-info])
+     #_[:div.vims-list
+        (for [{:vims/keys [title] :as vims} vimsae]
+          ^{:key title}
+          [:div.vims-title
+           {:on-click (e> (re-frame/dispatch [::app/open-vims vims]))}
+           title])]
 
-       [:div.auth-or-user
-        {:on-click (e> (swap! show-popup? not))}
-        (if true                        ;'logged-in?
-          [:div.user.ac
-           [auth.views/logout-popover-anchor
-            {:showing? show-popup?
-             :anchor   [user.views/avatar {:user user}]}]
-           [user.views/full-name {:user user}]]
-          [:div.auth
-           [auth.views/login-popover-anchor
-            {:showing? show-popup?
-             :anchor   [:div.button "login"]}]])]])))
+     [:div.auth-or-user
+      {:on-click (e> (swap! show-popup? not))}
+      (if true                          ;'logged-in?
+        [:div.user.ac
+         [auth.views/logout-popover-anchor
+          {:showing? show-popup?
+           :anchor   [user.views/avatar {:user user}]}]
+         [user.views/full-name {:user user}]]
+        [:div.auth
+         [auth.views/login-popover-anchor
+          {:showing? show-popup?
+           :anchor   [:div.button "login"]}]])]]))

@@ -3,7 +3,7 @@
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
    [re-com.core :as re-com]
-   [vimsical.frontend.util.re-frame :refer-macros [with-queries]]
+   [vimsical.frontend.util.re-frame :refer [<sub <sub-query]]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
    [vimsical.common.util.core :refer [=by] :as util]
    [vimsical.frontend.quick-search.handlers :as handlers]
@@ -111,11 +111,12 @@
   (let [state (reagent/atom {:result-idx 0
                              :query      ""
                              :results    default-results})]
+
+
     (fn []
-      (with-queries
-       [{:quick-search/keys [show?]}
-        [:app/quick-search [:db/id
-                            :quick-search/show?]]]
+      (let [{:quick-search/keys [show?]}
+            (<sub-query [:app/quick-search [:db/id
+                                            :quick-search/show?]])]
         (let [{:keys [result-idx query results]} @state]
           [:div.quick-search-container
            (when show?
