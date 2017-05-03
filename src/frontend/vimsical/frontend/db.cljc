@@ -56,7 +56,7 @@
    (let [libs-by-type (group-by ::lib/sub-type libs)
          files        [{:db/id (uuid :file-html) ::file/type :text ::file/sub-type :html}
                        {:db/id (uuid :file-css) ::file/type :text ::file/sub-type :css}
-                       {:db/id (uuid :file-js) ::file/type :text ::file/sub-type :javascript}]
+                       {:db/id (uuid :file-js) ::file/type :text ::file/sub-type :javascript ::file/compiler :babel}]
          branches     [{:db/id (uuid :branch-master) ::branch/name "master" ::branch/start-delta-id nil ::branch/entry-delta-id nil ::branch/created-at (util/now) ::branch/files files ::branch/libs (:javascript libs-by-type)}]]
      {:db/id         (uuid title)
       :vims/author   author-ref

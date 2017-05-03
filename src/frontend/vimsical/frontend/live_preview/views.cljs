@@ -21,6 +21,7 @@
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]
    [re-frame.core :as re-frame]
    [vimsical.frontend.live-preview.handlers :as handlers]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]
    [vimsical.frontend.vcs.subs :as vcs.subs]))
@@ -40,8 +41,10 @@
 
 (defn preview-node-dispatch [{:keys [ui-reg-key branch file]}]
   (let [{::file/keys [sub-type]} file
-        string (re-frame/subscribe [::vcs.subs/file-string file])]
-    (re-frame/dispatch [::handlers/update-live-preview ui-reg-key branch file @string])
+        ;; calling this sub to update live-preview
+        ;; may want to do this as a dispatch after file change
+        _string (<sub [::vcs.subs/file-string file])]
+    (re-frame/dispatch [::handlers/update-live-preview ui-reg-key branch file])
     [:div]))
 
 (defn- iframe-attrs [{:keys [branch ui-reg-key static?] :as opts}]

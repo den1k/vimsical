@@ -1,13 +1,15 @@
 (ns vimsical.frontend.live-preview.handlers
   (:require [re-frame.core :as re-frame]
             [vimsical.frontend.util.dom :as util.dom]
+            [vimsical.frontend.util.re-frame :refer [<sub]]
             [com.stuartsierra.mapgraph :as mg]
             [vimsical.frontend.vcs.subs :as vcs.subs]
             [vimsical.vcs.branch :as branch]
             [vimsical.vcs.file :as file]
             [vimsical.vcs.lib :as lib]
             [vimsical.common.util.core :as util]
-            [reagent.dom.server]))
+            [reagent.dom.server]
+            [vimsical.frontend.util.preprocess.core :as preprocess]))
 
 (defn- lib-node [{:keys [db/id] ::lib/keys [src sub-type] :as lib}]
   (let [tag (case sub-type :html :body :css :style :javascript :script)]
@@ -15,8 +17,9 @@
      {:id  id
       :src src}]))
 
-(defn- file-node [{:keys [db/id file/string] ::file/keys [sub-type] :as file}]
-  (let [tag (case sub-type :html :body :css :style :javascript :script)]
+(defn- file-node [{:keys [db/id] ::file/keys [sub-type] :as file}]
+  (let [tag    (case sub-type :html :body :css :style :javascript :script)
+        string (<sub [::vcs.subs/preprocessed-file-string file])]
     [tag
      {:id                      id
       :dangerouslySetInnerHTML {:__html string}}]))
@@ -36,7 +39,7 @@
        (for [file (:css by-subtype)]
          ^{:key (:db/id file)} [file-node file]))]
      (let [html-file   (first (:html by-subtype))
-           html-string (:file/string html-file)
+           html-string (<sub [::vcs.subs/preprocessed-file-string html-file])
            body-string (transduce
                         (map file-node-markup)
                         str
@@ -54,10 +57,6 @@
 (defn update-iframe-src
   [{:keys [db ui-db]} [_ ui-reg-key {::branch/keys [files libs]}]]
   (let [iframe        (get-in ui-db [ui-reg-key ::iframe])
-        files         (for [file files]
-                        (assoc file :file/string (-> db
-                                                     (vcs.subs/vims-vcs)
-                                                     (vcs.subs/file-string file))))
         markup        (iframe-markup-string {:files files :libs libs})
         prev-blob-url (get-in ui-db [ui-reg-key ::src-blob-url])
         blob-url      (util.dom/blob-url markup "text/html")]
@@ -82,15 +81,16 @@
      (util.dom/append! head new-node))))
 
 (defmethod update-node! :html
-  [iframe _ string]
-  (util.dom/set-inner-html! (.. iframe -contentDocument -body) string))
+  [iframe file]
+  (util.dom/set-inner-html! (.. iframe -contentDocument -body)
+                            (<sub [::vcs.subs/preprocessed-file-string file])))
 
 (defmethod update-node! :css-or-javascript
-  [iframe file string]
+  [iframe {::file/keys [sub-type] :keys [db/id] :as file}]
   (swap-head-node! iframe
-                   (::file/sub-type file)
-                   {:id (:db/id file)}
-                   string))
+                   sub-type
+                   {:id id}
+                   (<sub [::vcs.subs/preprocessed-file-string file])))
 
 (re-frame/reg-event-fx
  ::register-and-init-iframe
@@ -114,20 +114,20 @@
  ::update-live-preview
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [db ui-db] :as cofx}
-      [_ ui-reg-key branch {::file/keys [sub-type] :as file} string]]
+      [_ ui-reg-key branch {::file/keys [sub-type] :as file}]]
    (let [iframe (get-in ui-db [ui-reg-key ::iframe])]
      {:dispatch
       (if (= :javascript sub-type)
         [::update-iframe-src ui-reg-key branch]
-        [::update-preview-node ui-reg-key branch file string])})))
+        [::update-preview-node ui-reg-key branch file])})))
 
 (re-frame/reg-event-fx
  ::update-preview-node
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [db ui-db] :as cofx}
-      [_ ui-reg-key branch {::file/keys [sub-type] :as file} string]]
+      [_ ui-reg-key branch {::file/keys [sub-type] :as file}]]
    (let [iframe (get-in ui-db [ui-reg-key ::iframe])]
-     (do (update-node! iframe file string)
+     (do (update-node! iframe file)
          nil))))
 
 (re-frame/reg-event-fx

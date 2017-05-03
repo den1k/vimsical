@@ -2,8 +2,10 @@
   (:require
    [reagent.core :as r]
    [re-frame.core :as re-frame]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.common.util.core :as util]
    [vimsical.frontend.code-editor.handlers :as handlers]
+   [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.vcs.file :as file]))
 
 (defn editor-opts
@@ -13,7 +15,7 @@
   (let [sub-type
         (::file/sub-type file)
         defaults
-        {:value                ""
+        {:value                (<sub [::vcs.subs/file-string file])
          :language             (name sub-type)
          :readOnly             read-only?
 

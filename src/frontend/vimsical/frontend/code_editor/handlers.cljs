@@ -162,8 +162,7 @@
  ::register
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [db ui-db]} [_ reg-key {:keys [db/id] :as file} editor-instance]]
-   {:ui-db    (assoc-in ui-db [reg-key id] editor-instance)
-    :dispatch [::init reg-key file]}))
+   {:ui-db (assoc-in ui-db [reg-key id] editor-instance)}))
 
 (re-frame/reg-event-fx
  ::dispose
@@ -182,11 +181,6 @@
  ::update-editor-cursor
  [(re-frame/inject-cofx :ui-db)]
  update-editor-cursor)
-
-(re-frame/reg-event-fx
- ::init
- (fn [_ [_ reg-key file]]
-   {:dispatch [::update-editor-text reg-key file]}))
 
 (re-frame/reg-event-fx
  ::text-change
