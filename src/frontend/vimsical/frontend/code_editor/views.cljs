@@ -1,30 +1,30 @@
 (ns vimsical.frontend.code-editor.views
   (:require
-   [reagent.core :as r]
    [re-frame.core :as re-frame]
    [vimsical.frontend.util.re-frame :refer [<sub]]
+   [reagent.core :as r]
+   [vimsical.vcs.file :as file]
    [vimsical.common.util.core :as util]
    [vimsical.frontend.code-editor.handlers :as handlers]
+   [vimsical.frontend.vcs.handlers :as vcs.handlers]
    [vimsical.frontend.vcs.subs :as vcs.subs]
-   [vimsical.vcs.file :as file]))
+   [vimsical.vcs.edit-event :as edit-event]))
 
 (defn editor-opts
   "https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditorconstructionoptions.html"
-  [{:keys [file compact? read-only? custom-opts]
+  [{:keys [{::file/keys [sub-type]} file compact? read-only? custom-opts]
     :or   {read-only? false}}]
-  (let [sub-type
-        (::file/sub-type file)
-        defaults
-        {:value                (<sub [::vcs.subs/file-string file])
-         :language             (name sub-type)
-         :readOnly             read-only?
+  (let [defaults
+        {:value    ""
+         :language (name sub-type)
+         :readOnly read-only?
 
          :theme                "vs"     ; default
          ;; FIXME! Odd things happen to monaco's line-width calculations
          ;; when using FiraCode regardless of ligatures
-         ;:fontFamily           "FiraCode-Retina"
-         ;:fontLigatures        true
-         ;:fontSize             13
+         ;; :fontFamily           "FiraCode-Retina"
+         ;; :fontLigatures        true
+         ;; :fontSize             13
 
          ;; two chars gap between line nums and code
          :lineDecorationsWidth "2ch"
@@ -49,13 +49,12 @@
          :wrappingColumn       0
          ;; "none" | "same" | "indent"
          :wrappingIndent       "indent"
-         :useTabStops          false    ; use spaces
-         }
+         :useTabStops          false}
 
         scrollbar-defaults
         {:scrollbar
-         {; setting to be explicit, bar won't
-          ; show when wrappingColumn is 0
+         {;; setting to be explicit, bar won't
+          ;; show when wrappingColumn is 0
           :useShadows            false
           ;; horizontal should never be needed
           ;; because editors are rendered in
@@ -72,41 +71,118 @@
          :snippetSuggestions         :none
          :scrollbar                  {:verticalScrollbarSize 7}}]
 
-    {:editor (util/deep-merge defaults
-                              scrollbar-defaults
-                              (when compact? compact-defaults)
-                              custom-opts)
+    {:editor
+     (util/deep-merge
+      defaults
+      scrollbar-defaults
+      (when compact? compact-defaults)
+      custom-opts)
      ;; https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.itextmodelupdateoptions.html
      :model  {:tabSize 2}}))
+
 
 (defn new-editor [el {:keys [editor model] :as opts}]
   (doto (js/monaco.editor.create el (clj->js editor))
     (.. getModel (updateOptions (clj->js model)))))
 
-(defn setup-event-handlers [editor reg-key file]
-  (doto editor
-    (.onDidChangeModelContent
-     #(re-frame/dispatch [::handlers/text-change reg-key file %]))
-    (.onDidChangeCursorSelection
-     #(re-frame/dispatch [::handlers/selection-change reg-key file %]))
-    (.onDidFocusEditor
-     #(re-frame/dispatch [::handlers/focus :app/active-editor editor]))))
+
+(defn pos->str-idx
+  ;; Counts only until where we are
+  ;; inc's at each line to account for \n
+  ;; dec column because monaco returns col after event
+  [line column lines]
+  (let [xf (comp
+            (take (dec line))
+            (map #(inc (.-length %))))]
+    (transduce xf + (dec column) lines)))
+
+;;
+;; * Content change
+;;
+
+(defn- content-event-state [model e]
+  (let [range         (.-range e)
+        diff          (.-text e)
+        added-count   (.-length diff)
+        deleted-count (.-rangeLength e)
+        start-line    (.-startLineNumber range)
+        start-column  (.-startColumn range)
+        lines         (.getLinesContent model)]
+    {:idx     (pos->str-idx start-line start-column lines)
+     :diff    diff
+     :added   (when-not (zero? added-count) added-count)
+     :deleted (when-not (zero? deleted-count) deleted-count)}))
+
+(defn content-event-type [{:keys [added deleted]}]
+  (or (and deleted (if added :str/rplc :str/rem))
+      (and added :str/ins)))
+
+(defn parse-content-event [model e]
+  (let [{:keys [diff idx added deleted]
+         :as   e-state} (content-event-state model e)
+        event-type      (content-event-type e-state)]
+    (case event-type
+      :str/ins  {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
+      :str/rem  {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
+      :str/rplc {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx ::edit-event/amt deleted})))
+
+;;
+;; * Cursor & Selection change
+;;
+
+(defn- selection-event-state [model e]
+  (let [sel          (.-selection e)
+        start-line   (.-startLineNumber sel)
+        start-column (.-startColumn sel)
+        end-line     (.-endLineNumber sel)
+        end-column   (.-endColumn sel)
+        lines        (.getLinesContent model)
+        selection?   (or (not (identical? start-column end-column))
+                         (not (identical? start-line end-line)))]
+    {:selection? selection?
+     :start-idx  (pos->str-idx start-line start-column lines)
+     :end-idx    (when selection? (pos->str-idx end-line end-column lines))
+     :lines      lines}))
+
+(defn parse-selection-event [model e]
+  (let [{:keys [selection? start-idx end-idx]} (selection-event-state model e)]
+    (if-not selection?
+      {::edit-event/op :crsr/mv ::edit-event/idx start-idx}
+      {::edit-event/op :crsr/sel ::edit-event/range [start-idx end-idx]})))
+
+(defn handle-content-change [model {:keys [db/id] :as file} e]
+  (re-frame/dispatch [::vcs.handlers/add-edit-event id  (parse-content-event model e)]))
+
+(defn handle-cursor-change [model {:keys [db/id] :as file} e]
+  (re-frame/dispatch [::vcs.handlers/add-edit-event id (parse-selection-event model e)]))
+
+(defn editor-focus-handler [editor]
+  (fn [_]
+    (re-frame/dispatch [::handlers/focus :app/active-editor editor])))
+
+(defn new-listeners
+  [file editor]
+  {:model->content-change-handler
+   (fn model->content-change-handler [model]
+     (fn [e]
+       (handle-content-change model file e)))
+   :model->cursor-change-handler
+   (fn model->cursor-change-handler [model]
+     (fn [e]
+       (handle-cursor-change model file e)))
+   :editor->focus-handler editor-focus-handler})
 
 (defn code-editor
-  [{:keys [file read-only? editor-reg-key]
-    :as   opts}]
-  {:pre [editor-reg-key]}
+  [{:keys [file read-only?] :as opts}]
   (r/create-class
    {:component-did-mount
     (fn [c]
-      (let [editor (new-editor (r/dom-node c) (editor-opts opts))
-            model  (.-model editor)]
-        (when-not read-only?
-          (setup-event-handlers editor editor-reg-key file))
-        (re-frame/dispatch [::handlers/register editor-reg-key file editor])))
+      (let [editor    (new-editor (r/dom-node c) (editor-opts opts))
+            listeners (new-listeners file editor)]
+        (re-frame/dispatch [::handlers/register file editor listeners])))
     :component-will-unmount
     (fn [_]
-      (re-frame/dispatch [::handlers/dispose editor-reg-key file]))
+      (re-frame/dispatch [::handlers/dispose file]))
     :render
     (fn [_]
       (when-let [errors

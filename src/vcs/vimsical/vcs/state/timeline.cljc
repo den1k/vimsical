@@ -77,6 +77,7 @@
 (s/def ::index nat-int?)
 (s/def ::uuid-fn ifn?)
 
+;; TODO move chunks-seq code to state.chunks
 
 ;; * Denormalizations used for lookups
 

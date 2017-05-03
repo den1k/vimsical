@@ -2,9 +2,8 @@
   (:require
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
-   [vimsical.frontend.timeline.subs :as subs]
+   [vimsical.frontend.code-editor.handlers :as code-editor.handlers]
    [vimsical.frontend.util.re-frame :as util.re-frame]
-   [vimsical.frontend.vcs.queries :as vcs.queries]
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.state.timeline :as timeline]))
@@ -66,7 +65,8 @@
          vims-vcs' (-> vims-vcs
                        (update :vims/vcs assoc-skimhead t)
                        (update :vims/vcs vcs/set-delta delta))]
-     {:db (mg/add db vims-vcs')})))
+     {:db       (mg/add db vims-vcs')
+      :dispatch [::code-editor.handlers/update-editors]})))
 
 (re-frame/reg-event-fx
  ::skimhead-offset
@@ -83,4 +83,5 @@
          vims-vcs' (-> vims-vcs
                        (update :vims/vcs assoc-skimhead skimhead')
                        (update :vims/vcs vcs/set-delta delta))]
-     {:db (mg/add db vims-vcs')})))
+     {:db       (mg/add db vims-vcs')
+      :dispatch [::code-editor.handlers/update-editors]})))

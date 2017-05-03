@@ -20,7 +20,7 @@
 ;; * Mouse events helpers
 ;;
 
-(def x-scroll-factor 5)
+(def x-scroll-factor 10)
 (def y-scroll-factor (* 5 x-scroll-factor))
 
 (defn e->coords [e] [(.-clientX e) (.-clientY e)])
