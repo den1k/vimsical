@@ -1,11 +1,12 @@
 (ns vimsical.frontend.util.preprocess.core
   (:require [vimsical.vcs.file :as file]
+            [vimsical.vcs.compiler :as compiler]
             [cljsjs.babel-standalone]))
 
 (defmulti preprocess
   (fn [{::file/keys [compiler]} string]
     {:pre [(string? string)]}
-    compiler))
+    (::compiler/sub-type compiler)))
 
 (defmethod preprocess :default
   [_ string]
