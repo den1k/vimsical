@@ -102,6 +102,16 @@
         (assoc ::delta-id delta-id' ::timeline timeline'))))
 
 
+;; ** Timeline setters
+
+(defn set-delta-id
+  [vcs delta-id]
+  (assoc vcs ::delta-id delta-id))
+
+(defn set-delta
+  [vcs {:keys [id]}]
+  (set-delta-id vcs id))
+
 ;; * Queries
 
 (defn- delta-id->state

@@ -149,6 +149,4 @@
 
 (defn delta-at-relative-time
   [{::keys [duration deltas-by-relative-time]} t]
-  {:pre [(<= t duration)]}
-  (second
-   (avl/nearest deltas-by-relative-time <= t)))
+  (some-> deltas-by-relative-time (avl/nearest <= t) second))

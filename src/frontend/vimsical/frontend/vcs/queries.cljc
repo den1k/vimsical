@@ -4,15 +4,13 @@
    [vimsical.vcs.core :as vcs]))
 
 (def branch
-  ['*
-   {::branch/files ['*]}])
+  ['* {::branch/files ['*]}])
 
 (def vims
-  [:db/id
-   {:vims/branches branch}])
+  [:db/id {:vims/branches branch}])
 
 (def vcs
   ['* {::vcs/branches branch}])
 
 (def vims-vcs
-  [{:vims/vcs vcs}])
+  [:db/id {:vims/vcs vcs}])

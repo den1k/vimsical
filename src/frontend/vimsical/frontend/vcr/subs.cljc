@@ -13,10 +13,3 @@
  (fn [{:vims/keys [branches]}]
    (->> branches first)))
 
-(re-frame/reg-sub
- ::playhead
- (fn [db [_]] 2000))
-
-(re-frame/reg-sub
- ::skimhead
- (fn [db [_]] 1000))
