@@ -153,6 +153,10 @@
        (delta-id->state-by-file-id delta-id)
        (state.files/cursor file-id))))
 
+
+(defn timeline-delta-at-time [{::keys [timeline]} time]
+  (state.timeline/delta-at-absolute-time timeline time))
+
 (defn timeline-delta-at-time [{::keys [timeline]} time]
   (state.timeline/delta-at-absolute-time timeline time))
 

@@ -135,5 +135,23 @@
         (uuid :d7) 7
         (uuid :d8) 8
         (uuid :d2) 9))
-    (testing "next-delta"
-      )))
+    (testing "entries"
+      (is (= [1 d0] (sut/first-entry actual)))
+      (let [[t0 td0 :as e0] (sut/next-entry actual (sut/first-entry actual))
+            [t1 td1 :as e1] (sut/next-entry actual e0)
+            [t2 td2 :as e2] (sut/next-entry actual e1)
+            [t3 td3 :as e3] (sut/next-entry actual e2)
+            [t4 td4 :as e4] (sut/next-entry actual e3)
+            [t5 td5 :as e5] (sut/next-entry actual e4)
+            [t6 td6 :as e6] (sut/next-entry actual e5)
+            [t7 td7 :as e7] (sut/next-entry actual e6)
+            [t8 td8 :as e8] (sut/next-entry actual e7)]
+        (is (= 2 t0))
+        (is (= 3 t1))
+        (is (= 4 t2))
+        (is (= 5 t3))
+        (is (= 6 t4))
+        (is (= 7 t5))
+        (is (= 8 t6))
+        (is (= 9 t7))
+        (is (nil? t8))))))

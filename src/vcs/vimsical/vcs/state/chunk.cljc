@@ -7,13 +7,16 @@
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.file :as file]))
 
+;;
 ;; * Spec
+;;
 
 (s/def ::id uuid?)
 (s/def ::depth nat-int?)
 (s/def ::count pos-int?)
+(s/def ::relative-time nat-int?)
 (s/def ::deltas-by-relative-time
-  (s/every-kv nat-int? ::delta/delta :kind sorted? :into (avl/sorted-map)))
+  (s/every-kv ::relative-time ::delta/delta :kind sorted? :into (avl/sorted-map)))
 (s/def ::duration pos-int?)
 (s/def ::delta-start-id ::delta/id)
 (s/def ::delta-end-id ::delta/id)
@@ -30,20 +33,6 @@
           (same-file?   [deltas]
             (every? (partial apply util/=by :file-id) (partition 2 deltas)))]
     (s/and (s/every ::delta/delta) same-branch? same-file?)))
-
-(s/fdef new-deltas-by-relative-time
-        :args (s/cat :deltas ::deltas)
-        :ret  (s/tuple ::duration ::deltas-by-relative-time))
-
-(defn- new-deltas-by-relative-time
-  "Return an avl map where each delta is assoc'd to the sum of the previous
-  deltas' pad values + the delta's own pad value."
-  [deltas]
-  (reduce
-   (fn [[t deltas] {:keys [pad] :as delta}]
-     (let [t' (+ ^long t ^long pad)]
-       [t' (assoc deltas t' delta)]))
-   [0 (avl/sorted-map)] deltas))
 
 (s/def ::chunk
   (s/keys :req [::id
@@ -63,8 +52,27 @@
 (s/def ::annotated-chunk
   (s/merge ::chunk ::timeline-annotations))
 
+;;
+;; * Internal
+;;
 
-;; * API
+(s/fdef new-deltas-by-relative-time
+        :args (s/cat :deltas ::deltas)
+        :ret  (s/tuple ::duration ::deltas-by-relative-time))
+
+(defn- new-deltas-by-relative-time
+  "Return an avl map where each delta is assoc'd to the sum of the previous
+  deltas' pad values + the delta's own pad value."
+  [deltas]
+  (reduce
+   (fn [[t deltas] {:keys [pad] :as delta}]
+     (let [t' (+ ^long t ^long pad)]
+       [t' (assoc deltas t' delta)]))
+   [0 (avl/sorted-map)] deltas))
+
+;;
+;; * Ctor
+;;
 
 (s/fdef new-chunk
         :args (s/cat :id ::id :depth ::depth :deltas ::deltas :branch-off? boolean?)
@@ -88,6 +96,10 @@
              ::branch-id               branch-id
              ::file-id                 file-id}
       branch-off? (assoc ::delta-branch-off-id (delta/op-id first-delta)) )))
+
+;;
+;; * Adding deltas
+;;
 
 (defn conj?
   [chunk delta]
@@ -121,6 +133,10 @@
       (true? start?) (assoc ::branch-start? start?)
       (true? end?)   (assoc ::branch-end? end?))))
 
+;;
+;; * Splitting
+;;
+
 (s/fdef split-at-delta-index
         :args (s/cat :chunk ::chunk :uuid-fn ifn? :index nat-int?)
         :ret  (s/tuple (s/nilable ::chunk)
@@ -143,10 +159,30 @@
     [left-chunk right-chunk]))
 
 
+;;
+;; * Entries lookups
+;;
+
+(s/def ::entry (s/tuple ::relative-time ::delta/delta))
+
+(s/fdef first-entry :args (s/cat :chunk ::chunk) :ret ::entry)
+
+(defn first-entry
+  [{::keys [deltas-by-relative-time]}]
+  (first deltas-by-relative-time))
+
+(s/fdef entry-at-relative-time
+        :args (s/cat :chunk ::chunk :test ifn? :t ::relative-time)
+        :ret  (s/nilable ::entry))
+
+(defn entry-at-relative-time
+  [{::keys [deltas-by-relative-time]} test t]
+  (some-> deltas-by-relative-time (avl/nearest test t)))
+
 (s/fdef delta-at-relative-time
-        :args (s/cat :chunk ::chunk :t number?)
+        :args (s/cat :chunk ::chunk :t ::relative-time)
         :ret ::delta/delta)
 
 (defn delta-at-relative-time
-  [{::keys [duration deltas-by-relative-time]} t]
-  (some-> deltas-by-relative-time (avl/nearest <= t) second))
+  [timeline t]
+  (second (entry-at-relative-time timeline <= t)))

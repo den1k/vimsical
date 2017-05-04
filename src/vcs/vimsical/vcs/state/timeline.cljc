@@ -70,19 +70,26 @@
    [vimsical.vcs.state.branches :as state.branches]
    [vimsical.vcs.state.chunk :as chunk]))
 
-
+;;
 ;; * Spec
+;;
 
 (s/def ::absolute-time nat-int?)
 (s/def ::index nat-int?)
 (s/def ::uuid-fn ifn?)
 
-;; TODO move chunks-seq code to state.chunks
-
-;; * Denormalizations used for lookups
+;;
+;; * Internal - denormalizations used for lookups
+;;
 
 (s/def ::deltas-by-branch-id ::state.branches/deltas-by-branch-id)
 (s/def ::chunks-by-branch-id (s/every-kv ::branch/id (s/every ::chunk/chunk :kind vector?)))
+
+;;
+;; * Chunks
+;;
+
+;; ** Branch annotations
 
 (defn annotate-chunk-start [chunk]
   (-> chunk
@@ -100,6 +107,8 @@
 
 (defn remove-annotations [chunk]
   (dissoc chunk ::chunk/branch-start? ::chunk/branch-end?))
+
+;; ** Adding deltas
 
 ;; XXX more efficient way to get the depth
 (defn add-delta-to-chunks-by-branch-id
@@ -144,8 +153,9 @@
           (update branch-id update-chunks uuid-fn delta)
           (update branch-id annotate-branch-start-and-end)))))
 
-
-;; * Timeline state
+;;
+;; * Internal state
+;;
 
 (s/def ::chunks-by-absolute-start-time
   (s/every-kv ::absolute-time ::chunk/chunk :kind sorted? :into (avl/sorted-map)))
@@ -166,13 +176,17 @@
 
 (s/assert* ::timeline empty-timeline)
 
-
-;; * Internal
+;;
+;; * Transient state - denormalizations used during inlining
+;;
 
 (s/def ::branch/chunks (s/every ::chunk/chunk))
 
 (s/def ::branch-chunks-by-delta-start-index
   (s/every-kv ::index ::chunk/chunk :kind sorted? :into (avl/sorted-map)))
+
+(s/def ::branch-children-chunks-by-delta-branch-off-index
+  (s/every-kv ::index (s/every ::chunk/chunk) :kind sorted? :into (avl/sorted-map)))
 
 (defn- new-chunks-by-delta-start-index
   "Return an avl map where each chunk is assoc'd with its delta-start index."
@@ -191,13 +205,10 @@
   [{:keys [db/id] ::branch/keys [chunks]}]
   (new-chunks-by-delta-start-index chunks))
 
-(s/def ::branch-children-chunks-by-delta-branch-off-indexes
-  (s/every-kv ::index (s/every ::chunk/chunk) :kind sorted? :into (avl/sorted-map)))
-
 (s/fdef new-branch-children-chunks-by-delta-branch-off-indexes
         :args (s/cat :deltas-by-branch-id  ::deltas-by-branch-id
                      :branch ::branch/branch)
-        :ret ::branch-children-chunks-by-delta-branch-off-indexes)
+        :ret ::branch-children-chunks-by-delta-branch-off-index)
 
 (defn new-branch-children-chunks-by-delta-branch-off-indexes
   "Return an avl map where each child's chunks are assoc'd in a single sequence
@@ -252,7 +263,7 @@
 
 (s/fdef new-inlined-chunks-seq
         :args (s/cat :branch-chunks-by-delta-start-index ::branch-chunks-by-delta-start-index
-                     :branch-children-chunks-by-delta-branch-off-indexes ::branch-children-chunks-by-delta-branch-off-indexes
+                     :branch-children-chunks-by-delta-branch-off-index ::branch-children-chunks-by-delta-branch-off-index
                      :uuid-fn ::uuid-fn)
         :ret (s/every ::chunk/chunk))
 
@@ -262,9 +273,9 @@
   ordering to be: branch chunks left of branch-off, children chunks, branch
   chunks right of branch-off."
   [branch-chunks-by-delta-start-index
-   branch-children-chunks-by-delta-branch-off-indexes
+   branch-children-chunks-by-delta-branch-off-index
    uuid-fn]
-  (let [slice-indexes (keys branch-children-chunks-by-delta-branch-off-indexes)]
+  (let [slice-indexes (keys branch-children-chunks-by-delta-branch-off-index)]
     (if-not (seq slice-indexes)
       (vals branch-chunks-by-delta-start-index)
       (flatten
@@ -280,9 +291,7 @@
               {idx value}
               right)))
          (slice-branch-chunks-by-delta-index branch-chunks-by-delta-start-index slice-indexes uuid-fn)
-         branch-children-chunks-by-delta-branch-off-indexes))))))
-
-(s/def new-chunks-by-absolute-start-time (s/every-kv ::absolute-time ::chunk/chunk))
+         branch-children-chunks-by-delta-branch-off-index))))))
 
 (s/fdef new-chunks-by-absolute-start-time
         :args (s/cat :chunks (s/every ::chunk/chunk))
@@ -333,16 +342,19 @@
           (if-not (seq children)
             (assoc branch ::branch/chunks chunks)
             ;; XXX see what we can cache here instead
-            (let [branch-chunks-by-delta-start-index                 (new-branch-chunks-by-delta-start-index branch)
-                  branch-children-chunks-by-delta-branch-off-indexes (new-branch-children-chunks-by-delta-branch-off-indexes deltas-by-branch-id branch)
-                  inlined-chunks-seq                                 (new-inlined-chunks-seq branch-chunks-by-delta-start-index branch-children-chunks-by-delta-branch-off-indexes uuid-fn)]
+            (let [branch-chunks-by-delta-start-index               (new-branch-chunks-by-delta-start-index branch)
+                  branch-children-chunks-by-delta-branch-off-index (new-branch-children-chunks-by-delta-branch-off-indexes deltas-by-branch-id branch)
+                  inlined-chunks-seq                               (new-inlined-chunks-seq branch-chunks-by-delta-start-index branch-children-chunks-by-delta-branch-off-index uuid-fn)]
               (assoc branch ::branch/chunks inlined-chunks-seq))))
         tree)))))
 
-
+;;
 ;; * API
+;;
 
+;;
 ;; ** Updates
+;;
 
 (s/fdef add-delta
         :args (s/cat :timeline ::timeline
@@ -378,21 +390,51 @@
      (add-delta timeline branches uuid-fn delta))
    timeline deltas))
 
-
+;;
 ;; ** Queries
+;;
 
-(def duration ::duration)
+(s/def ::timeline-entry (s/tuple ::absolute-time ::delta/delta))
 
-(defn delta-at-absolute-time
-  [{::keys [chunks-by-absolute-start-time]} t]
-  (let [[abs-time chunk] (avl/nearest chunks-by-absolute-start-time < t)
-        rel-time         (- (long t) (long abs-time))]
-    (chunk/delta-at-relative-time chunk rel-time)))
-
-(s/def ::delta-path (s/tuple ::chunk/id ::delta/id))
+;; Make some aliases so clients don't rely on our internal state
 
 (def chunks-by-absolute-start-time ::chunks-by-absolute-start-time)
 
-(s/fdef next-delta-path
-        :args (s/cat :timeline ::timeline :delta-path ::delta-path)
-        :ret ::delta-path)
+(def duration ::duration)
+
+(defn- nearest-chunk
+  [{::keys [chunks-by-absolute-start-time]} test expect-abs-time]
+  (avl/nearest chunks-by-absolute-start-time test expect-abs-time))
+
+(defn- nearest-delta
+  [[chunk-abs-time chunk] test expect-abs-time]
+  (let [expect-rel-time (- (long expect-abs-time) (long chunk-abs-time))]
+    (when-some [[actual-rel-time delta] (chunk/entry-at-relative-time chunk test expect-rel-time)]
+      [(+ chunk-abs-time actual-rel-time) delta])))
+
+(s/fdef entry-at-absolute-time :args (s/cat :timeline ::timeline :t ::absolute-time) :ret ::timeline-entry)
+
+(defn entry-at-absolute-time
+  [timeline expect-abs-time]
+  (some-> timeline
+          (nearest-chunk < expect-abs-time)
+          (nearest-delta <= expect-abs-time)))
+
+(s/fdef first-entry :args (s/cat :timeline ::timeline) :ret ::timeline-entry)
+
+(defn first-entry
+  [{::keys [chunks-by-absolute-start-time]}]
+  (let [[_ chunk] (first chunks-by-absolute-start-time)]
+    (chunk/first-entry chunk)))
+
+(s/fdef next-entry :args (s/cat :timeline ::timeline :entry ::timeline-entry) :ret (s/nilable ::timeline-entry))
+
+(defn next-entry
+  [timeline [t _]]
+  ;; The next delta might be in the next chunk, but we look to the left first
+  (or (some-> timeline (nearest-chunk < t)  (nearest-delta > t))
+      (some-> timeline (nearest-chunk >= t) (nearest-delta > t))))
+
+(defn delta-at-absolute-time
+  [timeline expect-abs-time]
+  (second (entry-at-absolute-time timeline expect-abs-time)))
