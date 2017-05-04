@@ -1,21 +1,27 @@
 (ns vimsical.vcs.core
   "* TODO
 
-  - constant time next-delta look up for playback scheduling
-  - add branch/start end to chunks using branch-pointers
-  - update chunks inside branches
+  - rename ::delta-id to ::last-delta-id
+
+  Make it clear we're not tracking vcr state, only the bare minimum to be
+  consistent, the vcr can add ::timeline-entry and use it as a sub without us
+  knowing about it
+
+  - remove set-delta
+
+  - remove ::branch-id and add branch-id as an argument to add-edit-event
+
+  same rationale
+
+  - cleanup naming
+
+  alias state.foo/bar to ::bar
 
   - branching
 
   should we make the client create and add a new branch before accepting edit
   events?
-
-  * NOTES
-
-  - The delta-id tracked in the state corresponds to a str delta id: when
-  adding edit events it is the id of the last delat that point to a string
-  operation (in other words, a delta that makes up the file). The state would
-  invalid if that id pointed to a crsr delta."
+  "
   (:require
    [clojure.spec :as s]
    [vimsical.vcs.branch :as branch]

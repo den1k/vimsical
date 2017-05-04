@@ -17,48 +17,53 @@
         [vimsical.frontend.vcs.subs :as vcs.subs])
        (:import [goog.async Delay nextTick])]))
 
-;;
-;; * Fx
-;;
+(defonce scheduler
+  (atom {::play? false}))
 
 (defn schedule!
-  [ms f]
+  [ms event]
   #?(:cljs
-     (if-not (some-> ms int pos-int?)
-       (goog.async.nextTick f)
-       (doto (goog.async.Delay. f) (.start ms)))
-     :clj
-     (.start (Thread. (fn [] (when (pos? ms) (Thread/sleep ms)) (f))))))
+     (doto (goog.async.Delay. #(re-frame/dispatch event))
+       (.start ms))))
+
+(re-frame/reg-cofx
+ :scheduler
+ (fn [context]
+   (assoc context :scheduler @scheduler)))
+
+(re-frame/reg-fx
+ :schedule
+ (fn [value]
+   (doseq [{:keys [ms event] :as effect} value]
+     (if (or (empty? event) (not (number? ms)))
+       (console :error "re-frame: ignoring bad :schedule value:" effect)
+       (schedule! ms event)))))
 
 ;;
 ;; * Events
 ;;
 
-(re-frame/reg-fx
- :schedule
- (fn [value]
-   (doseq [{:keys [ms dispatch] :as effect} value]
-     (if (or (empty? dispatch) (not (number? ms)))
-       (console :error "re-frame: ignoring bad :schedule value:" effect)
-       (schedule! ms #(re-frame/dispatch dispatch))))))
 
 (re-frame/reg-event-fx
  ::play
- (fn [_ _]
-   {:dispatch [::next-delta nil]}))
+ [(re-frame/inject-cofx :scheduler)]
+ (fn [{:keys [scheduler]} _]
+   {:scheduler (assoc scheduler ::play? true)
+    :dispatch  [::tick]}))
 
 (re-frame/reg-event-fx
  ::pause
- (fn [_ _]))
+ [(re-frame/inject-cofx :scheduler)]
+ (fn [{:keys [scheduler]} _]
+   {:scheduler (assoc scheduler ::play? false)}))
 
 (re-frame/reg-event-fx
- ::next-delta
- [(util.re-frame/inject-sub [::timeline.subs/playhead])
-  (util.re-frame/inject-sub [::vcs.subs/vims-vcs])]
- (fn [{:as                  cofx
-       ::vcs.subs/keys      [vims-vcs]
-       ::timeline.subs/keys [playhead]}
+ ::tick
+ [(re-frame/inject-cofx :scheduler)
+  ;; (util.re-frame/inject-sub [::timeline.subs/playhead])
+  (util.re-frame/inject-sub [::vcs.subs/delta])]
+ (fn [{:as             cofx
+       ::vcs.subs/keys [vcs]}
       {:keys [pad] :as delta}]
    {:dispatch [::vcs.handlers/set-delta delta]
-    ;; :schedule [{:scheduler :ms pad :dispatch [::next-delta delta]}]
-    }))
+    :schedule [{:ms pad :dispatch [::tick delta]}]}))

@@ -394,7 +394,7 @@
 ;; ** Queries
 ;;
 
-(s/def ::timeline-entry (s/tuple ::absolute-time ::delta/delta))
+(s/def ::entry (s/tuple ::absolute-time ::delta/delta))
 
 ;; Make some aliases so clients don't rely on our internal state
 
@@ -412,7 +412,7 @@
     (when-some [[actual-rel-time delta] (chunk/entry-at-relative-time chunk test expect-rel-time)]
       [(+ chunk-abs-time actual-rel-time) delta])))
 
-(s/fdef entry-at-absolute-time :args (s/cat :timeline ::timeline :t ::absolute-time) :ret ::timeline-entry)
+(s/fdef entry-at-absolute-time :args (s/cat :timeline ::timeline :t ::absolute-time) :ret ::entry)
 
 (defn entry-at-absolute-time
   [timeline expect-abs-time]
@@ -420,14 +420,14 @@
           (nearest-chunk < expect-abs-time)
           (nearest-delta <= expect-abs-time)))
 
-(s/fdef first-entry :args (s/cat :timeline ::timeline) :ret ::timeline-entry)
+(s/fdef first-entry :args (s/cat :timeline ::timeline) :ret ::entry)
 
 (defn first-entry
   [{::keys [chunks-by-absolute-start-time]}]
   (let [[_ chunk] (first chunks-by-absolute-start-time)]
     (chunk/first-entry chunk)))
 
-(s/fdef next-entry :args (s/cat :timeline ::timeline :entry ::timeline-entry) :ret (s/nilable ::timeline-entry))
+(s/fdef next-entry :args (s/cat :timeline ::timeline :entry ::entry) :ret (s/nilable ::entry))
 
 (defn next-entry
   [timeline [t _]]

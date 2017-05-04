@@ -42,46 +42,42 @@
 (re-frame/reg-event-fx
  ::skimhead-start
  [(util.re-frame/inject-sub [::vcs.subs/vcs])]
- (fn [{:keys [ui-db db] ::vcs.subs/keys [vcs] :as cofx} _]))
+ (fn [{:keys [ui-db db] ::vcs.subs/keys [vcs]} _]))
 
 (re-frame/reg-event-fx
  ::skimhead-stop
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub [::vcs.subs/vcs])]
- (fn [{:keys [ui-db db] ::vcs.subs/keys [vcs] :as cofx} _]))
+ (fn [{:keys [ui-db db] ::vcs.subs/keys [vcs]} _]))
 
-;; TODO dispatch vcs/set-delta as an effect?
 (re-frame/reg-event-fx
  ::skimhead-set
  [(re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub [::vcs.subs/vims-vcs])]
- (fn [{:as                             cofx
-       :keys                           [db ui-db]
-       {:vims/keys [vcs] :as vims-vcs} ::vcs.subs/vims-vcs}
+  (util.re-frame/inject-sub [::vcs.subs/vcs])]
+ (fn [{:keys                           [db ui-db]
+       ::vcs.subs/keys [vcs]}
       [_ svg-node->timeline-position-fn]]
    (let [svg-node  (get ui-db ::svg)
          t         (svg-node->timeline-position-fn svg-node)
          delta     (vcs/timeline-delta-at-time vcs t)
-         vims-vcs' (-> vims-vcs
-                       (update :vims/vcs assoc-skimhead t)
-                       (update :vims/vcs vcs/set-delta delta))]
-     {:db       (mg/add db vims-vcs')
+         vcs' (-> vcs
+                  (assoc-skimhead t)
+                  (vcs/set-delta delta))]
+     {:db       (mg/add db vcs')
       :dispatch [::code-editor.handlers/update-editors]})))
 
 (re-frame/reg-event-fx
  ::skimhead-offset
- [(util.re-frame/inject-sub [::vcs.subs/vims-vcs])
+ [(util.re-frame/inject-sub [::vcs.subs/vcs])
   (util.re-frame/inject-sub [::vcs.subs/timeline-duration])]
- (fn [{:as                             cofx
-       :keys                           [db]
-       {:vims/keys [vcs] :as vims-vcs} ::vcs.subs/vims-vcs
-       ::vcs.subs/keys                 [timeline-duration]}
+ (fn [{:keys           [db]
+       ::vcs.subs/keys [vcs timeline-duration]}
       [_ dX]]
    (let [skimhead  (get-skimhead vcs)
          skimhead' (max 0 (min timeline-duration (+ skimhead dX)))
          delta     (vcs/timeline-delta-at-time vcs skimhead')
-         vims-vcs' (-> vims-vcs
-                       (update :vims/vcs assoc-skimhead skimhead')
-                       (update :vims/vcs vcs/set-delta delta))]
-     {:db       (mg/add db vims-vcs')
+         vcs'      (-> vcs
+                       (assoc-skimhead skimhead')
+                       (vcs/set-delta delta))]
+     {:db       (mg/add db vcs')
       :dispatch [::code-editor.handlers/update-editors]})))

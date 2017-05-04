@@ -4,7 +4,9 @@
    [re-frame.core :as re-frame]
    [vimsical.common.util.core :as util]
    [vimsical.common.uuid :refer [uuid]]
+   [vimsical.frontend.vcs.subs :as subs]
    [vimsical.frontend.vcs.queries :as queries]
+   [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.editor :as editor]))
 
@@ -21,12 +23,14 @@
 (re-frame/reg-event-db ::init-vims init-vims)
 
 (defn add-edit-event
-  [db [_ file-id edit-event]]
-  (let [{:vims/keys [vcs] :as res} (mg/pull-link db queries/vims-vcs :app/vims)
-        effects                    {::editor/pad-fn       (constantly 1000)
-                                    ::editor/uuid-fn      (fn [_e] (uuid))
-                                    ::editor/timestamp-fn (fn [_e] (util/now))}
-        vcs'                       (vcs/add-edit-event vcs effects file-id edit-event)]
-    (mg/add db vcs')))
+  [vcs file-id edit-event]
+  (let [effects {::editor/pad-fn       (constantly 1000)
+                 ::editor/uuid-fn      (fn [_e] (uuid))
+                 ::editor/timestamp-fn (fn [_e] (util/now))}]
+    (vcs/add-edit-event vcs effects file-id edit-event)))
 
-(re-frame/reg-event-db ::add-edit-event add-edit-event)
+(re-frame/reg-event-fx
+ ::add-edit-event
+ [(util.re-frame/inject-sub [::subs/vcs])]
+ (fn [{:keys [db] ::subs/keys [vcs]} [_ file-id edit-event]]
+   {:db (mg/add db (add-edit-event vcs file-id edit-event))}))

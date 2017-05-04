@@ -332,17 +332,16 @@
 (re-frame/reg-event-fx
  ::update-editors
  [(util.re-frame/inject-sub [::vcr.subs/files])
-  (util.re-frame/inject-sub [::vcs.subs/vims-vcs])]
+  (util.re-frame/inject-sub [::vcs.subs/vcs])]
  (fn update-editors
    [{:as             cofx
-     :keys           [ui-db]
      ::vcr.subs/keys [files]
-     ::vcs.subs/keys [vims-vcs]} _]
-   (let [vcs (:vims/vcs vims-vcs)]
-     {:dispatch-n
-      (apply concat
-             (for [{:keys [db/id] :as file} files]
-               [[::clear-disposables file]
-                [::set-string false file (vcs/file-string vcs id)]
-                [::set-cursor file (vcs/file-cursor vcs id) (vcs/file-string vcs id)]
-                [::bind-listeners file]]))})))
+     ::vcs.subs/keys [vcs]} _]
+   {:dispatch-n
+    (mapcat
+     (fn [{:keys [db/id] :as file}]
+       [[::clear-disposables file]
+        [::set-string false file (vcs/file-string vcs id)]
+        [::set-cursor file (vcs/file-cursor vcs id) (vcs/file-string vcs id)]
+        [::bind-listeners file]])
+     files)}))

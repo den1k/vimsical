@@ -1,4 +1,12 @@
 (ns vimsical.frontend.vcs.subs
+  "TODO
+
+  - DONE get rid of the vims in vims-vcs, it is already normalized
+
+  - DONE rename vims-vcs to vcs
+
+  - parametrize vcs by vims
+  "
   (:require
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
@@ -8,20 +16,13 @@
    [vimsical.frontend.util.preprocess.core :as preprocess]
    [vimsical.frontend.util.lint.core :as lint]))
 
+
 (re-frame/reg-sub
  ::vcs
  (fn [db [_]]
    (get-in
     (mg/pull db [{[:app/vims '_] queries/vims-vcs}])
     [:app/vims :vims/vcs])))
-
-;; TODO normalize vcs so we don't need the vims context
-(re-frame/reg-sub
- ::vims-vcs
- (fn [db [_]]
-   (-> db
-       (mg/pull [{[:app/vims '_] queries/vims-vcs}])
-       (get :app/vims))))
 
 (re-frame/reg-sub
  ::file
