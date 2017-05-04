@@ -19,9 +19,7 @@
       [lein-environ "1.1.0"]]}]
 
    :test
-   {:source-paths
-    ["test/backend" "test/frontend" "test/vcs" "test/common"]
-    :dependencies
+   {:dependencies
     [[org.clojure/test.check "0.9.0"]
      [orchestra "0.2.0"]]
     :global-vars
@@ -70,8 +68,7 @@
       [cc.qbits/alia-all       "3.3.0"]
       [com.datomic/datomic-pro "0.9.5544" :exclusions [commons-codec]]]
      :global-vars
-     {*warn-on-reflection* true
-      *unchecked-math*     :warn-on-boxed}}]
+     {*warn-on-reflection* true *unchecked-math* :warn-on-boxed}}]
 
    :backend-dev
    [:backend
@@ -224,10 +221,9 @@
                                              re_frame.trace.trace_enabled_QMARK_ true}
                       :preloads             [devtools.preload
                                              day8.re-frame.trace.preload]
-
-                      :external-config {:devtools/config
-                                        {:features-to-install :all
-                                         :fn-symbol           "λ"}}}}
+                      :external-config      {:devtools/config
+                                             {:features-to-install :all
+                                              :fn-symbol           "λ"}}}}
       {:id           "player-dev"
        :figwheel     {:on-jsload vimsical.frontend.player.dev/on-reload}
        :source-paths ["checkouts/mapgraph/src" "dev/frontend" "src/frontend" "src/common" "src/vcs" "dev/frontend"]
@@ -245,10 +241,9 @@
                                              re_frame.trace.trace_enabled_QMARK_ true}
                       :preloads             [devtools.preload
                                              day8.re-frame.trace.preload]
-
-                      :external-config {:devtools/config
-                                        {:features-to-install :all
-                                         :fn-symbol           "λ"}}}}
+                      :external-config      {:devtools/config
+                                             {:features-to-install :all
+                                              :fn-symbol           "λ"}}}}
       {:id           "test"
        :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
        :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
