@@ -14,8 +14,12 @@
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.file :as file]
    [vimsical.frontend.util.preprocess.core :as preprocess]
-   [vimsical.frontend.util.lint.core :as lint]))
+   [vimsical.frontend.util.lint.core :as lint]
+   [vimsical.vcs.state.timeline :as timeline]))
 
+;;
+;; * VCS
+;;
 
 (re-frame/reg-sub
  ::vcs
@@ -23,6 +27,10 @@
    (get-in
     (mg/pull db [{[:app/vims '_] queries/vims-vcs}])
     [:app/vims :vims/vcs])))
+
+;;
+;; * Files
+;;
 
 (re-frame/reg-sub
  ::file
@@ -48,6 +56,10 @@
  :<- [::vcs]
  (fn [vcs [_ {:keys [db/id] :as file}]]
    (vcs/file-cursor vcs id)))
+
+;;
+;; * Timeline
+;;
 
 (re-frame/reg-sub
  ::preprocessed-file-string
@@ -91,3 +103,9 @@
  :<- [::vcs]
  (fn [vcs _]
    (vcs/timeline-duration vcs)))
+
+(re-frame/reg-sub
+ ::timeline-entry
+ :<- [::vcs]
+ (fn [vcs _]
+   (get vcs ::timeline/current-entry)))

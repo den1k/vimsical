@@ -159,10 +159,6 @@
        (delta-id->state-by-file-id delta-id)
        (state.files/cursor file-id))))
 
-
-(defn timeline-delta-at-time [{::keys [timeline]} time]
-  (state.timeline/delta-at-absolute-time timeline time))
-
 (defn timeline-delta-at-time [{::keys [timeline]} time]
   (state.timeline/delta-at-absolute-time timeline time))
 
@@ -171,3 +167,6 @@
 
 (defn timeline-chunks-by-absolute-start-time [{::keys [timeline]}]
   (state.timeline/chunks-by-absolute-start-time timeline))
+
+(defn timeline-first-entry [{::keys [timeline]}] (state.timeline/first-entry timeline))
+(defn timeline-next-entry [{::keys [timeline]} entry] (state.timeline/next-entry timeline entry))

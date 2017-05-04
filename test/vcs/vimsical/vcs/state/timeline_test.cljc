@@ -63,7 +63,7 @@
                           (fn [cbb delta]
                             (sut/add-delta-to-chunks-by-branch-id cbb branches uuid-fn delta))
                           nil  deltas)]
-    (diff= expect actual)))
+    (is (= expect actual))))
 
 (defn dissoc-chunk-ids [coll]
   (cond
@@ -119,7 +119,7 @@
                     ;; b0, f1
                     8 (chunk/with-bounds (chunk/new-chunk (uuid :chk0) 0 [d2] false) false true)}
             actual (::sut/chunks-by-absolute-start-time actual)]
-        (diff= (dissoc-chunk-ids expect) (dissoc-chunk-ids actual))))
+        (is (= (dissoc-chunk-ids expect) (dissoc-chunk-ids actual)))))
     (testing "timeline-duration"
       (let [expect (reduce + (map :pad deltas))
             actual (sut/duration actual)]
