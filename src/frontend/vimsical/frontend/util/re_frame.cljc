@@ -3,7 +3,8 @@
    [clojure.spec :as s]
    [clojure.set :as set]
    [re-frame.core :as re-frame]
-   #?(:cljs [vimsical.frontend.util.scheduler :as util.scheduler])
+   [re-frame.interop :as interop]
+   [vimsical.frontend.util.scheduler :as util.scheduler]
    #?(:cljs [reagent.ratom :as ratom])))
 
 #?(:clj
@@ -31,7 +32,7 @@
   (deref (re-frame/subscribe sub)))
 
 ;;
-;; * Inject sub
+;; * Inject sub value in handler
 ;;
 
 (defn dispose-maybe
@@ -70,7 +71,7 @@
   ;;
   #?(:cljs
      (when-not (seq (.-watches ratom-or-reaction))
-       (ratom/dispose! ratom-or-reaction))))
+       (interop/dispose! ratom-or-reaction))))
 
 (re-frame/reg-cofx
  :sub
@@ -89,40 +90,75 @@
   (dispose-maybe (re-frame/subscribe query-vector)))
 
 ;;
-;; * Scheduler
+;; * Dispatch event on every sub value
 ;;
 
+(defonce track-register (atom {}))
 
-(defonce schedulers-by-event (atom {}))
+(defn new-track
+  "Create a new reagent track that will execute every time `subscription`
+  updates.
 
-(s/def ::ms nat-int?)
-(s/def ::scheduler #?(:cljs util.scheduler/scheduler? :clj any?))
-(s/def ::scheduler-fx-one (s/keys :req-un [::scheduler ::ms]))
-(s/def ::scheduler-fx-many (s/every ::scheduler-fx-one))
-(s/def ::scheduler-fx (s/or :one ::scheduler-fx-one :many ::scheduler-fx-many))
+  If `event` is provided will always dispatch that event.
 
-(defn- get-or-create-scheduler [event]
+  If event is nil, `val->event` is required and will be invoked with the latest
+  value from the subscription. It should return an event to dispatch or nil for
+  a no-op.
+
+  "
+  [{:keys [subscription event val->event]}]
+  {:pre [(vector? subscription) (or (vector? event) (ifn? val->event))]}
   #?(:cljs
-     (or (get @schedulers-by-event event)
-         (let [scheduler (util.scheduler/new-scheduler event)]
-           (swap! schedulers-by-event assoc event scheduler)
-           scheduler))))
+     (ratom/track!
+      (fn []
+        (let [val @(re-frame/subscribe subscription)]
+          (when-some [event (or event (val->event val))]
+            (re-frame/dispatch event)))))))
 
-(re-frame/reg-cofx
- :scheduler
- (fn [cofx [id :as event]]
-   (assoc cofx :scheduler (get-or-create-scheduler event))))
+(defmulti track-fx :action)
 
-(s/fdef scheduler-fx
-        :args (s/cat :fx ::scheduler-fx)
-        :ret any?)
+(defmethod track-fx :register
+  [{:keys [id] :as track}]
+  (if-some [track (get @track-register id)]
+    (throw (ex-info "Track already exists" {:track track}))
+    (let [track (new-track track)]
+      (swap! track-register assoc id track))))
 
-(defn scheduler-fx
-  [one-or-many]
-  #?(:cljs
-     (doseq [{:keys [scheduler ms] :as effect} (if (map? one-or-many) [one-or-many] one-or-many)]
-       (util.scheduler/schedule-delay! scheduler ms))
-     :clj
-     (throw (ex-info "Scheduler not implemented on the JVM" {}))))
+(defmethod track-fx :dispose
+  [{:keys [id] :as track}]
+  (if-some [track (get @track-register id)]
+    #?(:cljs (do (ratom/dispose! track) (swap! track-register dissoc id)) :clj nil)
+    (throw (ex-info "Track isn't registered" {:track track}))))
 
-(re-frame/reg-fx :schedule scheduler-fx)
+(re-frame/reg-fx :track track-fx)
+
+(comment
+  (do
+    (re-frame/reg-event-fx
+     ::start-trigger-track
+     (fn [cofx event]
+       {:track
+        {:action       :register
+         :id           42
+         :subscription [::sub  "blah"]
+         :val->event   (fn [val] [::trigger val])}}))
+
+    (re-frame/reg-event-fx
+     ::stop-trigger-track
+     (fn [cofx event]
+       {:track
+        {:action :dispose
+         :id     42}}))
+    ;; Define a sub and the event we want to trigger
+    (defonce foo (ratom/atom 0))
+    (re-frame/reg-sub-raw ::sub (fn [_ _] (ratom/make-reaction #(deref foo))))
+    (re-frame/reg-event-db ::trigger (fn [db val] (println "Trigger" val) db))
+    ;; Start the track
+    (re-frame/dispatch [::start-trigger-track])
+    ;; Update the ::sub, will cause ::trigger to run
+    (swap! foo inc)
+    (swap! foo inc)
+    (swap! foo inc)
+    ;; Stop the track, updates to ::sub aren't tracked anymore
+    (re-frame/dispatch [::stop-trigger-track])
+    (swap! foo inc)))
