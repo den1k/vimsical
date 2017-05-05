@@ -22,7 +22,7 @@
     :arrow-left  #(re-frame/dispatch [::handlers/move :left opts])
     :arrow-right #(re-frame/dispatch [::handlers/move :right opts])
     :tab         #(re-frame/dispatch [::handlers/move :right opts])
-    :enter       #(re-frame/dispatch [::handlers/run-selected-cmd quick-search])
+    :enter       #(re-frame/dispatch [::handlers/run-selected-cmd opts])
     :escape      #(re-frame/dispatch [::handlers/close])}))
 
 (defn input []

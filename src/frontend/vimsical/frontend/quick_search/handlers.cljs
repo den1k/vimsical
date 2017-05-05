@@ -108,6 +108,22 @@
                       close? (conj [::close]))]
      {:dispatch-n dispatches})))
 
+(re-frame/reg-event-fx
+ ::run-selected-cmd
+ (fn [_ [_ {:keys [quick-search results filters]}]]
+   (let [{:quick-search/keys
+          [result-idx filter-idx filter-category-idx filter-result-idx]} quick-search
+         {:keys [dispatch close?] :as cmd}
+         (if-not filter-idx
+           (get results result-idx)
+           (-> (get-in filters [filter-idx 1 filter-category-idx 1])
+               vals
+               vec
+               (get filter-result-idx)))]
+     (let [dispatches (cond-> [dispatch]
+                        close? (conj [::close]))]
+       {:dispatch-n dispatches}))))
+
 (re-frame/reg-event-db
  ::move
  (fn [db [_ dir opts]]
