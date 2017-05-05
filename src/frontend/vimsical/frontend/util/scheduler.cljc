@@ -32,7 +32,8 @@
    :clj
    (let [started-at (System/nanoTime)]
      (defn now []
-       (- (System/nanoTime) started-at))))
+       (double
+        (/ (- (System/nanoTime) started-at) 1000000.0)))))
 
 (defn request-callback!
   [tick-fn]
@@ -57,7 +58,7 @@
 
 (deftype TimeScheduler
     [event
-     elapsed-atom
+     tick-cb
      #?(:cljs ^:mutable running    :clj ^:unsynchronized-mutable running )
      #?(:cljs ^:mutable started-at :clj ^:unsynchronized-mutable started-at)
      #?(:cljs ^:mutable next-time  :clj ^:unsynchronized-mutable next-time)
@@ -70,7 +71,7 @@
   (tick! [this now]
     (when running
       (let [elapsed (- now started-at)]
-        (when elapsed-atom (reset! elapsed-atom elapsed))
+        (when tick-cb (tick-cb elapsed))
         (when (and next-time (<= next-time elapsed)) (fire! this)))
       (request-tick! this)))
   (fire! [this]
@@ -107,16 +108,16 @@
 
 (defn new-scheduler
   ([event] (new-scheduler event nil))
-  ([event elapsed-atom]
+  ([event tick-cb]
    {:pre [(vector? event)]}
-   (TimeScheduler. event elapsed-atom false nil nil (avl/sorted-set) nil)))
+   (->TimeScheduler event tick-cb false nil nil (avl/sorted-set) nil)))
 
 (comment
   (do
     (require '[re-frame.interop :as interop])
     (re-frame/reg-event-db :foo (fn [db v] (println :foo v) db))
     (def elapsed (interop/ratom nil))
-    (def s (new-scheduler [:foo]  elapsed))
+    (def s (new-scheduler [:foo]  (partial reset! elapsed)))
     (schedule-time! s 3000)
     (schedule-time! s 2000)
     (schedule-time! s 1000)
