@@ -58,7 +58,6 @@
       :else (reduce
              (fn [[cur-idx l c :as step] char]
                (let [next-idx (inc cur-idx)]
-                 (js/console.debug next-idx str-len)
                  (cond
                    (= cur-idx idx) (reduced {:line l :col c})
                    ;; lookahead at last step of reduction

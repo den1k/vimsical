@@ -99,12 +99,14 @@
                                     :user/vimsae     [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
                                                       (new-vims [:db/id (uuid :user)] "CatPhotoApp" {:libs js-libs})]}
                  :app/vims         [:db/id (uuid "CatPhotoApp")]
-                 :app/quick-search {:db/id                   (uuid :quick-search)
-                                    :quick-search/show?      false
-                                    :quick-search/result-idx 0
-                                    :quick-search/query      ""
-                                    :quick-search/commands   quick-search.commands/commands
-                                    :quick-search/filter     nil}
+                 :app/quick-search {:db/id                            (uuid :quick-search)
+                                    :quick-search/show?               false
+                                    :quick-search/result-idx          0
+                                    :quick-search/query               ""
+                                    :quick-search/commands            quick-search.commands/commands
+                                    :quick-search/filter-idx          nil
+                                    :quick-search/filter-result-idx   nil
+                                    :quick-search/filter-category-idx nil}
                  :app/libs         js-libs
                  :app/compilers    compilers
                  :app/route        :route/vcr}]

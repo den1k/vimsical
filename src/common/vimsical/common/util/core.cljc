@@ -118,6 +118,7 @@
 (def dissoc-in md/dissoc-in)
 (def map-keys md/map-keys)
 (def map-vals md/map-vals)
+(def assoc-some md/assoc-some)
 (def interleave-all md/interleave-all)
 
 (defn index-of

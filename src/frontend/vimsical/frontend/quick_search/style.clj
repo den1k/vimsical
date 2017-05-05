@@ -1,4 +1,5 @@
-(ns vimsical.frontend.quick-search.style)
+(ns vimsical.frontend.quick-search.style
+  (:require [vimsical.frontend.styles.color :refer [colors]]))
 
 (def quick-search
   (let [border-radius :5px]
@@ -18,22 +19,38 @@
       :width          :500px
       :padding        :10px
       :background     :black}
-     [:.input
-      {:background    :black
-       :padding       :5px
-       :color         :snow
-       :outline       :none
-       :border        :none
-       :border-radius border-radius
-       :height        :50px
-       :width         :100%
-       :text-align    :baseline
-       :font-size     :1.6rem}]
-     [:.search-results
+     [:.input-and-filters
+      {:width :100%}
+      [:.input
+       {:background    :black
+        :padding       :5px
+        :color         :snow
+        :outline       :none
+        :border        :none
+        :border-radius border-radius
+        :height        :50px
+        :width         :100%
+        :text-align    :baseline
+        :font-size     :1.6rem}]
+      [:.filters
+       [:.title-bubble
+        {:color         :snow
+         :padding       "3px 7px"
+         :border-radius "6px"}
+        [:&.selected
+         {:background (:darkgrey colors)}]]]]
+     [:.search-results :.filter-results
       {:display        :flex
        :flex-direction :column
        :align-items    :stretch
        :width          :100%}
+      [:.category-box
+       {:flex 1}
+       [:.title
+        {:color          :snow
+         :font-weight    100
+         :letter-spacing :1px
+         :font-size      :1rem}]]
       [:.search-result
        {:width           :100%
         :padding         :10px
@@ -43,5 +60,5 @@
         :color           :snow
         :background      :black
         :cursor          :pointer}
-       [:&.selected :&:hover
+       [:&.selected
         {:background :grey}]]]]))
