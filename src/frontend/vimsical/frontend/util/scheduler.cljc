@@ -2,8 +2,7 @@
   "Simple dispatch scheduler for re-frame."
   (:require
    [clojure.data.avl :as avl]
-   [re-frame.core :as re-frame])
-  #?(:cljs (:import (goog.async.nextTick))))
+   [re-frame.core :as re-frame]))
 
 ;;
 ;; * Protocol
@@ -11,17 +10,16 @@
 
 (defprotocol IScheduler
   (running? [_])
-  (start! [_])
+  (start! [_] [_ tick])
   (pause! [_])
   (stop! [_]))
 
 (defprotocol ITimeScheduler
-  (schedule-time! [_ t]))
+  (schedule! [_ t event]))
 
 (defprotocol ISchedulerInternal
   (request-tick! [_])
-  (tick! [_ now] "Callback for requestAnimationFrame")
-  (fire! [_]))
+  (tick! [_ now] "Callback for requestAnimationFrame"))
 
 ;;
 ;; * Interop
@@ -35,17 +33,17 @@
        (double
         (/ (- (System/nanoTime) started-at) 1000000.0)))))
 
-(defn request-callback!
+(defn request-tick*
   [tick-fn]
   #?(:cljs (.requestAnimationFrame js/window tick-fn)
      :clj  (let [delay 16
                  cb    (fn [] (Thread/sleep delay) (tick-fn))]
              (doto (Thread. cb) (.start)))))
 
-(defn cancel-callback!
-  [id]
-  #?(:cljs (.cancelAnimationFrame js/window id)
-     :clj  (.interrupt ^Thread id)))
+(defn cancel-tick*
+  [tick-id]
+  #?(:cljs (.cancelAnimationFrame js/window tick-id)
+     :clj  (.interrupt ^Thread tick-id)))
 
 (defn- ticker [scheduler]
   (fn ticker-cb
@@ -56,30 +54,34 @@
 ;; * Time scheduler
 ;;
 
+;; 1. We might miss some time->event if multiple times happen with one tick loop. Use
+;; avl/split-key to get all the time->event to the left
+
+;; 2. extend api to pair times with time->event
+
+(defn events-before
+  [m t]
+  (when-some [[k] (avl/nearest m <= t)]
+    (let [[l e r] (avl/split-key k m)]
+      [(seq (vals (conj l e))) r])))
+
 (deftype TimeScheduler
-    [event
-     tick-cb
-     #?(:cljs ^:mutable running    :clj ^:unsynchronized-mutable running )
-     #?(:cljs ^:mutable started-at :clj ^:unsynchronized-mutable started-at)
-     #?(:cljs ^:mutable next-time  :clj ^:unsynchronized-mutable next-time)
-     #?(:cljs ^:mutable times      :clj ^:unsynchronized-mutable times)
-     #?(:cljs ^:mutable id         :clj ^:unsynchronized-mutable id)]
+    [#?(:cljs ^:mutable tick     :clj ^:unsynchronized-mutable tick)
+     #?(:cljs ^:mutable running     :clj ^:unsynchronized-mutable running)
+     #?(:cljs ^:mutable started-at  :clj ^:unsynchronized-mutable started-at)
+     #?(:cljs ^:mutable time->event :clj ^:unsynchronized-mutable time->event)
+     #?(:cljs ^:mutable tick-id     :clj ^:unsynchronized-mutable tick-id)]
   ISchedulerInternal
   (request-tick! [this]
-    ;; Register the callback id so we can cancel it
-    (set! id (request-callback! (ticker this))))
+    (set! tick-id (request-tick* (ticker this))))
   (tick! [this now]
     (when running
       (let [elapsed (- now started-at)]
-        (when tick-cb (tick-cb elapsed))
-        (when (and next-time (<= next-time elapsed)) (fire! this)))
+        (when tick (tick elapsed))
+        (when-some [[events next-time->event] (events-before time->event elapsed)]
+          (doseq [event events] (re-frame/dispatch event))
+          (set! time->event next-time->event)))
       (request-tick! this)))
-  (fire! [this]
-    (re-frame/dispatch event)
-    ;; Shift the times by 1 element to the right, resetting the next-time
-    (let [[next-time' :as times'] (disj times next-time)]
-      (set! times times')
-      (set! next-time next-time')))
 
   IScheduler
   (running? [_] running)
@@ -87,40 +89,36 @@
     (set! started-at (now))
     (set! running true)
     (request-tick! this))
+  (start! [this tick']
+    (set! tick tick')
+    (start! this))
   (pause! [this]
     (set! running false))
   (stop! [this]
     (when-not running (throw (ex-info "Scheduler not running" {})))
-    (set! next-time nil)
-    (cancel-callback! id)
+    (cancel-tick* tick-id)
+    (when tick (tick nil))
     (set! started-at nil)
-    (set! times (empty times)))
+    (set! time->event (empty time->event)))
 
   ITimeScheduler
-  (schedule-time! [this t]
-    (let [[next-time' :as times'] (conj times t)]
-      ;; Make sure to reset the next-time to the first element in times, in case
-      ;; the new delay appears before what's currently our next-time
-      (set! times times')
-      (set! next-time next-time'))))
+  (schedule! [this t event]
+    (set! time->event (assoc time->event t event))))
 
 (defn scheduler? [x] (and x (instance? TimeScheduler x)))
 
 (defn new-scheduler
-  ([event] (new-scheduler event nil))
-  ([event tick-cb]
-   {:pre [(vector? event)]}
-   (->TimeScheduler event tick-cb false nil nil (avl/sorted-set) nil)))
+  [] (->TimeScheduler nil false nil (avl/sorted-map) nil))
 
 (comment
   (do
     (require '[re-frame.interop :as interop])
     (re-frame/reg-event-db :foo (fn [db v] (println :foo v) db))
     (def elapsed (interop/ratom nil))
-    (def s (new-scheduler [:foo]  (partial reset! elapsed)))
-    (schedule-time! s 3000)
-    (schedule-time! s 2000)
-    (schedule-time! s 1000)
+    (def s (new-scheduler (partial reset! elapsed)))
+    (schedule! s 3000 [:foo])
+    (schedule! s 2000 [:foo])
+    (schedule! s 1000 [:foo])
     (start! s)
     ;; (pause! s)
     (deref elapsed)
@@ -130,27 +128,19 @@
 ;; * Cofx & Fx
 ;;
 
-(defonce schedulers-by-event (atom {}))
-
-(defn- get-or-create-scheduler [f & [event :as args]]
-  (or (get @schedulers-by-event event)
-      (let [scheduler (apply f args)]
-        (swap! schedulers-by-event assoc event scheduler)
-        scheduler)))
-
-(re-frame/reg-cofx
- :scheduler
- (fn [cofx [event elapsed-atom]]
-   (assoc cofx :scheduler (get-or-create-scheduler new-scheduler event elapsed-atom))))
+(defonce scheduler (new-scheduler))
 
 (defn scheduler-fx
   [one-or-many]
-  (doseq [{:keys [scheduler t action]} (if (map? one-or-many) [one-or-many] one-or-many)]
-    (case action
-      :start (start! scheduler)
-      :stop  (stop! scheduler)
-      :pause (pause! scheduler)
-      nil)
-    (when t (schedule-time! scheduler t))))
-
-(re-frame/reg-fx :schedule scheduler-fx)
+  (letfn [(ensure-seq [x]
+            (if (map? x) [x] x))]
+    (doseq [{:keys [t event action tick]} (ensure-seq one-or-many)]
+      (assert (or (and t event) action))
+      ;; Schedule first
+      (when t (schedule! scheduler t event))
+      ;; Trigger the action
+      (case action
+        :start (start! scheduler tick)
+        :stop  (stop! scheduler)
+        :pause (pause! scheduler)
+        nil))))

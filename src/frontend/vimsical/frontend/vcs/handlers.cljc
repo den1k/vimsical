@@ -4,9 +4,9 @@
    [re-frame.core :as re-frame]
    [vimsical.common.util.core :as util]
    [vimsical.common.uuid :refer [uuid]]
-   [vimsical.frontend.vcs.subs :as subs]
-   [vimsical.frontend.vcs.queries :as queries]
    [vimsical.frontend.util.re-frame :as util.re-frame]
+   [vimsical.frontend.vcs.queries :as queries]
+   [vimsical.frontend.vcs.subs :as subs]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.editor :as editor]))
 

@@ -3,6 +3,9 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.core :as vcs]))
 
+(def file
+  ['*])
+
 (def branch
   ['* {::branch/files ['*]}])
 

@@ -74,7 +74,7 @@
 ;; * Spec
 ;;
 
-(s/def ::absolute-time nat-int?)
+(s/def ::absolute-time number?)
 (s/def ::index nat-int?)
 (s/def ::uuid-fn ifn?)
 

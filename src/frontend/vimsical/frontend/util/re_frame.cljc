@@ -1,11 +1,15 @@
 (ns vimsical.frontend.util.re-frame
-  (:require
-   [clojure.spec :as s]
-   [clojure.set :as set]
-   [re-frame.core :as re-frame]
-   [re-frame.interop :as interop]
-   [vimsical.frontend.util.scheduler :as util.scheduler]
-   #?(:cljs [reagent.ratom :as ratom])))
+  #?@(:clj
+      [(:require
+        [re-frame.core :as re-frame]
+        [re-frame.interop :as interop]
+        [vimsical.frontend.util.scheduler :as scheduler])]
+      :cljs
+      [(:require
+        [re-frame.core :as re-frame]
+        [re-frame.interop :as interop]
+        [reagent.ratom :as ratom]
+        [vimsical.frontend.util.scheduler :as scheduler])]))
 
 #?(:clj
    (defn- sub-deref
@@ -134,6 +138,7 @@
 
 (comment
   (do
+    (require '[re-frame.interop :as interop])
     (re-frame/reg-event-fx
      ::start-trigger-track
      (fn [cofx event]
@@ -150,8 +155,8 @@
         {:action :dispose
          :id     42}}))
     ;; Define a sub and the event we want to trigger
-    (defonce foo (ratom/atom 0))
-    (re-frame/reg-sub-raw ::sub (fn [_ _] (ratom/make-reaction #(deref foo))))
+    (defonce foo (interop/ratom 0))
+    (re-frame/reg-sub-raw ::sub (fn [_ _] (interop/make-reaction #(deref foo))))
     (re-frame/reg-event-db ::trigger (fn [db val] (println "Trigger" val) db))
     ;; Start the track
     (re-frame/dispatch [::start-trigger-track])
@@ -162,3 +167,11 @@
     ;; Stop the track, updates to ::sub aren't tracked anymore
     (re-frame/dispatch [::stop-trigger-track])
     (swap! foo inc)))
+
+;;
+;; * Scheduler
+;;
+
+;; Register in this file so we don't need to require scheduler
+
+(re-frame/reg-fx :scheduler scheduler/scheduler-fx)

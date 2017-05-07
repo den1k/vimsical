@@ -1,25 +1,37 @@
 (ns vimsical.frontend.timeline.subs
   (:require
-   [clojure.spec :as s]
    [re-frame.core :as re-frame]
+   [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
+   [vimsical.frontend.ui-db :as ui-db]
    [vimsical.frontend.vcs.subs :as vcs.subs]
-   [vimsical.vcs.core :as vcs]
-   [vimsical.vcs.state.timeline :as timeline]))
+   [vimsical.vcs.core :as vcs]))
 
-(s/def ::timeline/playhead nat-int?)
-(s/def ::timeline/skimhead nat-int?)
-
-(re-frame/reg-sub
- ::timeline
- :<- [::vcs.subs/vcs]
- (fn [{::vcs/keys [timeline] :as vcs} _] timeline))
+;;
+;; * UI Db
+;;
 
 (re-frame/reg-sub
  ::playhead
- :<- [::timeline]
- (fn [{::timeline/keys [playhead]} _] (or playhead 0)))
+ :<- [::ui-db/ui-db]
+ (fn [{::timeline.ui-db/keys [playhead]} _] (or playhead 0)))
 
 (re-frame/reg-sub
  ::skimhead
- :<- [::timeline]
- (fn [{::timeline/keys [skimhead]} _] (or skimhead 0)))
+ :<- [::ui-db/ui-db]
+ (fn [{::timeline.ui-db/keys [skimhead]} _] skimhead))
+
+;;
+;; * Db
+;;
+
+(re-frame/reg-sub
+ ::chunks-by-absolute-start-time
+ :<- [::vcs.subs/vcs]
+ (fn [vcs _]
+   (vcs/timeline-chunks-by-absolute-start-time vcs)))
+
+(re-frame/reg-sub
+ ::duration
+ :<- [::vcs.subs/vcs]
+ (fn [vcs _]
+   (vcs/timeline-duration vcs)))

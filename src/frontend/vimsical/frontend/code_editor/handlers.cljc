@@ -3,6 +3,7 @@
       [(:require
         [re-frame.core :as re-frame]
         [vimsical.frontend.util.re-frame :refer [<sub]]
+        [vimsical.frontend.code-editor.ui-db :as ui-db]
         [vimsical.common.util.core :as util]
         [vimsical.frontend.util.re-frame :as util.re-frame]
         [vimsical.frontend.vcr.subs :as vcr.subs]
@@ -13,19 +14,11 @@
         [re-frame.core :as re-frame]
         [vimsical.frontend.util.re-frame :refer [<sub]]
         [re-frame.loggers :refer [console]]
-        [vimsical.common.util.core :as util]
+        [vimsical.frontend.code-editor.ui-db :as ui-db]
         [vimsical.frontend.util.re-frame :as util.re-frame]
         [vimsical.frontend.vcr.subs :as vcr.subs]
         [vimsical.frontend.vcs.subs :as vcs.subs]
         [vimsical.vcs.core :as vcs])]))
-
-;;
-;; * UI Db helpers
-;;
-
-(defn file-editor-key [{:keys [db/id] :as file}] (assert id) [::editor id])
-(defn file-editor-listeners-key [{:keys [db/id] :as file}] (assert id) [::editor-listeners id])
-(defn disposables-key [{:keys [db/id] :as file}] (assert id) [::disposables id])
 
 ;;
 ;; * Monaco helpers
@@ -158,7 +151,7 @@
 ;;
 
 ;;
-;; ** Editor instance lifecycle
+;; ** Instance lifecycle
 ;;
 
 (re-frame/reg-event-fx
@@ -166,8 +159,8 @@
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ file editor-instance listeners]]
    {:ui-db      (-> ui-db
-                    (assoc-in (file-editor-key file) editor-instance)
-                    (assoc-in (file-editor-listeners-key file) listeners))
+                    (ui-db/set-editor file editor-instance)
+                    (ui-db/set-listeners file listeners))
     :dispatch-n [[::set-string nil file ""]
                  [::bind-listeners file]]}))
 
@@ -175,12 +168,13 @@
  ::dispose
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db] :as cofx} [_ file]]
-   (-> (get-in ui-db (file-editor-key file))
-       (dispose-editor))
-   {:ui-db (util/dissoc-in ui-db (file-editor-key file))}))
+   (do
+     ;; XXX fx?
+     (dispose-editor (ui-db/get-editor ui-db file))
+     {:ui-db (ui-db/set-editor ui-db file nil)})))
 
 ;;
-;; ** Editor listeners lifecycle
+;; ** Listeners lifecycle
 ;;
 
 (re-frame/reg-event-fx
@@ -188,14 +182,14 @@
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ file]]
    #?(:cljs
-      (if-some [disposables (get-in ui-db (disposables-key file))]
+      (if-some [disposables (ui-db/get-disposables ui-db file)]
         (do
           ;; Clear disposables
           (reduce-kv
            (fn [_ k disposable]
              (.dispose disposable))
            nil disposables)
-          {:ui-db (assoc-in ui-db (disposables-key file) nil)})
+          {:ui-db (ui-db/set-disposables ui-db file nil)})
         (console :error "disposables not found")))))
 
 (re-frame/reg-event-fx
@@ -203,13 +197,14 @@
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ file]]
    #?(:cljs
-      (when-some [editor (get-in ui-db (file-editor-key file))]
-        (when-some [listeners (get-in ui-db (file-editor-listeners-key file))]
+      (when-some [editor (ui-db/get-editor ui-db file)]
+        (when-some [listeners (ui-db/get-listeners ui-db file)]
           ;; Create new disposables and update ui-db
-          {:ui-db (assoc-in ui-db (disposables-key file) (bind-listeners editor listeners))})))))
+          (let [listeners' (bind-listeners editor listeners)]
+            {:ui-db (ui-db/set-disposables ui-db file listeners')}))))))
 
 ;;
-;; ** Editor actions
+;; ** User actions
 ;;
 
 (re-frame/reg-event-fx
@@ -302,7 +297,7 @@
             :range            (first sels)}]))))))
 
 ;;
-;; ** Editor updates
+;; ** Updates
 ;;
 
 ;; NOTE this will cause the .onContentDidChange callback to fire unless we
@@ -313,7 +308,7 @@
  (fn set-string
    [{:keys [ui-db]} [_ read-only? file string]]
    #?(:cljs
-      (if-some [editor (get-in ui-db (file-editor-key file))]
+      (if-some [editor (ui-db/get-editor ui-db file)]
         (do (.setValue editor string) nil)
         (console :error "editor not found")))))
 
@@ -323,25 +318,28 @@
  (fn set-cursor
    [{:keys [ui-db]} [_ file cursor string]]
    #?(:cljs
-      (if-some [editor (get-in ui-db (file-editor-key file))]
+      (if-some [editor (ui-db/get-editor ui-db file)]
         ;; TODO convert index to line/col pos
         ;; (.setCursor editor cursor)
         nil
         (console :error "editor not found")))))
 
+;; TODO track files' subs
 (re-frame/reg-event-fx
  ::update-editors
- [(util.re-frame/inject-sub [::vcr.subs/files])
-  (util.re-frame/inject-sub [::vcs.subs/vcs])]
+ [(util.re-frame/inject-sub [::vcs.subs/vcs])
+  (util.re-frame/inject-sub [::vcs.subs/timeline-entry])
+  (util.re-frame/inject-sub [::vcr.subs/files])]
  (fn update-editors
    [{:as             cofx
      ::vcr.subs/keys [files]
-     ::vcs.subs/keys [vcs]} _]
-   {:dispatch-n
-    (mapcat
-     (fn [{:keys [db/id] :as file}]
-       [[::clear-disposables file]
-        [::set-string false file (vcs/file-string vcs id)]
-        [::set-cursor file (vcs/file-cursor vcs id) (vcs/file-string vcs id)]
-        [::bind-listeners file]])
-     files)}))
+     ::vcs.subs/keys [vcs timeline-entry]} _]
+   (when-some [[_ {delta-id :id}] timeline-entry]
+     {:dispatch-n
+      (mapcat
+       (fn [{:keys [db/id] :as file}]
+         [[::clear-disposables file]
+          [::set-string false file (vcs/file-string vcs id delta-id)]
+          [::set-cursor file (vcs/file-cursor vcs id delta-id) (vcs/file-string vcs id delta-id)]
+          [::bind-listeners file]])
+       files)})))

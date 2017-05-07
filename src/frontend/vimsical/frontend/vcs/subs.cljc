@@ -1,15 +1,8 @@
 (ns vimsical.frontend.vcs.subs
-  "TODO
-
-  - DONE get rid of the vims in vims-vcs, it is already normalized
-
-  - DONE rename vims-vcs to vcs
-
-  - parametrize vcs by vims
-  "
   (:require
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
+   [vimsical.frontend.vcs.db :as db]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.file :as file]
@@ -23,10 +16,28 @@
 
 (re-frame/reg-sub
  ::vcs
- (fn [db [_]]
-   (get-in
-    (mg/pull db [{[:app/vims '_] queries/vims-vcs}])
-    [:app/vims :vims/vcs])))
+ (fn [db [vims]]
+   (if-some [lookup-ref (mg/ref-to db vims)]
+     (-> db
+         (mg/pull queries/vims-vcs lookup-ref)
+         (get-in [:vims/vcs]))
+     (-> db
+         (mg/pull [{[:app/vims '_] queries/vims-vcs}])
+         (get-in [:app/vims :vims/vcs])))))
+
+;;
+;; * Heads (timeline entries)
+;;
+
+(re-frame/reg-sub ::playhead-entry :<- [::vcs] (fn [vcs _] (::db/playhead-entry vcs)))
+(re-frame/reg-sub ::skimhead-entry :<- [::vcs] (fn [vcs _] (::db/skimhead-entry vcs)))
+
+(re-frame/reg-sub
+ ::timeline-entry
+ :<- [::playhead-entry]
+ :<- [::skimhead-entry]
+ (fn [[playhead-entry skimhead-entry] _]
+   (or skimhead-entry playhead-entry)))
 
 ;;
 ;; * Files
@@ -34,14 +45,15 @@
 
 (re-frame/reg-sub
  ::file
- (fn [db [_ id pattern]]
-   (mg/pull db (or pattern '[*]) [:db/id id])))
+ (fn [db [_ file-id]]
+   (mg/pull db queries/file [:db/id file-id])))
 
 (re-frame/reg-sub
  ::file-string
  :<- [::vcs]
- (fn [vcs [_ {:keys [db/id] :as file}]]
-   (vcs/file-string vcs id)))
+ :<- [::timeline-entry]
+ (fn [[vcs [_ {delta-id id}]] [_ {file-id :id}]]
+   (vcs/file-string vcs file-id delta-id)))
 
 (re-frame/reg-sub
  ::preprocessed-file-data
@@ -56,10 +68,6 @@
  :<- [::vcs]
  (fn [vcs [_ {:keys [db/id] :as file}]]
    (vcs/file-cursor vcs id)))
-
-;;
-;; * Timeline
-;;
 
 (re-frame/reg-sub
  ::preprocessed-file-string

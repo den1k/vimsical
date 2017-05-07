@@ -5,8 +5,8 @@
    [vimsical.common.util.core :as util]
    [vimsical.frontend.styles.color :as color]
    [vimsical.frontend.timeline.handlers :as handlers]
-   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.timeline.subs :as subs]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.vcs.file :as file]
    [vimsical.vcs.state.chunk :as chunk]))
@@ -56,6 +56,10 @@
 ;; * Handlers
 ;;
 
+
+(defn on-chunks-mouse-enter [e]
+  (re-frame/dispatch [::handlers/skimhead-start]))
+
 (defn on-chunks-mouse-wheel [e]
   (.preventDefault e)  ; Prevent history navigation
   (let [dt (scroll-event->timeline-offset e)]
@@ -67,8 +71,10 @@
     (re-frame/dispatch
      [::handlers/skimhead-set svg-node->timeline-position-fn])))
 
-(defn on-chunks-mouse-enter [e]
-  (re-frame/dispatch [::handlers/skimhead-start]))
+(defn on-chunks-click [e]
+  (let [svg-node->timeline-position-fn (mouse-event->svg-node->timeline-position e)]
+    (re-frame/dispatch
+     [::handlers/playhead-set-entry svg-node->timeline-position-fn])))
 
 (defn on-chunks-mouse-leave [e]
   (re-frame/dispatch [::handlers/skimhead-stop]))
@@ -80,11 +86,11 @@
 (def clip-path-id (gensym "clip-path-id"))
 
 (defn- file-color
-  [{::file/keys [sub-type] :as file}]
+  [{::file/keys [sub-type]}]
   (get color/type-colors-timeline sub-type))
 
 (defn- chunk
-  [timeline-duration abs-time file {::chunk/keys [depth duration branch-start? branch-end?]}]
+  [duration abs-time file {::chunk/keys [depth duration branch-start? branch-end?]}]
   (let [left               abs-time
         right              (+ left duration)
         height             (case depth 0 master-branch-height 1 child-branch-height)
@@ -140,37 +146,38 @@
 
 (defn- skimhead-line
   [clip-path-id]
-  (let [skimhead (<sub [::subs/skimhead])]
-    [:line.skimhead
-     {:x1            skimhead :x2 skimhead
-      :y1            0        :y2 "100%"
-      :stroke-width  3
-      :vector-effect "non-scaling-stroke"
-      :stroke        "white"
-      :clip-path     (str "url(#" clip-path-id ")")
-      :style         {:visibility     (when-not skimhead "hidden")
-                      :pointer-events "none"}}]))
+  (when-some [skimhead (<sub [::subs/skimhead])]
+    (let [playhead     (<sub [::subs/playhead])
+          at-playhead? (and playhead (= (int skimhead) (int playhead)))]
+      [:line.skimhead
+       {:x1            skimhead :x2 skimhead
+        :y1            0        :y2 "100%"
+        :stroke-width  3
+        :vector-effect "non-scaling-stroke"
+        :stroke        (if at-playhead? "red" "white")
+        :clip-path     (str "url(#" clip-path-id ")")
+        :style         {:pointer-events "none"}}])))
+
 (defn- playhead-line
   [clip-path-id]
-  (let [playhead (<sub [::subs/playhead])
-        skimhead (<sub [::subs/skimhead])]
+  (when-some [playhead (<sub [::subs/playhead])]
     [:line.playhead
      {:x1            playhead :x2 playhead
       :y1            0        :y2 "100%" :stroke-width 3
       :vector-effect "non-scaling-stroke"
-      :stroke        (if (= skimhead playhead) "red" "black")
+      :stroke        "black"
       :clip-path     (str "url(#" clip-path-id ")")
       :style         {:pointer-events "none"}}]))
 
 (defn chunks []
-  (let [timeline-duration  (<sub [::vcs.subs/timeline-duration])
-        chunks-by-abs-time (<sub [::vcs.subs/timeline-chunks-by-absolute-start-time])
+  (let [duration           (<sub [::subs/duration])
+        chunks-by-abs-time (<sub [::subs/chunks-by-absolute-start-time])
         chunks-html
         (doall
          (for [[abs-time {::chunk/keys [id file-id] :as c}] chunks-by-abs-time
                :let                                         [file (<sub [::vcs.subs/file file-id])]]
            ^{:key id}
-           [chunk timeline-duration abs-time file c]))]
+           [chunk duration abs-time file c]))]
     [:g [:defs [:clipPath {:id clip-path-id} chunks-html]]
      chunks-html]))
 
@@ -181,18 +188,21 @@
     (re-frame/dispatch [::handlers/register-svg node])))
 
 (defn timeline []
-  (let [timeline-duration (<sub [::vcs.subs/timeline-duration])
-        left              0
-        right             0]
+  (let [duration (<sub [::subs/duration])
+        left     0
+        right    0]
     [:div.timeline
      [:div.scaler
       [:svg.timeline-chunks
        {:ref                   svg-ref-handler
-        :view-box              (util/space-join left right timeline-duration timeline-height)
+        :view-box              (util/space-join left right duration timeline-height)
         :preserve-aspect-ratio "none meet"
         :style                 {:width "100%" :height "100%"}
+        :on-mouse-enter        on-chunks-mouse-enter
+        :on-mouse-move         on-chunks-mouse-move
+        :on-click              on-chunks-click
         :on-wheel              on-chunks-mouse-wheel
-        :on-mouse-move         on-chunks-mouse-move}
+        :on-mouse-leave        on-chunks-mouse-leave}
        [chunks]
        [playhead-line clip-path-id]
        [skimhead-line clip-path-id]]]]))

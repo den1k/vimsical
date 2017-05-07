@@ -131,36 +131,39 @@
 (defn deltas
   ([{::keys [delta-id] :as vcs}] (deltas vcs delta-id))
   ([vcs delta-id]
-   (-> vcs (delta-id->state delta-id) ::state.deltas/deltas)))
+   (some-> vcs (delta-id->state delta-id) ::state.deltas/deltas)))
 
 (defn file-ids
   ([{::keys [delta-id] :as vcs}] (file-ids vcs delta-id))
   ([vcs delta-id]
-   (-> vcs (delta-id->state-by-file-id delta-id) keys)))
+   (some-> vcs (delta-id->state-by-file-id delta-id) keys)))
 
 (defn file-deltas
   ([{::keys [delta-id] :as vcs} file-id] (file-deltas vcs file-id delta-id))
   ([vcs file-id delta-id]
-   (-> vcs
-       (delta-id->state-by-file-id delta-id)
-       (state.files/deltas file-id))))
+   (some-> vcs
+           (delta-id->state-by-file-id delta-id)
+           (state.files/deltas file-id))))
 
 (defn file-string
   ([{::keys [delta-id] :as vcs} file-id] (file-string vcs file-id delta-id))
   ([vcs file-id delta-id]
-   (-> vcs
-       (delta-id->state-by-file-id delta-id)
-       (state.files/string file-id))))
+   (some-> vcs
+           (delta-id->state-by-file-id delta-id)
+           (state.files/string file-id))))
 
 (defn file-cursor
   ([{::keys [delta-id] :as vcs} file-id] (file-cursor vcs file-id delta-id))
   ([vcs file-id delta-id]
-   (-> vcs
-       (delta-id->state-by-file-id delta-id)
-       (state.files/cursor file-id))))
+   (some-> vcs
+           (delta-id->state-by-file-id delta-id)
+           (state.files/cursor file-id))))
 
 (defn timeline-delta-at-time [{::keys [timeline]} time]
   (state.timeline/delta-at-absolute-time timeline time))
+
+(defn timeline-entry-at-time [{::keys [timeline]} time]
+  (state.timeline/entry-at-absolute-time timeline time))
 
 (defn timeline-duration [{::keys [timeline]}]
   (state.timeline/duration timeline))
