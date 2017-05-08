@@ -190,27 +190,25 @@
  ::clear-disposables
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ file]]
-   #?(:cljs
-      (if-some [disposables (ui-db/get-disposables ui-db file)]
-        (do
-          ;; Clear disposables
-          (reduce-kv
-           (fn [_ k disposable]
-             (.dispose disposable))
-           nil disposables)
-          {:ui-db (ui-db/set-disposables ui-db file nil)})
-        (console :error "disposables not found")))))
+   (if-some [disposables (ui-db/get-disposables ui-db file)]
+     (do
+       ;; Clear disposables
+       (reduce-kv
+        (fn [_ k disposable]
+          (.dispose disposable))
+        nil disposables)
+       {:ui-db (ui-db/set-disposables ui-db file nil)})
+     (console :error "disposables not found"))))
 
 (re-frame/reg-event-fx
  ::bind-listeners
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ file]]
-   #?(:cljs
-      (when-some [editor (ui-db/get-editor ui-db file)]
-        (when-some [listeners (ui-db/get-listeners ui-db file)]
-          ;; Create new disposables and update ui-db
-          (let [listeners' (bind-listeners editor listeners)]
-            {:ui-db (ui-db/set-disposables ui-db file listeners')}))))))
+   (when-some [editor (ui-db/get-editor ui-db file)]
+     (when-some [listeners (ui-db/get-listeners ui-db file)]
+       ;; Create new disposables and update ui-db
+       (let [listeners' (bind-listeners editor listeners)]
+         {:ui-db (ui-db/set-disposables ui-db file listeners')})))))
 
 ;;
 ;; ** User actions
@@ -298,18 +296,17 @@
  ::paste
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ string]]
-   #?(:cljs
-      (let [editor (ui-db/get-active-editor ui-db)
-            model  (.-model editor)
-            sels   (.. editor -cursor getSelections)]
-        (.pushEditOperations
-         model
-         sels
-         (clj->js
-          [{; if true moves cursor, else makes selection around added text
-            :forceMoveMarkers true
-            :text             string
-            :range            (first sels)}]))))))
+   (let [editor (ui-db/get-active-editor ui-db)
+         model  (.-model editor)
+         sels   (.. editor -cursor getSelections)]
+     (.pushEditOperations
+      model
+      sels
+      (clj->js
+       [{         ; if true moves cursor, else makes selection around added text
+         :forceMoveMarkers true
+         :text             string
+         :range            (first sels)}])))))
 
 ;;
 ;; ** Updates
@@ -322,27 +319,25 @@
  [(re-frame/inject-cofx :ui-db)]
  (fn set-string
    [{:keys [ui-db]} [_ read-only? file string]]
-   #?(:cljs
-      (if-some [editor (ui-db/get-editor ui-db file)]
-        (do (.setValue editor string) nil)
-        (console :error "editor not found")))))
+   (if-some [editor (ui-db/get-editor ui-db file)]
+     (do (.setValue editor string) nil)
+     (console :error "editor not found"))))
 
 (re-frame/reg-event-fx
  ::set-cursor
  [(re-frame/inject-cofx :ui-db)]
  (fn set-cursor
    [{:keys [ui-db]} [_ file cursor string]]
-   #?(:cljs
-      (if-some [editor (ui-db/get-editor ui-db file)]
-        ;; TODO convert index to line/col pos
-        ;; (.setCursor editor cursor)
-        nil
-        (console :error "editor not found")))))
+   (if-some [editor (ui-db/get-editor ui-db file)]
+     ;; TODO convert index to line/col pos
+     ;; (.setCursor editor cursor)
+     nil
+     (console :error "editor not found"))))
 
 (re-frame/reg-event-fx
  ::update-editor
  (fn update-editor
-   [_ [_ {file-id :db/id :as file} string cursor]]
+   [_ [_ file string cursor]]
    (when (and (some? string) (some? cursor))
      {:dispatch-n
       [[::clear-disposables file]
