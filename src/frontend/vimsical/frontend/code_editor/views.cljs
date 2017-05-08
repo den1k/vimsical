@@ -109,4 +109,6 @@
       (re-frame/dispatch [::handlers/dispose editor-reg-key file]))
     :render
     (fn [_]
+      (when-let [lint-errors (<sub [::vcs.subs/file-lint-errors file])]
+        (js/console.warn ::LINT_ERRORS lint-errors))
       [:div.code-editor])}))

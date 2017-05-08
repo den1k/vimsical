@@ -116,10 +116,11 @@
  (fn [{:keys [db ui-db] :as cofx}
       [_ ui-reg-key branch {::file/keys [sub-type] :as file}]]
    (let [iframe (get-in ui-db [ui-reg-key ::iframe])]
-     {:dispatch
-      (if (= :javascript sub-type)
-        [::update-iframe-src ui-reg-key branch]
-        [::update-preview-node ui-reg-key branch file])})))
+     (if (= :javascript sub-type)
+       ;; FIXME, nasty <sub in handler
+       (when (nil? (<sub [::vcs.subs/file-lint-errors file]))
+         {:dispatch [::update-iframe-src ui-reg-key branch]})
+       {:dispatch [::update-preview-node ui-reg-key branch file]}))))
 
 (re-frame/reg-event-fx
  ::update-preview-node

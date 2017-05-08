@@ -123,7 +123,11 @@
 
 (defn vcr []
   (let [{:as           branch
-         ::branch/keys [files libs]} @(re-frame/subscribe [::subs/branch [{::branch/files ['*]} {::branch/libs ['*]}]])
+         ::branch/keys [files libs]} @(re-frame/subscribe
+                                       [::subs/branch
+                                        [{::branch/files ['*
+                                                          {::file/compiler ['*]}]}
+                                         {::branch/libs ['*]}]])
         editor-comps           (->> files (map editor-components) editor-components-by-file-type)
         playing?               false
         visible-files          (visible-files files)

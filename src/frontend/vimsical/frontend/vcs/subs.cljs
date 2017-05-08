@@ -4,7 +4,8 @@
    [re-frame.core :as re-frame]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.vcs.core :as vcs]
-   [vimsical.frontend.util.preprocess.core :as preprocess]))
+   [vimsical.frontend.util.preprocess.core :as preprocess]
+   [vimsical.frontend.util.lint.core :as lint]))
 
 (defn vims-vcs [db]
   (:vims/vcs
@@ -29,6 +30,14 @@
  (fn [[_ file]]
    (re-frame/subscribe [::file-string file]))
  (fn [string [_ file]]
+   ;; TODO handle errors
    (let [{::preprocess/keys [string compile-error]}
          (preprocess/preprocess file string)]
      string)))
+
+(re-frame/reg-sub
+ ::file-lint-errors
+ (fn [[_ file]]
+   (re-frame/subscribe [::file-string file]))
+ (fn [string [_ file]]
+   (::lint/errors (lint/lint file string))))

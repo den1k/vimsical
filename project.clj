@@ -215,6 +215,11 @@
                       :output-to            "resources/public/js/compiled/vimsical.js"
                       :output-dir           "resources/public/js/compiled/out"
                       :optimizations        :none
+                      :foreign-libs         [; todo put jshint code into into resources
+                                             ; add file-min opt
+                                             ; externs
+                                             {:file     "https://cdnjs.cloudflare.com/ajax/libs/jshint/2.9.4/jshint.min.js"
+                                              :provides ["jshint"]}]
                       :parallel-build       true
                       ;; Add cache busting timestamps to source map urls.
                       ;; This is helpful for keeping source maps up to date when

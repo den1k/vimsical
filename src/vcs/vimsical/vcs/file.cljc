@@ -14,7 +14,8 @@
 (s/def ::sub-type sub-types)
 (s/def ::name string?)
 (s/def ::compiler ::compiler/compiler)
+(s/def ::lang-version string?)
 
 ;; * Entity
 (s/def ::file (s/keys :req [:db/id ::type ::sub-type]
-                      :opt [::name ::compiler]))
+                      :opt [::name ::compiler ::lang-version]))
