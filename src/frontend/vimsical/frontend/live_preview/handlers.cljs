@@ -118,7 +118,7 @@
    (let [iframe (get-in ui-db [ui-reg-key ::iframe])]
      (if (= :javascript sub-type)
        ;; FIXME, nasty <sub in handler
-       (when (nil? (<sub [::vcs.subs/file-lint-errors file]))
+       (when (nil? (<sub [::vcs.subs/file-lint-or-preprocessing-errors file]))
          {:dispatch [::update-iframe-src ui-reg-key branch]})
        {:dispatch [::update-preview-node ui-reg-key branch file]}))))
 

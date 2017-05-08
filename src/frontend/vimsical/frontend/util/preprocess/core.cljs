@@ -21,8 +21,9 @@
   (let [pos     {:line (.. e -loc -line)
                  :col  (.. e -loc -column)}
         message (.-message e)]
-    {::pos     pos
-     ::message message}))
+    {:type :compile-error
+     :pos  pos
+     :msg  message}))
 
 (defmethod preprocess :babel
   [_ string]
@@ -36,4 +37,4 @@
                                    :plugins    []}))
      (format-result))
     (catch js/Error e
-      {::compile-error (handle-compile-error e)})))
+      {::error (handle-compile-error e)})))

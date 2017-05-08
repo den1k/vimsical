@@ -9,7 +9,8 @@
    [vimsical.vcs.lib :as lib]
    [vimsical.vcs.compiler :as compiler]
    [vimsical.common.test :refer [uuid]]
-   [vimsical.frontend.quick-search.commands :as quick-search.commands]))
+   #?(:cljs
+      [vimsical.frontend.quick-search.commands :as quick-search.commands])))
 
 (defn- entities? [db coll]
   (boolean
@@ -72,10 +73,10 @@
   ([author-ref title] (new-vims author-ref title {}))
   ([author-ref title {:keys [libs compilers] :as opts}]
    (let [libs-by-type      (group-by ::lib/sub-type libs)
-         compilers-by-type (group-by ::compiler/to-sub-type compilers)
+         compilers-by-type (util/project ::compiler/to-sub-type compilers)
          files             [{:db/id (uuid :file-html) ::file/type :text ::file/sub-type :html ::file/compiler (:html compilers-by-type)}
                             {:db/id (uuid :file-css) ::file/type :text ::file/sub-type :css ::file/compiler (:css compilers-by-type)}
-                            {:db/id (uuid :file-js) ::file/type :text ::file/sub-type :javascript ::file/compiler (:javascript compilers-by-type)}]
+                            {:db/id (uuid :file-js) ::file/type :text ::file/sub-type :javascript ::file/lang-version "5" ::file/compiler (:javascript compilers-by-type)}]
          branches          [{:db/id (uuid :branch-master) ::branch/name "master" ::branch/start-delta-id nil ::branch/entry-delta-id nil ::branch/created-at (util/now) ::branch/files files ::branch/libs (:javascript libs-by-type)}]]
      {:db/id         (uuid title)
       :vims/author   author-ref
@@ -97,13 +98,14 @@
                                     :user/last-name  "Applecrust"
                                     :user/email      "kalavox@gmail.com"
                                     :user/vimsae     [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
-                                                      (new-vims [:db/id (uuid :user)] "CatPhotoApp" {:libs js-libs})]}
+                                                      (new-vims [:db/id (uuid :user)] "CatPhotoApp" {:libs      js-libs
+                                                                                                     :compilers compilers})]}
                  :app/vims         [:db/id (uuid "CatPhotoApp")]
                  :app/quick-search {:db/id                            (uuid :quick-search)
                                     :quick-search/show?               false
                                     :quick-search/result-idx          0
                                     :quick-search/query               ""
-                                    :quick-search/commands            quick-search.commands/commands
+                                    :quick-search/commands            #?(:cljs quick-search.commands/commands :clj nil)
                                     :quick-search/filter-idx          nil
                                     :quick-search/filter-result-idx   nil
                                     :quick-search/filter-category-idx nil}
