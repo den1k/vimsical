@@ -1,11 +1,10 @@
 (ns vimsical.frontend.timeline.ui-db
-  (:require
-   [clojure.spec :as s]
-   [re-frame.core :as re-frame]
-   [vimsical.frontend.ui-db :as ui-db]))
+  (:require [clojure.spec :as s]))
 
 (s/def ::playhead (s/nilable number?))
 (s/def ::skimhead (s/nilable number?))
+(s/def ::playing? boolean?)
 
-(re-frame/reg-sub ::playhead :<- [::ui-db/ui-db] ::playhead)
-(re-frame/reg-sub ::skimhead :<- [::ui-db/ui-db] ::skimhead)
+(defn set-playing  [ui-db playing?]  (assoc ui-db ::playing? (boolean playing?)))
+(defn set-playhead [ui-db t] (assoc ui-db ::playhead t))
+(defn set-skimhead [ui-db t] (assoc ui-db ::skimhead t))

@@ -87,6 +87,7 @@
 
 (defn inject-sub
   [query-vector]
+  {:pre [(vector? query-vector)]}
   (re-frame/inject-cofx :sub query-vector))
 
 (defn subscribe-once
@@ -119,20 +120,27 @@
           (when-some [event (or event (val->event val))]
             (re-frame/dispatch event)))))))
 
-(defmulti track-fx :action)
+(defn ensure-vec [x] (if (sequential? x) (vec x) (vector x)))
 
-(defmethod track-fx :register
+(defmulti track-fx* :action)
+
+(defmethod track-fx* :register
   [{:keys [id] :as track}]
-  (if-some [track (get @track-register id)]
-    (throw (ex-info "Track already exists" {:track track}))
+  (if-some [track' (get @track-register id)]
+    (throw (ex-info "Track already exists" {:track track' :tried track}))
     (let [track (new-track track)]
       (swap! track-register assoc id track))))
 
-(defmethod track-fx :dispose
+(defmethod track-fx* :dispose
   [{:keys [id] :as track}]
   (if-some [track (get @track-register id)]
     #?(:cljs (do (ratom/dispose! track) (swap! track-register dissoc id)) :clj nil)
     (throw (ex-info "Track isn't registered" {:track track}))))
+
+(defn track-fx
+  [track-or-tracks]
+  (doseq [track (ensure-vec track-or-tracks)]
+    (track-fx* track)))
 
 (re-frame/reg-fx :track track-fx)
 

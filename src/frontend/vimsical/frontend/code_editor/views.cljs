@@ -14,12 +14,13 @@
   "https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditorconstructionoptions.html"
   [{:keys [{::file/keys [sub-type]} file compact? read-only? custom-opts]
     :or   {read-only? false}}]
+  {:pre [file-type]}
   (let [defaults
         {:value    ""
          :language (name sub-type)
          :readOnly read-only?
 
-         :theme                "vs"     ; default
+         :theme "vs" ; default
          ;; FIXME! Odd things happen to monaco's line-width calculations
          ;; when using FiraCode regardless of ligatures
          ;; :fontFamily           "FiraCode-Retina"
@@ -31,25 +32,25 @@
          :lineNumbersMinChars  1
          ;; "none" | "gutter" | "line" | "all"
          :renderLineHighlight  "line"
-         :renderIndentGuides   false    ; default
+         :renderIndentGuides   false ; default
 
          ;; Enable that the editor will install an interval to check if its container
          ;; dom node size has changed. Enabling this might have a severe performance
          ;; impact. Defaults to false.
-         :automaticLayout      true
-         :contextmenu          false
+         :automaticLayout true
+         :contextmenu     false
          ;; cmd + scroll changes font-size
-         :mouseWheelZoom       true
+         :mouseWheelZoom  true
 
          ;; Control the wrapping strategy of the editor. Using -1 means no
          ;; wrapping whatsoever. Using 0 means viewport width wrapping
          ;; (ajusts with the resizing of the editor). Using a positive number
          ;; means wrapping after a fixed number of characters. Defaults to 300.
          ;; https://microsoft.github.io/monaco-editor/api/modules/monaco.editor.html#definetheme
-         :wrappingColumn       0
+         :wrappingColumn 0
          ;; "none" | "same" | "indent"
-         :wrappingIndent       "indent"
-         :useTabStops          false}
+         :wrappingIndent "indent"
+         :useTabStops    false}
 
         scrollbar-defaults
         {:scrollbar
@@ -78,13 +79,12 @@
       (when compact? compact-defaults)
       custom-opts)
      ;; https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.itextmodelupdateoptions.html
-     :model  {:tabSize 2}}))
+     :model {:tabSize 2}}))
 
-
-(defn new-editor [el {:keys [editor model] :as opts}]
+(defn new-editor [el {:keys [editor model]}]
+  {:pre [editor model]}
   (doto (js/monaco.editor.create el (clj->js editor))
     (.. getModel (updateOptions (clj->js model)))))
-
 
 (defn pos->str-idx
   ;; Counts only until where we are
@@ -118,7 +118,7 @@
       (and added :str/ins)))
 
 (defn parse-content-event [model e]
-  (let [{:keys [diff idx added deleted]
+  (let [{:keys [diff idx _ deleted]
          :as   e-state} (content-event-state model e)
         event-type      (content-event-type e-state)]
     (case event-type
@@ -127,7 +127,7 @@
       :str/rplc {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx ::edit-event/amt deleted})))
 
 ;;
-;; * Cursor & Selection change
+;; * Cursor & selection change
 ;;
 
 (defn- selection-event-state [model e]
@@ -150,15 +150,26 @@
       {::edit-event/op :crsr/mv ::edit-event/idx start-idx}
       {::edit-event/op :crsr/sel ::edit-event/range [start-idx end-idx]})))
 
-(defn handle-content-change [model {:keys [db/id] :as file} e]
-  (re-frame/dispatch [::vcs.handlers/add-edit-event id  (parse-content-event model e)]))
+;;
+;; * Model listeners
+;;
 
-(defn handle-cursor-change [model {:keys [db/id] :as file} e]
-  (re-frame/dispatch [::vcs.handlers/add-edit-event id (parse-selection-event model e)]))
+;; XXX use interceptors to parse events?
+(defn handle-content-change [model {file-id :db/id} e]
+  (re-frame/dispatch
+   [::vcs.handlers/add-edit-event file-id  (parse-content-event model e)]))
 
-(defn editor-focus-handler [editor]
+(defn handle-cursor-change [model {file-id :db/id} e]
+  (re-frame/dispatch
+   [::vcs.handlers/add-edit-event file-id (parse-selection-event model e)]))
+
+(defn editor-focus-handler [file editor]
   (fn [_]
-    (re-frame/dispatch [::handlers/focus :app/active-editor editor])))
+    (re-frame/dispatch [::handlers/focus file editor])))
+
+(defn editor-blur-handler [file editor]
+  (fn [_]
+    (re-frame/dispatch [::handlers/blur file editor])))
 
 (defn new-listeners
   [file editor]
@@ -170,10 +181,16 @@
    (fn model->cursor-change-handler [model]
      (fn [e]
        (handle-cursor-change model file e)))
-   :editor->focus-handler editor-focus-handler})
+   :editor->focus-handler (partial editor-focus-handler file)
+   :editor->blur-handler  (partial editor-blur-handler file)})
+
+;;
+;; * Component
+;;
 
 (defn code-editor
-  [{:keys [file read-only?] :as opts}]
+  [{:keys [file] :as opts}]
+  {:pre [file]}
   (r/create-class
    {:component-did-mount
     (fn [c]

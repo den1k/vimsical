@@ -2,7 +2,9 @@
   (:require
    [re-com.core :as re-com]
    [re-frame.core :as re-frame]
+   [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
    [vimsical.frontend.views.splits :as splits]
+   [vimsical.frontend.timeline.subs :as timeline.subs]
    [vimsical.frontend.timeline.views :refer [timeline]]
    [vimsical.frontend.live-preview.views :refer [live-preview]]
    [vimsical.frontend.code-editor.views :refer [code-editor]]
@@ -68,30 +70,25 @@
                         :on-click (e> :increase)})])))
 
 (defn- playback-control []
-  (let [playing? (reagent/atom false)]
-    (fn []
-      [:div.control.play-pause
-       (if-not @playing?
-         [:svg
-          {:class    "icon play" ;; rename to button
-           :view-box "0 0 100 100"
-           :on-click (e>
-                      (re-frame/dispatch [::handlers/play])
-                      (reset! playing? true))}
-          (shapes/triangle {:origin          [50 50]
-                            :height          100
-                            :stroke-linejoin "round"
-                            :stroke-width    15
-                            :rotate          90})]
-         [:svg {:class    "icon pause" ;; rename to button
-                :view-box "0 0 90 100"
-                :on-click (e>
-                           (re-frame/dispatch [::handlers/pause])
-                           (reset! playing? false))}
-          (let [attrs {:y 0 :width 30 :height 100 :rx 5 :ry 5}]
-            [:g
-             [:rect (merge {:x 0} attrs)]
-             [:rect (merge {:x 60} attrs)]])])])))
+  (let [playing? (<sub [::timeline.subs/playing?])]
+    [:div.control.play-pause
+     (if-not playing?
+       [:svg
+        {:class    "icon play" ;; rename to button
+         :view-box "0 0 100 100"
+         :on-click (e> (re-frame/dispatch [::handlers/play]))}
+        (shapes/triangle {:origin          [50 50]
+                          :height          100
+                          :stroke-linejoin "round"
+                          :stroke-width    15
+                          :rotate          90})]
+       [:svg {:class    "icon pause" ;; rename to button
+              :view-box "0 0 90 100"
+              :on-click (e> (re-frame/dispatch [::handlers/pause]))}
+        (let [attrs {:y 0 :width 30 :height 100 :rx 5 :ry 5}]
+          [:g
+           [:rect (merge {:x 0} attrs)]
+           [:rect (merge {:x 60} attrs)]])])]))
 
 (defn- playback []
   [:div.playback [playback-control] [timeline] [speed-control]])
@@ -142,7 +139,8 @@
      :class "vcr"
      :size "100%"
      :children
-     [[splits/n-h-split
+     [[playback]
+      [splits/n-h-split
        :class "live-preview-and-editors"
        :panels [[live-preview
                  {:ui-reg-key :vcr/live-preview
@@ -156,5 +154,4 @@
        :splitter-child [editor-tabs files]
        :splitter-size "34px"
        :initial-split 60
-       :margin "0"]
-      [playback]]]))
+       :margin "0"]]]))

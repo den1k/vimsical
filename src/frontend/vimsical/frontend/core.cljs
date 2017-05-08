@@ -16,7 +16,7 @@
 (defn ^:export init
   "Called from index.html"
   []
-  (st/instrument)
+  #_(st/instrument)
   (code-editor.util/require-monaco
    #(do
       (re-frame/dispatch-sync [::db/init])

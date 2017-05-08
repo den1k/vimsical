@@ -29,15 +29,8 @@
 ;; * Heads (timeline entries)
 ;;
 
-(re-frame/reg-sub ::playhead-entry :<- [::vcs] (fn [vcs _] (::db/playhead-entry vcs)))
-(re-frame/reg-sub ::skimhead-entry :<- [::vcs] (fn [vcs _] (::db/skimhead-entry vcs)))
-
-(re-frame/reg-sub
- ::timeline-entry
- :<- [::playhead-entry]
- :<- [::skimhead-entry]
- (fn [[playhead-entry skimhead-entry] _]
-   (or skimhead-entry playhead-entry)))
+(re-frame/reg-sub ::playhead-entry :<- [::vcs] (fn [vcs _] (some-> vcs db/get-playhead-entry)))
+(re-frame/reg-sub ::skimhead-entry :<- [::vcs] (fn [vcs _] (some-> vcs db/get-skimhead-entry)))
 
 ;;
 ;; * Files
@@ -46,6 +39,7 @@
 (re-frame/reg-sub
  ::file
  (fn [db [_ file-id]]
+   {:pre [file-id]}
    (mg/pull db queries/file [:db/id file-id])))
 
 (re-frame/reg-sub

@@ -7,6 +7,7 @@
    [vimsical.frontend.timeline.handlers :as handlers]
    [vimsical.frontend.timeline.subs :as subs]
    [vimsical.frontend.util.re-frame :refer [<sub]]
+   [vimsical.frontend.vcr.handlers :as vcr.handlers]
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.vcs.file :as file]
    [vimsical.vcs.state.chunk :as chunk]))
@@ -23,14 +24,14 @@
 (def x-scroll-factor 10)
 (def y-scroll-factor (* 5 x-scroll-factor))
 
-(defn e->coords [e] [(.-clientX e) (.-clientY e)])
-(defn e->deltas [e] [(.-deltaX e)  (.-deltaY e)])
+(defn e->mouse-coords [e] [(.-clientX e) (.-clientY e)])
+(defn e->mouse-deltas [e] [(.-deltaX e)  (.-deltaY e)])
 
 (defn scroll-event->timeline-offset
   [e]
   (letfn [(abs [x] (max x (- x)))
           (max-delta [e]
-            (let [[dx dy] (e->deltas e)]
+            (let [[dx dy] (e->mouse-deltas e)]
               (if (< (abs dx) (abs dy))
                 [nil dy]
                 [dx nil])))]
@@ -50,7 +51,7 @@
           (svg-node->timeline-position-fn [coords]
             (fn [svg-node]
               (first (scale-coords svg-node coords))))]
-    (-> e e->coords svg-node->timeline-position-fn)))
+    (-> e e->mouse-coords svg-node->timeline-position-fn)))
 
 ;;
 ;; * Handlers
@@ -58,26 +59,26 @@
 
 
 (defn on-chunks-mouse-enter [e]
-  (re-frame/dispatch [::handlers/skimhead-start]))
+  (re-frame/dispatch [::handlers/on-mouse-enter]))
 
 (defn on-chunks-mouse-wheel [e]
   (.preventDefault e)  ; Prevent history navigation
   (let [dt (scroll-event->timeline-offset e)]
     (re-frame/dispatch
-     [::handlers/skimhead-offset dt])))
+     [::handlers/offset-skimhead dt])))
 
 (defn on-chunks-mouse-move [e]
   (let [svg-node->timeline-position-fn (mouse-event->svg-node->timeline-position e)]
     (re-frame/dispatch
-     [::handlers/skimhead-set svg-node->timeline-position-fn])))
+     [::handlers/set-skimhead svg-node->timeline-position-fn])))
 
 (defn on-chunks-click [e]
   (let [svg-node->timeline-position-fn (mouse-event->svg-node->timeline-position e)]
     (re-frame/dispatch
-     [::handlers/playhead-set-entry svg-node->timeline-position-fn])))
+     [::handlers/set-playhead-entry svg-node->timeline-position-fn [::vcr.handlers/step]])))
 
 (defn on-chunks-mouse-leave [e]
-  (re-frame/dispatch [::handlers/skimhead-stop]))
+  (re-frame/dispatch [::handlers/on-mouse-leave]))
 
 ;;
 ;; * Components

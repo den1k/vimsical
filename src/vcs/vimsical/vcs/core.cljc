@@ -71,7 +71,6 @@
      ::branches          branches
      ::timeline          state.timeline/empty-timeline}))
 
-
 ;; ** Reading (existing vims deltas')
 
 (defn add-delta

@@ -10,12 +10,13 @@
 
 (defprotocol IScheduler
   (running? [_])
-  (start! [_] [_ tick])
+  (start! [_ t tick])
   (pause! [_])
-  (stop! [_]))
+  (stop! [_])
+  (set-time! [_ t]))
 
 (defprotocol ITimeScheduler
-  (schedule! [_ t event]))
+  (schedule! [_ t event override?]))
 
 (defprotocol ISchedulerInternal
   (request-tick! [_])
@@ -85,13 +86,11 @@
 
   IScheduler
   (running? [_] running)
-  (start! [this]
-    (set! started-at (now))
+  (start! [this t tick']
+    (set-time! this t)
+    (set! tick tick')
     (set! running true)
     (request-tick! this))
-  (start! [this tick']
-    (set! tick tick')
-    (start! this))
   (pause! [this]
     (set! running false))
   (stop! [this]
@@ -100,10 +99,15 @@
     (when tick (tick nil))
     (set! started-at nil)
     (set! time->event (empty time->event)))
+  (set-time! [this t]
+    (let [started-at' (cond-> (now) (some? t) (- t))]
+      (set! started-at started-at')))
 
   ITimeScheduler
-  (schedule! [this t event]
-    (set! time->event (assoc time->event t event))))
+  (schedule! [this t event override?]
+    (when (and t event)
+      (let [time->event' (cond-> time->event override? (empty))]
+        (set! time->event (assoc time->event' t event))))))
 
 (defn scheduler? [x] (and x (instance? TimeScheduler x)))
 
@@ -130,17 +134,21 @@
 
 (defonce scheduler (new-scheduler))
 
+(defmulti perform-action! :action)
+
+(defmethod perform-action! nil [_])
+(defmethod perform-action! :start    [{:keys [t tick]}] (start! scheduler t tick))
+(defmethod perform-action! :pause    [{:keys [tick]}]   (pause! scheduler))
+(defmethod perform-action! :stop     [{:keys [tick]}]   (stop! scheduler))
+(defmethod perform-action! :set-time [{:keys [t]}]      (set-time! scheduler t))
+
 (defn scheduler-fx
   [one-or-many]
   (letfn [(ensure-seq [x]
             (if (map? x) [x] x))]
-    (doseq [{:keys [t event action tick]} (ensure-seq one-or-many)]
-      (assert (or (and t event) action))
+    (doseq [{:keys [t event override? action] :as sched} (ensure-seq one-or-many)]
       ;; Schedule first
-      (when t (schedule! scheduler t event))
-      ;; Trigger the action
-      (case action
-        :start (start! scheduler tick)
-        :stop  (stop! scheduler)
-        :pause (pause! scheduler)
-        nil))))
+      (when t (schedule! scheduler t event override?))
+      ;; Then perform the action
+      (when action (println "Scheduler:" action))
+      (perform-action! sched))))

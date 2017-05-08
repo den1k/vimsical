@@ -5,7 +5,9 @@
         [vimsical.frontend.util.re-frame :refer [<sub]]
         [vimsical.frontend.code-editor.ui-db :as ui-db]
         [vimsical.common.util.core :as util]
+        [vimsical.frontend.code-editor.subs :as subs]
         [vimsical.frontend.util.re-frame :as util.re-frame]
+        [vimsical.frontend.timeline.subs :as timeline.subs]
         [vimsical.frontend.vcr.subs :as vcr.subs]
         [vimsical.frontend.vcs.subs :as vcs.subs]
         [vimsical.vcs.core :as vcs])]
@@ -15,7 +17,9 @@
         [vimsical.frontend.util.re-frame :refer [<sub]]
         [re-frame.loggers :refer [console]]
         [vimsical.frontend.code-editor.ui-db :as ui-db]
+        [vimsical.frontend.code-editor.subs :as subs]
         [vimsical.frontend.util.re-frame :as util.re-frame]
+        [vimsical.frontend.timeline.subs :as timeline.subs]
         [vimsical.frontend.vcr.subs :as vcr.subs]
         [vimsical.frontend.vcs.subs :as vcs.subs]
         [vimsical.vcs.core :as vcs])]))
@@ -139,12 +143,14 @@
     :keys
     [model->content-change-handler
      model->cursor-change-handler
-     editor->focus-handler]}]
+     editor->focus-handler
+     editor->blur-handler]}]
   (when (and editor listeners)
     (let [model (.-model editor)]
       {:model->content-change-handler (.onDidChangeModelContent editor (model->content-change-handler model))
        :model->cursor-change-handler  (.onDidChangeCursorSelection editor (model->cursor-change-handler model))
-       :editor->focus-handler         (.onDidFocusEditor editor (editor->focus-handler editor))})))
+       :editor->focus-handler         (.onDidFocusEditor editor (editor->focus-handler editor))
+       :editor->blur-handler          (.onDidBlurEditor editor (editor->blur-handler editor))})))
 
 ;;
 ;; * Events
@@ -158,11 +164,13 @@
  ::register
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ file editor-instance listeners]]
-   {:ui-db      (-> ui-db
-                    (ui-db/set-editor file editor-instance)
-                    (ui-db/set-listeners file listeners))
-    :dispatch-n [[::set-string nil file ""]
-                 [::bind-listeners file]]}))
+   {:ui-db (-> ui-db
+               (ui-db/set-editor file editor-instance)
+               (ui-db/set-listeners file listeners))
+    :dispatch-n
+    [[::set-string nil file ""]
+     [::bind-listeners file]
+     [::track-start file]]}))
 
 (re-frame/reg-event-fx
  ::dispose
@@ -171,7 +179,8 @@
    (do
      ;; XXX fx?
      (dispose-editor (ui-db/get-editor ui-db file))
-     {:ui-db (ui-db/set-editor ui-db file nil)})))
+     {:ui-db    (ui-db/set-editor ui-db file nil)
+      :dispatch [::track-stop file]})))
 
 ;;
 ;; ** Listeners lifecycle
@@ -276,15 +285,21 @@
 (re-frame/reg-event-fx
  ::focus
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db] :as cofx} [_ focus-key editor]]
-   {:ui-db (assoc ui-db focus-key editor)}))
+ (fn [{:keys [ui-db] :as cofx} [_ file]]
+   {:ui-db (ui-db/set-active-file ui-db file)}))
+
+(re-frame/reg-event-fx
+ ::blur
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db] :as cofx} [_ file]]
+   {:ui-db (ui-db/set-active-file ui-db nil)}))
 
 (re-frame/reg-event-fx
  ::paste
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ string]]
    #?(:cljs
-      (let [editor (:app/active-editor ui-db)
+      (let [editor (ui-db/get-active-editor ui-db)
             model  (.-model editor)
             sels   (.. editor -cursor getSelections)]
         (.pushEditOperations
@@ -324,22 +339,30 @@
         nil
         (console :error "editor not found")))))
 
-;; TODO track files' subs
 (re-frame/reg-event-fx
- ::update-editors
- [(util.re-frame/inject-sub [::vcs.subs/vcs])
-  (util.re-frame/inject-sub [::vcs.subs/timeline-entry])
-  (util.re-frame/inject-sub [::vcr.subs/files])]
- (fn update-editors
-   [{:as             cofx
-     ::vcr.subs/keys [files]
-     ::vcs.subs/keys [vcs timeline-entry]} _]
-   (when-some [[_ {delta-id :id}] timeline-entry]
+ ::update-editor
+ (fn update-editor
+   [_ [_ {file-id :db/id :as file} string cursor]]
+   (when (and (some? string) (some? cursor))
      {:dispatch-n
-      (mapcat
-       (fn [{:keys [db/id] :as file}]
-         [[::clear-disposables file]
-          [::set-string false file (vcs/file-string vcs id delta-id)]
-          [::set-cursor file (vcs/file-cursor vcs id delta-id) (vcs/file-string vcs id delta-id)]
-          [::bind-listeners file]])
-       files)})))
+      [[::clear-disposables file]
+       [::set-string false file string]
+       [::set-cursor file cursor string]
+       [::bind-listeners file]]})))
+
+(re-frame/reg-event-fx
+ ::track-start
+ (fn [_ [_ file]]
+   {:track
+    [{:id           [::editor file]
+      :action       :register
+      :subscription [::subs/string-and-cursor file]
+      :val->event   (fn [{:keys [string cursor] :as val}]
+                      [::update-editor file string cursor])}]}))
+
+(re-frame/reg-event-fx
+ ::track-stop
+ (fn [_ [_ file]]
+   {:track
+    [{:id     [::editor file]
+      :action :dispose}]}))
