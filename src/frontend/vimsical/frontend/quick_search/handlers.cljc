@@ -74,7 +74,8 @@
 (re-frame/reg-event-ctx
  ::clear-console
  (fn [_]
-   (js/console.clear)))
+   #?(:cljs
+      (js/console.clear))))
 
 (re-frame/reg-event-db
  ::toggle

@@ -3,7 +3,7 @@
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
    [re-com.core :as re-com]
-   [vimsical.frontend.util.re-frame :refer [<sub <sub-query]]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
    [vimsical.common.util.core :refer [=by] :as util]
    [vimsical.frontend.quick-search.subs :as subs]
@@ -88,7 +88,7 @@
                                query
                                result-idx
                                filter] :as qs}
-          (<sub-query [:app/quick-search ['*]])]
+          (<sub [:q [:app/quick-search ['*]]])]
       [:div.quick-search-container
        (when show?
          (let [filters (<sub [::subs/filters])]

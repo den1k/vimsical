@@ -1,17 +1,9 @@
 (ns vimsical.frontend.util.re-frame
-  (:require [clojure.spec :as s]
-            [vimsical.frontend.db :as db]))
+  (:require [re-frame.core :as re-frame]))
 
 (defn <sub
   [sub]
-  (deref (re-frame.core/subscribe sub)))
-
-#?(:cljs
-   (defn <sub-query [qexpr]
-     (if (db/rewrite-query? qexpr)
-       (let [{:keys [link pattern]} (db/rewrite-link-query qexpr)]
-         (get (<sub [:q pattern]) link))
-       (<sub [:q qexpr]))))
+  (deref (re-frame/subscribe sub)))
 
 #?(:clj
    (defn- sub-deref

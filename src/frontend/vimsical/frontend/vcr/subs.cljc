@@ -7,8 +7,8 @@
  ::branch
  (fn [[_ pattern]]
    (re-frame/subscribe
-    [:q*
-     [{:vims/branches (or pattern '[*])}]
-     :app/vims]))
+    [:q
+     [:app/vims
+      [{:vims/branches (or pattern '[*])}]]]))
  (fn [{:vims/keys [branches]}]
    (->> branches first)))

@@ -4,7 +4,7 @@
    [reagent.core :as reagent]
    [re-com.core :as re-com]
    [vimsical.frontend.views.icons :as icons]
-   [vimsical.frontend.util.re-frame :refer [<sub <sub-query] :refer-macros [with-subs]]
+   [vimsical.frontend.util.re-frame :refer [<sub] :refer-macros [with-subs]]
    [vimsical.frontend.util.dom :refer-macros [e-> e->> e>]]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
    [vimsical.common.util.core :refer [=by] :as util]
@@ -48,12 +48,12 @@
                                 hovering?)))]
     (fn []
       (let
-       [user            (<sub-query [:app/user [:db/id]])
+       [user            (<sub [:q [:app/user [:db/id]]])
 
         {:vims/keys [title author] :as vims}
-        (<sub-query [:app/vims
-                     [:vims/title
-                      {:vims/author [:db/id]}]])
+        (<sub [:q [:app/vims
+                   [:vims/title
+                    {:vims/author [:db/id]}]]])
 
         {:keys [editing? title-too-long?]} @state
 
@@ -88,17 +88,16 @@
   (let
    [show-popup? (reagent/atom false)
     {:user/keys [first-name last-name vimsae] :as user}
-    (<sub-query [:app/user
-                 [:db/id
-                  :user/first-name
-                  :user/last-name
-                  :user/email
-                  {:user/vimsae [:db/id :vims/title]}]])
+    (<sub [:q [:app/user
+               [:db/id
+                :user/first-name
+                :user/last-name
+                :user/email
+                {:user/vimsae [:db/id :vims/title]}]]])
 
-    {:vims/keys [title] :as app-vims} (<sub-query [:app/vims
-                                                   [:db/id
-                                                    :vims/title]])
-    ]
+    {:vims/keys [title] :as app-vims} (<sub [:q [:app/vims
+                                                 [:db/id
+                                                  :vims/title]]])]
     [:div.main-nav.ac.jsb
      [:div.logo-and-type
       [:span.logo icons/vimsical-logo]

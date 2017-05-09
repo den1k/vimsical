@@ -1,7 +1,6 @@
 (ns vimsical.frontend.quick-search.subs
   (:require [re-frame.core :as re-frame]
             [com.stuartsierra.mapgraph :as mg]
-            [vimsical.frontend.util.re-frame :refer [<sub-query]]
             [vimsical.frontend.util.search :as util.search]
             [vimsical.frontend.db :as db]
             [vimsical.frontend.app.subs :as app.subs]

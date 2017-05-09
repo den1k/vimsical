@@ -1,6 +1,7 @@
 (ns vimsical.frontend.code-editor.handlers
   (:require
    [re-frame.core :as re-frame]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.common.util.core :as util]
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.vcs.edit-event :as edit-event]
@@ -43,10 +44,11 @@
    (idx->monaco-range pos pos))
   ([start-pos end-pos]
    {:pre [start-pos end-pos]}
-   #js {:startColumn     (:col start-pos)
-        :startLineNumber (:line start-pos)
-        :endColumn       (:col end-pos)
-        :endLineNumber   (:line end-pos)}))
+   #?(:cljs
+      #js {:startColumn     (:col start-pos)
+           :startLineNumber (:line start-pos)
+           :endColumn       (:col end-pos)
+           :endLineNumber   (:line end-pos)})))
 
 (defn idx->pos
   "Takes an idx and a string and computes a :line and :col hashmap."
@@ -181,13 +183,53 @@
  [(re-frame/inject-cofx :ui-db)]
  update-editor-cursor)
 
+(defn set-model-markers [model sub-type markers]
+  #?(:cljs
+     (.. js/monaco -editor (setModelMarkers model (name sub-type) markers))))
+
+(defn severity-code [flag]
+  (case flag
+    :error 3
+    :warning 2
+    :info 1
+    :ignore 0))
+
+(defn model-marker
+  [{:keys [pos msg severity]
+    :or   {severity :error}}]
+  #?(:cljs
+     (let [{:keys [line col]} pos]
+       #js {:message         msg
+            :severity        (severity-code severity)
+            :startColumn     col
+            :startLineNumber line
+            :endColumn       col
+            :endLineNumber   line})))
+
 (re-frame/reg-event-fx
  ::text-change
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ reg-key {:keys [db/id] :as file} e]]
    (let [model      (ui-db->editor ui-db reg-key file :model)
          edit-event (parse-content-event model e)]
-     {:dispatch [::vcs.handlers/add-edit-event id edit-event]})))
+     {:dispatch-n [[::vcs.handlers/add-edit-event id edit-event]
+                   [::check-code-errors reg-key file]]})))
+
+(re-frame/reg-event-fx
+ ::check-code-errors
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db]} [_ reg-key {:keys [db/id] :as file}]]
+   (when-let [errors (<sub [::vcs.subs/file-lint-or-preprocessing-errors file])]
+     (let [model   (ui-db->editor ui-db reg-key file :model)
+           markers (into-array (map model-marker errors))]
+       ;; TODO fixme
+       #?(:cljs
+          (.setTimeout js/window
+                       #(set-model-markers model
+                                           :javascript
+                                           markers)
+                       1000))
+       nil))))
 
 (re-frame/reg-event-fx
  ::selection-change
@@ -207,15 +249,16 @@
  ::paste
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ string]]
-   (let [editor (:app/active-editor ui-db)
-         model  (.-model editor)
-         sels   (.. editor -cursor getSelections)]
-     (.pushEditOperations
-      model
-      sels
-      (clj->js
-       [{; if true moves cursor, else makes selection around added text
-         :forceMoveMarkers true
-         :text             string
-         :range            (first sels)}])))
+   #?(:cljs
+      (let [editor (:app/active-editor ui-db)
+            model  (.-model editor)
+            sels   (.. editor -cursor getSelections)]
+        (.pushEditOperations
+         model
+         sels
+         (clj->js
+          [{; if true moves cursor, else makes selection around added text
+            :forceMoveMarkers true
+            :text             string
+            :range            (first sels)}]))))
    nil))

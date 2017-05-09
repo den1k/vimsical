@@ -1,8 +1,8 @@
 (ns vimsical.frontend.util.preprocess.core
   (:require [vimsical.vcs.file :as file]
             [vimsical.vcs.compiler :as compiler]
-            [cljsjs.babel-standalone]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+   #?(:cljs [cljsjs.babel-standalone])))
 
 (defmulti preprocess
   (fn [{::file/keys [compiler]} string]
@@ -31,16 +31,17 @@
      :pos  pos
      :msg  message}))
 
-(defmethod preprocess :babel
-  [_ string]
-  (try
-    (->
-     (js/Babel.transform string
-                         (clj->js {:ast        false
-                                   :sourceMaps false
-                                   ;; plugins, e.g. jsx, flow
-                                   ;; https://github.com/babel/babylon#plugins
-                                   :plugins    []}))
-     (format-result))
-    (catch js/Error e
-      {::error (handle-compile-error e)})))
+#?(:cljs
+   (defmethod preprocess :babel
+     [_ string]
+     (try
+       (->
+        (js/Babel.transform string
+                            (clj->js {:ast        false
+                                      :sourceMaps false
+                                      ;; plugins, e.g. jsx, flow
+                                      ;; https://github.com/babel/babylon#plugins
+                                      :plugins    []}))
+        (format-result))
+       (catch js/Error e
+         {::error (handle-compile-error e)}))))

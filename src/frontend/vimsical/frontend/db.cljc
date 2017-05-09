@@ -9,6 +9,7 @@
    [vimsical.vcs.lib :as lib]
    [vimsical.vcs.compiler :as compiler]
    [vimsical.common.test :refer [uuid]]
+   [re-frame.interop :as interop]
    #?(:cljs
       [vimsical.frontend.quick-search.commands :as quick-search.commands])))
 
@@ -66,8 +67,18 @@
       (get (mg/pull db pattern) link))
     (mg/pull db qexpr)))
 
-(re-frame/reg-sub-raw :q sg/pull)
-(re-frame/reg-sub-raw :q* sg/pull-link)
+(defn pull-sub* [db qexpr]
+  (if (rewrite-query? qexpr)
+    (let [{:keys [link pattern]} (rewrite-link-query qexpr)]
+      (interop/make-reaction
+       (fn []
+         (get @(sg/pull db pattern) link))))
+    (sg/pull db qexpr)))
+
+(re-frame/reg-sub-raw
+ :q
+ (fn [db [_ qexpr]]
+   (pull-sub* db qexpr)))
 
 (defn new-vims
   ([author-ref title] (new-vims author-ref title {}))

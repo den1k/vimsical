@@ -1,6 +1,5 @@
 (ns vimsical.frontend.live-preview.handlers
   (:require [re-frame.core :as re-frame]
-            [vimsical.frontend.util.dom :as util.dom]
             [vimsical.frontend.util.re-frame :refer [<sub]]
             [com.stuartsierra.mapgraph :as mg]
             [vimsical.frontend.vcs.subs :as vcs.subs]
@@ -8,8 +7,9 @@
             [vimsical.vcs.file :as file]
             [vimsical.vcs.lib :as lib]
             [vimsical.common.util.core :as util]
-            [reagent.dom.server]
-            [vimsical.frontend.util.preprocess.core :as preprocess]))
+            [vimsical.frontend.util.preprocess.core :as preprocess]
+   #?@(:cljs [[reagent.dom.server]
+              [vimsical.frontend.util.dom :as util.dom]])))
 
 (defn- lib-node [{:keys [db/id] ::lib/keys [src sub-type] :as lib}]
   (let [tag (case sub-type :html :body :css :style :javascript :script)]
@@ -25,8 +25,9 @@
       :dangerouslySetInnerHTML {:__html string}}]))
 
 (defn- file-node-markup [file]
-  (reagent.dom.server/render-to-static-markup
-   [file-node file]))
+  #?(:cljs
+     (reagent.dom.server/render-to-static-markup
+      [file-node file])))
 
 (defn- iframe-markup [{:keys [files libs]}]
   (let [by-subtype (group-by ::file/sub-type files)]
@@ -51,18 +52,20 @@
                                    body-string}}])]))
 
 (defn- iframe-markup-string [{:keys [files libs] :as opts}]
-  (reagent.dom.server/render-to-static-markup
-   (iframe-markup opts)))
+  #?(:cljs
+     (reagent.dom.server/render-to-static-markup
+      (iframe-markup opts))))
 
 (defn update-iframe-src
   [{:keys [db ui-db]} [_ ui-reg-key {::branch/keys [files libs]}]]
-  (let [iframe        (get-in ui-db [ui-reg-key ::iframe])
-        markup        (iframe-markup-string {:files files :libs libs})
-        prev-blob-url (get-in ui-db [ui-reg-key ::src-blob-url])
-        blob-url      (util.dom/blob-url markup "text/html")]
-    (some-> prev-blob-url util.dom/revoke-blob-url)
-    (aset iframe "src" blob-url)
-    {:ui-db (assoc-in ui-db [ui-reg-key ::src-blob-url] blob-url)}))
+  #?(:cljs
+     (let [iframe        (get-in ui-db [ui-reg-key ::iframe])
+           markup        (iframe-markup-string {:files files :libs libs})
+           prev-blob-url (get-in ui-db [ui-reg-key ::src-blob-url])
+           blob-url      (util.dom/blob-url markup "text/html")]
+       (some-> prev-blob-url util.dom/revoke-blob-url)
+       (aset iframe "src" blob-url)
+       {:ui-db (assoc-in ui-db [ui-reg-key ::src-blob-url] blob-url)})))
 
 (defmulti update-node!
   (fn [_ {::file/keys [sub-type]} _] sub-type)
@@ -73,17 +76,19 @@
    (swap-head-node! iframe content-type attrs ""))
   ([iframe content-type {:keys [id] :as attrs} value]
    {:pre [id]}
-   (let [doc      (.-contentDocument iframe)
-         head     (.-head doc)
-         old-node (.getElementById doc id)
-         new-node (util.dom/create content-type attrs value)]
-     (some-> old-node util.dom/remove!)
-     (util.dom/append! head new-node))))
+   #?(:cljs
+      (let [doc      (.-contentDocument iframe)
+            head     (.-head doc)
+            old-node (.getElementById doc id)
+            new-node (util.dom/create content-type attrs value)]
+        (some-> old-node util.dom/remove!)
+        (util.dom/append! head new-node)))))
 
 (defmethod update-node! :html
   [iframe file]
-  (util.dom/set-inner-html! (.. iframe -contentDocument -body)
-                            (<sub [::vcs.subs/preprocessed-file-string file])))
+  #?(:cljs
+     (util.dom/set-inner-html! (.. iframe -contentDocument -body)
+                               (<sub [::vcs.subs/preprocessed-file-string file]))))
 
 (defmethod update-node! :css-or-javascript
   [iframe {::file/keys [sub-type] :keys [db/id] :as file}]
