@@ -73,6 +73,11 @@
       {:id 50} 5
       {:id 90} 9)))
 
+(deftest peek-test
+  (let [{:keys [v vb]} (test-data)]
+    (is (= {:id 90} (peek v)))
+    (is (= {:id 90} (peek vb)))))
+
 (deftest update-test
   (let [{:keys [v vb]} (test-data)]
     (is (thrown?

@@ -221,6 +221,9 @@
              v'      (conj v val)]
          (vector f index' v')))
 
+     clojure.lang.IPersistentStack
+     (peek [_] (.peek v))
+
      java.lang.Iterable
      ;; XXX This might be a bit risky in cases where someone would call remove()
      ;; on the vector's iterator, our index would go out of sync.
@@ -231,7 +234,7 @@
        (vector f (index) (impl/vector)))
      (equiv [this other]
        (or (identical? this other)
-            (if (instance? IndexedVector other)
+           (if (instance? IndexedVector other)
              (and (= v (.v ^IndexedVector other))
                   (= index (.index ^IndexedVector other)))
              false)))
@@ -290,7 +293,6 @@
              [_ r]   (splittable/split tmp cnt)]
          (splittable/append l r)))
 
-
      splittable/Mergeable
      (splice [this idx other]
        (if (== (count this) (long idx))
@@ -319,6 +321,9 @@
      ISeq
      (-first [_] (first v))
      (-rest [this] (or (next this) (empty this)))
+
+     IStack
+     (-peek [_] (-peek v))
 
      INext
      (-next [_]
