@@ -218,7 +218,7 @@
                       :foreign-libs         [; todo put jshint code into into resources
                                              ; add file-min opt
                                              ; externs
-                                             {:file     "https://cdnjs.cloudflare.com/ajax/libs/jshint/2.9.4/jshint.min.js"
+                                             {:file     "public/js/jshint.js"
                                               :provides ["jshint"]}]
                       :parallel-build       true
                       ;; Add cache busting timestamps to source map urls.
