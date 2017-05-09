@@ -44,6 +44,10 @@
   [parent child]
   (=by :db/id (comp :db/id ::parent) parent child))
 
+(defn master
+  [branches]
+  (some-val master? branches))
+
 (defn lineage
   "Return a seq of that `branch`'s lineage, starting with itself,
   then its direct parent, etc all the way to master.

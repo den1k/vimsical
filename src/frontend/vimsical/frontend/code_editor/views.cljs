@@ -155,13 +155,13 @@
 ;;
 
 ;; XXX use interceptors to parse events?
-(defn handle-content-change [model {file-id :db/id} e]
+(defn handle-content-change [model file e]
   (re-frame/dispatch
-   [::vcs.handlers/add-edit-event file-id  (parse-content-event model e)]))
+   [::vcs.handlers/add-edit-event file  (parse-content-event model e)]))
 
-(defn handle-cursor-change [model {file-id :db/id} e]
+(defn handle-cursor-change [model file e]
   (re-frame/dispatch
-   [::vcs.handlers/add-edit-event file-id (parse-selection-event model e)]))
+   [::vcs.handlers/add-edit-event file (parse-selection-event model e)]))
 
 (defn editor-focus-handler [file editor]
   (fn [_]
