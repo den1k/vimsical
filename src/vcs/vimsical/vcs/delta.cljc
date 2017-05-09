@@ -3,7 +3,9 @@
    [clojure.spec :as s]
    [vimsical.vcs.op :as op]))
 
+;;
 ;; * Consistency checks
+;;
 
 (declare op-type op-id)
 
@@ -22,8 +24,9 @@
            true))
        {} deltas))))
 
-
+;;
 ;; * Spec
+;;
 
 (def current-version 0.3)
 
@@ -40,6 +43,10 @@
 (s/def ::delta
   (s/keys :req-un [::branch-id ::file-id ::prev-id ::id ::op ::pad]
           :opt-un [::meta]))
+
+;;
+;; * Constructor
+;;
 
 (s/def ::new-delta
   (s/keys :req-un [::branch-id ::file-id ::prev-id ::id ::op ::pad ::timestamp]))
@@ -58,8 +65,11 @@
    :pad       pad
    :meta      {:timestamp timestamp :version current-version}})
 
+;;
+;; * Accessors
+;;
 
-(defn op-id [{[_ id] :op}] id)
+(defn op-id   [{[_ id] :op}] id)
 (defn op-type [{[op] :op}] op)
 (defn op-diff [{[_ _ diff] :op}] (assert diff "Not a :str/ins") diff)
 (defn op-amt  [{[_ _ amt] :op}] (assert amt "Not :str/rem") amt)

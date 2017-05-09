@@ -4,6 +4,7 @@
   (:require
    [clojure.spec :as s]
    [diffit.vec :as diffit]
+   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.edit-event :as edit-event]
@@ -196,15 +197,17 @@
         :args (s/cat :vcs ::vcs/vcs
                      :effects ::editor/effects
                      :file-id ::file/id
+                     :branch-id ::branch/id
+                     :delta-id ::delta/prev-id
                      :strs (s/* ::splice-or-string))
-        :ret ::vcs/vcs)
+        :ret (s/tuple ::vcs/vcs ::delta/id))
 
 (defn diffs->vcs
-  [vcs effects file-id & strs]
+  [vcs effects file-id branch-id delta-id & strs]
   (assert (string? (first strs)))
   (assert (every? vector? (next strs)))
   (letfn [(splice-strs [strs] (mapv (fn [str] (if (vector? str) str [str])) strs))]
     (reduce
-     (fn [vcs edit-event]
-       (vcs/add-edit-event vcs effects file-id edit-event))
-     vcs (apply diffs->edit-events (splice-strs strs)))))
+     (fn [[vcs delta-id] edit-event]
+       (vcs/add-edit-event vcs effects file-id branch-id delta-id edit-event))
+     [vcs delta-id] (apply diffs->edit-events (splice-strs strs)))))
