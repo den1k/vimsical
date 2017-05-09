@@ -1,7 +1,8 @@
 (ns vimsical.frontend.util.preprocess.core
   (:require [vimsical.vcs.file :as file]
             [vimsical.vcs.compiler :as compiler]
-            [cljsjs.babel-standalone]))
+            [cljsjs.babel-standalone]
+            [clojure.string :as string]))
 
 (defmulti preprocess
   (fn [{::file/keys [compiler]} string]
@@ -17,10 +18,15 @@
    ::ast        (.-ast res)
    ::source-map (.-map res)})
 
-(defn handle-compile-error [e]
+(defn- format-error-msg [msg]
+  (-> (subs msg 9)                      ; remove "unknown "
+      (string/split #"\s\(\d*:\d*\d\)") ; remove line numbers and annotated code
+      first))
+
+(defn- handle-compile-error [e]
   (let [pos     {:line (.. e -loc -line)
                  :col  (.. e -loc -column)}
-        message (.-message e)]
+        message (format-error-msg (.-message e))]
     {:type :compile-error
      :pos  pos
      :msg  message}))
