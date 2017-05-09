@@ -40,44 +40,44 @@
         (* x-scroll-factor x)
         (* y-scroll-factor y)))))
 
-(defn mouse-event->svg-node->timeline-position
-  [e]
+(defn coords-and-svg-node->timeline-position
+  [coords svg-node]
   (letfn [(scale-coords [svg-node [x y]]
             (let [pt (.createSVGPoint svg-node)
                   sc (.matrixTransform
                       (doto pt (aset "x" x) (aset "y" y))
                       (.inverse (.getScreenCTM svg-node)))]
-              [(.-x sc) (.-y sc)]))
-          (svg-node->timeline-position-fn [coords]
-            (fn [svg-node]
-              (first (scale-coords svg-node coords))))]
-    (-> e e->mouse-coords svg-node->timeline-position-fn)))
+              [(.-x sc) (.-y sc)]))]
+    (first
+     (scale-coords svg-node coords))))
 
 ;;
 ;; * Handlers
 ;;
 
-
-(defn on-chunks-mouse-enter [e]
+(defn on-mouse-enter [_]
   (re-frame/dispatch [::handlers/on-mouse-enter]))
 
-(defn on-chunks-mouse-wheel [e]
+(defn on-mouse-wheel [e]
   (.preventDefault e)  ; Prevent history navigation
-  (let [dt (scroll-event->timeline-offset e)]
-    (re-frame/dispatch
-     [::handlers/on-mouse-wheel dt])))
+  (re-frame/dispatch
+   [::handlers/on-mouse-wheel
+    (scroll-event->timeline-offset e)]))
 
-(defn on-chunks-mouse-move [e]
-  (let [svg-node->timeline-position-fn (mouse-event->svg-node->timeline-position e)]
-    (re-frame/dispatch
-     [::handlers/on-mouse-move svg-node->timeline-position-fn])))
+(defn on-mouse-move [e]
+  (re-frame/dispatch
+   [::handlers/on-mouse-move
+    (e->mouse-coords e)
+    coords-and-svg-node->timeline-position]))
 
-(defn on-chunks-click [e]
-  (let [svg-node->timeline-position-fn (mouse-event->svg-node->timeline-position e)]
-    (re-frame/dispatch
-     [::handlers/on-click svg-node->timeline-position-fn [::vcr.handlers/step]])))
+(defn on-click [e]
+  (re-frame/dispatch
+   [::handlers/on-click
+    (e->mouse-coords e)
+    coords-and-svg-node->timeline-position
+    [::vcr.handlers/step]]))
 
-(defn on-chunks-mouse-leave [e]
+(defn on-mouse-leave [_]
   (re-frame/dispatch [::handlers/on-mouse-leave]))
 
 ;;
@@ -199,11 +199,11 @@
         :view-box              (util/space-join left right duration timeline-height)
         :preserve-aspect-ratio "none meet"
         :style                 {:width "100%" :height "100%"}
-        :on-mouse-enter        on-chunks-mouse-enter
-        :on-mouse-move         on-chunks-mouse-move
-        :on-click              on-chunks-click
-        :on-wheel              on-chunks-mouse-wheel
-        :on-mouse-leave        on-chunks-mouse-leave}
+        :on-mouse-enter        on-mouse-enter
+        :on-wheel              on-mouse-wheel
+        :on-mouse-move         on-mouse-move
+        :on-click              on-click
+        :on-mouse-leave        on-mouse-leave}
        [chunks]
        [playhead-line clip-path-id]
        [skimhead-line clip-path-id]]]]))

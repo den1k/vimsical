@@ -30,13 +30,13 @@
    {:ui-db (dissoc ui-db ::svg node)}))
 
 (defn ui-time
-  [{:keys [ui-db]} svg-node->timeline-position-fn]
-  (let [svg-node  (get ui-db ::svg)]
-    (svg-node->timeline-position-fn svg-node)))
+  [{:keys [ui-db]} coords coords-and-svg-node->timeline-position-fn]
+  (let [svg-node (get ui-db ::svg)]
+    (coords-and-svg-node->timeline-position-fn coords svg-node)))
 
 (defn ui-timeline-entry
-  [{::vcs.subs/keys [vcs] :as cofx} svg-node->timeline-position-fn]
-  (let [ui-time        (ui-time cofx svg-node->timeline-position-fn)
+  [{::vcs.subs/keys [vcs] :as cofx} coords coords-and-svg-node->timeline-position-fn]
+  (let [ui-time        (ui-time cofx coords coords-and-svg-node->timeline-position-fn)
         timeline-entry (vcs/timeline-entry-at-time vcs ui-time)]
     [ui-time timeline-entry]))
 
@@ -60,20 +60,6 @@
 (re-frame/reg-event-fx ::on-mouse-enter (fn [_ _]))
 
 (re-frame/reg-event-fx
- ::on-mouse-move
- [(re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub [::vcs.subs/vcs])]
- (fn [{:as             cofx
-       :keys           [db ui-db]
-       ::vcs.subs/keys [vcs]}
-      [_ svg-node->timeline-position-fn]]
-   (let [[t entry] (ui-timeline-entry cofx svg-node->timeline-position-fn)
-         vcs'      (vcs.db/set-skimhead-entry vcs entry)
-         db'       (mg/add db vcs')
-         ui-db'    (timeline.ui-db/set-skimhead ui-db t)]
-     {:db db' :ui-db ui-db'})))
-
-(re-frame/reg-event-fx
  ::on-mouse-wheel
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub [::vcs.subs/vcs])
@@ -88,6 +74,20 @@
          vcs'      (vcs.db/set-skimhead-entry vcs entry)
          db'       (mg/add db vcs')
          ui-db'    (timeline.ui-db/set-skimhead ui-db skimhead')]
+     {:db db' :ui-db ui-db'})))
+
+(re-frame/reg-event-fx
+ ::on-mouse-move
+ [(re-frame/inject-cofx :ui-db)
+  (util.re-frame/inject-sub [::vcs.subs/vcs])]
+ (fn [{:as             cofx
+       :keys           [db ui-db]
+       ::vcs.subs/keys [vcs]}
+      [_ coords coords-and-svg-node->timeline-position-fn]]
+   (let [[t entry] (ui-timeline-entry cofx coords coords-and-svg-node->timeline-position-fn)
+         vcs'      (vcs.db/set-skimhead-entry vcs entry)
+         db'       (mg/add db vcs')
+         ui-db'    (timeline.ui-db/set-skimhead ui-db t)]
      {:db db' :ui-db ui-db'})))
 
 (re-frame/reg-event-fx
@@ -128,8 +128,8 @@
  (fn [{:as             cofx
        :keys           [db ui-db]
        ::vcs.subs/keys [vcs]}
-      [_ svg-node->timeline-position-fn step-event]]
-   (let [[ui-time [entry-time :as entry]] (ui-timeline-entry cofx svg-node->timeline-position-fn)
+      [_ coords coords-and-svg-node->timeline-position-fn step-event]]
+   (let [[ui-time [entry-time :as entry]] (ui-timeline-entry cofx coords coords-and-svg-node->timeline-position-fn)
          vcs'                             (assoc vcs ::vcs.db/playhead-entry entry)
          db'                              (mg/add db vcs')
          ui-db'                           (assoc ui-db ::timeline.ui-db/playhead ui-time)]
