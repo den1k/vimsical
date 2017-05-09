@@ -9,7 +9,9 @@
       [(:refer-clojure :exclude [uuid])
        (:require [vimsical.common.uuid :as uuid])]))
 
+;;
 ;; * Helpers
+;;
 
 ;; Only use this when working through tests,
 #?(:clj
@@ -19,7 +21,9 @@
        (t/is (nil? only-in-expected))
        (t/is (nil? only-in-actual)))))
 
+;;
 ;; * UUID
+;;
 
 (def ^{:dynamic true :private true} *print-tags* true)
 (def ^{:dynamic true :private true} *tag->uuid* (atom {}))

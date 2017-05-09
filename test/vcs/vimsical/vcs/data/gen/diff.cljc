@@ -12,11 +12,18 @@
    [vimsical.vcs.file :as file]
    [vimsical.vcs.state.files :as state.files]))
 
+;;
 ;; * Edit events
+;;
 
+;;
 ;; ** Cursor
+;;
+
+;;
 ;; *** Moving after str events
 ;;
+
 ;; Add the crsr/mv events after str/* edit-events
 ;;
 
@@ -41,8 +48,10 @@
   (comp (map move-past-edit-event) cat))
 
 
+;;
 ;; *** Moving between diff events
 ;;
+
 ;; When the diff generates, say an insert at X and a delete at Y, we want to add
 ;; the cursor movements going from (+ X 1) do Y. There is some complexity in the
 ;; implementation because these fns usually kick in after we've added the
@@ -112,8 +121,13 @@
 (defn- splice-edit-events-xf [] (comp (map #'state.files/splice-edit-event) cat))
 
 
+;;
 ;; * String diff to edit events
+;;
+
+;;
 ;; ** str -> diff
+;;
 
 (s/def ::ins (s/cat :op #{:+} :index nat-int? :chars vector?))
 (s/def ::rem (s/cat :op #{:-} :index nat-int? :amt pos-int?))
@@ -121,7 +135,9 @@
 (s/def ::edit-script (s/spec (s/* ::edit)))
 (s/def ::diff (s/cat :edit-distance number? :edit-script ::edit-script ))
 
+;;
 ;; ** diff -> edit-event
+;;
 
 (defmulti ^:private diffit-edit->edit-event first)
 
@@ -139,8 +155,9 @@
   [[_ edits]]
   (into [] (map diffit-edit->edit-event) edits))
 
-
-;; * Diff API
+;;
+;; * API
+;;
 
 (s/def ::splice-string (s/tuple string?))
 (s/def ::string string?)

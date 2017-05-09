@@ -5,16 +5,18 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]))
 
-
+;;
 ;; * Spec
+;;
 
 (s/def ::start ::delta/prev-id)
 (s/def ::end ::delta/prev-id)
 (s/def ::branch-pointers (s/keys :req [::start ::end]))
 (s/def ::branch-pointers-by-branch-id (s/map-of ::branch/id ::branch-pointers))
 
-
+;;
 ;; * State
+;;
 
 (def empty-branch-pointers-by-branch-id {})
 
@@ -24,12 +26,13 @@
     (nil? start) (assoc ::start start-id)
     true         (assoc ::end end-id)))
 
-
+;;
 ;; * API
+;;
 
 (s/fdef add-delta
-  :args (s/cat :bpbb ::branch-pointers-by-branch-id ::deltas ::delta/delta)
-  :ret ::branch-pointers-by-branch-id)
+        :args (s/cat :bpbb ::branch-pointers-by-branch-id ::deltas ::delta/delta)
+        :ret ::branch-pointers-by-branch-id)
 
 (defn add-delta
   [branch-pointers-by-branch-id {:keys [id branch-id] :as delta}]

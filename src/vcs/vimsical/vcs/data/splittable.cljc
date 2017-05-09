@@ -3,21 +3,25 @@
   (:require
    [clojure.spec :as s]))
 
-
+;;
 ;; * Split
+;;
 
 (defprotocol Splittable
   (split [_ idx] "Return a tuple of splittables, from 0 to idx exclusive, and from index to end.")
   (omit  [_ idx cnt] "Remove `cnt` values starting at `idx`."))
 
+;;
 ;; * Merge
+;;
 
 (defprotocol Mergeable
   (splice [_ idx other] "Insert `other` at idx. NOTE that for performance reasons, implementations should inline their implementations of `append` when `idx` is `(count this)`")
   (append [_ other] "An alternative to `concat` for mergrables that doesn't require implementing lazy-seq."))
 
-
+;;
 ;; * Default implementations
+;;
 
 (extend-protocol Splittable
   #?(:clj String :cljs string)
@@ -108,13 +112,12 @@
      (let [[l r] (split splittable index)]
        (recur r (conj acc l) (map #(- % index) indexes))))))
 
-
 (defn interleave
   "Like `clojure.core/interleave` but non-lazy and doesn't stop at the shortest
   seq."
   [& colls]
   (loop [colls colls
-         acc  (transient [])]
+         acc   (transient [])]
     (if (not-any? seq colls)
       (persistent! acc)
       (recur

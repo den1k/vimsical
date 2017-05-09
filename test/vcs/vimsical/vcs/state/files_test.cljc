@@ -22,16 +22,18 @@
 
 (st/instrument)
 
-
+;;
 ;; * Deltas tests
+;;
 
 (deftest add-deltas-test
   (let [states                          (sut/add-deltas sut/empty-state-by-file-id examples/deltas)
         {::sut/keys [deltas] :as state} (get states examples/file1-id)]
     (t/is (seq deltas))))
 
-
+;;
 ;; * Edit events tests
+;;
 
 (deftest add-edit-events-test
   (letfn [(test-pad-fn [_] 1)
@@ -42,12 +44,12 @@
           test-effects {::editor/pad-fn       test-pad-fn
                         ::editor/uuid-fn      test-uuid-fn
                         ::editor/timestamp-fn test-timestamp-fn}
-          state= (fn [expected-string expected-cursor [states deltas]]
-                   (let [{::sut/keys [files string cursor]} (get states file-id)]
-                     (is (seq deltas))
-                     (is (topo/sorted? deltas))
-                     (is (= expected-string string))
-                     (is (= expected-cursor cursor))))]
+          state=       (fn [expected-string expected-cursor [states deltas]]
+                         (let [{::sut/keys [files string cursor]} (get states file-id)]
+                           (is (seq deltas))
+                           (is (topo/sorted? deltas))
+                           (is (= expected-string string))
+                           (is (= expected-cursor cursor))))]
       (testing "Spliced insert"
         (state= "abc" 3
                 (sut/add-edit-events

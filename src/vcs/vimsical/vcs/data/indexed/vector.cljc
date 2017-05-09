@@ -29,19 +29,23 @@
    [vimsical.vcs.data.splittable :as splittable]
    #?(:clj [clojure.pprint :as pprint])))
 
-
+;;
 ;; * Protocol
+;;
 
 (defprotocol IIndexedVector
   (index-of [_ val]))
 
-
+;;
 ;; * Private
+;;
 
 (defprotocol IIndexedInternal
   (-consistent? [_]))
 
+;;
 ;; ** Index
+;;
 
 #?(:clj
    (deftype Index [^long offset ^clojure.lang.IPersistentMap m]
@@ -168,8 +172,9 @@
   ([vals] (Index. 0 (impl/index identity vals)))
   ([f vals] (Index. 0 (impl/index f vals))))
 
-
+;;
 ;; ** Printing
+;;
 
 #?(:clj
    (defmethod pprint/simple-dispatch Index [^Index m]
@@ -179,8 +184,9 @@
    (defmethod print-method Index [^Index m w]
      (print-method (impl/-normalize (.m m) (.offset m)) w)))
 
-
+;;
 ;; * Impl
+;;
 
 (defn ^:declared vector ([]) ([v]) ([f index v]))
 (defn ^:declared vector? ([]) ([v]))
@@ -421,8 +427,9 @@
                v'     (splittable/append v (.-v other))]
            (vector f index' v'))))))
 
-
+;;
 ;; ** Printing
+;;
 
 #?(:clj
    (defmethod pprint/simple-dispatch IndexedVector [^IndexedVector v]
@@ -435,8 +442,9 @@
 #?(:clj
    (prefer-method pprint/simple-dispatch Index clojure.lang.IPersistentMap ))
 
-
+;;
 ;; * API
+;;
 
 (defn vector?
   ([]  (vector))
@@ -445,8 +453,9 @@
 (s/def ::vector-like (s/or :seq seq? :vec clojure.core/vector? :sequ sequential?))
 (s/def ::vector (s/and vector? -consistent?))
 
-
+;;
 ;; ** By value
+;;
 
 (s/fdef vec :args (s/cat :v ::vector-like))
 
@@ -463,8 +472,9 @@
   ([f index v]
    (IndexedVector. f index (impl/vec v))))
 
-
+;;
 ;; ** By key
+;;
 
 (s/fdef vec-by :args (s/cat :f ifn? :v ::vector-like))
 

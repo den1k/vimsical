@@ -4,7 +4,9 @@
    [clojure.spec :as s]
    [vimsical.vcs.data.splittable :as splittable]))
 
+;;
 ;; * Index
+;;
 
 (defprotocol IIndex
   (-init [this f vals])
@@ -16,7 +18,9 @@
   ([] {})
   ([f vals] (-init (index) f vals)))
 
+;;
 ;; ** Map
+;;
 
 ;; NOTE couldn't figure out how to remove the duplication in extending both
 ;; map types in cljs, `extend` didn't seem to work as expected
@@ -73,8 +77,9 @@
             (split-at idx)
             (mapv (partial into (empty m)))))))
 
-
+;;
 ;; * Vector
+;;
 
 (s/def ::vector clojure.core/vector?)
 

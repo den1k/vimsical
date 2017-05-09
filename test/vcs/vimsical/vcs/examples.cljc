@@ -8,7 +8,9 @@
    [vimsical.vcs.state.branch-pointers :as state.branch-pointers]
    [vimsical.vcs.state.branches :as state.branches]))
 
+;;
 ;; * UUIDs
+;;
 
 (def master-id (uuid :master))
 (def child-id (uuid :child))
@@ -26,8 +28,9 @@
 (def id7 (uuid :id7))
 (def id8 (uuid :id8))
 
-
+;;
 ;; * Branches
+;;
 
 (def master {:db/id master-id})
 (def child  {:db/id child-id  ::branch/parent master ::branch/branch-off-delta-id id1 ::branch/start-deltas-id id2})
@@ -37,11 +40,12 @@
 
 (s/assert* (s/coll-of ::branch/branch) branches)
 
-
+;;
 ;; * Deltas
+;;
 
 (def d0 {:branch-id master-id, :id id0 :prev-id nil, :file-id file1-id, :op [:str/ins nil "h"], :pad 0,   :meta {:timestamp 1, :version 1.0}})
-(def d1 {:branch-id master-id, :id id1 :prev-id id0, :file-id file1-id, :op [:crsr/mv id0],     :pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d1 {:branch-id master-id, :id id1 :prev-id id0, :file-id file1-id, :op [:crsr/mv id0], :pad 1, :meta {:timestamp 1, :version 1.0}})
 (def d2 {:branch-id child-id,  :id id2 :prev-id id1, :file-id file1-id, :op [:str/ins id0 "i"], :pad 100, :meta {:timestamp 1, :version 1.0}})
 (def d3 {:branch-id child-id,  :id id3 :prev-id id2, :file-id file1-id, :op [:crsr/mv id2],     :pad 1,   :meta {:timestamp 1, :version 1.0}})
 (def d4 {:branch-id gchild-id, :id id4 :prev-id id3, :file-id file1-id, :op [:str/ins id2 "!"], :pad 100, :meta {:timestamp 1, :version 1.0}})
@@ -54,16 +58,18 @@
 
 (s/assert* (s/coll-of ::delta/delta) deltas)
 
-
+;;
 ;; * Latest file deltas
+;;
 
 (def latest-file-deltas
   {master-id {file1-id d8}
    child-id  {file1-id d3 file2-id d7}
    gchild-id {file1-id d5 file2-id d6}})
 
-
+;;
 ;; * Branches
+;;
 
 (def deltas-by-branch-id
   {master-id (indexed/vec-by :id [d0 d1 d8])
@@ -79,8 +85,9 @@
 
 (s/assert* ::state.branch-pointers/branch-pointers-by-branch-id branch-pointers-by-branch-id)
 
-
+;;
 ;; * Branch tree
+;;
 
 (def branch-tree
   (assoc master ::branch/children [(assoc child ::branch/children [gchild])]))

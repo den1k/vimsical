@@ -16,7 +16,9 @@
 
 (st/instrument)
 
+;;
 ;; * Data
+;;
 
 (defn test-data
   ([] (test-data (range 0 100 10)))
@@ -36,8 +38,9 @@
         (update :v  update-fn)
         (update :vb update-fn))))
 
-
+;;
 ;; * Tests
+;;
 
 (deftest spec-test
   (is (s/valid? ::sut/vector (sut/vector)))

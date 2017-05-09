@@ -10,8 +10,13 @@
    [vimsical.vcs.editor :as editor]
    [vimsical.vcs.file :as file]))
 
+;;
 ;; * Spec
+;;
+
+;;
 ;; ** Singe file state
+;;
 
 (s/def ::cursor (s/or :idx ::edit-event/idx :idx-range ::edit-event/range))
 (s/def ::deltas (s/every ::delta/delta :kind indexed/vector?))
@@ -24,18 +29,25 @@
    ::string ""
    ::cursor 0})
 
-
+;;
 ;; ** State by file id
+;;
 
 (s/def ::state-by-file-id (s/every-kv ::file/id ::state))
 
 (def empty-state-by-file-id {})
 
-
+;;
 ;; * Internal
-;; ** Helpers
+;;
 
+;;
+;; ** Helpers
+;;
+
+;;
 ;; *** State update
+;;
 
 ;; XXX This op is hacky because it reuses the format of the delta/op but with
 ;; indexes instead of uuid, this datatype is not valid anywhere else in the vcs
@@ -80,8 +92,9 @@
 (defmethod update-state :crsr/mv  [state  [_ idx] _]       (assoc state ::cursor idx))
 (defmethod update-state :crsr/sel [state  [_ idx-range] _] (assoc state ::cursor idx-range))
 
-
+;;
 ;; *** Indexes and ids
+;;
 
 (s/fdef op-id->op-idx
         :args (s/cat :state ::state :op-id ::delta/prev-id)
@@ -110,8 +123,9 @@
     (when (<= 0 (long idx))
       (:id (nth deltas (long idx))))))
 
-
+;;
 ;; ** Player API Internals -- adding existing deltas
+;;
 
 (s/fdef add-delta-rf
         :args (s/cat :state ::state :delta ::delta/delta)
@@ -144,14 +158,19 @@
 
 (defmethod add-delta-rf :str/rem
   [{::keys [deltas string] :as state} delta]
-  (let [op-id      (delta/op-id delta)
-        op-amt     (delta/op-amt delta)
-        op-idx     (op-id->op-idx state op-id)]
+  (let [op-id  (delta/op-id delta)
+        op-amt (delta/op-amt delta)
+        op-idx (op-id->op-idx state op-id)]
     (update-state state [:str/rem op-idx op-amt] delta)))
 
 
+;;
 ;; ** Editor API internals -- adding edit-events
+;;
+
+;;
 ;; *** Event splicing -- 1 edit-event -> * edit-events
+;;
 
 (defmulti ^:private splice-edit-event ::edit-event/op)
 
@@ -307,13 +326,17 @@
         state'       (update-state state [:crsr/sel from-idx to-idx] delta)]
     [state' deltas' new-delta-id]))
 
-
-
+;;
 ;; * API
+;;
 
+;;
 ;; ** Updates
+;;
 
+;;
 ;; *** Adding deltas -- reading a vims
+;;
 
 (s/fdef add-delta
         :args (s/cat :state ::state-by-file-id :delta ::delta/delta)
@@ -331,8 +354,9 @@
   [state-by-file-id deltas]
   (reduce (fnil add-delta empty-state-by-file-id) state-by-file-id deltas))
 
-
+;;
 ;; *** Adding editing events -- editing a vims
+;;
 
 (def ^:private add-edit-event-state-update-fn (fnil add-edit-event-rf empty-state))
 
@@ -379,8 +403,9 @@
      (add-edit-event* state-by-file-id editor-effects deltas file-id branch-id prev-delta-id edit-event))
    [state-by-file-id [] delta-id] edit-events))
 
-
+;;
 ;; ** Queries
+;;
 
 (s/fdef deltas :args (s/cat :state-by-file-id ::state-by-file-id :file-id ::file/id) :ret  (s/every ::delta/delta) )
 

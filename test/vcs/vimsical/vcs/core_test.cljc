@@ -24,7 +24,9 @@
 
 (t/use-fixtures :each uuid-fixture)
 
+;;
 ;; * Integration tests
+;;
 
 (deftest add-edit-event-test
   (letfn [(add-edit-events

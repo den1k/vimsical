@@ -6,7 +6,9 @@
 
 (def sub-types #{:html :css :javascript})
 
+;;
 ;; * Attributes
+;;
 
 (s/def ::id uuid?)
 (s/def :db/id ::id)
@@ -16,6 +18,7 @@
 (s/def ::compiler ::compiler/compiler)
 (s/def ::lang-version string?)
 
+;;
 ;; * Entity
 (s/def ::file (s/keys :req [:db/id ::type ::sub-type]
                       :opt [::name ::compiler ::lang-version]))

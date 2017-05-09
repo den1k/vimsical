@@ -108,7 +108,9 @@
 (defn remove-annotations [chunk]
   (dissoc chunk ::chunk/branch-start? ::chunk/branch-end?))
 
+;;
 ;; ** Adding deltas
+;;
 
 ;; XXX more efficient way to get the depth
 (defn add-delta-to-chunks-by-branch-id

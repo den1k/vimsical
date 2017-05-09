@@ -6,8 +6,9 @@
    [vimsical.vcs.data.splittable :as splittable]
    [vimsical.vcs.state.branches :as state.branches]))
 
-
+;;
 ;; * Tree traversals
+;;
 
 (defn walk-tree
   "Perform a depth-first walk of `tree`.
@@ -45,8 +46,9 @@
       (rf (rec' acc rec-tree) tree)
       (rf acc tree))))
 
-
+;;
 ;; * Branch comparator
+;;
 
 (def asc -1)
 (def desc 1)
@@ -116,8 +118,9 @@
         (catch #?(:clj Throwable :cljs :default) t
             (throw (ex-info "Branch comparison error" {:t t :a a :b b})))))))
 
-
+;;
 ;; * Branch inlining
+;;
 
 (defn child-has-branch-off-delta-id?
   [{::branch/keys [parent branch-off-delta-id]}]

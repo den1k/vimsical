@@ -158,7 +158,6 @@
                                        false branch-end?))]
     [left-chunk right-chunk]))
 
-
 ;;
 ;; * Entries lookups
 ;;

@@ -49,6 +49,7 @@
 ;;
 ;; ** Initilization
 ;;
+
 (s/fdef empty-vcs
         :args (s/cat :branches (s/every ::branch/branch))
         :ret ::vcs)
@@ -60,7 +61,9 @@
      ::branches          branches
      ::timeline          state.timeline/empty-timeline}))
 
+;;
 ;; ** Reading (existing vims deltas')
+;;
 
 (s/fdef add-delta
         :args (s/cat :vcs ::vcs

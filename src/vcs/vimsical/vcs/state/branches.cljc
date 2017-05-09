@@ -7,15 +7,18 @@
    [vimsical.vcs.data.indexed.vector :as indexed]
    [vimsical.vcs.delta :as delta]))
 
+;;
 ;; * Spec
+;;
 
 (s/def ::deltas (s/and ::indexed/vector (s/every ::delta/delta) topo/sorted? topo/valid-ops?))
 (s/def ::deltas-by-branch-id (s/every-kv ::branch/id ::deltas))
 
 (def empty-deltas-by-branch-id {})
 
-
+;;
 ;; * Internal
+;;
 
 (defn- new-vector
   ([] (indexed/vector-by :id))
@@ -27,12 +30,13 @@
   [deltas delta]
   (conj-deltas deltas delta))
 
-
+;;
 ;; * API
+;;
 
 (s/fdef add-delta
-  :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id :deltas ::delta/delta)
-  :ret ::deltas-by-branch-id)
+        :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id :deltas ::delta/delta)
+        :ret ::deltas-by-branch-id)
 
 (defn add-delta
   [deltas-by-branch-id {:keys [branch-id] :as delta}]
@@ -40,8 +44,8 @@
   (update deltas-by-branch-id branch-id update-deltas delta))
 
 (s/fdef add-deltas
-  :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id :deltas (s/every ::delta/delta))
-  :ret ::deltas-by-branch-id)
+        :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id :deltas (s/every ::delta/delta))
+        :ret ::deltas-by-branch-id)
 
 (defn add-deltas
   [deltas-by-branch-id deltas]
