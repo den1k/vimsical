@@ -58,7 +58,11 @@
 
 (re-frame/reg-event-fx
  ::stop
- (fn [_ _]
-   {:dispatch  [::timeline.handlers/set-playing false]
-    :scheduler {:action :stop}}))
-
+ [(util.re-frame/inject-sub [::vcs.subs/vcs])]
+ (fn [{:keys           [db]
+       ::vcs.subs/keys [vcs]} _]
+   (let [vcs' (assoc vcs ::vcs.db/playhead-entry nil)
+         db'  (mg/add db vcs')]
+     {:dispatch  [::timeline.handlers/set-playing false]
+      :db        db'
+      :scheduler {:action :stop}})))

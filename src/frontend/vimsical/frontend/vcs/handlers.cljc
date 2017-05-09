@@ -13,6 +13,7 @@
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.frontend.vcs.subs :as subs]
    [vimsical.frontend.vcs.db :as vcs.db]
+   [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.editor :as editor]))
@@ -54,16 +55,28 @@
 ;;
 
 (defn add-edit-event
-  [{::vcs.db/keys [branch-id delta-id] :as vcs} effects file-id edit-event]
-  (let [[vcs delta-id'] (vcs/add-edit-event vcs effects file-id branch-id delta-id edit-event)]
-    (assoc vcs ::vcs.db/delta-id delta-id')))
+  "Update the vcs with the edit event and move the playhead-entry to the newly created timeline entry"
+  [{:as           vcs
+    ::vcs.db/keys [branch-id delta-id playhead-entry]}
+   effects
+   file-id
+   edit-event]
+  (let [[vcs' delta-id'] (vcs/add-edit-event vcs effects file-id branch-id delta-id edit-event)
+        playhead-entry'  (if playhead-entry (vcs/timeline-next-entry vcs' playhead-entry) (vcs/timeline-first-entry vcs'))
+        state'           {::vcs.db/delta-id delta-id' ::vcs.db/playhead-entry playhead-entry'}]
+    (merge vcs' state')))
 
 (re-frame/reg-event-fx
  ::add-edit-event
- [(re-frame/inject-cofx ::editor/effects)
-  (util.re-frame/inject-sub [::subs/vcs])]
- (fn [{:keys         [db]
+ [(re-frame/inject-cofx :ui-db)
+  (re-frame/inject-cofx ::editor/effects)
+  (util.re-frame/inject-sub [::subs/vcs])
+  (util.re-frame/inject-sub [::subs/playhead-entry])]
+ (fn [{:keys         [db ui-db]
        ::subs/keys   [vcs]
        ::editor/keys [effects]}
       [_ {file-id :db/id} edit-event]]
-   {:db (mg/add db (add-edit-event vcs effects file-id edit-event))}))
+   ;; Get the time from the update timeline entry and update the timeline ui.
+   (let [{[t] ::vcs.db/playhead-entry :as vcs'} (add-edit-event vcs effects file-id edit-event)]
+     {:ui-db (timeline.ui-db/set-playhead ui-db t)
+      :db    (mg/add db vcs')})))
