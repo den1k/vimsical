@@ -3,123 +3,106 @@
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
    [re-com.core :as re-com]
-   [vimsical.frontend.util.re-frame :refer-macros [with-queries]]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
    [vimsical.common.util.core :refer [=by] :as util]
+   [vimsical.frontend.quick-search.subs :as subs]
    [vimsical.frontend.quick-search.handlers :as handlers]
-   [vimsical.frontend.config :as config]
    [vimsical.frontend.util.search :as util.search]
-   [vimsical.frontend.code-editor.handlers :as code-editor.handlers]
-   [vimsical.frontend.util.content :as util.content]))
-
-(def commands
-  "Map of command keywords -> map of :title and :dispatch vector. Optionally
-  takes a :close? value which defaults to true (see dispatch-result)."
-  (let [defaults
-        {["new" "new vims"] {:title "New Vims"} ;; todo dispatch
-
-         ["play"]           {:title "► Play"} ;; todo dispatch
-
-         ["pause"]          {:title "❚❚ Pause"} ;; todo dispatch
-
-         ["lorem" "ipsum"]  {:title    "Lorem Ipsum"
-                             :dispatch [::code-editor.handlers/paste
-                                        (util.content/lorem-ipsum 1)]}
-         ["go to" "player"] {:title    "Go to Player"
-                             :dispatch [::handlers/go-to :route/player]}
-
-         ["go to" "vcr"]    {:title    "Go to VCR"
-                             :dispatch [::handlers/go-to :route/vcr]}}
-        dev
-        {["clear" "console"] {:title    "Clear JS Console"
-                              :dispatch [::handlers/clear-console]}}]
-    (cond-> defaults
-      config/debug? (merge dev))))
-
-(def default-results
-  (vec (vals commands)))
-
-(defn search [state query]
-  (let [results (or (util.search/search query commands) default-results)]
-    (swap! state assoc
-           :query query
-           :results results)))
-
-(defn move [state dir]
-  (let [{:keys [result-idx results]} @state
-        max-idx  (dec (count results))
-        next-idx (case dir
-                   :up (if (zero? result-idx) max-idx (dec result-idx))
-                   :down (if (= max-idx result-idx) 0 (inc result-idx)))]
-    (swap! state assoc :result-idx next-idx)))
-
-(defn dispatch-result
-  ([st]
-   (dispatch-result st (:result-idx st)))
-  ([st idx]
-   (let [{:keys [results]} st
-         {:keys [dispatch close?]
-          :or   {close? true}} (get results idx)] ; close by default
-     (re-frame/dispatch dispatch)
-     (when close? (re-frame/dispatch [::handlers/close])))))
+   [vimsical.vcs.lib :as lib]
+   [vimsical.vcs.compiler :as compiler]
+   [clojure.string :as string]))
 
 (defn handle-key
-  [state e]
-  (util.dom/handle-key e
-                       {:arrow-down #(move state :down)
-                        :arrow-up   #(move state :up)
-                        :enter      #(dispatch-result @state)
-                        :escape     #(re-frame/dispatch [::handlers/close])}))
+  [e {:keys [quick-search] :as opts}]
+  (util.dom/handle-key
+   e
+   {:arrow-down  #(re-frame/dispatch [::handlers/move :down opts])
+    :arrow-up    #(re-frame/dispatch [::handlers/move :up opts])
+    :arrow-left  #(re-frame/dispatch [::handlers/move :left opts])
+    :arrow-right #(re-frame/dispatch [::handlers/move :right opts])
+    :tab         #(re-frame/dispatch [::handlers/move :right opts])
+    :enter       #(re-frame/dispatch [::handlers/run-selected-cmd opts])
+    :escape      #(re-frame/dispatch [::handlers/close])}))
 
-(defn input [state]
+(defn input []
   (reagent/create-class
    {:component-did-mount
     (fn [c]
-      (when (not-empty (:query @state))
+      (when (not-empty (:quick-search/query (<sub [::subs/quick-search [:quick-search/query]])))
         (.select (reagent/dom-node c))))
     :render
     (fn [_]
-      (let [{:keys [result-idx query results]} @state]
-        [:input.input {:id          "IPD"
-                       :type        "text"
+      (let [{:quick-search/keys [query] :as qs} (<sub [::subs/quick-search])
+            results (<sub [::subs/results])
+            filters (<sub [::subs/filters])]
+        [:input.input {:type        "text"
                        :auto-focus  true
                        :value       query
-                       :on-change   (e> (search state value)
-                                        (swap! state assoc :result-idx 0))
-                       :on-key-down (e->> (handle-key state))
+                       :on-change   (e>
+                                     (re-frame/dispatch [::handlers/set-query value qs]))
+                       :on-key-down (e-> (handle-key
+                                          {:quick-search qs
+                                           :results      results
+                                           :filters      filters}))
                        :on-blur     (e> (re-frame/dispatch [::handlers/close]))}]))}))
 
-(defn results-view [state]
-  (let [{:keys [result-idx results]} @state]
-    [:div.search-results
-     (for [[idx cmd-map] (map-indexed vector results)
-           :let [{:keys [title]} cmd-map
-                 is-selected? (= idx result-idx)]]
-       [:div.search-result
-        {:class         (when is-selected? "selected")
-         :on-mouse-down (e>
-                         ;; needed to for quick search to close
-                         ;; don't ask why
-                         (.preventDefault e)
-                         (dispatch-result @state idx)
-                         ;(transact-cmd this cmd-map)
-                         )
-         :key           title}
-        [:span title]])]))
+(defn results-view []
+  (fn []
+    (if-let [filter-cmds (<sub [::subs/selected-filter-results])] ;; should be results
+      [re-com/h-box
+       :class "filter-results ac"
+       :justify :around
+       :children
+       (for [[category cmds] filter-cmds
+             :let [title (string/upper-case (name category))]]
+         [:div.category-box
+          {:key category}
+          [:div.title.jc title]
+          [:div.search-results
+           (for [{:keys [title dispatch selected?]} cmds]
+             [:div.search-result
+              {:key   title
+               :class (when selected? "selected")}
+              title])]])]
+      (let [results (<sub [::subs/results])]
+        [:div.search-results
+         (for [{:keys [title selected?] :as res} results]
+           [:div.search-result
+            {:class         (when selected? "selected")
+             :on-mouse-down (e>
+                             ;; needed to for quick search to close
+                             ;; don't ask why
+                             (.preventDefault e)
+                             (re-frame/dispatch [::handlers/run-cmd res]))
+             :on-mouse-move (e> (re-frame/dispatch [::handlers/update-result-idx
+                                                    (<sub [::subs/quick-search])
+                                                    results res]))
+             :key           title}
+            [:span title]])]))))
 
 (defn quick-search []
-  (let [state (reagent/atom {:result-idx 0
-                             :query      ""
-                             :results    default-results})]
-    (fn []
-      (with-queries
-       [{:quick-search/keys [show?]}
-        [:app/quick-search [:db/id
-                            :quick-search/show?]]]
-        (let [{:keys [result-idx query results]} @state]
-          [:div.quick-search-container
-           (when show?
-             [:div.quick-search
-              [input state]
-              (when results
-                [results-view state])])])))))
+  (fn []
+    (let [{:quick-search/keys [show?
+                               commands
+                               query
+                               result-idx
+                               filter] :as qs}
+          (<sub [:q [:app/quick-search ['*]]])]
+      [:div.quick-search-container
+       (when show?
+         (let [filters (<sub [::subs/filters])]
+           [:div.quick-search
+            [re-com/h-box
+             :class "input-and-filters"
+             :gap "10px"
+             :children [[input]
+                        [re-com/h-box
+                         :class "filters"
+                         :gap "10px"
+                         :align :center
+                         :children (for [[{:keys [title selected?]} cmds] filters]
+                                     [:div.title-bubble
+                                      {:class (when selected? "selected")}
+                                      title])]]]
+            [results-view]]))])))

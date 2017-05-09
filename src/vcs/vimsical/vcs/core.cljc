@@ -76,7 +76,8 @@
 (defn file-string
   ([{::keys [delta-id] :as vcs} file-id] (file-string vcs file-id delta-id))
   ([vcs file-id delta-id]
-   (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id file-id ::state.files/string])))
+   (or (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id file-id ::state.files/string])
+       "")))
 
 
 ;; *** Timeline

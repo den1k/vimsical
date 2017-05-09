@@ -91,3 +91,22 @@
   (when-let [f (-> e e->key key->fn)]
     (.preventDefault e)
     (f)))
+
+
+;;
+;; * Blobs
+;;
+
+(defn blob [data type]
+  (-> data
+      array
+      (js/Blob. #js {:type type})))
+
+(defn blob-url
+  ([blob]
+   (.createObjectURL js/URL blob))
+  ([data type]
+   (blob-url (blob data type))))
+
+(defn revoke-blob-url [url]
+  (.revokeObjectURL js/URL url))

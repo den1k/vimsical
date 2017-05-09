@@ -4,11 +4,11 @@
    [vimsical.vcs.branch :as branch]))
 
 (re-frame/reg-sub
- ::files
+ ::branch
  (fn [[_ pattern]]
    (re-frame/subscribe
-    [:q*
-     [{:vims/branches ['* {:vimsical.vcs.branch/files [(or pattern '*)]}]}]
-     :app/vims]))
+    [:q
+     [:app/vims
+      [{:vims/branches (or pattern '[*])}]]]))
  (fn [{:vims/keys [branches]}]
-   (->> branches first ::branch/files)))
+   (->> branches first)))

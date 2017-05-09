@@ -1,6 +1,7 @@
 (ns vimsical.vcs.file
   (:require
-   [clojure.spec :as s]))
+   [clojure.spec :as s]
+   [vimsical.vcs.compiler :as compiler]))
 
 
 (def sub-types #{:html :css :javascript})
@@ -12,6 +13,9 @@
 (s/def ::type #{:text})
 (s/def ::sub-type sub-types)
 (s/def ::name string?)
+(s/def ::compiler ::compiler/compiler)
+(s/def ::lang-version string?)
 
 ;; * Entity
-(s/def ::file (s/keys :req [:db/id ::type ::sub-type] :opt [::name]))
+(s/def ::file (s/keys :req [:db/id ::type ::sub-type]
+                      :opt [::name ::compiler ::lang-version]))

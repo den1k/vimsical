@@ -14,7 +14,7 @@
     ;; Help CIDER find the Java code in Clojure
     [[org.clojure/clojure "1.9.0-alpha15" :classifier "sources"]]
     :plugins
-    [[lein-pprint  "1.1.2"]             ; lein with-profile frontend-dev pprint
+    [[lein-pprint "1.1.2"]              ; lein with-profile frontend-dev pprint
      [lein-environ "1.1.0"]]}
 
    :test
@@ -22,7 +22,7 @@
     ["test/backend" "test/frontend" "test/vcs" "test/common"]
     :dependencies
     [[org.clojure/test.check "0.9.0"]
-     [orchestra              "0.2.0"]]
+     [orchestra "0.2.0"]]
     :global-vars
     {*warn-on-reflection* false *unchecked-math* false}}
 
@@ -36,11 +36,11 @@
    :vcs
    {:source-paths ["src/vcs"]
     :dependencies
-    [[org.clojure/data.avl        "0.0.17"]
-     [diffit                      "1.0.0"]
-     ;; TODO remove this
-     [com.stuartsierra/mapgraph   "0.2.1"]
-     [re-frame                    "0.9.2"]]}
+                  [[org.clojure/data.avl "0.0.17"]
+                   [diffit "1.0.0"]
+                   ;; TODO remove this
+                   [com.stuartsierra/mapgraph "0.2.1"]
+                   [re-frame "0.9.2"]]}
    ;;
    ;; Common
    ;;
@@ -48,13 +48,13 @@
    {:source-paths
     ["src/common"]
     :dependencies
-    [[com.cognitect/transit-cljs          "0.8.239"]
-     [org.clojure/core.async              "0.3.442" :exclusions [org.clojure/tools.reader]]
-     [com.stuartsierra/component          "0.3.1"]
-     [medley                              "0.8.4"]
-     [environ                             "1.1.0"]
+    [[com.cognitect/transit-cljs "0.8.239"]
+     [org.clojure/core.async "0.3.442" :exclusions [org.clojure/tools.reader]]
+     [com.stuartsierra/component "0.3.1"]
+     [medley "0.8.4"]
+     [environ "1.1.0"]
      [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
-     [net.cgrand/macrovich                "0.2.0"]]}
+     [net.cgrand/macrovich "0.2.0"]]}
    ;;
    ;; Backend
    ;;
@@ -63,18 +63,18 @@
     {:source-paths ["src/backend"]
      :main         vimsical.backend.core
      :repositories
-     {"my.datomic.com"
-      {:url      "https://my.datomic.com/repo"
-       :username :env/datomic_login
-       :password :env/datomic_password}}
+                   {"my.datomic.com"
+                    {:url      "https://my.datomic.com/repo"
+                     :username :env/datomic_login
+                     :password :env/datomic_password}}
      :dependencies
-     [[com.taoensso/carmine    "2.15.0"]
-      [org.immutant/web        "2.1.5" :exclusions [ring/ring-core org.jboss.logging/jboss-logging]]
-      [cc.qbits/alia-all       "3.3.0"]
-      [com.datomic/datomic-pro "0.9.5544" :exclusions [commons-codec]]]
+                   [[com.taoensso/carmine "2.15.0"]
+                    [org.immutant/web "2.1.5" :exclusions [ring/ring-core org.jboss.logging/jboss-logging]]
+                    [cc.qbits/alia-all "3.3.0"]
+                    [com.datomic/datomic-pro "0.9.5544" :exclusions [commons-codec]]]
      :global-vars
-     {*warn-on-reflection* true
-      *unchecked-math*     :warn-on-boxed}}]
+                   {*warn-on-reflection* true
+                    *unchecked-math*     :warn-on-boxed}}]
 
    :backend-dev
    [:backend
@@ -102,13 +102,15 @@
     :dependencies
     [[org.clojure/clojurescript "1.9.518"]
      ;; Dependency of Google Closure compiler
-     [com.google.guava/guava    "21.0"]
+     [com.google.guava/guava "21.0"]
      ;; Our mapgraph fork. Must be be symlinked in checkouts.
      [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
-     [reagent                   "0.6.1" :exclusions [org.clojure/clojurescript]]
-     [re-frame                  "0.9.2" :exclusions [org.clojure/clojurescript]]
-     [re-com                    "2.0.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
-     [thi.ng/color              "1.2.0"]]}
+     [reagent "0.6.1" :exclusions [org.clojure/clojurescript]]
+     [re-frame "0.9.2" :exclusions [org.clojure/clojurescript]]
+     [re-com "2.0.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
+     ;; this package does not have externs
+     [cljsjs/babel-standalone "6.18.1-2"]
+     [thi.ng/color "1.2.0"]]}
 
    :-frontend-dev-config
    {:source-paths
@@ -117,13 +119,13 @@
     [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]]
     :dependencies
     [[com.cemerick/piggieback "0.2.2-SNAPSHOT"]
-     [figwheel-sidecar        "0.5.10" :exclusions [org.clojure/clojurescript]]
-     [re-frisk                "0.4.4" :exclusions [re-frame org.clojure/clojurescript]]
+     [figwheel-sidecar "0.5.10" :exclusions [org.clojure/clojurescript]]
+     [re-frisk "0.4.4" :exclusions [re-frame org.clojure/clojurescript]]
      ;; needed as a dep for re-frame.trace
-     [binaryage/devtools      "0.8.3"]
+     [binaryage/devtools "0.8.3"]
      ;; re-frame.trace - clone and install to use
      ;; https://github.com/Day8/re-frame-trace
-     [day8.re-frame/abra      "0.0.9-SNAPSHOT" :exclusions [re-frame reagent org.clojure/clojurescript]]
+     [day8.re-frame/abra "0.0.9-SNAPSHOT" :exclusions [re-frame reagent org.clojure/clojurescript]]
      [org.clojure/tools.nrepl "0.2.13"]]
     :repl-options
     {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
@@ -137,7 +139,7 @@
    :frontend-test
    [:test :frontend :vcs :common
     {:source-paths
-     ["test/frontend" "test/vcs" "test/common"]
+              ["test/frontend" "test/vcs" "test/common"]
      :plugins [[lein-doo "0.1.7"]]}]
 
    :player
@@ -154,7 +156,7 @@
 
    :-css-dev-config
    {:plugins      [[lein-garden "0.2.8" :exclusions [org.clojure/clojure]]]
-    :dependencies [[garden     "1.3.2"]
+    :dependencies [[garden "1.3.2"]
                    ;; Added this to fix a compilation issue with garden
                    [ns-tracker "0.3.0"]]
     :prep-tasks   [["garden" "once"]]}
@@ -213,6 +215,11 @@
                       :output-to            "resources/public/js/compiled/vimsical.js"
                       :output-dir           "resources/public/js/compiled/out"
                       :optimizations        :none
+                      :foreign-libs         [; todo put jshint code into into resources
+                                             ; add file-min opt
+                                             ; externs
+                                             {:file     "https://cdnjs.cloudflare.com/ajax/libs/jshint/2.9.4/jshint.min.js"
+                                              :provides ["jshint"]}]
                       :parallel-build       true
                       ;; Add cache busting timestamps to source map urls.
                       ;; This is helpful for keeping source maps up to date when

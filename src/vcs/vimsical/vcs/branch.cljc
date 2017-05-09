@@ -4,19 +4,21 @@
    [clojure.spec :as s]
    [vimsical.common.core :as common :refer [=by some-val]]
    [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.file :as file]))
+   [vimsical.vcs.file :as file]
+   [vimsical.vcs.lib :as lib]))
 
 ;; * Spec
 
 (s/def ::branch
-  (s/keys :req [:db/id] :opt [::parent ::files]))
+  (s/keys :req [:db/id]
+          :opt [::start-delta-id ::entry-delta-id ::parent ::files ::name]))
 
 
 ;; ** Attributes
 
 (s/def ::id uuid?)
 (s/def :db/id ::id)
-(s/def ::name (s/nilable string?))
+(s/def ::name string?)
 (s/def ::start-delta-id (s/nilable ::delta/id))
 (s/def ::entry-delta-id (s/nilable ::delta/id))
 (s/def ::created-at nat-int?)
@@ -25,6 +27,7 @@
 
 (s/def ::parent (s/nilable ::branch))
 (s/def ::files (s/coll-of ::file/file))
+(s/def ::libs (s/coll-of ::lib/lib))
 
 
 ;; * Lineage
@@ -121,13 +124,13 @@
 
 (s/fdef branch-tree
         :args (s/cat :branches (s/every ::branch))
-        :ret  ::tree)
+        :ret ::tree)
 
 (defn branch-tree
   [branches]
   (letfn [(parent-id [branch] (-> branch ::parent :db/id))]
     (let [branches-by-parent-id (group-by parent-id branches)
-          [master & error]      (get branches-by-parent-id nil)]
+          [master & error] (get branches-by-parent-id nil)]
       (if error
         (throw (ex-info "Found more than one branch with no parent:" {:error error :master master}))
         (tree* branches-by-parent-id master)))))
