@@ -6,6 +6,7 @@
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as vcs.db]
    [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.frontend.timeline.subs :as timeline.subs]
    [vimsical.vcs.core :as vcs]))
 
 (defn tick-fn
@@ -14,28 +15,28 @@
 
 (re-frame/reg-event-fx
  ::play
- [(util.re-frame/inject-sub [::vcs.subs/vcs])]
- (fn [{:keys           [db scheduler]
-       ::vcs.subs/keys [vcs timeline-entry]}
+ [(util.re-frame/inject-sub [::vcs.subs/vcs])
+  (util.re-frame/inject-sub [::vcs.subs/playhead-entry])
+  (util.re-frame/inject-sub [::timeline.subs/playhead])]
+ (fn [{:keys                [db scheduler]
+       ::vcs.subs/keys      [vcs playhead-entry]
+       ::timeline.subs/keys [playhead]}
       _]
-   (if (some? timeline-entry)
-     (let [[t] timeline-entry ]
-       {:dispatch [::timeline.handlers/set-playing true]
-        :scheduler
-        [{:action :start
-          :t      t
-          :event  [::step]
-          :tick   tick-fn}]})
-     (let [[t {:keys [pad]} :as entry] (vcs/timeline-first-entry vcs)
-           vcs'                        (assoc vcs ::vcs.db/playhead-entry entry)
-           db'                         (mg/add db vcs')]
-       {:db       db'
-        :dispatch [::timeline.handlers/set-playing true]
-        :scheduler
-        [{:action :start
-          :t      (- t pad)
-          :event  [::step]
-          :tick   tick-fn}]}))))
+   (letfn [(new-context [db t]
+             (cond-> {:dispatch  [::timeline.handlers/set-playing true]
+                      :scheduler [{:action :set-time :t playhead}
+                                  {:action :start
+                                   :t      t
+                                   :event  [::step]
+                                   :tick   tick-fn}]}
+               (some? db) (assoc :db db)))]
+     (if (some? playhead-entry)
+       (let [[t] playhead-entry ]
+         (new-context nil t))
+       (let [[t {:keys [pad]} :as entry] (vcs/timeline-first-entry vcs)
+             vcs'                        (assoc vcs ::vcs.db/playhead-entry entry)
+             db'                         (mg/add db vcs')]
+         (new-context db' (- t pad)))))))
 
 (re-frame/reg-event-fx
  ::step
