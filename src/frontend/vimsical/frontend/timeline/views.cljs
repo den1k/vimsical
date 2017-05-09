@@ -65,17 +65,17 @@
   (.preventDefault e)  ; Prevent history navigation
   (let [dt (scroll-event->timeline-offset e)]
     (re-frame/dispatch
-     [::handlers/offset-skimhead dt])))
+     [::handlers/on-mouse-wheel dt])))
 
 (defn on-chunks-mouse-move [e]
   (let [svg-node->timeline-position-fn (mouse-event->svg-node->timeline-position e)]
     (re-frame/dispatch
-     [::handlers/set-skimhead svg-node->timeline-position-fn])))
+     [::handlers/on-mouse-move svg-node->timeline-position-fn])))
 
 (defn on-chunks-click [e]
   (let [svg-node->timeline-position-fn (mouse-event->svg-node->timeline-position e)]
     (re-frame/dispatch
-     [::handlers/set-playhead-entry svg-node->timeline-position-fn [::vcr.handlers/step]])))
+     [::handlers/on-click svg-node->timeline-position-fn [::vcr.handlers/step]])))
 
 (defn on-chunks-mouse-leave [e]
   (re-frame/dispatch [::handlers/on-mouse-leave]))

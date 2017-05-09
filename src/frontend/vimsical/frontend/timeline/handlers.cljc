@@ -60,7 +60,7 @@
 (re-frame/reg-event-fx ::on-mouse-enter (fn [_ _]))
 
 (re-frame/reg-event-fx
- ::set-skimhead
+ ::on-mouse-move
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub [::vcs.subs/vcs])]
  (fn [{:as             cofx
@@ -74,7 +74,7 @@
      {:db db' :ui-db ui-db'})))
 
 (re-frame/reg-event-fx
- ::offset-skimhead
+ ::on-mouse-wheel
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub [::vcs.subs/vcs])
   (util.re-frame/inject-sub [::subs/duration])
@@ -122,7 +122,7 @@
 ;; and vcr.handlers
 
 (re-frame/reg-event-fx
- ::set-playhead-entry
+ ::on-click
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub [::vcs.subs/vcs])]
  (fn [{:as             cofx
