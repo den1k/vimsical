@@ -63,7 +63,7 @@
   (:require
    [clojure.data.avl :as avl]
    [clojure.spec :as s]
-   [vimsical.common.util.core :as util]
+   [vimsical.vcs.state.chunks :as state.chunks]
    [vimsical.vcs.alg.traversal :as traversal]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]
@@ -79,85 +79,11 @@
 (s/def ::uuid-fn ifn?)
 
 ;;
-;; * Internal - denormalizations used for lookups
+;; * Internal state
 ;;
 
 (s/def ::deltas-by-branch-id ::state.branches/deltas-by-branch-id)
-(s/def ::chunks-by-branch-id (s/every-kv ::branch/id (s/every ::chunk/chunk :kind vector?)))
-
-;;
-;; * Chunks
-;;
-
-;; ** Branch annotations
-
-(defn annotate-chunk-start [chunk]
-  (-> chunk
-      (dissoc ::chunk/branch-end?)
-      (assoc ::chunk/branch-start? true)))
-
-(defn annotate-chunk-end [chunk]
-  (-> chunk
-      (dissoc ::chunk/branch-start?)
-      (assoc ::chunk/branch-end? true)))
-
-(defn annotate-single-chunk [chunk]
-  (-> chunk
-      (assoc ::chunk/branch-start? true ::chunk/branch-end? true)))
-
-(defn remove-annotations [chunk]
-  (dissoc chunk ::chunk/branch-start? ::chunk/branch-end?))
-
-;;
-;; ** Adding deltas
-;;
-
-;; XXX more efficient way to get the depth
-(defn add-delta-to-chunks-by-branch-id
-  [chunks-by-branch-id
-   branches
-   uuid-fn
-   {:keys [branch-id] :as delta}]
-  (let [branch (util/ffilter
-                (partial util/=by  identity :db/id branch-id)
-                branches)
-        depth  (branch/depth branch)]
-    (letfn [(conj-onto-last-chunk? [chunks delta]
-              (and (some? chunks) (chunk/conj? (peek chunks) delta)))
-            (first-chunk-in-branch? [chunks-by-branch-id {:keys [branch-id] :as delta}]
-              (nil? (get chunks-by-branch-id branch-id)))
-            (conj-onto-last-chunk [chunks delta]
-              (let [last-index (dec (count chunks))]
-                (update chunks last-index chunk/add-delta delta)))
-            (update-chunks [chunks uuid-fn delta]
-              (cond
-                (conj-onto-last-chunk? chunks delta) (conj-onto-last-chunk chunks delta)
-                :else
-                (let [branch-start? (first-chunk-in-branch? chunks-by-branch-id delta)
-                      chunk'        (chunk/new-chunk (uuid-fn) depth [delta] branch-start?)
-                      f             (fnil conj [])]
-                  (f chunks chunk'))))
-            (annotate-branch-start-and-end [chunks]
-              (case (count chunks)
-                0 chunks
-                1 (update chunks 0 annotate-single-chunk)
-                (let [first-index       0
-                      last-index        (max 0 (dec (count chunks)))
-                      before-last-index (max 0 (dec last-index))]
-                  (cond-> chunks
-                    true (update first-index annotate-chunk-start)
-
-                    (< first-index before-last-index last-index)
-                    (update before-last-index remove-annotations)
-
-                    true (update last-index  annotate-chunk-end)))))]
-      (-> chunks-by-branch-id
-          (update branch-id update-chunks uuid-fn delta)
-          (update branch-id annotate-branch-start-and-end)))))
-
-;;
-;; * Internal state
-;;
+(s/def ::chunks-by-branch-id ::state.chunks/chunks-by-branch-id)
 
 (s/def ::chunks-by-absolute-start-time
   (s/every-kv ::absolute-time ::chunk/chunk :kind sorted? :into (avl/sorted-map)))
@@ -172,7 +98,7 @@
 
 (def empty-timeline
   {::deltas-by-branch-id           state.branches/empty-deltas-by-branch-id
-   ::chunks-by-branch-id           {}
+   ::chunks-by-branch-id           state.chunks/emtpy-chunks-by-branch-id
    ::chunks-by-absolute-start-time (avl/sorted-map)
    ::duration                      0})
 
@@ -369,7 +295,7 @@
   [{:as timeline ::keys [deltas-by-branch-id chunks-by-branch-id duration]} branches uuid-fn
    {:keys [pad] :as delta}]
   (let [deltas-by-branch-id'           (state.branches/add-delta deltas-by-branch-id delta)
-        chunks-by-branch-id'           (add-delta-to-chunks-by-branch-id chunks-by-branch-id branches uuid-fn delta)
+        chunks-by-branch-id'           (state.chunks/add-delta chunks-by-branch-id branches uuid-fn delta)
         inlined-chunks                 (inline-chunks deltas-by-branch-id' chunks-by-branch-id' branches uuid-fn)
         chunks-by-absolute-start-time' (new-chunks-by-absolute-start-time inlined-chunks)]
     (assoc timeline

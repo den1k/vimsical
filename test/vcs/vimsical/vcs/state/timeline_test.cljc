@@ -48,23 +48,6 @@
   [a b]
   [(chunk/with-bounds a true nil) (chunk/with-bounds b nil true)])
 
-(deftest add-delta-to-chunks-by-branch-id-test
-  (let [{[chk0 chk1
-          chk2 chk3
-          chk4 chk5] :seq
-         uuid-fn     :f} (uuid-gen)
-        [d0 d1 d2
-         d3 d4 d5
-         d6 d7 d8]       deltas
-        expect           {(uuid :b0)   (chunks-vec (chunk/new-chunk chk0 0 [d0 d1] true) (chunk/new-chunk chk1 0 [d2] false))
-                          (uuid :b1-1) (chunks-vec (chunk/new-chunk chk2 1 [d3 d4] true) (chunk/new-chunk chk3 1 [d5] false))
-                          (uuid :b1-2) (chunks-vec (chunk/new-chunk chk4 1 [d6 d7] true) (chunk/new-chunk chk5 1 [d8] false))}
-        actual           (reduce
-                          (fn [cbb delta]
-                            (sut/add-delta-to-chunks-by-branch-id cbb branches uuid-fn delta))
-                          nil  deltas)]
-    (is (= expect actual))))
-
 (defn dissoc-chunk-ids [coll]
   (cond
     (nil? coll) nil

@@ -21,6 +21,7 @@
    [vimsical.vcs.delta-test]
    [vimsical.vcs.state.branch-pointers-test]
    [vimsical.vcs.state.branches-test]
+   [vimsical.vcs.state.chunks-test]
    [vimsical.vcs.state.files-test]
    [vimsical.vcs.state.timeline-test]))
 
