@@ -146,8 +146,9 @@
 (defn split-at-delta-index
   [{::keys [count depth delta-branch-off-id deltas-by-relative-time branch-start? branch-end?]} uuid-fn index]
   {:pre [(< index count)]}
-  ;; XXX This is easy and helps with correctness but it would be much more
-  ;; efficient to split the underlying deltas and update the chunk
+  ;; XXX We should use the left and right deltas as is and keep a time offset on
+  ;; the right chunk, this would avoid rebuilding the `deltas-by-relative-time`,
+  ;; it is also similar to the split operation in the indexed vector.
   (let [[left-deltas right-deltas] (mapv vals (avl/split-at index deltas-by-relative-time))
         left-chunk                 (when (seq left-deltas)
                                      (with-bounds
