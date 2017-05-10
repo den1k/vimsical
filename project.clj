@@ -207,10 +207,7 @@
                       :output-to            "resources/public/js/compiled/vimsical.js"
                       :output-dir           "resources/public/js/compiled/out"
                       :optimizations        :none
-                      :foreign-libs         [;; todo put jshint code into into resources
-                                             ;; add file-min opt
-                                             ;; externs
-                                             {:file     "public/js/jshint.js"
+                      :foreign-libs         [{:file     "public/js/jshint.js"
                                               :provides ["jshint"]}]
                       :parallel-build       true
                       ;; Add cache busting timestamps to source map urls.
@@ -251,7 +248,9 @@
                       :main           vimsical.runner
                       :target         :nodejs
                       :optimizations  :none
-                      :parallel-build true}}
+                      :parallel-build true
+                      :foreign-libs   [{:file     "public/js/jshint.js"
+                                        :provides ["jshint"]}]}}
       {:id           "test-advanced"
        :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
        :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
@@ -261,4 +260,6 @@
                       :optimizations  :advanced
                       :pretty-print   true
                       :pseudo-names   true
-                      :parallel-build true}}]}}})
+                      :parallel-build true
+                      :foreign-libs   [{:file     "public/js/jshint.js"
+                                        :provides ["jshint"]}]}}]}}})

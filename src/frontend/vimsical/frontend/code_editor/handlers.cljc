@@ -2,10 +2,13 @@
   #?@(:clj
       [(:require
         [re-frame.core :as re-frame]
+        [vimsical.vcs.edit-event :as edit-event]
+        [vimsical.frontend.vcs.handlers :as vcs.handlers]
         [vimsical.frontend.util.re-frame :refer [<sub]]
         [vimsical.frontend.code-editor.ui-db :as ui-db]
         [vimsical.common.util.core :as util]
         [vimsical.frontend.code-editor.subs :as subs]
+        [vimsical.frontend.code-editor.interop :as interop]
         [vimsical.frontend.util.re-frame :as util.re-frame]
         [vimsical.frontend.timeline.subs :as timeline.subs]
         [vimsical.frontend.vcr.subs :as vcr.subs]
@@ -14,10 +17,13 @@
       :cljs
       [(:require
         [re-frame.core :as re-frame]
+        [vimsical.vcs.edit-event :as edit-event]
+        [vimsical.frontend.vcs.handlers :as vcs.handlers]
         [vimsical.frontend.util.re-frame :refer [<sub]]
         [re-frame.loggers :refer [console]]
         [vimsical.frontend.code-editor.ui-db :as ui-db]
         [vimsical.frontend.code-editor.subs :as subs]
+        [vimsical.frontend.code-editor.interop :as interop]
         [vimsical.frontend.util.re-frame :as util.re-frame]
         [vimsical.frontend.timeline.subs :as timeline.subs]
         [vimsical.frontend.vcr.subs :as vcr.subs]
@@ -25,152 +31,19 @@
         [vimsical.vcs.core :as vcs])]))
 
 ;;
-;; * Monaco helpers
-;;
-
-(defn pos->str-idx
-  "Takes a line, column, and lines, array of strings. Counts the characters of
-  each line, including \newline, returning an absolute positional index from
-  the beginning."
-  [line column lines]
-  (transduce (comp (take (dec line))
-                   (map #(inc (.-length %))))
-             +
-             (dec column)               ; dec bc we count from zero, monaco from one
-             lines))
-
-(defn idx->monaco-range
-  "Creates a monaco range object given either one position for a cursor or two
-  for a selection."
-  ([pos]
-   (idx->monaco-range pos pos))
-  ([start-pos end-pos]
-   {:pre [start-pos end-pos]}
-   #?(:cljs
-      #js {:startColumn     (:col start-pos)
-           :startLineNumber (:line start-pos)
-           :endColumn       (:col end-pos)
-           :endLineNumber   (:line end-pos)})))
-
-(defn idx->pos
-  "Takes an idx and a string and computes a :line and :col hashmap."
-  [idx string]
-  (let [str-len (count string)]
-    (cond
-      (zero? idx)     {:line 1 :col 1}
-      (> idx str-len) nil ; out of bounds
-      :else           (reduce
-                       (fn [[cur-idx l c :as step] char]
-                         (let [next-idx (inc cur-idx)]
-                           (cond
-                             (= cur-idx idx)      (reduced {:line l :col c})
-                             ;; lookahead at last step of reduction
-                             ;; this becomes true only when idx is at last char
-                             (= next-idx str-len) (reduced {:line l :col (inc c)})
-                             :else                (if (identical? \newline char)
-                                                    [next-idx (inc l) 1]
-                                                    [next-idx l (inc c)]))))
-                       [0 1 1]
-                       string))))
-
-;;
-;; * Change Parsing
-;;
-
-(defn- content-event-state [model e]
-  (let [range         (.-range e)
-        diff          (.-text e)
-        added-count   (.-length diff)
-        start-line    (.-startLineNumber range)
-        deleted-count (.-rangeLength e)
-        start-column  (.-startColumn range)
-        lines         (.getLinesContent model)]
-    {:idx     (pos->str-idx start-line start-column lines)
-     :diff    diff
-     :added   (when-not (zero? added-count) added-count)
-     :deleted (when-not (zero? deleted-count) deleted-count)}))
-
-(defn content-event-type [{:keys [added deleted]}]
-  (or
-   (and deleted (if added :str/rplc :str/rem))
-   (and added :str/ins)))
-
-(defn parse-content-event [model e]
-  (let [{:keys [diff idx added deleted]
-         :as   e-state} (content-event-state model e)
-        event-type      (content-event-type e-state)]
-    (case event-type
-      :str/ins  {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
-      :str/rem  {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
-      :str/rplc {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx ::edit-event/amt deleted})))
-
-;;
-;; * Cursor & Selection change
-;;
-
-(defn- selection-event-state [model e]
-  (let [sel          (.-selection e)
-        start-line   (.-startLineNumber sel)
-        start-column (.-startColumn sel)
-        end-line     (.-endLineNumber sel)
-        end-column   (.-endColumn sel)
-        lines        (.getLinesContent model)
-        selection?   (or (not (identical? start-column end-column))
-                         (not (identical? start-line end-line)))]
-    {:selection? selection?
-     :start-idx  (pos->str-idx start-line start-column lines)
-     :end-idx    (when selection? (pos->str-idx end-line end-column lines))
-     :lines      lines}))
-
-(defn parse-selection-event [model e]
-  (let [{:keys [selection? start-idx end-idx]} (selection-event-state model e)]
-    (if-not selection?
-      {::edit-event/op :crsr/mv ::edit-event/idx start-idx}
-      {::edit-event/op :crsr/sel ::edit-event/range [start-idx end-idx]})))
-
-;; todo, move into monaco URLs?
-(defn dispose-editor
-  "Dispose Monaco editor"
-  [editor]
-  (.dispose editor))
-
-(defn bind-listeners
-  "Register `listeners` with their respective handlers on `editor` and return a
-  map with the same keys as `listeners` but where the values are the disposables
-  returned from binding the listeners."
-  [editor
-   {:as listeners
-    :keys
-    [model->content-change-handler
-     model->cursor-change-handler
-     editor->focus-handler
-     editor->blur-handler]}]
-  (when (and editor listeners)
-    (let [model (.-model editor)]
-      {:model->content-change-handler (.onDidChangeModelContent editor (model->content-change-handler model))
-       :model->cursor-change-handler  (.onDidChangeCursorSelection editor (model->cursor-change-handler model))
-       :editor->focus-handler         (.onDidFocusEditor editor (editor->focus-handler editor))
-       :editor->blur-handler          (.onDidBlurEditor editor (editor->blur-handler editor))})))
-
-;;
-;; * Events
-;;
-
-;;
-;; ** Instance lifecycle
+;; * Instance lifecycle
 ;;
 
 (re-frame/reg-event-fx
  ::register
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ file editor-instance listeners]]
-   {:ui-db (-> ui-db
-               (ui-db/set-editor file editor-instance)
-               (ui-db/set-listeners file listeners))
-    :dispatch-n
-    [[::set-string nil file ""]
-     [::bind-listeners file]
-     [::track-start file]]}))
+   {:ui-db      (-> ui-db
+                    (ui-db/set-editor file editor-instance)
+                    (ui-db/set-listeners file listeners))
+    :dispatch-n [[::set-string nil file ""]
+                 [::bind-listeners file]
+                 [::track-start file]]}))
 
 (re-frame/reg-event-fx
  ::dispose
@@ -178,12 +51,12 @@
  (fn [{:keys [ui-db] :as cofx} [_ file]]
    (do
      ;; XXX fx?
-     (dispose-editor (ui-db/get-editor ui-db file))
+     (interop/dispose-editor (ui-db/get-editor ui-db file))
      {:ui-db    (ui-db/set-editor ui-db file nil)
       :dispatch [::track-stop file]})))
 
 ;;
-;; ** Listeners lifecycle
+;; * Listeners lifecycle
 ;;
 
 (re-frame/reg-event-fx
@@ -209,26 +82,15 @@
       (when-some [editor (ui-db/get-editor ui-db file)]
         (when-some [listeners (ui-db/get-listeners ui-db file)]
           ;; Create new disposables and update ui-db
-          (let [listeners' (bind-listeners editor listeners)]
+          (let [listeners' (interop/bind-listeners editor listeners)]
             {:ui-db (ui-db/set-disposables ui-db file listeners')}))))))
 
 ;;
-;; ** User actions
+;; * Linting
 ;;
 
-(re-frame/reg-event-fx
- ::update-editor-text
- [(re-frame/inject-cofx :ui-db)]
- update-editor-text)
-
-(re-frame/reg-event-fx
- ::update-editor-cursor
- [(re-frame/inject-cofx :ui-db)]
- update-editor-cursor)
-
 (defn set-model-markers [model sub-type markers]
-  #?(:cljs
-     (.. js/monaco -editor (setModelMarkers model (name sub-type) markers))))
+  #?(:cljs (.. js/monaco -editor (setModelMarkers model (name sub-type) markers))))
 
 (defn severity-code [flag]
   (case flag
@@ -250,20 +112,12 @@
             :endLineNumber   line})))
 
 (re-frame/reg-event-fx
- ::text-change
- [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ reg-key {:keys [db/id] :as file} e]]
-   (let [model      (ui-db->editor ui-db reg-key file :model)
-         edit-event (parse-content-event model e)]
-     {:dispatch-n [[::vcs.handlers/add-edit-event id edit-event]
-                   [::check-code-errors reg-key file]]})))
-
-(re-frame/reg-event-fx
  ::check-code-errors
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ reg-key {:keys [db/id] :as file}]]
+ (fn [{:keys [ui-db]} [_ {:keys [db/id] :as file}]]
    (when-let [errors (<sub [::vcs.subs/file-lint-or-preprocessing-errors file])]
-     (let [model   (ui-db->editor ui-db reg-key file :model)
+     (let [editor  (ui-db/get-editor ui-db file)
+           model   (.-model editor)
            markers (into-array (map model-marker errors))]
        ;; TODO fixme
        #?(:cljs
@@ -274,13 +128,29 @@
                        1000))
        nil))))
 
+;;
+;; ** User actions
+;;
+
+
 (re-frame/reg-event-fx
- ::selection-change
+ ::content-change
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ reg-key {:keys [db/id] :as file} e]]
-   (let [model      (ui-db->editor ui-db reg-key file :model)
-         edit-event (parse-selection-event model e)]
-     {:dispatch [::vcs.handlers/add-edit-event id edit-event]})))
+ (fn [{:keys [ui-db]} [_ file e]]
+   (let [editor     (ui-db/get-editor ui-db file)
+         model      (.-model editor)
+         edit-event (interop/parse-content-event model e)]
+     {:dispatch-n [[::vcs.handlers/add-edit-event file edit-event]
+                   [::check-code-errors file]]})))
+
+(re-frame/reg-event-fx
+ ::cursor-change
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db]} [_ file e]]
+   (let [editor     (ui-db/get-editor ui-db file)
+         model      (.-model editor)
+         edit-event (interop/parse-selection-event model e)]
+     {:dispatch [::vcs.handlers/add-edit-event file edit-event]})))
 
 (re-frame/reg-event-fx
  ::focus
@@ -312,7 +182,7 @@
             :range            (first sels)}]))))))
 
 ;;
-;; ** Updates
+;; ** Internal updates (from subscription)
 ;;
 
 ;; NOTE this will cause the .onContentDidChange callback to fire unless we
@@ -328,41 +198,55 @@
         (console :error "editor not found")))))
 
 (re-frame/reg-event-fx
- ::set-cursor
+ ::set-position
  [(re-frame/inject-cofx :ui-db)]
- (fn set-cursor
-   [{:keys [ui-db]} [_ file cursor string]]
+ (fn set-position
+   [{:keys [ui-db]} [_ file position]]
    #?(:cljs
       (if-some [editor (ui-db/get-editor ui-db file)]
-        ;; TODO convert index to line/col pos
-        ;; (.setCursor editor cursor)
-        nil
+        (when position
+          (.revealRange editor position)
+          (.setSelection editor position)
+          (.focus editor)
+          nil)
         (console :error "editor not found")))))
 
 (re-frame/reg-event-fx
- ::update-editor
+ ::update-editor-string
  (fn update-editor
-   [_ [_ {file-id :db/id :as file} string cursor]]
-   (when (and (some? string) (some? cursor))
+   [_ [_ {file-id :db/id :as file} string]]
+   (when (some? string)
      {:dispatch-n
       [[::clear-disposables file]
        [::set-string false file string]
-       [::set-cursor file cursor string]
+       [::bind-listeners file]]})))
+
+(re-frame/reg-event-fx
+ ::update-editor-position
+ (fn update-editor
+   [_ [_ {file-id :db/id :as file} position]]
+   (when (some? position)
+     {:dispatch-n
+      [[::clear-disposables file]
+       [::set-position file position]
        [::bind-listeners file]]})))
 
 (re-frame/reg-event-fx
  ::track-start
  (fn [_ [_ file]]
    {:track
-    [{:id           [::editor file]
+    [{:id           [::editor-str file]
       :action       :register
-      :subscription [::subs/string-and-cursor file]
-      :val->event   (fn [{:keys [string cursor] :as val}]
-                      [::update-editor file string cursor])}]}))
+      :subscription [::subs/string file]
+      :val->event   (fn [string] [::update-editor-string file string])}
+     {:id           [::editor-pos file]
+      :action       :register
+      :subscription [::subs/position file]
+      :val->event   (fn [position] [::update-editor-position file position])}]}))
 
 (re-frame/reg-event-fx
  ::track-stop
  (fn [_ [_ file]]
    {:track
-    [{:id     [::editor file]
-      :action :dispose}]}))
+    [{:id [::editor-str file]   :action :dispose}
+     {:id [::editor-pos file] :action :dispose}]}))

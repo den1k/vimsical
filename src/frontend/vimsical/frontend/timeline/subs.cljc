@@ -39,4 +39,4 @@
  ::duration
  :<- [::vcs.subs/vcs]
  (fn [vcs _]
-   (vcs/timeline-duration vcs)))
+   (or (vcs/timeline-duration vcs) 0)))

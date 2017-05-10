@@ -183,3 +183,8 @@
 ;; Register in this file so we don't need to require scheduler
 
 (re-frame/reg-fx :scheduler scheduler/scheduler-fx)
+
+
+;;
+;; * Time elapsed between two events
+;;

@@ -6,10 +6,12 @@
   "
   (:require
    [com.stuartsierra.mapgraph :as mg]
+   ;; [vimsical.frontend.db :as db]
    [re-frame.core :as re-frame]
    [vimsical.common.util.core :as util]
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.util.re-frame :as util.re-frame]
+   [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.frontend.vcs.subs :as subs]
    [vimsical.frontend.vcs.db :as vcs.db]
@@ -26,7 +28,7 @@
   [db [_]]
   (let [{:as        vims
          :keys      [db/id]
-         :vims/keys [branches]} (mg/pull-link db queries/vims :app/vims)
+         :vims/keys [branches]} (util.mg/pull* db [:app/vims queries/vims])
         master                  (branch/master branches)
         vcs-state               (vcs/empty-vcs branches)
         vcs-frontend-state      {:db/id             (uuid)

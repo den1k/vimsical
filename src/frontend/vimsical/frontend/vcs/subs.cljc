@@ -28,9 +28,15 @@
 ;;
 ;; * Heads (timeline entries)
 ;;
-
-(re-frame/reg-sub ::playhead-entry :<- [::vcs] (fn [vcs _] (some-> vcs db/get-playhead-entry)))
 (re-frame/reg-sub ::skimhead-entry :<- [::vcs] (fn [vcs _] (some-> vcs db/get-skimhead-entry)))
+(re-frame/reg-sub ::playhead-entry :<- [::vcs] (fn [vcs _] (some-> vcs db/get-playhead-entry)))
+
+(re-frame/reg-sub
+ ::timeline-entry
+ :<- [::skimhead-entry]
+ :<- [::playhead-entry]
+ (fn [[skimhead-entry playhead-entry] _]
+   (or skimhead-entry playhead-entry)))
 
 ;;
 ;; * Files
@@ -46,49 +52,55 @@
  ::file-string
  :<- [::vcs]
  :<- [::timeline-entry]
- (fn [[vcs [_ {delta-id id}]] [_ {file-id :id}]]
-   (vcs/file-string vcs file-id delta-id)))
+ (fn [[vcs [_ {delta-id :id}]] [_ {file-id :db/id}]]
+   (when (and file-id delta-id)
+     (vcs/file-string vcs file-id delta-id))))
 
+(re-frame/reg-sub
+ ::file-cursor
+ :<- [::vcs]
+ :<- [::timeline-entry]
+ (fn [[vcs [_ {delta-id :id}]] [_ {file-id :db/id}]]
+   (when (and file-id delta-id)
+     (vcs/file-cursor vcs file-id delta-id))))
+
+;;
+;; * Pre-processors
+;;
+
+;; TODO handle errors
 (re-frame/reg-sub
  ::preprocessed-file-data
  (fn [[_ file]]
    (re-frame/subscribe [::file-string file]))
  (fn [string [_ file]]
-   ;; TODO handle errors
-   (preprocess/preprocess file string)))
-
-(re-frame/reg-sub
- ::file-cursor
- :<- [::vcs]
- (fn [vcs [_ {:keys [db/id] :as file}]]
-   (vcs/file-cursor vcs id)))
+   (when string
+     (preprocess/preprocess file string))))
 
 (re-frame/reg-sub
  ::preprocessed-file-string
  (fn [[_ file]]
    (re-frame/subscribe [::preprocessed-file-data file]))
- (fn [{::preprocess/keys [string error]} [_ file]]
+ (fn [{::preprocess/keys [string error]} _]
    string))
 
-(re-frame/reg-sub
- ::timeline-chunks-by-absolute-start-time
- :<- [::vcs]
- (fn [vcs _]
-   (vcs/timeline-chunks-by-absolute-start-time vcs)))
-
+;;
+;; * Linters
+;;
 
 (re-frame/reg-sub
  ::file-lint-data
  (fn [[_ file]]
    (re-frame/subscribe [::file-string file]))
  (fn [string [_ file]]
-   (lint/lint file string)))
+   (when string
+     (lint/lint file string))))
 
 (re-frame/reg-sub
  ::file-lint-errors
  (fn [[_ file]]
    (re-frame/subscribe [::file-lint-data file]))
- (fn [{::lint/keys [errors]} [_ file]]
+ (fn [{::lint/keys [errors]} _]
    errors))
 
 (re-frame/reg-sub
@@ -96,18 +108,6 @@
  (fn [[_ file]]
    [(re-frame/subscribe [::preprocessed-file-data file])
     (re-frame/subscribe [::file-lint-data file])])
- (fn [[preprocessed linted] [_ file]]
+ (fn [[preprocessed {::lint/keys [errors]}] _]
    (or (some-> preprocessed ::preprocess/error vector)
-       (::lint/errors linted))))
-
-(re-frame/reg-sub
- ::timeline-duration
- :<- [::vcs]
- (fn [vcs _]
-   (vcs/timeline-duration vcs)))
-
-(re-frame/reg-sub
- ::timeline-entry
- :<- [::vcs]
- (fn [vcs _]
-   (get vcs ::timeline/current-entry)))
+       errors)))

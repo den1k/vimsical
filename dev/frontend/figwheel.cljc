@@ -7,7 +7,6 @@
 
 #?(:clj
    (require
-    '[figwheel-sidecar.repl :as r]
     '[figwheel-sidecar.repl-api :as ra]
     '[figwheel-sidecar.config :as config]))
 
