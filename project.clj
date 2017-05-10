@@ -3,6 +3,7 @@
   [[org.clojure/clojure "1.9.0-alpha15"]]
 
   :source-paths []                      ; ignore src/ in all profiles
+  :test-paths []
 
   :clean-targets
   ^{:protect false}
@@ -15,7 +16,7 @@
      ;; Help CIDER find the Java code in Clojure
      [[org.clojure/clojure "1.9.0-alpha15" :classifier "sources"]]
      :plugins
-     [[lein-pprint  "1.1.2"]             ; lein with-profile frontend-dev pprint
+     [[lein-pprint  "1.1.2"]            ; lein with-profile frontend-dev pprint
       [lein-environ "1.1.0"]]}]
 
    :test
@@ -79,7 +80,7 @@
 
    :backend-test
    [:test :backend :vcs :common
-    {:source-paths
+    {:test-paths
      ["test/backend" "test/vcs" "test/common"]}]
    ;;
    ;; Frontend
@@ -130,7 +131,7 @@
 
    :frontend-test
    [:test :frontend :vcs :common
-    {:source-paths
+    {:test-paths
      ["test/frontend" "test/vcs" "test/common"]
      :plugins [[lein-doo "0.1.7"]]}]
 
