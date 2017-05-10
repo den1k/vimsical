@@ -18,7 +18,8 @@
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.editor :as editor]))
+   [vimsical.vcs.editor :as editor]
+   [vimsical.vcs.edit-event :as edit-event]))
 
 ;;
 ;; * VCS Vims init
@@ -41,16 +42,60 @@
 (re-frame/reg-event-db ::init-vims init-vims)
 
 ;;
-;; * Editor cofxs
+;; * Cofxs
 ;;
 
-(re-frame/reg-cofx
- ::editor/effects
- (fn [context _]
-   (assoc context ::editor/effects
-          {::editor/uuid-fn      (fn [_] (uuid))
-           ::editor/timestamp-fn (fn [_] (util/now))
-           ::editor/pad-fn       (constantly 1000)})))
+;;
+;; ** Padding
+;;
+
+;; NOTE
+;; - the first padding will always be `event-max-pad`
+;; - any subsequent padding will be capped at `event-max-pad`
+;; - when pad-fn is invoked more than once it will always return 1
+;; - we currently don't handle zero paddings well due to how deltas are
+;;   denormalized in the timeline and the chunks, they cause the latest delta
+;;   with a zero padding value to replace the previous one
+
+(def event-max-pad 500)
+
+(defmulti pad (fn [edit-event elapsed] (::edit-event/op edit-event)))
+
+(defmethod pad :default [_ elapsed]
+  (if (== -1 elapsed) event-max-pad (min elapsed event-max-pad)))
+
+(defn new-pad-fn
+  [elapsed]
+  (let [pad-counter (atom -1)]
+    (fn [edit-event]
+      (pad
+       edit-event
+       (if (zero? (swap! pad-counter inc)) elapsed 1)))))
+
+;;
+;; ** Editor
+;;
+
+(defn editor-cofx
+  [{:keys [uuid-fn timestamp elapsed] :as context} _]
+  {:pre [uuid-fn timestamp elapsed]}
+  (assoc context ::editor/effects
+         ;; NOTE all these fns take the edit-event
+         {::editor/uuid-fn      (fn [& _] (uuid-fn))
+          ::editor/timestamp-fn (fn [& _] timestamp)
+          ::editor/pad-fn       (new-pad-fn elapsed)}))
+
+(re-frame/reg-cofx :editor editor-cofx)
+
+;; The :editor cofx depends on the 3 previous cofxs, and should be injected
+;; _after_ them. re-frame flattens the handler's cofxs so we can nest them in a
+;; vector it has no special meaning, just a way to refer to a stack of cofxs
+
+(def editor-cofxs
+  [(re-frame/inject-cofx :uuid-fn)
+   (re-frame/inject-cofx :timestamp)
+   (re-frame/inject-cofx :elapsed)
+   (re-frame/inject-cofx :editor)])
 
 ;;
 ;; * Edit events
@@ -70,8 +115,8 @@
 
 (re-frame/reg-event-fx
  ::add-edit-event
- [(re-frame/inject-cofx :ui-db)
-  (re-frame/inject-cofx ::editor/effects)
+ [editor-cofxs
+  (re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub [::subs/vcs])
   (util.re-frame/inject-sub [::subs/playhead-entry])]
  (fn [{:keys         [db ui-db]

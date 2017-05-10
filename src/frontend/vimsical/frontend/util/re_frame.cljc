@@ -3,12 +3,16 @@
       [(:require
         [re-frame.core :as re-frame]
         [re-frame.interop :as interop]
+        [vimsical.common.uuid :as uuid]
+        [vimsical.common.util.core :as util]
         [vimsical.frontend.util.scheduler :as scheduler])]
       :cljs
       [(:require
         [re-frame.core :as re-frame]
         [re-frame.interop :as interop]
         [reagent.ratom :as ratom]
+        [vimsical.common.uuid :as uuid]
+        [vimsical.common.util.core :as util]
         [vimsical.frontend.util.scheduler :as scheduler])]))
 
 #?(:clj
@@ -184,7 +188,37 @@
 
 (re-frame/reg-fx :scheduler scheduler/scheduler-fx)
 
+;;
+;; * UUID fn
+;;
+
+(defn uuid-fn
+  [context _]
+  (assoc context :uuid-fn uuid/uuid))
+
+(re-frame/reg-cofx :uuid-fn uuid-fn)
+
+;;
+;; * Timestamp
+;;
+
+(defn timestamp
+  [context _]
+  (assoc context :timestamp (util/inst)))
+
+(re-frame/reg-cofx :timestamp timestamp)
 
 ;;
 ;; * Time elapsed between two events
 ;;
+
+(defonce elapsed-register (atom {}))
+
+(defn elapsed
+  [context [id :as event]]
+  (let [now  (util/now)
+        prev (get @elapsed-register id -1)]
+    (swap! elapsed-register assoc id now)
+    (assoc context :elapsed (if (neg? prev) -1 (- now prev)))))
+
+(re-frame/reg-cofx :elapsed elapsed)

@@ -89,6 +89,9 @@
   #?(:clj  (.getTime (java.util.Date.))
      :cljs (.now js/Date)))
 
+(defn inst []
+  #?(:clj (java.util.Date.) :cljs (js/Date.)))
+
 (def merge-1
   "One level deep merge."
   (partial merge-with merge))
