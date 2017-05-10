@@ -28,66 +28,67 @@
 ;; * Integration tests
 ;;
 
+(defn- add-edit-events
+  [vcs effects file-id branch-id delta-id edit-events]
+  (reduce
+   (fn [[vcs delta-id] edit-event]
+     (sut/add-edit-event vcs effects file-id branch-id delta-id edit-event))
+   [vcs delta-id] edit-events))
+
 (deftest add-edit-event-test
-  (letfn [(add-edit-events
-            [vcs effects file-id branch-id delta-id edit-events]
-            (reduce
-             (fn [[vcs delta-id] edit-event]
-               (sut/add-edit-event vcs effects file-id branch-id delta-id edit-event))
-             [vcs delta-id] edit-events))]
-    (let [{uuid-fn :f}     (uuid-gen)
-          branches         [examples/master]
-          expect-html      "<body><h1>Hello</h1></body>"
-          html-edit-events (diff/diffs->edit-events
-                            ""
-                            ["<body></body>"]
-                            ["<body><h1>YO</h1></body>"]
-                            [expect-html])
-          expect-css       "body { color: orange; }"
-          css-edit-events  (diff/diffs->edit-events
-                            ""
-                            ["body { color: red; }"]
-                            [expect-css])
-          all-edit-events  (into html-edit-events css-edit-events)
-          effects          {::editor/pad-fn       (constantly 1)
-                            ::editor/uuid-fn      (fn [& _] (uuid-fn))
-                            ::editor/timestamp-fn (constantly 1)}
-          [vcs delta-id]   (-> (sut/empty-vcs branches)
-                               (add-edit-events effects (uuid :html) (uuid :master) nil html-edit-events))
-          [vcs delta-id]   (-> vcs
-                               (add-edit-events effects (uuid :css) (uuid :master) delta-id css-edit-events))
-          html-deltas      (sut/file-deltas vcs (uuid :html) delta-id)
-          css-deltas       (sut/file-deltas vcs (uuid :css) delta-id)
-          all-deltas       (into html-deltas css-deltas)]
-      (testing "file"
-        (testing "string"
-          (is (= expect-html (sut/file-string vcs (uuid :html) delta-id)))
-          (is (= expect-css (sut/file-string vcs (uuid :css) delta-id)))
-          (are [file-id delta-index string] (is (= string (sut/file-string vcs file-id (->> delta-index (nth all-deltas) :id))))
-            (uuid :html) 0 "<"
-            (uuid :html) 1 "<b"
-            (uuid :html) 2 "<bo"
-            (uuid :html) 3 "<bod"))
-        (testing "cursor"
-          (are [file-id delta-index cursor] (is (= cursor (sut/file-cursor vcs file-id (->> delta-index (nth all-deltas) :id))))
-            (uuid :html) 0 0
-            (uuid :html) 1 1
-            (uuid :html) 2 2
-            (uuid :html) 3 3)))
-      (testing "timeline"
-        (is (= (sut/timeline-duration vcs) (count all-edit-events)))
-        (is (= 2 (count (sut/timeline-chunks-by-absolute-start-time vcs)))))
-      (testing "time-based state lookups"
-        (let [last-html-delta (sut/timeline-delta-at-time vcs (count html-edit-events))
-              last-css-delta  (sut/timeline-delta-at-time vcs (count all-edit-events))]
-          (is (some? last-html-delta))
-          (is (some? last-css-delta))
-          (testing "files"
-            ;; NOTE test with prev-id because the last id is a crsr mv
-            (is (= expect-html (sut/file-string vcs (uuid :html) (:prev-id last-html-delta))))
-            (is (nil? (sut/file-string vcs (uuid :css) (:prev-id last-html-delta))))
-            (is (= expect-html (sut/file-string vcs (uuid :html) (:prev-id last-css-delta))))
-            (is (= expect-css (sut/file-string vcs (uuid :css) (:prev-id last-css-delta))))))))))
+  (let [{uuid-fn :f}     (uuid-gen)
+        branches         [examples/master]
+        expect-html      "<body><h1>Hello</h1></body>"
+        html-edit-events (diff/diffs->edit-events
+                          ""
+                          ["<body></body>"]
+                          ["<body><h1>YO</h1></body>"]
+                          [expect-html])
+        expect-css       "body { color: orange; }"
+        css-edit-events  (diff/diffs->edit-events
+                          ""
+                          ["body { color: red; }"]
+                          [expect-css])
+        all-edit-events  (into html-edit-events css-edit-events)
+        effects          {::editor/pad-fn       (constantly 1)
+                          ::editor/uuid-fn      (fn [& _] (uuid-fn))
+                          ::editor/timestamp-fn (constantly 1)}
+        [vcs delta-id]   (-> (sut/empty-vcs branches)
+                             (add-edit-events effects (uuid :html) (uuid :master) nil html-edit-events))
+        [vcs delta-id]   (-> vcs
+                             (add-edit-events effects (uuid :css) (uuid :master) delta-id css-edit-events))
+        html-deltas      (sut/file-deltas vcs (uuid :html) delta-id)
+        css-deltas       (sut/file-deltas vcs (uuid :css) delta-id)
+        all-deltas       (into html-deltas css-deltas)]
+    (testing "file"
+      (testing "string"
+        (is (= expect-html (sut/file-string vcs (uuid :html) delta-id)))
+        (is (= expect-css (sut/file-string vcs (uuid :css) delta-id)))
+        (are [file-id delta-index string] (is (= string (sut/file-string vcs file-id (->> delta-index (nth all-deltas) :id))))
+          (uuid :html) 0 "<"
+          (uuid :html) 1 "<b"
+          (uuid :html) 2 "<bo"
+          (uuid :html) 3 "<bod"))
+      (testing "cursor"
+        (are [file-id delta-index cursor] (is (= cursor (sut/file-cursor vcs file-id (->> delta-index (nth all-deltas) :id))))
+          (uuid :html) 0 0
+          (uuid :html) 1 1
+          (uuid :html) 2 2
+          (uuid :html) 3 3)))
+    (testing "timeline"
+      (is (= (sut/timeline-duration vcs) (count all-edit-events)))
+      (is (= 2 (count (sut/timeline-chunks-by-absolute-start-time vcs)))))
+    (testing "time-based state lookups"
+      (let [last-html-delta (sut/timeline-delta-at-time vcs (count html-edit-events))
+            last-css-delta  (sut/timeline-delta-at-time vcs (count all-edit-events))]
+        (is (some? last-html-delta))
+        (is (some? last-css-delta))
+        (testing "files"
+          ;; NOTE test with prev-id because the last id is a crsr mv
+          (is (= expect-html (sut/file-string vcs (uuid :html) (:prev-id last-html-delta))))
+          (is (nil? (sut/file-string vcs (uuid :css) (:prev-id last-html-delta))))
+          (is (= expect-html (sut/file-string vcs (uuid :html) (:prev-id last-css-delta))))
+          (is (= expect-css (sut/file-string vcs (uuid :css) (:prev-id last-css-delta)))))))))
 
 (deftest add-deltas-gen-test
   (let [{uuids   :seq

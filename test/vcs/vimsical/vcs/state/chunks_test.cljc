@@ -15,7 +15,7 @@
         [vimsical.vcs.state.chunks :as sut])]))
 
 (def deltas
-  [{:branch-id (uuid :b0), :file-id (uuid :f0), :id (uuid :d0) :prev-id nil, :op [:str/ins nil        "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
+  [{:branch-id (uuid :b0), :file-id (uuid :f0), :id (uuid :d0) :prev-id nil,,,,,,,, :op [:str/ins nil "h"],,,,,,,, :pad 1, :meta {:timestamp 1, :version 1.0}}
    {:branch-id (uuid :b0), :file-id (uuid :f0), :id (uuid :d1) :prev-id (uuid :d0), :op [:str/ins (uuid :d0) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
    {:branch-id (uuid :b0), :file-id (uuid :f1), :id (uuid :d2) :prev-id (uuid :d1), :op [:str/ins (uuid :d1) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
 

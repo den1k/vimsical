@@ -83,19 +83,20 @@
   (let [{:keys
          [branch-id file-id]
          ;; XXX faster accessors?
+         prev-id        :prev-id
          delta-start-id :id :as first-delta} (first deltas)
         {delta-end-id :id}                   (last deltas)
         [duration deltas-by-relative-time]   (new-deltas-by-relative-time deltas)]
     (cond-> {::id                      id
              ::deltas-by-relative-time deltas-by-relative-time
              ::duration                duration
-             ::count                  (count deltas)
+             ::count                   (count deltas)
              ::depth                   depth
              ::delta-start-id          delta-start-id
              ::delta-end-id            delta-end-id
              ::branch-id               branch-id
              ::file-id                 file-id}
-      branch-off? (assoc ::delta-branch-off-id (delta/op-id first-delta)) )))
+      branch-off? (assoc ::delta-branch-off-id prev-id))))
 
 ;;
 ;; * Adding deltas
