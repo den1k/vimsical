@@ -1,20 +1,29 @@
 (ns vimsical.common.test
   #?@(:clj
       [(:require
-        [net.cgrand.macrovich :as macros]
-        [clojure.data :as data]
-        [clojure.test :as t :refer [is]]
-        [vimsical.common.uuid :as uuid])
+        [vimsical.common.uuid :as uuid]
+        [clojure.test :as t]
+        [clojure.data :as data])
        (:import java.util.UUID)]
       :cljs
-      [(:require
-        [clojure.data :as data]
-        [clojure.test :as t :refer-macros [is]]
-        [vimsical.common.uuid :as uuid])
-       (:require-macros [net.cgrand.macrovich :as macros])
-       (:refer-clojure :exclude [uuid])]))
+      [(:refer-clojure :exclude [uuid])
+       (:require [vimsical.common.uuid :as uuid])]))
 
+;;
+;; * Helpers
+;;
+
+;; Only use this when working through tests,
+#?(:clj
+   (defn diff=
+     [expected actual]
+     (let [[only-in-expected only-in-actual] (data/diff expected actual)]
+       (t/is (nil? only-in-expected))
+       (t/is (nil? only-in-actual)))))
+
+;;
 ;; * UUID
+;;
 
 (def ^{:dynamic true :private true} *print-tags* true)
 (def ^{:dynamic true :private true} *tag->uuid* (atom {}))

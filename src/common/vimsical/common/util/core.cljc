@@ -104,6 +104,13 @@
          maps))
 
 (defn =by
+  ([f]
+   (fn [a b]
+     (= (f a) (f b))))
+  ([f a]
+   (let [fa (f a)]
+     (fn [b]
+       (= fa (f b)))))
   ([f a b]
    (= (f a) (f b)))
   ([f g a b]

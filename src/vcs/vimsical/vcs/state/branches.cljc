@@ -2,38 +2,46 @@
   "Keep track of the deltas for a branch"
   (:require
    [clojure.spec :as s]
-   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.alg.topo :as topo]
+   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.data.indexed.vector :as indexed]
-   [vimsical.vcs.data.splittable :as splittable]
    [vimsical.vcs.delta :as delta]))
 
-
+;;
 ;; * Spec
+;;
 
-(s/def ::deltas (s/and ::indexed/vector (s/every ::delta/delta) topo/sorted?))
+(s/def ::deltas (s/and ::indexed/vector (s/every ::delta/delta) topo/sorted? topo/valid-ops?))
 (s/def ::deltas-by-branch-id (s/every-kv ::branch/id ::deltas))
 
 (def empty-deltas-by-branch-id {})
 
-
+;;
 ;; * Internal
+;;
 
 (defn- new-vector
   ([] (indexed/vector-by :id))
   ([deltas] (indexed/vec-by :id deltas)))
 
+(def conj-deltas (fnil conj (new-vector)))
+
 (defn- update-deltas
   [deltas delta]
-  (conj deltas delta))
+  (conj-deltas deltas delta))
 
-(defn- update-deltas-by-branch-id
+;;
+;; * API
+;;
+
+(s/fdef add-delta
+        :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id :deltas ::delta/delta)
+        :ret ::deltas-by-branch-id)
+
+(defn add-delta
   [deltas-by-branch-id {:keys [branch-id] :as delta}]
   {:pre [branch-id]}
-  (update deltas-by-branch-id branch-id (fnil update-deltas (new-vector)) delta))
-
-
-;; * API
+  (update deltas-by-branch-id branch-id update-deltas delta))
 
 (s/fdef add-deltas
         :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id :deltas (s/every ::delta/delta))
@@ -41,7 +49,7 @@
 
 (defn add-deltas
   [deltas-by-branch-id deltas]
-  (reduce update-deltas-by-branch-id deltas-by-branch-id deltas))
+  (reduce add-delta deltas-by-branch-id deltas))
 
 (s/fdef get-deltas
         :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id

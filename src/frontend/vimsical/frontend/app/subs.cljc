@@ -1,6 +1,7 @@
 (ns vimsical.frontend.app.subs
-  (:require [re-frame.core :as re-frame]
-            [vimsical.frontend.db :as db]))
+  (:require
+   [re-frame.core :as re-frame]
+   [vimsical.frontend.util.mapgraph :as util.mg]))
 
 (re-frame/reg-sub
  ::route
@@ -10,9 +11,9 @@
 (re-frame/reg-sub
  ::libs
  (fn [db [_ ?pattern]]
-   (db/pull* db [:app/libs (or ?pattern '[*])])))
+   (util.mg/pull* db [:app/libs (or ?pattern '[*])])))
 
 (re-frame/reg-sub
  ::compilers
  (fn [db [_ ?pattern]]
-   (db/pull* db [:app/compilers (or ?pattern '[*])])))
+   (util.mg/pull* db [:app/compilers (or ?pattern '[*])])))

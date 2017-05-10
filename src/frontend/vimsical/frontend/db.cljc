@@ -1,122 +1,82 @@
 (ns vimsical.frontend.db
   (:require
    [com.stuartsierra.mapgraph :as mg]
-   [com.stuartsierra.subgraph :as sg]
    [re-frame.core :as re-frame]
-   [vimsical.vcs.branch :as branch]
-   [vimsical.common.util.core :as util]
-   [vimsical.vcs.file :as file]
-   [vimsical.vcs.lib :as lib]
-   [vimsical.vcs.compiler :as compiler]
    [vimsical.common.test :refer [uuid]]
-   [re-frame.interop :as interop]
-   #?(:cljs
-      [vimsical.frontend.quick-search.commands :as quick-search.commands])))
+   [vimsical.common.util.core :as util]
+   [vimsical.frontend.quick-search.commands :as quick-search.commands]
+   [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.compiler :as compiler]
+   [vimsical.vcs.file :as file]
+   [vimsical.vcs.lib :as lib]))
 
-(defn- entities? [db coll]
-  (boolean
-   (when (coll? coll)
-     (every? (partial mg/entity? db) coll))))
+;;
+;; * State
+;;
 
-(defn- ref-or-refs [db x]
-  (cond
-    (mg/entity? db x) (mg/ref-to db x)
-    (entities? db x) (mapv (partial mg/ref-to db) x)
-    :else nil))
+(def js-libs
+  [{:db/id         (uuid :lib-js-jquery)
+    ::lib/title    "jQuery"
+    ::lib/type     :text
+    ::lib/sub-type :javascript
+    ::lib/src      "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"}])
 
-(defmulti add
-  (fn [db entity-or-entities]
-    (cond
-      (mg/entity? db entity-or-entities) :entity
-      (entities? db entity-or-entities) :entities)))
+(def sub-type->libs (group-by ::lib/sub-type js-libs))
 
-(defmethod add :entity
-  ([db entity]
-   (mg/add db entity)))
+(def compilers
+  [{:db/id                 (uuid :babel-compiler)
+    ::compiler/name        "Babel"
+    ::compiler/type        :text
+    ::compiler/sub-type    :babel
+    ::compiler/to-sub-type :javascript}])
 
-(defmethod add :entities
-  ([db entities]
-   (apply mg/add db entities)))
+(def to-sub-type->compiler (util/project ::compiler/to-sub-type compilers))
 
-(defn add-to [db k v]
-  (if-let [rors (ref-or-refs db v)]
-    (-> db
-        (add v)
-        (assoc k rors))
-    (assoc db k v)))
+(defn new-file
+  ([uuid type sub-type] (new-file uuid type sub-type nil nil))
+  ([uuid type sub-type lang-version compilers]
+   (-> {:db/id          uuid
+        ::file/type     type
+        ::file/sub-type sub-type}
+       (util/assoc-some
+        ::file/lang-version lang-version
+        ::file/compiler (get compilers sub-type)))))
 
-(defn add-linked-entities
-  "Takes a map of link-keys->entities, normalizes entities and creates links for
-  them."
-  [db state]
-  (reduce-kv add-to db state))
-
-(defn rewrite-query? [qexpr]
-  (and (= 2 (count qexpr))
-       (let [[?link ?pattern] qexpr]
-         (and (keyword? ?link)
-              (vector? ?pattern)))))
-
-(defn rewrite-link-query [[link pattern]]
-  {:link    link
-   :pattern [{[link '_] pattern}]})
-
-(defn pull* [db qexpr]
-  (if (rewrite-query? qexpr)
-    (let [{:keys [link pattern]} (rewrite-link-query qexpr)]
-      (get (mg/pull db pattern) link))
-    (mg/pull db qexpr)))
-
-(defn pull-sub* [db qexpr]
-  (if (rewrite-query? qexpr)
-    (let [{:keys [link pattern]} (rewrite-link-query qexpr)]
-      (interop/make-reaction
-       (fn []
-         (get @(sg/pull db pattern) link))))
-    (sg/pull db qexpr)))
-
-(re-frame/reg-sub-raw
- :q
- (fn [db [_ qexpr]]
-   (pull-sub* db qexpr)))
+(defn new-branch
+  [uuid name files libs]
+  (-> {:db/id                       uuid
+       ::branch/name                name
+       ::branch/start-delta-id      nil
+       ::branch/branch-off-delta-id nil
+       ::branch/created-at          (util/now)
+       ::branch/files               files}
+      (util/assoc-some ::branch/libs libs)))
 
 (defn new-vims
   ([author-ref title] (new-vims author-ref title {}))
-  ([author-ref title {:keys [libs compilers] :as opts}]
-   (let [libs-by-type      (group-by ::lib/sub-type libs)
-         compilers-by-type (util/project ::compiler/to-sub-type compilers)
-         files             [{:db/id (uuid :file-html) ::file/type :text ::file/sub-type :html ::file/compiler (:html compilers-by-type)}
-                            {:db/id (uuid :file-css) ::file/type :text ::file/sub-type :css ::file/compiler (:css compilers-by-type)}
-                            {:db/id (uuid :file-js) ::file/type :text ::file/sub-type :javascript ::file/lang-version "5" ::file/compiler (:javascript compilers-by-type)}]
-         branches          [{:db/id (uuid :branch-master) ::branch/name "master" ::branch/start-delta-id nil ::branch/entry-delta-id nil ::branch/created-at (util/now) ::branch/files files ::branch/libs (:javascript libs-by-type)}]]
+  ([author-ref title {:keys [js-libs compilers]}]
+   (let [files    [(new-file (uuid :file-htmlr) :text :html)
+                   (new-file (uuid :file-css) :text :css)
+                   (new-file (uuid :file-js) :text :javascript "5" compilers)]
+         branches [(new-branch (uuid :master) "master" files (:javascript js-libs))]]
      {:db/id         (uuid title)
       :vims/author   author-ref
       :vims/title    title
       :vims/branches branches})))
-
-(let [js-libs   [{:db/id         (uuid :lib-js-jquery)
-                  ::lib/title    "jQuery"
-                  ::lib/type     :text
-                  ::lib/sub-type :javascript
-                  ::lib/src      "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"}]
-      compilers [{:db/id                 (uuid :babel-compiler)
-                  ::compiler/name        "Babel"
-                  ::compiler/type        :text
-                  ::compiler/sub-type    :babel
-                  ::compiler/to-sub-type :javascript}]
-      state     {:app/user         {:db/id           (uuid :user)
+(let [state     {:app/user         {:db/id           (uuid :user)
                                     :user/first-name "Jane"
                                     :user/last-name  "Applecrust"
                                     :user/email      "kalavox@gmail.com"
-                                    :user/vimsae     [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
-                                                      (new-vims [:db/id (uuid :user)] "CatPhotoApp" {:libs      js-libs
-                                                                                                     :compilers compilers})]}
+                                    :user/vimsae
+                                    [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
+                                     (new-vims [:db/id (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs :compilers to-sub-type->compiler})]}
                  :app/vims         [:db/id (uuid "CatPhotoApp")]
                  :app/quick-search {:db/id                            (uuid :quick-search)
                                     :quick-search/show?               false
                                     :quick-search/result-idx          0
                                     :quick-search/query               ""
-                                    :quick-search/commands            #?(:cljs quick-search.commands/commands :clj nil)
+                                    :quick-search/commands            quick-search.commands/commands
                                     :quick-search/filter-idx          nil
                                     :quick-search/filter-result-idx   nil
                                     :quick-search/filter-category-idx nil}
@@ -127,6 +87,6 @@
   (def default-db
     (-> (mg/new-db)
         (mg/add-id-attr :db/id)
-        (add-linked-entities state))))
+        (util.mg/add-linked-entities state))))
 
 (re-frame/reg-event-db ::init (constantly default-db))

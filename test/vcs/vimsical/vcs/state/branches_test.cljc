@@ -17,6 +17,11 @@
 (deftest constructor-test
   (is (= examples/deltas-by-branch-id (sut/add-deltas sut/empty-deltas-by-branch-id examples/deltas))))
 
+(deftest add-delta-test
+  (let [expected    examples/deltas-by-branch-id
+        actual      (reduce sut/add-delta sut/empty-deltas-by-branch-id examples/deltas)]
+    (is (= expected actual))))
+
 (deftest add-deltas-test
   (let [expected    examples/deltas-by-branch-id
         batches     (split-at (rand-int (count examples/deltas)) examples/deltas)

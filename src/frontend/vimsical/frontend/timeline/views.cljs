@@ -1,11 +1,84 @@
 (ns vimsical.frontend.timeline.views
-  (:require [vimsical.common.util.core :as util])
-  (:refer-clojure :exclude [chunk]))
+  (:refer-clojure :exclude [chunk])
+  (:require
+   [re-frame.core :as re-frame]
+   [vimsical.common.util.core :as util]
+   [vimsical.frontend.styles.color :as color]
+   [vimsical.frontend.timeline.handlers :as handlers]
+   [vimsical.frontend.timeline.subs :as subs]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
+   [vimsical.frontend.vcr.handlers :as vcr.handlers]
+   [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.vcs.file :as file]
+   [vimsical.vcs.state.chunk :as chunk]))
 
-(defonce tl-height 100)
-(defonce tl-middle (/ tl-height 2))
-(defonce master-branch-height (* 0.75 tl-height))
-(defonce child-branch-height tl-height)
+(defonce timeline-height 100)
+(defonce timeline-vertical-center (/ timeline-height 2))
+(defonce master-branch-height (* 0.75 timeline-height))
+(defonce child-branch-height timeline-height)
+
+;;
+;; * Mouse events helpers
+;;
+
+(def x-scroll-factor 10)
+(def y-scroll-factor (* 5 x-scroll-factor))
+
+(defn e->mouse-coords [e] [(.-clientX e) (.-clientY e)])
+(defn e->mouse-deltas [e] [(.-deltaX e)  (.-deltaY e)])
+
+(defn scroll-event->timeline-offset
+  [e]
+  (letfn [(abs [x] (max x (- x)))
+          (max-delta [e]
+            (let [[dx dy] (e->mouse-deltas e)]
+              (if (< (abs dx) (abs dy))
+                [nil dy]
+                [dx nil])))]
+    (let [[x y] (max-delta e)]
+      (if x
+        (* x-scroll-factor x)
+        (* y-scroll-factor y)))))
+
+(defn coords-and-svg-node->timeline-position
+  [coords svg-node]
+  (letfn [(scale-coords [svg-node [x y]]
+            (let [pt (.createSVGPoint svg-node)
+                  sc (.matrixTransform
+                      (doto pt (aset "x" x) (aset "y" y))
+                      (.inverse (.getScreenCTM svg-node)))]
+              [(.-x sc) (.-y sc)]))]
+    (first
+     (scale-coords svg-node coords))))
+
+;;
+;; * Handlers
+;;
+
+(defn on-mouse-enter [_]
+  (re-frame/dispatch [::handlers/on-mouse-enter]))
+
+(defn on-mouse-wheel [e]
+  (.preventDefault e)  ; Prevent history navigation
+  (re-frame/dispatch
+   [::handlers/on-mouse-wheel
+    (scroll-event->timeline-offset e)]))
+
+(defn on-mouse-move [e]
+  (re-frame/dispatch
+   [::handlers/on-mouse-move
+    (e->mouse-coords e)
+    coords-and-svg-node->timeline-position]))
+
+(defn on-click [e]
+  (re-frame/dispatch
+   [::handlers/on-click
+    (e->mouse-coords e)
+    coords-and-svg-node->timeline-position
+    [::vcr.handlers/step]]))
+
+(defn on-mouse-leave [_]
+  (re-frame/dispatch [::handlers/on-mouse-leave]))
 
 ;;
 ;; * Components
@@ -13,148 +86,124 @@
 
 (def clip-path-id (gensym "clip-path-id"))
 
-(defn linear-gradient [id & stops-attrs]
-  [:linearGradient
-   {:id id}
-   (for [[offset col op] stops-attrs]
-     [:stop
-      {:key    (str id "__" offset)
-       :offset offset
-       :style  {:stop-color   col
-                :stop-opacity (or op 1)}}])])
+(defn- file-color
+  [{::file/keys [sub-type]}]
+  (get color/type-colors-timeline sub-type))
 
-(defn infinity-gradients [{:keys [at-start? at-end? window-dur start-offset]}]
-  (letfn [(style [on-off]
-            {:opacity        (if on-off 0 1)
-             :transition     "opacity 0.5s ease"
-             :width          "5%"
-             :height         "100%"
-             :pointer-events "none"})]
-    [:g
-     [:defs
-      (linear-gradient "start-grad" ["0%" "white" 1] ["100%" "white" 0])
-      (linear-gradient "end-grad" ["0%" "white" 0] ["100%" "white" 1])]
-     [:rect.grad.infinity-start
-      {:x    start-offset :y 0
-       :fill "url(#start-grad)" :style (style at-start?)}]
-     [:rect.grad.infinity-end
-      {:x    (+ start-offset (* 0.95 window-dur)) :y 0
-       :fill "url(#end-grad)" :style (style at-end?)}]]))
-
-(defn chunk [{:keys [chunk opts]}]
-  (let [{:keys [window-dur handlers]} opts
-        {:keys [lx rx fill
-                chunk/branch-depth chunk/branch-start? chunk/branch-end?]} chunk
-        height       (case branch-depth
-                       0 master-branch-height
-                       1 child-branch-height)
-        half-height  (/ height 2)
-        t-edge       (- tl-middle half-height)
-        b-edge       (+ tl-middle half-height)
-        edge-h       12.5               ; (max branch-1) / 2
-        t-chip       (+ t-edge edge-h)
-        b-chip       (- b-edge edge-h)
-        edge-offset  (* 0.007 window-dur)
-        left-offset  (+ lx edge-offset)
-        right-offset (- rx edge-offset)]
-
+(defn- chunk
+  [duration abs-time file {::chunk/keys [depth duration branch-start? branch-end?]}]
+  (let [left               abs-time
+        right              (+ left duration)
+        height             (case depth 0 master-branch-height 1 child-branch-height)
+        half-height        (/ height 2)
+        top                (- timeline-vertical-center half-height)
+        bottom             (+ timeline-vertical-center half-height)
+        bezel              12.5
+        top-bezel          (+ top bezel)
+        bottom-bezel       (- bottom bezel)
+        horizontal-padding 0
+        left-padding       (+ left horizontal-padding)
+        right-padding      (- right horizontal-padding)
+        fill               (file-color file)]
     [:polygon
-     ;; TODO event handlers
-     {:fill   fill
-      :points (cond
-                (and branch-start? branch-end?)
-                (util/space-join
-                 lx b-chip
-                 lx t-chip
-                 left-offset t-edge
-                 right-offset t-edge
-                 rx t-chip
-                 rx b-chip
-                 right-offset b-edge
-                 left-offset b-edge)
+     {:fill          fill
+      :points
+      (cond
+        (and branch-start? branch-end?)
+        (util/space-join
+         left bottom-bezel
+         left top-bezel
+         left-padding top
+         right-padding top
+         right top-bezel
+         right bottom-bezel
+         right-padding bottom
+         left-padding bottom)
 
-                branch-start?
-                (util/space-join
-                 lx b-chip
-                 lx t-chip
-                 left-offset t-edge
-                 rx t-edge
-                 rx b-edge
-                 left-offset b-edge)
+        branch-start?
+        (util/space-join
+         left bottom-bezel
+         left top-bezel
+         left-padding top
+         right top
+         right bottom
+         left-padding bottom)
 
-                branch-end?
-                (util/space-join
-                 lx t-edge
-                 right-offset t-edge
-                 rx t-chip
-                 rx b-chip
-                 right-offset b-edge
-                 lx b-edge)
+        branch-end?
+        (util/space-join
+         left top
+         right-padding top
+         right top-bezel
+         right bottom-bezel
+         right-padding bottom
+         left bottom)
 
-                :else
-                (util/space-join
-                 lx t-edge
-                 rx t-edge
-                 rx b-edge
-                 lx b-edge))}]))
+        :else
+        (util/space-join
+         left top
+         right top
+         right bottom
+         left bottom))}]))
+
+(defn- skimhead-line
+  [clip-path-id]
+  (when-some [skimhead (<sub [::subs/skimhead])]
+    (let [playhead     (<sub [::subs/playhead])
+          at-playhead? (and playhead (= (int skimhead) (int playhead)))]
+      [:line.skimhead
+       {:x1            skimhead :x2 skimhead
+        :y1            0        :y2 "100%"
+        :stroke-width  3
+        :vector-effect "non-scaling-stroke"
+        :stroke        (if at-playhead? "red" "white")
+        :clip-path     (str "url(#" clip-path-id ")")
+        :style         {:pointer-events "none"}}])))
+
+(defn- playhead-line
+  [clip-path-id]
+  (when-some [playhead (<sub [::subs/playhead])]
+    [:line.playhead
+     {:x1            playhead :x2 playhead
+      :y1            0        :y2 "100%" :stroke-width 3
+      :vector-effect "non-scaling-stroke"
+      :stroke        "black"
+      :clip-path     (str "url(#" clip-path-id ")")
+      :style         {:pointer-events "none"}}]))
+
+(defn chunks []
+  (let [duration           (<sub [::subs/duration])
+        chunks-by-abs-time (<sub [::subs/chunks-by-absolute-start-time])
+        chunks-html
+        (doall
+         (for [[abs-time {::chunk/keys [id file-id] :as c}] chunks-by-abs-time
+               :let                                         [file (<sub [::vcs.subs/file file-id])]]
+           ^{:key id}
+           [chunk duration abs-time file c]))]
+    [:g [:defs [:clipPath {:id clip-path-id} chunks-html]]
+     chunks-html]))
+
+(defn svg-ref-handler
+  [node]
+  (if (nil? node)
+    (re-frame/dispatch [::handlers/dispose-svg])
+    (re-frame/dispatch [::handlers/register-svg node])))
 
 (defn timeline []
-  (let [chunks           []
-
-        ;; timeline attrs
-        start-offset     0
-        window-dur       2000
-
-        ;; playhead & skimhead
-        skimhead         1000
-        playhead         2000
-        playhead-locked? false
-        show-playhead?   true]
-    (fn []
-      (let [chunks-html (for [c chunks]
-                          ^{:key (:db/uuid c)}
-                          [chunk
-                           {:chunk c
-                            :opts  {:window-dur window-dur}
-                            ;:handlers {:on-click        click-handler
-                            ;           :on-double-click double-click-handler
-                            ;           :on-mouse-move   mouse-move-handler}
-                            }])]
-        [:div.timeline
-         [:div.scaler
-          [:svg.timeline-chunks
-           {:ref                   "svg"
-            ;:view-box              (vimsical.common.util.core/space-join
-            ;                        start-offset 0 window-dur tl-height)
-            :preserve-aspect-ratio "none meet"
-            :style                 {:width "100%" :height "100%"}
-            ;:on-wheel              mouse-wheel-handler
-            ;:on-mouse-enter        mouse-enter-handler
-            ;:on-mouse-leave        mouse-leave-handler
-            }
-           [:defs [:clipPath {:id clip-path-id} chunks-html]]
-           chunks-html
-           #_(infinity-gradients
-              {:at-start?    at-start?
-               :at-end?      at-end?
-               :start-offset start-offset
-               :window-dur   window-dur}
-              )
-           [:line.skimhead
-            {:x1            skimhead :x2 skimhead
-             :y1            0 :y2 "100%"
-             :stroke-width  3
-             :vector-effect "non-scaling-stroke"
-             :stroke        "white"
-             :clip-path     (str "url(#" clip-path-id ")")
-             :style         {:visibility     (when-not skimhead "hidden")
-                             :pointer-events "none"}}]
-           [:line.playhead
-            {:x1            playhead :x2 playhead
-             :y1            0 :y2 "100%" :stroke-width 3
-             :vector-effect "non-scaling-stroke"
-             :stroke        (if (= skimhead playhead) "red" "black")
-             :clip-path     (when-not playhead-locked?
-                              (str "url(#" clip-path-id ")"))
-             :style         {:visibility     (when-not show-playhead? "hidden")
-                             :pointer-events "none"}}]]]]))))
+  (let [duration (<sub [::subs/duration])
+        left     0
+        right    0]
+    [:div.timeline
+     [:div.scaler
+      [:svg.timeline-chunks
+       {:ref                   svg-ref-handler
+        :view-box              (util/space-join left right duration timeline-height)
+        :preserve-aspect-ratio "none meet"
+        :style                 {:width "100%" :height "100%"}
+        :on-mouse-enter        on-mouse-enter
+        :on-wheel              on-mouse-wheel
+        :on-mouse-move         on-mouse-move
+        :on-click              on-click
+        :on-mouse-leave        on-mouse-leave}
+       [chunks]
+       [playhead-line clip-path-id]
+       [skimhead-line clip-path-id]]]]))

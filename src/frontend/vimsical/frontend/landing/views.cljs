@@ -4,8 +4,9 @@
             [goog.net.XhrIo]
             [reagent.core :as reagent]))
 
-
+;;
 ;; * Waitlist Form
+;;
 
 (def endpoint "https://di60oevsv1.execute-api.us-west-2.amazonaws.com/prod/handler")
 
@@ -48,11 +49,13 @@
                     "Thank You!"
                     [:br]
                     "We'll let you know as soon as we're live!"]
-           error [:div.result.error
-                  "Oh no!"
-                  [:br] "Something went wrong. Please try again."])]))))
+           error   [:div.result.error
+                    "Oh no!"
+                    [:br] "Something went wrong. Please try again."])]))))
 
+;;
 ;; * Component
+;;
 
 (defn landing []
   [:div.landing.asc.dc.ac
@@ -70,7 +73,7 @@
         :muted     true
         ;; necesssary to not enter full-screen mode in iOS
         ;; but seeming not currently supported in react
-        ;:plays-inline true
+                                        ;:plays-inline true
         :loop      true
         :preload   "auto"
         :src       "video/watch-and-interact.m4v"}]]

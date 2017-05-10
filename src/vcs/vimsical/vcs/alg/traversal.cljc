@@ -6,11 +6,29 @@
    [vimsical.vcs.data.splittable :as splittable]
    [vimsical.vcs.state.branches :as state.branches]))
 
-;; * Internal
+;;
+;; * Tree traversals
+;;
 
-;; Can never remember those!
-(def asc -1)
-(def desc 1)
+(defn walk-tree
+  "Perform a depth-first walk of `tree`.
+  `rec` is a fn of `tree` that should return the recursive part of the tree or
+  nil to stop the recursion and start bracktracking.
+
+  `node` is a fn that takes a tree node, the recursive part of the tree and
+  returns a new node`
+
+  `pre` and `post` are fns of a tree node applied before and after traversing
+  that node."
+  [rec node pre post tree]
+  (letfn [(rec' [rec-tree]
+            (mapv (partial walk-tree rec node pre post) rec-tree))]
+    (if-some [rec-tree (rec tree)]
+      (-> (pre tree)
+          (node (rec' rec-tree))
+          (post))
+      (post (pre tree)))))
+
 
 (defn reduce-tree
   "Depth-first reduction of a tree.
@@ -18,48 +36,23 @@
   `rec` is a fn of `tree` that should return the recursive part of the tree or
   nil to stop the recursion and start bracktracking.
 
-  `f` is a reducing fn of `acc` and a `tree` node"
-  [rec f acc tree]
+  `rf` is a reducing fn of `acc` and a `tree` node"
+  [rec rf acc tree]
   (letfn [(reduce-tree' [acc tree]
-            (reduce-tree rec f acc tree))
+            (reduce-tree rec rf acc tree))
           (rec' [acc rec-tree]
             (reduce reduce-tree' acc rec-tree))]
     (if-some [rec-tree (rec tree)]
-      (f (rec' acc rec-tree) tree)
-      (f acc tree))))
+      (rf (rec' acc rec-tree) tree)
+      (rf acc tree))))
 
-(comment
-  (assert
-   (= [0 1 2 3 4 5]
-      (reduce-tree
-       :children
-       (fn f [acc {:keys [id]}]
-         (conj acc id))
-       [] {:id        5
-           :children [{:id 2 :children [{:id 1 :children [{:id 0}]}]}
-                      {:id 4 :children [{:id 3}]}]}))))
-
-
-(defn update-tree
-  [rec rf f tree]
-  (if-some [rec-tree (rec tree)]
-    (f (rf tree (mapv (partial update-tree rec rf f) rec-tree)))
-    (f tree)))
-
-(comment
-  (assert
-   (= {:id        6
-       :children [{:id 3 :children [{:id 2 :children [{:id 1}]}]}
-                  {:id 5 :children [{:id 4}]}]}
-      (update-tree
-       :children
-       (fn [node children] (assoc node :children children))
-       (fn [node] (update node :id inc))
-       {:id        5
-        :children [{:id 2 :children [{:id 1 :children [{:id 0}]}]}
-                   {:id 4 :children [{:id 3}]}]}) )))
-
+;;
 ;; * Branch comparator
+;;
+
+(def asc -1)
+(def desc 1)
+
 
 (s/fdef new-comparator
         :args (s/cat :state ::comparator-state)
@@ -89,45 +82,56 @@
                   depth-comparison (compare depth-a depth-b)]
               (when-not (zero? depth-comparison)
                 depth-comparison)))
-          (branch-entry-index [deltas-by-branch-id {::branch/keys [entry-delta-id] :keys [db/id]}]
-            (state.branches/index-of-delta deltas-by-branch-id id entry-delta-id))
+          (branch-entry-index [deltas-by-branch-id {::branch/keys [branch-off-delta-id] :keys [db/id]}]
+            (state.branches/index-of-delta deltas-by-branch-id id branch-off-delta-id))
           (compare-entry-deltas [common-ancestor a b]
             (compare
              (branch-entry-index deltas-by-branch-id a)
              (branch-entry-index deltas-by-branch-id b)))]
     (fn branch-comparator
       [a b]
-      (let [common-ancestor (branch/common-ancestor a b)]
-        (cond
-          (branch/parent? a b) asc
+      (try
+        (let [common-ancestor (branch/common-ancestor a b)]
+          (cond
+            (branch/parent? a b) asc
 
-          (branch/parent? b a) desc
+            (branch/parent? b a) desc
 
-          (some? common-ancestor)
-          (or (compare-relative-depth common-ancestor a b)
-              (compare-entry-deltas common-ancestor a b)
-              (throw (ex-info "Entry deltas not found???" {})))
+            (some? common-ancestor)
+            (or (compare-relative-depth common-ancestor a b)
+                (compare-entry-deltas common-ancestor a b)
+                (throw (ex-info "Entry deltas not found???" {})))
 
-          (and (zero? (branch/depth a))
-               (pos?  (branch/depth b))) asc
+            (and (zero? (branch/depth a))
+                 (pos?  (branch/depth b))) asc
 
-          (and (pos?  (branch/depth a))
-               (zero? (branch/depth b))) desc
+            (and (pos?  (branch/depth a))
+                 (zero? (branch/depth b))) desc
 
-          :else
-          (throw
-           (ex-info
-            "Can't compare branches with no master or no common ancestor, are
+            :else
+            (throw
+             (ex-info
+              "Can't compare branches with no master or no common ancestor, are
             the branches fully denormalized (include their ancestors
             recursively through ::branch/parent)?"
-            {:branch-a a :branch-b b})))))))
+              {:branch-a a :branch-b b}))))
+        (catch #?(:clj Throwable :cljs :default) t
+            (throw (ex-info "Branch comparison error" {:t t :a a :b b})))))))
 
-
+;;
 ;; * Branch inlining
+;;
+
+(defn child-has-branch-off-delta-id?
+  [{::branch/keys [parent branch-off-delta-id]}]
+  (or (nil? parent) (some? branch-off-delta-id)))
+
+(s/def ::branch (s/and ::branch/branch child-has-branch-off-delta-id?))
+(s/def ::branches (s/every ::branch))
 
 (s/fdef inline
         :args (s/cat :deltas-by-branch-id ::state.branches/deltas-by-branch-id
-                     :branches (s/every ::branch/branch))
+                     :branches ::branches)
         :ret  ::indexed/vector)
 
 ;; NOTE do a post-traversal of the branch-tree, inlining children in their
@@ -135,26 +139,31 @@
 ;; offsets of offsets processed so far
 
 (defn inline
-  "Does a reduce-tree traversal of the branch tree, reducing over children
-  branches and inlining their deltas in a single indexed vector."
+  "Perform a depth-first walk over the branch tree and splices the children's
+  deltas into its parent's deltas."
   [deltas-by-branch-id branches]
   (let [cpr  (new-branch-comparator deltas-by-branch-id)
         tree (branch/branch-tree branches)
         rec  (fn [{::branch/keys [children]}]
-               (sort cpr children))]
-    (::insert-deltas
-     (reduce-tree
-      rec
-      (fn [{:as    acc
-            ::keys [insert-id insert-deltas]}
-           {:as           branch
-            :keys         [db/id]
-            ::branch/keys [entry-delta-id]}]
-        (let [branch-deltas (state.branches/get-deltas deltas-by-branch-id branch)]
-          (if (nil? acc)
-            {::insert-id     entry-delta-id
-             ::insert-deltas branch-deltas}
-            (let [insert-index (inc (state.branches/index-of-delta deltas-by-branch-id id insert-id))]
-              {::insert-id     entry-delta-id
-               ::insert-deltas (splittable/splice branch-deltas insert-index insert-deltas)}))))
-      nil tree))))
+               (->> children not-empty (sort cpr)))
+        node (fn [branch children]
+               (assoc branch ::branch/children children))]
+    (::branch/deltas
+     (walk-tree
+      rec node
+      (fn pre [branch]
+        (assoc branch ::branch/deltas
+               (state.branches/get-deltas deltas-by-branch-id branch)))
+      (fn post [{:keys [db/id] ::branch/keys [deltas children] :as branch}]
+        (let [children-deltas    (mapv ::branch/deltas children)
+              branch-off-ids     (mapv ::branch/branch-off-delta-id children)
+              branch-off-indexes (mapv
+                                  (fn [delta-id]
+                                    ;; We want to insert _after_ the entry delta
+                                    (inc (state.branches/index-of-delta deltas-by-branch-id id delta-id)))
+                                  branch-off-ids)
+              splits             (splittable/splits deltas branch-off-indexes)
+              deltas+splits      (splittable/interleave splits children-deltas)
+              deltas'            (reduce splittable/append deltas+splits)]
+          (assoc branch ::branch/deltas deltas')))
+      tree))))

@@ -25,8 +25,9 @@
 
 (st/instrument)
 
-
+;;
 ;; * Generators
+;;
 
 (defn gen-with-index-in-bounds
   "Return a generator that will return tuples of: value from coll-gen, index in value."
@@ -83,7 +84,9 @@
 (def gen-uuid-map  (s/gen ::uuid-map))
 (def gen-uuid-map-vec (gen/not-empty (gen/vector-distinct gen-uuid-map)))
 
+;;
 ;; ** Splittable types
+;;
 
 (defn gen-indexed [coll-gen]
   (gen/bind
@@ -95,8 +98,9 @@
    coll-gen
    (fn [coll] (gen/return (indexed/vec-by key coll)))))
 
-
+;;
 ;; * Properties
+;;
 
 (extend-protocol indexed/IIndexedInternal
   #?(:clj Object :cljs default)
@@ -140,8 +144,8 @@
   (testing "The count after omiting should equal the subtraction of the input counts"
     (for-all
      [[coll [idx cnt cnt2]] (gen-with-index-and-counts gen)]
-     (let [[a b]   (split! coll idx)
-           [b1 b2] (split! b cnt)
+     (let [[a b]     (split! coll idx)
+           [b1 b2]   (split! b cnt)
            [b11 b12] (split! b1 cnt2)]
        (= coll
           (append! a b)
@@ -154,7 +158,9 @@
           (splice! (omit! coll idx cnt) idx b1)
           (splice! (omit! coll idx cnt) idx (append! b11 b12)))))))
 
+;;
 ;; * Tests
+;;
 
 (def num-tests 200)
 

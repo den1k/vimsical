@@ -4,14 +4,26 @@
   (:require
    [clojure.spec :as s]
    [diffit.vec :as diffit]
+   [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.core :as vcs]
+   [vimsical.vcs.delta :as delta]
    [vimsical.vcs.edit-event :as edit-event]
-   [vimsical.vcs.state.files :as files]))
+   [vimsical.vcs.editor :as editor]
+   [vimsical.vcs.file :as file]
+   [vimsical.vcs.state.files :as state.files]))
 
+;;
 ;; * Edit events
+;;
 
+;;
 ;; ** Cursor
+;;
+
+;;
 ;; *** Moving after str events
 ;;
+
 ;; Add the crsr/mv events after str/* edit-events
 ;;
 
@@ -36,8 +48,10 @@
   (comp (map move-past-edit-event) cat))
 
 
+;;
 ;; *** Moving between diff events
 ;;
+
 ;; When the diff generates, say an insert at X and a delete at Y, we want to add
 ;; the cursor movements going from (+ X 1) do Y. There is some complexity in the
 ;; implementation because these fns usually kick in after we've added the
@@ -94,7 +108,6 @@
              (rf (rf result [@prev-input nil]))
              (rf result)))
           ([result input]
-           (println "IN" input)
            (if (pos? (vswap! cnt inc))
              (rf result [@prev-input (vreset! prev-input input)])
              (do (vreset! prev-input input) result)))))))
@@ -105,11 +118,16 @@
      cat)))
 
 
-(defn- splice-edit-events-xf [] (comp (map #'files/splice-edit-event) cat))
+(defn- splice-edit-events-xf [] (comp (map #'state.files/splice-edit-event) cat))
 
 
+;;
 ;; * String diff to edit events
+;;
+
+;;
 ;; ** str -> diff
+;;
 
 (s/def ::ins (s/cat :op #{:+} :index nat-int? :chars vector?))
 (s/def ::rem (s/cat :op #{:-} :index nat-int? :amt pos-int?))
@@ -117,7 +135,9 @@
 (s/def ::edit-script (s/spec (s/* ::edit)))
 (s/def ::diff (s/cat :edit-distance number? :edit-script ::edit-script ))
 
+;;
 ;; ** diff -> edit-event
+;;
 
 (defmulti ^:private diffit-edit->edit-event first)
 
@@ -135,8 +155,9 @@
   [[_ edits]]
   (into [] (map diffit-edit->edit-event) edits))
 
-
-;; * Diff API
+;;
+;; * API
+;;
 
 (s/def ::splice-string (s/tuple string?))
 (s/def ::string string?)
@@ -188,3 +209,22 @@
               {::s s' ::edit-events
                (transduce  xf conj edit-events (diff->edit-events s s'))})))
         nil splices-and-strs))))))
+
+(s/fdef diffs->vcs
+        :args (s/cat :vcs ::vcs/vcs
+                     :effects ::editor/effects
+                     :file-id ::file/id
+                     :branch-id ::branch/id
+                     :delta-id ::delta/prev-id
+                     :strs (s/* ::splice-or-string))
+        :ret (s/tuple ::vcs/vcs ::delta/id))
+
+(defn diffs->vcs
+  [vcs effects file-id branch-id delta-id & strs]
+  (assert (string? (first strs)))
+  (assert (every? vector? (next strs)))
+  (letfn [(splice-strs [strs] (mapv (fn [str] (if (vector? str) str [str])) strs))]
+    (reduce
+     (fn [[vcs delta-id] edit-event]
+       (vcs/add-edit-event vcs effects file-id branch-id delta-id edit-event))
+     [vcs delta-id] (apply diffs->edit-events (splice-strs strs)))))

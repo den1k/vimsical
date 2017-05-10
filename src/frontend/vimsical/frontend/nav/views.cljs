@@ -48,33 +48,33 @@
                                 hovering?)))]
     (fn []
       (let
-       [user            (<sub [:q [:app/user [:db/id]]])
+          [user            (<sub [:q [:app/user [:db/id]]])
 
-        {:vims/keys [title author] :as vims}
-        (<sub [:q [:app/vims
-                   [:vims/title
-                    {:vims/author [:db/id]}]]])
+           {:vims/keys [title author] :as vims}
+           (<sub [:q [:app/vims
+                      [:vims/title
+                       {:vims/author [:db/id]}]]])
 
-        {:keys [editing? title-too-long?]} @state
+           {:keys [editing? title-too-long?]} @state
 
-        editable-title? (=by :db/id user author)
-        title-html
-                        [:div.title
-                         (when editable-title?
-                           {:content-editable                  true
-                            :suppress-content-editable-warning true
-                            :on-mouse-enter                    #(swap! state assoc :hovering? true)
-                            :on-mouse-leave                    #(swap! state assoc :hovering? false)
-                            :on-key-down                       (e-> keydown-handler)
-                            :on-click                          #(swap! state assoc :editing? true)
-                            :on-blur                           (e>
-                                                                (swap! state assoc :editing? false)
-                                                                (re-frame/dispatch
-                                                                 [:vims/set-title (util/norm-str inner-html)]))})
-                         (or title
-                             (if editing?
-                               ""
-                               title-placeholder))]]
+           editable-title? (=by :db/id user author)
+           title-html
+           [:div.title
+            (when editable-title?
+              {:content-editable                  true
+               :suppress-content-editable-warning true
+               :on-mouse-enter                    #(swap! state assoc :hovering? true)
+               :on-mouse-leave                    #(swap! state assoc :hovering? false)
+               :on-key-down                       (e-> keydown-handler)
+               :on-click                          #(swap! state assoc :editing? true)
+               :on-blur                           (e>
+                                                   (swap! state assoc :editing? false)
+                                                   (re-frame/dispatch
+                                                    [:vims/set-title (util/norm-str inner-html)]))})
+            (or title
+                (if editing?
+                  ""
+                  title-placeholder))]]
         [:div.vims-info.jc.ac
          (if-not editable-title?
            title-html
@@ -86,18 +86,18 @@
 
 (defn nav []
   (let
-   [show-popup? (reagent/atom false)
-    {:user/keys [first-name last-name vimsae] :as user}
-    (<sub [:q [:app/user
-               [:db/id
-                :user/first-name
-                :user/last-name
-                :user/email
-                {:user/vimsae [:db/id :vims/title]}]]])
+      [show-popup? (reagent/atom false)
+       {:user/keys [first-name last-name vimsae] :as user}
+       (<sub [:q [:app/user
+                  [:db/id
+                   :user/first-name
+                   :user/last-name
+                   :user/email
+                   {:user/vimsae [:db/id :vims/title]}]]])
 
-    {:vims/keys [title] :as app-vims} (<sub [:q [:app/vims
-                                                 [:db/id
-                                                  :vims/title]]])]
+       {:vims/keys [title] :as app-vims} (<sub [:q [:app/vims
+                                                    [:db/id
+                                                     :vims/title]]])]
     [:div.main-nav.ac.jsb
      [:div.logo-and-type
       [:span.logo icons/vimsical-logo]

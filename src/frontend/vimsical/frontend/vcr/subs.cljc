@@ -12,3 +12,4 @@
       [{:vims/branches (or pattern '[*])}]]]))
  (fn [{:vims/keys [branches]}]
    (->> branches first)))
+

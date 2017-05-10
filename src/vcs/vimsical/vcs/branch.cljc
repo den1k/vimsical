@@ -7,36 +7,46 @@
    [vimsical.vcs.file :as file]
    [vimsical.vcs.lib :as lib]))
 
+;;
 ;; * Spec
+;;
 
 (s/def ::branch
   (s/keys :req [:db/id]
           :opt [::start-delta-id ::entry-delta-id ::parent ::files ::name]))
 
-
+;;
 ;; ** Attributes
+;;
 
 (s/def ::id uuid?)
 (s/def :db/id ::id)
 (s/def ::name string?)
 (s/def ::start-delta-id (s/nilable ::delta/id))
-(s/def ::entry-delta-id (s/nilable ::delta/id))
+(s/def ::branch-off-delta-id (s/nilable ::delta/id))
 (s/def ::created-at nat-int?)
 
+;;
 ;; ** Relations
+;;
 
 (s/def ::parent (s/nilable ::branch))
 (s/def ::files (s/coll-of ::file/file))
 (s/def ::libs (s/coll-of ::lib/lib))
 
-
+;;
 ;; * Lineage
+;;
 
 (defn master? [{::keys [parent]}] (nil? parent))
 
 (defn parent?
   [parent child]
   (=by :db/id (comp :db/id ::parent) parent child))
+
+(defn master
+  [branches]
+  (some-val master? branches))
 
 (defn lineage
   "Return a seq of that `branch`'s lineage, starting with itself,
@@ -98,14 +108,16 @@
      (=by :db/id other)
      lineage))))
 
-
+;;
 ;; * Tree
+;;
 
 (s/def ::children (s/every ::tree))
 (s/def ::tree (s/merge ::branch (s/keys :opt [::children])))
 
-
+;;
 ;; ** Internal
+;;
 
 (defn- tree*
   [branches-by-parent-id {:keys [db/id] :as branch}]
@@ -119,8 +131,9 @@
      (recur-children
       (get branches-by-parent-id id)))))
 
-
+;;
 ;; ** API
+;;
 
 (s/fdef branch-tree
         :args (s/cat :branches (s/every ::branch))

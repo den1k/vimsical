@@ -16,7 +16,9 @@
 
 (st/instrument)
 
+;;
 ;; * Data
+;;
 
 (defn test-data
   ([] (test-data (range 0 100 10)))
@@ -36,8 +38,9 @@
         (update :v  update-fn)
         (update :vb update-fn))))
 
-
+;;
 ;; * Tests
+;;
 
 (deftest spec-test
   (is (s/valid? ::sut/vector (sut/vector)))
@@ -69,6 +72,18 @@
       {:id 0}  0
       {:id 50} 5
       {:id 90} 9)))
+
+(deftest peek-test
+  (let [{:keys [v vb]} (test-data)]
+    (is (= {:id 90} (peek v)))
+    (is (= {:id 90} (peek vb)))))
+
+(deftest update-test
+  (let [{:keys [v vb]} (test-data)]
+    (is (thrown?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (= {:id 0 :foo :bar} (first (update v 0 assoc :foo :bar)))))
+    (is (= {:id 0 :foo :bar} (first (update vb 0 assoc :foo :bar))))))
 
 (deftest next-test
   (testing "equality"
