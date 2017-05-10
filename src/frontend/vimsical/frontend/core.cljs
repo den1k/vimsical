@@ -4,7 +4,7 @@
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
    [vimsical.frontend.app.views :refer [app]]
-   [vimsical.frontend.code-editor.util :as code-editor.util]
+   [vimsical.frontend.code-editor.core :as code-editor.core]
    [vimsical.frontend.db :as db]
    [vimsical.frontend.vcs.handlers :as vcs.handlers]))
 
@@ -17,7 +17,7 @@
   "Called from index.html"
   []
   #_(st/instrument)
-  (code-editor.util/require-monaco
+  (code-editor.core/require-monaco
    #(do
       (re-frame/dispatch-sync [::db/init])
       (re-frame/dispatch-sync [::vcs.handlers/init-vims])

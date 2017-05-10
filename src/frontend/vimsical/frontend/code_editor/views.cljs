@@ -24,6 +24,11 @@
            ;; :fontFamily           "FiraCode-Retina"
            ;; :fontLigatures        true
            ;; :fontSize             13
+           ; columns within the .decorationsOverviewRuler (under scrollbar) in
+           ; which decorations like errors are rendered.
+           :overviewRulerLanes 1
+           ; removes the ugly black bar signifying the position of the cursor
+           :hideCursorInOverviewRuler true
            ;; two chars gap between line nums and code
            :lineDecorationsWidth "2ch"
            :lineNumbersMinChars  1

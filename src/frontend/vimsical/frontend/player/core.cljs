@@ -2,7 +2,7 @@
   "Core namespace for standalone player."
   (:require [re-frame.core :as re-frame]
             [reagent.core :as reagent]
-            [vimsical.frontend.code-editor.util :as code-editor.util]
+            [vimsical.frontend.code-editor.core :as code-editor.core]
             [vimsical.frontend.player.views :refer [player]]
             [vimsical.frontend.player.embed :as player.embed]))
 
@@ -14,7 +14,7 @@
 (defn ^:export init
   "Called from index.html"
   []
-  (code-editor.util/require-monaco
+  (code-editor.core/require-monaco
    #(do
       ;(re-frame/dispatch-sync [::db/init])
       (mount-root))))
