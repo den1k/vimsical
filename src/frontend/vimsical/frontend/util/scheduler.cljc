@@ -175,5 +175,4 @@
   (letfn [(ensure-seq [x]
             (if (map? x) [x] x))]
     (doseq [{:keys [t event override? action] :as sched} (ensure-seq one-or-many)]
-      (when action (println "Scheduler:" action))
       (perform-action! sched))))
