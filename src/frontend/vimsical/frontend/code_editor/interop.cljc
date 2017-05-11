@@ -39,13 +39,15 @@
        (fn [[cur-idx line col :as step] char]
          (let [next-idx (inc cur-idx)]
            (cond
-             (= cur-idx idx)      (reduced {:line line :col (inc col)})
-             ;; lookahead at last step of reduction
-             ;; this becomes true only when idx is at last char
-             (= next-idx str-len) (reduced {:line line :col (inc col)})
-             :else                (if (identical? \newline char)
-                                    [next-idx (inc line) 1]
-                                    [next-idx line (inc col)]))))
+             ;; lookahead in case we're at the last char
+             (or (= cur-idx idx) (= next-idx str-len))
+             (reduced {:line line :col (inc col)})
+
+             (identical? \newline char)
+             [next-idx (inc line) 1]
+
+             :else
+             [next-idx line (inc col)])))
        [0 1 1] string))))
 
 (def idx->js-pos (comp pos->js-pos idx->pos))
