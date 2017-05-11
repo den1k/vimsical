@@ -59,18 +59,26 @@
 
 (def event-max-pad 500)
 
-(defmulti pad (fn [edit-event elapsed] (::edit-event/op edit-event)))
-
-(defmethod pad :default [_ elapsed]
-  (if (== -1 elapsed) event-max-pad (min elapsed event-max-pad)))
+(defn pad [elapsed]
+  ;; The first time `::add-edit-event` is dispatched `elapsed` will be -1 in
+  ;; which case we want to return `event-max-pad` so the delta doesn't end up
+  ;; "stuck" to the left of the timeline.
+  ;;
+  ;; In all other cases we want to cap the `elapsed` time to `event-max-pad`
+  ;; which will most definitely yield the max value for the first delta in a new
+  ;; vims when switching between vims.
+  ;;
+  ;; NOTE this will need to change with audio since we'll need to stop capping
+  ;; the elapsed time when an audio clip is recording.
+  (if (== -1 elapsed)
+    event-max-pad
+    (min elapsed event-max-pad)))
 
 (defn new-pad-fn
   [elapsed]
   (let [pad-counter (atom -1)]
     (fn [edit-event]
-      (pad
-       edit-event
-       (if (zero? (swap! pad-counter inc)) elapsed 1)))))
+      (pad (if (zero? (swap! pad-counter inc)) elapsed 1)))))
 
 ;;
 ;; ** Editor
