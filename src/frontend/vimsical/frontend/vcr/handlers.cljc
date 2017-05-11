@@ -11,7 +11,7 @@
 
 (defn tick-fn
   [t]
-  (re-frame/dispatch [::timeline.handlers/set-playhead (int t)]))
+  (re-frame/dispatch [::timeline.handlers/set-playhead t]))
 
 (defn at-end?
   [vcs playhead-entry]
