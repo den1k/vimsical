@@ -6,7 +6,7 @@
 (s/def ::playing? boolean?)
 (s/def ::skimming? boolean?)
 
-(defn set-playing  [ui-db playing?]  (assoc ui-db ::playing? (boolean playing?)))
-(defn set-skimming [ui-db skimming?] (assoc ui-db ::skimming? (boolean skimming?)))
+(defn set-playing  [ui-db playing?]  (assoc ui-db ::playing? playing?))
+(defn set-skimming [ui-db skimming?] (assoc ui-db ::skimming? skimming?))
 (defn set-playhead [ui-db t] (assoc ui-db ::playhead t))
 (defn set-skimhead [ui-db t] (assoc ui-db ::skimhead t))
