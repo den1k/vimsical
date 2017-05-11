@@ -96,7 +96,7 @@
                      :branch-uid ::branch/uid
                      :delta-uid ::delta/prev-uid
                      :edit-event ::edit-event/edit-event)
-        :ret (s/tuple ::vcs ::delta/uid))
+        :ret (s/tuple ::vcs (s/every ::delta/delta) ::delta/uid))
 
 (defn add-edit-event
   [{:as vcs ::keys [branches state-by-delta-uid timeline]}
@@ -117,7 +117,7 @@
                                     (assoc-in [::state-by-delta-uid delta-uid' ::state.deltas/deltas] all-deltas')
                                     (assoc-in [::state-by-delta-uid delta-uid' ::state.files/state-by-file-uid] files-state-by-file-uid')
                                     (assoc ::timeline timeline'))]
-    [vcs' delta-uid']))
+    [vcs' deltas' delta-uid']))
 
 ;;
 ;; * Queries

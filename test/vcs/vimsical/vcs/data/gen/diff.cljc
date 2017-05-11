@@ -217,14 +217,14 @@
                      :branch-uid ::branch/uid
                      :delta-uid ::delta/prev-uid
                      :strs (s/* ::splice-or-string))
-        :ret (s/tuple ::vcs/vcs ::delta/uid))
+        :ret (s/tuple ::vcs/vcs (s/every ::delta/delta) ::delta/uid))
 
 (defn diffs->vcs
-  [vcs effects file-uuid branch-uid delta-uid & strs]
+  [vcs effects file-uid branch-uid delta-uid & strs]
   (assert (string? (first strs)))
   (assert (every? vector? (next strs)))
   (letfn [(splice-strs [strs] (mapv (fn [str] (if (vector? str) str [str])) strs))]
     (reduce
-     (fn [[vcs delta-uid] edit-event]
-       (vcs/add-edit-event vcs effects file-uuid branch-uid delta-uid edit-event))
-     [vcs delta-uid] (apply diffs->edit-events (splice-strs strs)))))
+     (fn [[vcs _ delta-uid] edit-event]
+       (vcs/add-edit-event vcs effects file-uid branch-uid delta-uid edit-event))
+     [vcs nil delta-uid] (apply diffs->edit-events (splice-strs strs)))))
