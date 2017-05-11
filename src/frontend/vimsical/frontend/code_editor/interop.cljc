@@ -39,7 +39,7 @@
        (fn [[cur-idx line col :as step] char]
          (let [next-idx (inc cur-idx)]
            (cond
-             (= cur-idx idx)      (reduced {:line line :col col})
+             (= cur-idx idx)      (reduced {:line line :col (inc col)})
              ;; lookahead at last step of reduction
              ;; this becomes true only when idx is at last char
              (= next-idx str-len) (reduced {:line line :col (inc col)})
