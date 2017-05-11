@@ -1,6 +1,7 @@
 (ns vimsical.frontend.util.scheduler
   "Simple dispatch scheduler for re-frame."
   (:require
+   [clojure.spec :as s]
    [clojure.data.avl :as avl]
    [re-frame.core :as re-frame]))
 
@@ -132,23 +133,47 @@
 ;; * Cofx & Fx
 ;;
 
+(s/def ::t number?)
+(s/def ::event vector?)
+(s/def ::tick ifn?)
+(s/def ::tick ifn?)
+(s/def ::override? boolean?)
+
+(s/def ::start (s/keys :req-un [::t] :opt-un [::tick]))
+(s/def ::pause any?)
+(s/def ::stop any?)
+(s/def ::set-time (s/keys :req-un [::t]))
+(s/def ::schedule (s/keys :req-un [::t ::event] :opt-un [::override?]))
+
+(s/def ::scheduler-actions
+  (s/or :start ::start
+        :pause ::pause
+        :stop ::stop
+        :set-time ::set-time
+        :schedule ::schedule))
+
 (defonce scheduler (new-scheduler))
 
 (defmulti perform-action! :action)
 
 (defmethod perform-action! nil [_])
-(defmethod perform-action! :start    [{:keys [t tick]}] (start! scheduler t tick))
-(defmethod perform-action! :pause    [{:keys [tick]}]   (pause! scheduler))
-(defmethod perform-action! :stop     [{:keys [tick]}]   (stop! scheduler))
-(defmethod perform-action! :set-time [{:keys [t]}]      (set-time! scheduler t))
+(defmethod perform-action! :start    [{:keys [t tick]}]  (start! scheduler t tick))
+(defmethod perform-action! :pause    [{:keys [tick]}]    (pause! scheduler))
+(defmethod perform-action! :stop     [{:keys [tick]}]    (stop! scheduler))
+(defmethod perform-action! :set-time [{:keys [t]}]       (set-time! scheduler t))
+(defmethod perform-action! :schedule [{:keys [t event override?]}]
+  (schedule! scheduler t event override?))
+
+(s/def ::scheduler-fx
+  (s/or :one ::scheduler-actions
+        :many (s/every ::scheduler-actions)))
+
+(s/fdef scheduler-fx :args (s/cat :fx ::scheduler-fx))
 
 (defn scheduler-fx
   [one-or-many]
   (letfn [(ensure-seq [x]
             (if (map? x) [x] x))]
     (doseq [{:keys [t event override? action] :as sched} (ensure-seq one-or-many)]
-      ;; Schedule first
-      (when t (schedule! scheduler t event override?))
-      ;; Then perform the action
       (when action (println "Scheduler:" action))
       (perform-action! sched))))
