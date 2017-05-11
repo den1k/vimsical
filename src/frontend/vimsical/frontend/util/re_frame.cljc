@@ -3,11 +3,13 @@
       [(:require
         [re-frame.core :as re-frame]
         [re-frame.interop :as interop]
+        [re-frame.loggers :refer [console]]
         [vimsical.frontend.util.scheduler :as scheduler])]
       :cljs
       [(:require
         [re-frame.core :as re-frame]
         [re-frame.interop :as interop]
+        [re-frame.loggers :refer [console]]
         [reagent.ratom :as ratom]
         [vimsical.frontend.util.scheduler :as scheduler])]))
 
@@ -39,9 +41,13 @@
 ;; * Inject sub value in handler
 ;;
 
+(defn- inject-sub-ignore-dispose-warnings?
+  [query-vector]
+  (:ignore-warnings (meta query-vector)))
+
 (defn dispose-maybe
   "Dispose of `ratom-or-reaction` if it has no watches."
-  [ratom-or-reaction]
+  [query-vector ratom-or-reaction]
   ;; Behavior notes:
   ;;
   ;; 1. calling `reagent/dispose!` takes care of "walking up" the reaction graph
@@ -75,24 +81,89 @@
   ;;
   #?(:cljs
      (when-not (seq (.-watches ratom-or-reaction))
+       (when-not (inject-sub-ignore-dispose-warnings? query-vector)
+         (console :warn "Disposing of injected sub:" query-vector))
        (interop/dispose! ratom-or-reaction))))
 
-(re-frame/reg-cofx
- :sub
- (fn [cofx [id :as query-vector]]
-   (let [sub (re-frame/subscribe query-vector)
-         val (deref sub)]
-     (dispose-maybe sub)
-     (assoc cofx id val))))
+(defmulti inject-sub-cofx
+  (fn [context query-vector-or-event->query-vector-fn]
+    (if (vector? query-vector-or-event->query-vector-fn)
+      ::query-vector
+      ::event->query-vector-fn)))
+
+(defmethod inject-sub-cofx ::query-vector
+  [context [id :as query-vector]]
+  (let [sub (re-frame/subscribe query-vector)
+        val (deref sub)]
+    (dispose-maybe query-vector sub)
+    (assoc context id val)))
+
+(defmethod inject-sub-cofx ::event->query-vector-fn
+  [{:keys [event] :as context} event->query-vector-fn]
+  (if-some [[id :as query-vector] (event->query-vector-fn event)]
+    (let [sub                   (re-frame/subscribe query-vector)
+          val                   (deref sub)]
+      (dispose-maybe query-vector sub)
+      (assoc context id val))
+    context))
 
 (defn inject-sub
-  [query-vector]
-  {:pre [(vector? query-vector)]}
-  (re-frame/inject-cofx :sub query-vector))
+  "Inject the `:sub` cofx.
 
-(defn subscribe-once
-  [query-vector]
-  (dispose-maybe (re-frame/subscribe query-vector)))
+  If `query-vector-or-event->query-vector-fn` is a query vector, subscribe and
+  dereference that subscription before assoc'ing its value in the context map
+  under the id of the subscription and disposing of it.
+
+  If `query-vector-or-event->query-vector-fn` is a fn it should take a single
+  argument which is the event parameters vector for that handler (similar to the
+  2-arity of `re-frame.core/reg-sub`). Its return value should be a query-vector
+  that can be passed to `re-frame.core/subscribe` or nil. From there on the
+  behavior is similar to when passing a query-vector.
+
+  NOTE that if there are no component subscribed to that subscriptions the cofx
+  will dispose of in order to prevent leaks. However there is a performance
+  penalty to doing this since we pay for a re-frame subscription cache miss
+  every time we inject that subscription. In such cases the cofx will log a
+  warning which can be ignored by setting `:ignore-warnings` in the query
+  vector's meta. A rule of thumb for what to do here would be that if an
+  injected sub is disposed of very often, we should either rework the
+  subscription graph so that it ends up used by a component and thus cached, or
+  we should extract the db lookup logic into a function that can return the
+  desired value straight from the db inside the handler. It seems safe to decide
+  to ignore the warning when the disposal doesn't happen too often and it is
+  just more convenient to reuse the subscription's logic.
+
+  Examples:
+
+  ;; Query vector:
+
+  (re-frame/reg-sub ::injected-static ...)
+  (re-frame/reg-event-fx
+   ::handler
+   [(inject-sub ^:ignore-warnings [::injected-static]]]
+   (fn [{:as cofx {::keys [injected-static]} params]
+     ...)
+
+  ;; Fn of event to query vector:
+
+  (re-frame/reg-sub ::injected-dynamic (fn [_ [_ arg1 arg2]] ...))
+  (re-frame/reg-event-fx
+   ::handler
+   [(inject-sub
+      (fn [[_ event-arg1 event-arg2]]
+        ...
+        ^:ignore-warnings [::injected-dynamic arg1 arg2]))]
+   (fn [{:as cofx {::keys [injected-dynamic]} [_ event-arg1 event-arg-2]]
+     ...)
+  "
+  [query-vector-or-event->query-vector-fn]
+  {:pre [(or (vector? query-vector-or-event->query-vector-fn)
+             (ifn? query-vector-or-event->query-vector-fn))]}
+  (re-frame/inject-cofx
+   :sub
+   query-vector-or-event->query-vector-fn))
+
+(re-frame/reg-cofx :sub inject-sub-cofx)
 
 ;;
 ;; * Dispatch event on every sub value
@@ -153,7 +224,7 @@
        {:track
         {:action       :register
          :id           42
-         :subscription [::sub  "blah"]
+         :subscription [::query-vector  "blah"]
          :val->event   (fn [val] [::trigger val])}}))
 
     (re-frame/reg-event-fx
@@ -164,15 +235,15 @@
          :id     42}}))
     ;; Define a sub and the event we want to trigger
     (defonce foo (interop/ratom 0))
-    (re-frame/reg-sub-raw ::sub (fn [_ _] (interop/make-reaction #(deref foo))))
+    (re-frame/reg-sub-raw ::query-vector (fn [_ _] (interop/make-reaction #(deref foo))))
     (re-frame/reg-event-db ::trigger (fn [db val] (println "Trigger" val) db))
     ;; Start the track
     (re-frame/dispatch [::start-trigger-track])
-    ;; Update the ::sub, will cause ::trigger to run
+    ;; Update the ::query-vector, will cause ::trigger to run
     (swap! foo inc)
     (swap! foo inc)
     (swap! foo inc)
-    ;; Stop the track, updates to ::sub aren't tracked anymore
+    ;; Stop the track, updates to ::query-vector aren't tracked anymore
     (re-frame/dispatch [::stop-trigger-track])
     (swap! foo inc)))
 
