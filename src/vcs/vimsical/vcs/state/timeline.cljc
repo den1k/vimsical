@@ -330,11 +330,28 @@
 
 (def duration ::duration)
 
-(defn- nearest-chunk
-  [{::keys [chunks-by-absolute-start-time]} test expect-abs-time]
-  (avl/nearest chunks-by-absolute-start-time test expect-abs-time))
+(defn- nearest-chunk-entry
+  "Return a tuple of [absolute-start-time chunk] by looking up the nearest chunk
+  in the direction of `test` starting from `expect-abs-time`, `test` can be one
+  of `<`, `>`, `<=`, `>=`.
 
-(defn- nearest-delta
+  The `<` test is a special case where if `expect-abs-time` falls before the
+  first delta in the matching chunk, we'll return the next chunk to the
+  left. This ensures that we'll be able to find the corresponding delta at that
+  time."
+  [{::keys [chunks-by-absolute-start-time]} test expect-abs-time]
+  (letfn [(before-first-delta?
+            [expect-abs-time [abs-time chunk :as chunk-entry]]
+            (let [[rel-time _] (chunk/first-entry chunk)]
+              (< expect-abs-time (+ abs-time rel-time))))]
+    (let [[abs-time _ :as nearest-chunk-entry]
+          (avl/nearest chunks-by-absolute-start-time test expect-abs-time)]
+      (if (and (= < test)
+               (before-first-delta? expect-abs-time nearest-chunk-entry))
+        (avl/nearest chunks-by-absolute-start-time test abs-time)
+        nearest-chunk-entry))))
+
+(defn- nearest-delta-entry
   [[chunk-abs-time chunk] test expect-abs-time]
   (let [expect-rel-time (- (long expect-abs-time) (long chunk-abs-time))]
     (when-some [[actual-rel-time delta] (chunk/entry-at-relative-time chunk test expect-rel-time)]
@@ -345,8 +362,8 @@
 (defn entry-at-absolute-time
   [timeline expect-abs-time]
   (some-> timeline
-          (nearest-chunk < expect-abs-time)
-          (nearest-delta <= expect-abs-time)))
+          (nearest-chunk-entry < expect-abs-time)
+          (nearest-delta-entry <= expect-abs-time)))
 
 (s/fdef first-entry :args (s/cat :timeline ::timeline) :ret ::entry)
 
@@ -360,8 +377,8 @@
 (defn next-entry
   [timeline [t _]]
   ;; The next delta might be in the next chunk, but we look to the left first
-  (or (some-> timeline (nearest-chunk < t)  (nearest-delta > t))
-      (some-> timeline (nearest-chunk >= t) (nearest-delta > t))))
+  (or (some-> timeline (nearest-chunk-entry < t)  (nearest-delta-entry > t))
+      (some-> timeline (nearest-chunk-entry >= t) (nearest-delta-entry > t))))
 
 (defn delta-at-absolute-time
   [timeline expect-abs-time]
