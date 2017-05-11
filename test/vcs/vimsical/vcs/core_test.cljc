@@ -1,6 +1,7 @@
 (ns vimsical.vcs.core-test
   #?@(:clj
       [(:require
+        [clojure.test.check :as tc]
         [clojure.test :as t :refer [are deftest is testing]]
         [orchestra.spec.test :as st]
         [vimsical.common.test :refer [uuid uuid-fixture uuid-gen]]
