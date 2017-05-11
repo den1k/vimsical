@@ -49,36 +49,32 @@
 ;; ** Padding
 ;;
 
-;; NOTE
-;; - the first padding will always be `event-max-pad`
-;; - any subsequent padding will be capped at `event-max-pad`
-;; - when pad-fn is invoked more than once it will always return 1
-;; - we currently don't handle zero paddings well due to how deltas are
-;;   denormalized in the timeline and the chunks, they cause the latest delta
-;;   with a zero padding value to replace the previous one
-
 (def event-max-pad 500)
-
-(defn pad [elapsed]
-  ;; The first time `::add-edit-event` is dispatched `elapsed` will be -1 in
-  ;; which case we want to return `event-max-pad` so the delta doesn't end up
-  ;; "stuck" to the left of the timeline.
-  ;;
-  ;; In all other cases we want to cap the `elapsed` time to `event-max-pad`
-  ;; which will most definitely yield the max value for the first delta in a new
-  ;; vims when switching between vims.
-  ;;
-  ;; NOTE this will need to change with audio since we'll need to stop capping
-  ;; the elapsed time when an audio clip is recording.
-  (if (== -1 elapsed)
-    event-max-pad
-    (min elapsed event-max-pad)))
 
 (defn new-pad-fn
   [elapsed]
   (let [pad-counter (atom -1)]
     (fn [edit-event]
-      (pad (if (zero? (swap! pad-counter inc)) elapsed 1)))))
+      (cond
+        ;; Always return 0 after the first invocation, ensures that spliced
+        ;; deltas pad at 0 after the first one. Due to an implementation detail
+        ;; in the vcs -- the AVL maps assoc a relative time to a single delta
+        ;; inside chunks -- the timeline will end up with only the last spliced
+        ;; delta, at a time equal to that of the first one, which is in fact the
+        ;; behavior we want.
+        (pos? (swap! pad-counter inc)) 0
+
+        ;; If it's the very first time the event handler is called, we want to
+        ;; return `event-max-pad` so the first delta doesn't end up "stuck" to
+        ;; the left of the timeline
+        (== -1 elapsed) event-max-pad
+
+        ;; In all other cases we want to cap the elapsed time to
+        ;; `event-max-pad`.
+        ;;
+        ;; NOTE that this will need to change with audio since we'll want the
+        ;; actual elapsed time when an audio clip is recording.
+        :else (min elapsed event-max-pad)))))
 
 ;;
 ;; ** Editor
