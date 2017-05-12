@@ -9,7 +9,8 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.compiler :as compiler]
    [vimsical.vcs.file :as file]
-   [vimsical.vcs.lib :as lib]))
+   [vimsical.vcs.lib :as lib])
+  (:refer-clojure :exclude [uuid]))
 
 ;;
 ;; * State
@@ -56,10 +57,10 @@
 (defn new-vims
   ([author-ref title] (new-vims author-ref title {}))
   ([author-ref title {:keys [js-libs compilers]}]
-   (let [files    [(new-file (uuid :file-htmlr) :text :html)
-                   (new-file (uuid :file-css) :text :css)
-                   (new-file (uuid :file-js) :text :javascript "5" compilers)]
-         branches [(new-branch (uuid :master) "master" files (:javascript js-libs))]]
+   (let [files    [(new-file (uuid title :file-html) :text :html)
+                   (new-file (uuid title :file-css) :text :css)
+                   (new-file (uuid title :file-js) :text :javascript "5" compilers)]
+         branches [(new-branch (uuid title :master) "master" files (:javascript js-libs))]]
      {:db/id         (uuid title)
       :vims/author   author-ref
       :vims/title    title
@@ -71,7 +72,7 @@
                                     :user/vimsae
                                     [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
                                      (new-vims [:db/id (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs :compilers to-sub-type->compiler})]}
-                 :app/vims         [:db/id (uuid "CatPhotoApp")]
+                 :app/vims         [:db/id (uuid "NLP Chatbot running on React Fiber")]
                  :app/quick-search {:db/id                            (uuid :quick-search)
                                     :quick-search/show?               false
                                     :quick-search/result-idx          0
