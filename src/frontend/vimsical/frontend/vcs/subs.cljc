@@ -2,13 +2,13 @@
   (:require
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
+   [vimsical.common.util.core :as util]
+   [vimsical.frontend.util.lint.core :as lint]
+   [vimsical.frontend.util.preprocess.core :as preprocess]
    [vimsical.frontend.vcs.db :as db]
    [vimsical.frontend.vcs.queries :as queries]
-   [vimsical.vcs.core :as vcs]
-   [vimsical.vcs.file :as file]
-   [vimsical.frontend.util.preprocess.core :as preprocess]
-   [vimsical.frontend.util.lint.core :as lint]
-   [vimsical.vcs.state.timeline :as timeline]))
+   [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.core :as vcs]))
 
 ;;
 ;; * VCS
@@ -26,8 +26,25 @@
          (get-in [:app/vims :vims/vcs])))))
 
 ;;
+;; * Branch
+;;
+
+(re-frame/reg-sub ::branches  :<- [::vcs] (fn [{::vcs/keys [branches]}] branches))
+(re-frame/reg-sub ::branch-id :<- [::vcs] (fn [{::db/keys [branch-id]}] branch-id))
+
+(re-frame/reg-sub
+ ::branch
+ :<- [::branch-id]
+ :<- [::branches]
+ (fn [[branch-id branches] _]
+   (util/ffilter
+    (partial util/=by identity :db/id branch-id)
+    branches)))
+
+;;
 ;; * Heads (timeline entries)
 ;;
+
 (re-frame/reg-sub ::skimhead-entry :<- [::vcs] (fn [vcs _] (some-> vcs db/get-skimhead-entry)))
 (re-frame/reg-sub ::playhead-entry :<- [::vcs] (fn [vcs _] (some-> vcs db/get-playhead-entry)))
 
@@ -41,6 +58,8 @@
 ;;
 ;; * Files
 ;;
+
+(re-frame/reg-sub ::files :<- [::branch] (fn [{::branch/keys [files]}] files))
 
 (re-frame/reg-sub
  ::file
