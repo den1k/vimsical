@@ -2,20 +2,20 @@
   (:require
    [re-com.core :as re-com]
    [re-frame.core :as re-frame]
-   [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
-   [vimsical.frontend.views.splits :as splits]
+   [reagent.core :as reagent]
+   [vimsical.common.util.core :as util]
+   [vimsical.frontend.code-editor.views :refer [code-editor]]
+   [vimsical.frontend.live-preview.views :refer [live-preview]]
    [vimsical.frontend.timeline.subs :as timeline.subs]
    [vimsical.frontend.timeline.views :refer [timeline]]
-   [vimsical.frontend.live-preview.views :refer [live-preview]]
-   [vimsical.frontend.code-editor.views :refer [code-editor]]
-   [vimsical.frontend.views.shapes :as shapes]
-   [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.file :as file]
-   [vimsical.frontend.vcr.subs :as subs]
+   [vimsical.frontend.util.dom :as util.dom :refer-macros [e>]]
+   [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
    [vimsical.frontend.vcr.handlers :as handlers]
-   [reagent.core :as reagent]
-   [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]
-   [vimsical.common.util.core :as util]))
+   [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.frontend.views.shapes :as shapes]
+   [vimsical.frontend.views.splits :as splits]
+   [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.file :as file]))
 
 (defn visible-files [files]
   (remove ::file/hidden? files))
@@ -125,11 +125,7 @@
 
 (defn vcr []
   (let [{:as           branch
-         ::branch/keys [files libs]} @(re-frame/subscribe
-                                       [::subs/branch
-                                        [{::branch/files ['*
-                                                          {::file/compiler ['*]}]}
-                                         {::branch/libs ['*]}]])
+         ::branch/keys [files libs]} (<sub [::vcs.subs/branch])
         editor-comps           (->> files (map editor-components) editor-components-by-file-type)
         visible-files          (visible-files files)
         visi-components        (views-for-files visible-files editor-comps)

@@ -11,7 +11,6 @@
         [vimsical.frontend.code-editor.interop :as interop]
         [vimsical.frontend.util.re-frame :as util.re-frame]
         [vimsical.frontend.timeline.subs :as timeline.subs]
-        [vimsical.frontend.vcr.subs :as vcr.subs]
         [vimsical.frontend.vcs.subs :as vcs.subs]
         [vimsical.vcs.core :as vcs])]
       :cljs
@@ -26,7 +25,6 @@
         [vimsical.frontend.code-editor.interop :as interop]
         [vimsical.frontend.util.re-frame :as util.re-frame]
         [vimsical.frontend.timeline.subs :as timeline.subs]
-        [vimsical.frontend.vcr.subs :as vcr.subs]
         [vimsical.frontend.vcs.subs :as vcs.subs]
         [vimsical.vcs.core :as vcs])]))
 
@@ -252,3 +250,23 @@
    {:track
     [{:id [::editor-str file]   :action :dispose}
      {:id [::editor-pos file] :action :dispose}]}))
+
+(re-frame/reg-event-fx
+ ::reset-editor-to-playhead
+ [(util.re-frame/inject-sub
+   (fn [[_ file]] ^:ignore-warnings [::subs/playhead-string file]))
+  (util.re-frame/inject-sub
+   (fn [[_ file]] ^:ignore-warnings [::subs/playhead-position file]))]
+ (fn [{::subs/keys [playhead-string playhead-position]} [_ file]]
+   {:dispatch-n
+    [[::clear-disposables file]
+     [::set-string nil file playhead-string]
+     [::set-position file playhead-position]
+     [::bind-listeners file]]}))
+
+(re-frame/reg-event-fx
+ ::reset-all-editors-to-playhead
+ [(util.re-frame/inject-sub ^:ignore-warnings [::vcs.subs/files])]
+ (fn [{::vcs.subs/keys [files]} _]
+   {:dispatch-n
+    (for [file files] [::reset-editor-to-playhead file])}))

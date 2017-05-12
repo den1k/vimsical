@@ -1,22 +1,56 @@
 (ns vimsical.frontend.code-editor.subs
+  "Editor subscriptions
+
+  The editor tracks the ::string and ::cursor subs to update its internal
+  state. However we do not want that to happen unless we're interacting with the
+  timeline. We have a contract with downstream handlers that nil values for
+  these subs should be interpreted as a signal NOT to update.
+
+  These subscriptions do the right thing by distinguishing between a nil value
+  for ::timeline-entry, meaning the current head is at the beginning of the
+  timeline, and a ::sentinel value meaning the ::string and ::cursor should
+  return nil so that the editors don't update."
   (:require
    [re-frame.core :as re-frame]
-   [vimsical.vcs.core :as vcs]
-   [vimsical.frontend.code-editor.ui-db :as code-editor.ui-db]
    [vimsical.frontend.code-editor.interop :as interop]
-   [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.frontend.code-editor.ui-db :as code-editor.ui-db]
    [vimsical.frontend.timeline.subs :as timeline.subs]
-   [vimsical.frontend.ui-db :as ui-db]))
+   [vimsical.frontend.ui-db :as ui-db]
+   [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.vcs.core :as vcs]))
+
+;;
+;; * Handlers
+;;
+
+(defn string-handler
+  [[vcs timeline-entry] [_ {file-id :db/id}]]
+  {:pre [file-id]}
+  (when-not (= ::sentinel timeline-entry)
+    (let [[_ {delta-id :id}] timeline-entry]
+      (or (vcs/file-string vcs file-id delta-id) ""))))
+
+(defn cursor-handler
+  [[vcs timeline-entry] [_ {file-id :db/id}]]
+  {:pre [file-id]}
+  (when-not (= ::sentinel timeline-entry)
+    (let [[_ {delta-id :id}] timeline-entry]
+      (or (vcs/file-cursor vcs file-id delta-id) 0))))
+
+(defn position-handler
+  [[cursor string] [_ {file-id :db/id}]]
+  (when (and cursor string)
+    (interop/idx->pos cursor string)))
+
+;;
+;; * Subscriptions
+;;
 
 (re-frame/reg-sub
  ::active-file
  :<- [::ui-db/ui-db]
  (fn [ui-db _]
    (code-editor.ui-db/get-active-file ui-db)))
-
-;; NOTE this is different from vcs.subs/timeline-entry since the code-editors
-;; are tracking this sub to set their state and but we only want that to
-;; happened while the timeline is either skimming or playing.
 
 (re-frame/reg-sub
  ::timeline-entry
@@ -28,32 +62,23 @@
    (cond
      skimming? skimhead-entry
      playing?  playhead-entry
-     :else     nil)))
+     :else     ::sentinel)))
 
-(re-frame/reg-sub
- ::string
- :<- [::vcs.subs/vcs]
- :<- [::timeline-entry]
- (fn string-sub
-   [[vcs [_ {delta-id :id}]] [_ {file-id :db/id}]]
-   {:pre [file-id]}
-   (or (vcs/file-string vcs file-id delta-id) "")))
-
-(re-frame/reg-sub
- ::cursor
- :<- [::vcs.subs/vcs]
- :<- [::timeline-entry]
- (fn cursor-sub
-   [[vcs [_ {delta-id :id}]] [_ {file-id :db/id}]]
-   {:pre [file-id]}
-   (or (vcs/file-cursor vcs file-id delta-id) 0)))
+(re-frame/reg-sub ::string          :<- [::vcs.subs/vcs] :<- [::timeline-entry] string-handler)
+(re-frame/reg-sub ::cursor          :<- [::vcs.subs/vcs] :<- [::timeline-entry] cursor-handler)
+(re-frame/reg-sub ::playhead-string :<- [::vcs.subs/vcs] :<- [::vcs.subs/playhead-entry] string-handler)
+(re-frame/reg-sub ::playhead-cursor :<- [::vcs.subs/vcs] :<- [::vcs.subs/playhead-entry] cursor-handler)
 
 (re-frame/reg-sub
  ::position
  (fn [[_ file]]
    [(re-frame/subscribe [::cursor file])
     (re-frame/subscribe [::string file])])
- (fn position-sub
-   [[cursor string] [_ {file-id :db/id}]]
-   (when (and cursor string)
-     (interop/idx->pos cursor string))))
+ position-handler)
+
+(re-frame/reg-sub
+ ::playhead-position
+ (fn [[_ file]]
+   [(re-frame/subscribe [::playhead-cursor file])
+    (re-frame/subscribe [::playhead-string file])])
+ position-handler)

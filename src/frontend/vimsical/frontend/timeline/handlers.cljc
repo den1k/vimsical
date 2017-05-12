@@ -2,6 +2,7 @@
   (:require
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
+   [vimsical.frontend.code-editor.handlers :as code-editor.handlers]
    [vimsical.frontend.timeline.subs :as subs]
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
    [vimsical.frontend.util.re-frame :as util.re-frame]
@@ -49,12 +50,6 @@
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ playing?]]
    {:ui-db (timeline.ui-db/set-playing ui-db playing?)}))
-
-(re-frame/reg-event-fx
- ::set-skimming
- [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ skimming?]]
-   {:ui-db (timeline.ui-db/set-skimming ui-db skimming?)}))
 
 ;;
 ;; ** Skimhead
@@ -115,13 +110,14 @@
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub [::vcs.subs/vcs])]
  (fn [{:keys [ui-db db] ::vcs.subs/keys [vcs]} _]
-   (let [playhead-entry (vcs.db/get-playhead-entry vcs)
-         vcs'           (vcs.db/set-skimhead-entry vcs playhead-entry)
-         db'            (mg/add db vcs')
-         ui-db'         (timeline.ui-db/set-skimhead ui-db nil)]
-     {:db             db'
-      :ui-db          ui-db'
-      :dispatch-later [{:ms 16 :dispatch [::set-skimming false]}]})))
+   (let [vcs'   (vcs.db/set-skimhead-entry vcs nil)
+         db'    (mg/add db vcs')
+         ui-db' (-> ui-db
+                    (timeline.ui-db/set-skimhead nil)
+                    (timeline.ui-db/set-skimming false))]
+     {:db       db'
+      :ui-db    ui-db'
+      :dispatch [::code-editor.handlers/reset-all-editors-to-playhead]})))
 
 ;;
 ;; ** Playhead
