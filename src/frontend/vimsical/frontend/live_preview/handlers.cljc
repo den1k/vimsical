@@ -13,6 +13,15 @@
    #?@(:cljs [[reagent.dom.server]
               [vimsical.frontend.util.dom :as util.dom]])))
 
+(defn iframe-ready-state [iframe]
+  (.. iframe -contentDocument -readyState))
+
+(defn iframe-loading? [iframe]
+  (= "loading" (iframe-ready-state iframe)))
+
+(defn iframe-ready? [iframe]
+  (= "complete" (iframe-ready-state iframe)))
+
 (defn- lib-node [{:keys [db/id] ::lib/keys [src sub-type] :as lib}]
   (let [tag (case sub-type :html :body :css :style :javascript :script)]
     [tag {:id id :src src}]))
@@ -98,18 +107,17 @@
 (defmethod update-node! :html
   [iframe file]
   #?(:cljs
-     (when iframe
+     (when (iframe-ready? iframe)
        (let [body (.. iframe -contentDocument -body)
              html (<sub [::vcs.subs/preprocessed-file-string file])]
          (util.dom/set-inner-html! body html)))))
 
 (defmethod update-node! :css
   [iframe {::file/keys [sub-type] :keys [db/id] :as file}]
-  (when iframe
+  (when (iframe-ready? iframe)
     (let [attrs  {:id id}
           string (<sub [::vcs.subs/preprocessed-file-string file])]
-      (when (some? string)
-        (swap-head-node! iframe sub-type attrs string)))))
+      (swap-head-node! iframe sub-type attrs string))))
 
 #_(:cljs (js/console.debug
           (let [js-markup (reagent.dom.server/render-to-static-markup
@@ -171,7 +179,7 @@
        ::vcs.subs/keys [file-lint-or-preprocessing-errors]
        :keys           [db ui-db]}
       [_ branch {::file/keys [sub-type] :as file}]]
-   (when-some [iframe (ui-db/get-iframe ui-db)]
+   (let [iframe (ui-db/get-iframe ui-db)]
      (if (= :javascript sub-type)
        (when (nil? file-lint-or-preprocessing-errors)
          {:dispatch [::update-iframe-src branch]})
@@ -179,13 +187,16 @@
 
 (re-frame/reg-event-fx
  ::update-live-preview
- [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [db ui-db] :as cofx}
+ [(re-frame/inject-cofx :ui-db)
+  (util.reframe/inject-sub
+   (fn [[_ _ file]] [::vcs.subs/file-lint-or-preprocessing-errors file]))]
+ (fn [{:keys           [db ui-db]
+       ::vcs.subs/keys [file-lint-or-preprocessing-errors]
+       :as             cofx}
       [_ branch {::file/keys [sub-type] :as file}]]
    (let [iframe (preview-iframe ui-db)]
      (if (= :javascript sub-type)
-       ;; FIXME, nasty <sub in handler
-       (when (nil? (<sub [::vcs.subs/file-lint-or-preprocessing-errors file]))
+       (when (nil? file-lint-or-preprocessing-errors)
          {:dispatch [::update-iframe-src branch]})
        {:dispatch [::update-preview-node branch file]}))))
 
@@ -194,21 +205,21 @@
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [db ui-db] :as cofx}
       [_ branch {::file/keys [sub-type] :as file}]]
-   (when-some [iframe (ui-db/get-iframe ui-db)]
+   (let [iframe (ui-db/get-iframe ui-db)]
      (do (update-node! iframe file) nil))))
 
 (re-frame/reg-event-fx
  ::move-script-nodes
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [db ui-db]} [_ {::branch/keys [files]}]]
-   (when-some [iframe (ui-db/get-iframe ui-db)]
-     (let [doc          (.-contentDocument iframe)
-           head         (.-head doc)
-           js-files     (filter (fn [file] (= :javascript (::file/sub-type file))) files)
-           script-nodes (mapv (fn [{:keys [db/id]}]
-                                (.getElementById doc id)) js-files)]
-       (doseq [node script-nodes]
-         (.appendChild head node))))))
+   (let [iframe       (ui-db/get-iframe ui-db)
+         doc          (.-contentDocument iframe)
+         head         (.-head doc)
+         js-files     (filter (fn [file] (= :javascript (::file/sub-type file))) files)
+         script-nodes (mapv (fn [{:keys [db/id]}]
+                              (.getElementById doc id)) js-files)]
+     (doseq [node script-nodes]
+       (.appendChild head node)))))
 
 (re-frame/reg-event-fx
  ::track-start
