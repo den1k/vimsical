@@ -1,0 +1,35 @@
+version: '2'
+
+services:
+  # Override datomic config volume
+  #
+  datomic:
+    volumes:
+      - "./docker/images/datomic-transactor/config/dev/:/var/datomic/config/"
+    ports:
+      - "4334:4334"
+      - "4335:4335"
+      - "4336:4336"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  cassandra:
+    ports:
+      - "9042:9042"
+
+  # Dev tools
+  #
+  console:
+    build:
+      context: .
+      dockerfile: docker/images/datomic-console/Dockerfile
+      args:
+        DATOMIC_LOGIN: "$DATOMIC_LOGIN"
+        DATOMIC_PASSWORD: "$DATOMIC_PASSWORD"
+    links:
+      - datomic
+    command: ["dev", "datomic:dev://datomic:4334"]
+    ports:
+      - "9000:9000"

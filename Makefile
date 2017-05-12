@@ -1,7 +1,7 @@
 .PHONY: clean test test-clj test-cljs test-cljs-advanced lein-deps deps
 
 #
-# TODO Get deps
+# TODO Deps
 #
 
 checkouts/mapgraph/:
@@ -12,14 +12,14 @@ lein-deps:
 
 deps: checkouts/mapgraph/
 
-
+#
 # Lein
 #
 
 clean:
 	lein clean
 
-
+#
 # Test
 #
 
@@ -34,7 +34,7 @@ test-cljs: deps clean
 test-cljs-advanced: deps clean
 	lein with-profile +frontend-test,-css doo node test-advanced once
 
-
+#
 # Build
 #
 
@@ -46,6 +46,7 @@ build-clj: deps clean
 build-cljs: deps clean
 	lein with-profile frontend cljsbuild once prod
 
+#
 # Styles
 #
 
@@ -55,3 +56,21 @@ dev-styles: deps
 
 dev-styles-player: deps
 	lein with-profile player-dev garden auto
+
+#
+# Dev infra
+#
+
+infra/.env:
+	exit 1 "Copy ./infra/env.template to ./infra/.env and add secrets"
+
+infra: infra/.env
+	cd infra && \
+	docker-compose \
+	-f docker-compose.yml \
+	-f docker-compose.dev.yml up -d \
+	&& docker-compose logs -f
+
+infra-stop:
+	cd infra \
+	&& docker-compose down -v --remove-orphans

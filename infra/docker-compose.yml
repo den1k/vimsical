@@ -1,0 +1,37 @@
+version: '2'
+
+volumes:
+  cassandra_data:
+    driver: local
+  datomic_data:
+    driver: local
+  datomic_log:
+    driver: local
+  redis_data:
+    driver: local
+
+services:
+
+  cassandra:
+    image: cassandra:3.7
+    volumes:
+      - "cassandra_data:/var/lib/cassandra"
+
+  datomic:
+    build:
+      context: .
+      dockerfile: docker/images/datomic-transactor/Dockerfile
+      args:
+        DATOMIC_LOGIN: "$DATOMIC_LOGIN"
+        DATOMIC_PASSWORD: "$DATOMIC_PASSWORD"
+    environment:
+      DB_NAME: "vimsical"
+      DATOMIC_LICENSE_KEY: "$DATOMIC_LICENSE_KEY"
+    volumes:
+      - "datomic_data:/var/datomic/data"
+      - "datomic_log:/var/datomic/log"
+
+  redis:
+    image: redis:3.2.4-alpine
+    volumes:
+      - "redis_data:/data"
