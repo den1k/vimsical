@@ -9,7 +9,13 @@
   ['* {::file/compiler ['*]}])
 
 (def branch
-  ['* {::branch/files file} {::branch/libs ['*]}])
+  ['*
+   {::branch/files file}
+   {::branch/libs ['*]}
+   ;; XXX need recursive queries implemented in mapgraph
+   {::branch/parent ['*
+                     {::branch/files file}
+                     {::branch/libs ['*]}]}])
 
 (def vims
   [:db/uid {::vims/branches branch}])

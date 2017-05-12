@@ -86,7 +86,7 @@
   :db/valueType   :db.type/long
   :db/cardinality :db.cardinality/one}
  {:db/id          #db/id [:db.part/db]
-  :db/ident       :vimsical.vcs.branch/entry-delta-uid
+  :db/ident       :vimsical.vcs.branch/branch-off-delta-uid
   :db/valueType   :db.type/long
   :db/cardinality :db.cardinality/one}
  {:db/id          #db/id [:db.part/db]

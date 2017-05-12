@@ -2,17 +2,16 @@
   (:require
    [vimsical.vims :as vims]
    [com.stuartsierra.mapgraph :as mg]
-   ;; [vimsical.frontend.db :as db]
    [re-frame.core :as re-frame]
    [vimsical.common.uuid :refer [uuid]]
-   [vimsical.frontend.util.re-frame :as util.re-frame]
+   [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
    [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.frontend.util.re-frame :as util.re-frame]
+   [vimsical.frontend.vcs.db :as vcs.db]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.frontend.vcs.subs :as subs]
-   [vimsical.frontend.vcs.db :as vcs.db]
-   [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
-   [vimsical.vcs.core :as vcs]
    [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.core :as vcs]
    [vimsical.vcs.editor :as editor]))
 
 ;;
@@ -102,14 +101,31 @@
 (defn add-edit-event
   "Update the vcs with the edit event and move the playhead-entry to the newly created timeline entry"
   [{:as           vcs
-    ::vcs.db/keys [branch-uid delta-uid playhead-entry]}
-   effects
+    ::vcs.db/keys [branch-uid playhead-entry]}
+   {::editor/keys [uuid-seq uuid-fn timestamp-fn] :as effects}
    file-uid
    edit-event]
-  (let [[vcs' delta-uid'] (vcs/add-edit-event vcs effects file-uid branch-uid delta-uid edit-event)
-        playhead-entry'   (if playhead-entry (vcs/timeline-next-entry vcs' playhead-entry) (vcs/timeline-first-entry vcs'))
-        state'            {::vcs.db/delta-uid delta-uid' ::vcs.db/playhead-entry playhead-entry'}]
-    (merge vcs' state')))
+  (let [[_ {current-delta-uid :uid}] playhead-entry]
+    (if (vcs/branching? vcs branch-uid playhead-entry)
+      ;; Use editor effects to create a branch id that we can reference in the deltas
+      (let [[vcs'
+             _
+             delta-uid'
+             {branch-uid' :db/uid :as branch}] (vcs/add-edit-event-branching vcs effects file-uid branch-uid current-delta-uid edit-event)
+            playhead-entry'                    (vcs/timeline-next-entry vcs' playhead-entry)
+            ;; Create a new child branch that uses our new id
+            ;; Swap the branch id on the vcs
+            state'                             {::vcs.db/branch-uid     branch-uid'
+                                                ::vcs.db/delta-uid      delta-uid'
+                                                ::vcs.db/playhead-entry playhead-entry'}]
+        [(merge vcs' state') branch])
+      (let [[vcs'
+             _
+             delta-uid']    (vcs/add-edit-event vcs effects file-uid branch-uid current-delta-uid edit-event)
+            playhead-entry' (if playhead-entry (vcs/timeline-next-entry vcs' playhead-entry) (vcs/timeline-first-entry vcs'))
+            state'          {::vcs.db/delta-uid      delta-uid'
+                             ::vcs.db/playhead-entry playhead-entry'}]
+        [(merge vcs' state')]))))
 
 (re-frame/reg-event-fx
  ::add-edit-event
@@ -122,6 +138,7 @@
        ::editor/keys [effects]}
       [_ {file-uid :db/uid} edit-event]]
    ;; Get the time from the update timeline entry and update the timeline ui.
-   (let [{[t] ::vcs.db/playhead-entry :as vcs'} (add-edit-event vcs effects file-uid edit-event)]
+   (let [[{[t] ::vcs.db/playhead-entry :as vcs'} branch-maybe] (add-edit-event vcs effects file-uid edit-event)]
+     ;; TODO Add new branch to vims
      {:ui-db (timeline.ui-db/set-playhead ui-db t)
       :db    (mg/add db vcs')})))

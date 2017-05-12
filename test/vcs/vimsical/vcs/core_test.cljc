@@ -32,7 +32,7 @@
 (defn- add-edit-events
   [vcs effects file-uid branch-uid delta-uid edit-events]
   (reduce
-   (fn [[vcs delta-uid] edit-event]
+   (fn [[vcs _ delta-uid] edit-event]
      (sut/add-edit-event vcs effects file-uid branch-uid delta-uid edit-event))
    [vcs nil delta-uid] edit-events))
 

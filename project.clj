@@ -12,8 +12,7 @@
 
   :profiles
   {:dev
-   [:test
-    {:dependencies
+   [{:dependencies
      ;; Help CIDER find the Java code in Clojure
      [[org.clojure/clojure "1.9.0-alpha15" :classifier "sources"]]
      :plugins

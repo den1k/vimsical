@@ -17,7 +17,7 @@
 (s/def ::relative-time nat-int?)
 (s/def ::deltas-by-relative-time
   (s/every-kv ::relative-time ::delta/delta :kind sorted? :into (avl/sorted-map)))
-(s/def ::duration pos-int?)
+(s/def ::duration nat-int?)
 (s/def ::delta-start-uid ::delta/uid)
 (s/def ::delta-end-uid ::delta/uid)
 (s/def ::delta-branch-off-uid ::delta/prev-uid)
