@@ -139,8 +139,7 @@
       [splits/n-h-split
        :class "live-preview-and-editors"
        :panels [[live-preview
-                 {:ui-reg-key :vcr/live-preview
-                  :branch     branch}]
+                 {:branch branch}]
                 [splits/n-v-split
                  :height "100%"
                  :splitter-size "31px"

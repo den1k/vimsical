@@ -17,3 +17,35 @@
           ;:jsx ; "React", "Preserve", "None" ; default: preserve
           ;:jsxFactory ; default "React.createElement"
           :allowNonTsExtensions true})))
+
+
+
+#_(let [model-uri (-> (js/monaco.editor.getModels) last .-uri)]
+    (-> (js/monaco.languages.typescript.getJavaScriptWorker)
+        (.then
+         (fn [w]
+           (-> (w model-uri)
+               (.then
+                (fn [client]
+                  (-> (.getEmitOutput client (str model-uri))
+                      (.then
+                       (fn [r]
+                         (-> r
+                             .-outputFiles
+                             first
+                             .-text)))))))))))
+
+;(let [model-uri (-> (js/monaco.editor.getModels) second .-uri)]
+;    (-> (js/monaco.languages.css)
+;        (.then
+;         (fn [w]
+;           (-> (w model-uri)
+;               (.then
+;                (fn [client]
+;                  (-> (.getEmitOutput client (str model-uri))
+;                      (.then
+;                       (fn [r]
+;                         (-> r
+;                             .-outputFiles
+;                             first
+;                             .-text)))))))))))

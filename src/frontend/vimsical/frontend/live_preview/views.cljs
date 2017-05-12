@@ -36,27 +36,25 @@
                    "allow-scripts"))
 
 (defn- iframe-ref-handler
-  [ui-reg-key branch]
+  [branch]
   (fn [node]
     (if node
-      ;; sync to make sure iframe is available before preview-nodes render
       (re-frame/dispatch
-       [::handlers/register-and-init-iframe
-        ui-reg-key node branch])
+       [::handlers/register-and-init-iframe node branch])
       (re-frame/dispatch
-       [::handlers/dispose-iframe ui-reg-key]))))
+       [::handlers/dispose-iframe]))))
 
 (defn- iframe-on-load-handler
-  [ui-reg-key branch]
+  [branch]
   (fn []
-    (re-frame/dispatch [::handlers/move-script-nodes ui-reg-key branch])))
+    (re-frame/dispatch [::handlers/move-script-nodes branch])))
 
 (defn- iframe-attrs
-  [{:keys [ui-reg-key branch static?] :as opts}]
-  (cond-> {:key     ::iframe ; ref only works when key is present
+  [{:keys [branch static?] :as opts}]
+  (cond-> {:key     ::iframe            ; ref only works when key is present
            :sandbox iframe-sandbox-opts
-           :ref     (iframe-ref-handler ui-reg-key branch)}
-    (not static?) (assoc :on-load (iframe-on-load-handler ui-reg-key branch))))
+           :ref     (iframe-ref-handler branch)}
+    (not static?) (assoc :on-load (iframe-on-load-handler branch))))
 
 ;;
 ;; * Components
@@ -65,20 +63,20 @@
 (defn live-preview
   [{:as                     opts
     {::branch/keys [files]} :branch
-    :keys                   [ui-reg-key branch static?]}]
+    :keys                   [branch static?]}]
   (fn [_]
     (reagent/create-class
      {:component-did-mount
       (fn [_]
         (when-not static?
           (doseq [file files]
-            (re-frame/dispatch [::handlers/track-start ui-reg-key branch file]))))
+            (re-frame/dispatch [::handlers/track-start branch file]))))
 
       :component-will-unmount
       (fn [_]
         (when-not static?
           (doseq [file files]
-            (re-frame/dispatch [::handlers/track-stop ui-reg-key branch file]))))
+            (re-frame/dispatch [::handlers/track-stop branch file]))))
       :render
       (fn [_]
         [:div.live-preview
