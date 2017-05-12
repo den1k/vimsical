@@ -114,24 +114,23 @@
   dereference that subscription before assoc'ing its value in the context map
   under the id of the subscription and disposing of it.
 
-  If `query-vector-or-event->query-vector-fn` is a fn it should take a single
+  If `query-vector-or-event->query-vector-fn` is a fn, it should take a single
   argument which is the event parameters vector for that handler (similar to the
   2-arity of `re-frame.core/reg-sub`). Its return value should be a query-vector
-  that can be passed to `re-frame.core/subscribe` or nil. From there on the
-  behavior is similar to when passing a query-vector.
+  or nil. From there on the behavior is similar to when passing a query-vector.
 
-  NOTE that if there are no component subscribed to that subscriptions the cofx
-  will dispose of in order to prevent leaks. However there is a performance
+  NOTE that if there are no components subscribed to that subscription the cofx
+  will dispose of it in order to prevent leaks. However there is a performance
   penalty to doing this since we pay for a re-frame subscription cache miss
-  every time we inject that subscription. In such cases the cofx will log a
-  warning which can be ignored by setting `:ignore-warnings` in the query
-  vector's meta. A rule of thumb for what to do here would be that if an
-  injected sub is disposed of very often, we should either rework the
-  subscription graph so that it ends up used by a component and thus cached, or
-  we should extract the db lookup logic into a function that can return the
-  desired value straight from the db inside the handler. It seems safe to decide
-  to ignore the warning when the disposal doesn't happen too often and it is
-  just more convenient to reuse the subscription's logic.
+  every time we inject it. In such cases the cofx will log a warning which can
+  be ignored by setting `:ignore-warnings` on the query vector's meta. A rule of
+  thumb for what to do here would be that if an injected sub is disposed of very
+  often, we should either rework the subscription graph so that it ends up used
+  by a component and thus cached, or we should extract the db lookup logic into
+  a function that can be used to get the value straight from the db inside the
+  handler. It seems safe to decide to ignore the warning when the disposal
+  doesn't happen too often and it is just more convenient to reuse the
+  subscription's logic.
 
   Examples:
 
