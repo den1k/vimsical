@@ -18,7 +18,8 @@
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.editor :as editor]))
+   [vimsical.vcs.editor :as editor]
+   [vimsical.vcs.edit-event :as edit-event]))
 
 ;;
 ;; * VCS Vims init
@@ -41,16 +42,64 @@
 (re-frame/reg-event-db ::init-vims init-vims)
 
 ;;
-;; * Editor cofxs
+;; * Cofxs
 ;;
 
-(re-frame/reg-cofx
- ::editor/effects
- (fn [context _]
-   (assoc context ::editor/effects
-          {::editor/uuid-fn      (fn [_] (uuid))
-           ::editor/timestamp-fn (fn [_] (util/now))
-           ::editor/pad-fn       (constantly 1000)})))
+;;
+;; ** Padding
+;;
+
+(def event-max-pad 500)
+
+(defn new-pad-fn
+  [elapsed]
+  (let [pad-counter (atom -1)]
+    (fn [edit-event]
+      (cond
+        ;; Always return 0 after the first invocation, ensures that spliced
+        ;; deltas pad at 0 after the first one. Due to an implementation detail
+        ;; in the vcs -- the AVL maps assoc a relative time to a single delta
+        ;; inside chunks -- the timeline will end up with only the last spliced
+        ;; delta, at a time equal to that of the first one, which is in fact the
+        ;; behavior we want.
+        (pos? (swap! pad-counter inc)) 0
+
+        ;; If it's the very first time the event handler is called, we want to
+        ;; return `event-max-pad` so the first delta doesn't end up "stuck" to
+        ;; the left of the timeline
+        (== -1 elapsed) event-max-pad
+
+        ;; In all other cases we want to cap the elapsed time to
+        ;; `event-max-pad`.
+        ;;
+        ;; NOTE that this will need to change with audio since we'll want the
+        ;; actual elapsed time when an audio clip is recording.
+        :else (min elapsed event-max-pad)))))
+
+;;
+;; ** Editor
+;;
+
+(defn editor-cofx
+  [{:keys [uuid-fn timestamp elapsed] :as context} _]
+  {:pre [uuid-fn timestamp elapsed]}
+  (assoc context ::editor/effects
+         ;; NOTE all these fns take the edit-event
+         {::editor/uuid-fn      (fn [& _] (uuid-fn))
+          ::editor/timestamp-fn (fn [& _] timestamp)
+          ::editor/pad-fn       (new-pad-fn elapsed)}))
+
+(re-frame/reg-cofx :editor editor-cofx)
+
+;; The :editor cofx depends on the 3 previous cofxs, and should be injected
+;; _after_ them. re-frame flattens the handler's cofxs so we can nest them in a
+;; vector it has no special meaning, just a way to refer to a stack of cofxs
+
+(def editor-cofxs
+  [(re-frame/inject-cofx :uuid-fn)
+   (re-frame/inject-cofx :timestamp)
+   (re-frame/inject-cofx :elapsed)
+   (re-frame/inject-cofx :editor)])
 
 ;;
 ;; * Edit events
@@ -70,8 +119,8 @@
 
 (re-frame/reg-event-fx
  ::add-edit-event
- [(re-frame/inject-cofx :ui-db)
-  (re-frame/inject-cofx ::editor/effects)
+ [editor-cofxs
+  (re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub [::subs/vcs])
   (util.re-frame/inject-sub [::subs/playhead-entry])]
  (fn [{:keys         [db ui-db]
