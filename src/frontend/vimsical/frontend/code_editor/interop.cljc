@@ -50,8 +50,6 @@
              [next-idx line (inc col)])))
        [0 1 1] string))))
 
-(def idx->js-pos (comp pos->js-pos idx->pos))
-
 ;;
 ;; * Change Parsing
 ;;

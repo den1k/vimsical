@@ -204,9 +204,9 @@
    [{:keys [ui-db]} [_ file position]]
    #?(:cljs
       (if-some [editor (ui-db/get-editor ui-db file)]
-        (when position
-          (.revealRange editor position)
-          (.setSelection editor position)
+        (when-some [js-pos (some-> position interop/pos->js-pos)]
+          (.revealRange editor js-pos)
+          (.setSelection editor js-pos)
           (.focus editor)
           nil)
         (console :error "editor not found")))))
@@ -239,10 +239,12 @@
       :action       :register
       :subscription [::subs/string file]
       :val->event   (fn [string] [::update-editor-string file string])}
-     {:id           [::editor-pos file]
-      :action       :register
-      :subscription [::subs/position file]
-      :val->event   (fn [position] [::update-editor-position file position])}]}))
+     {:id              [::editor-pos file]
+      :action          :register
+      ;; Prevents showing cursors on all editors when reloading
+      :dispatch-first? false
+      :subscription    [::subs/position file]
+      :val->event      (fn [position] [::update-editor-position file position])}]}))
 
 (re-frame/reg-event-fx
  ::track-stop

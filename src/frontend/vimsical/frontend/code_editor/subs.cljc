@@ -56,4 +56,4 @@
  (fn position-sub
    [[cursor string] [_ {file-id :db/id}]]
    (when (and cursor string)
-     (interop/idx->js-pos cursor string))))
+     (interop/idx->pos cursor string))))
