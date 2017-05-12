@@ -176,7 +176,7 @@
          model
          sels
          (clj->js
-          [{; if true moves cursor, else makes selection around added text
+          [{;; if true moves cursor, else makes selection around added text
             :forceMoveMarkers true
             :text             string
             :range            (first sels)}]))))))

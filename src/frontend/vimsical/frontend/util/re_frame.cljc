@@ -185,14 +185,18 @@
   a no-op.
 
   "
-  [{:keys [subscription event val->event]}]
+  [{:keys [subscription event val->event dispatch-first?] :or {dispatch-first? true}}]
   {:pre [(vector? subscription) (or (vector? event) (ifn? val->event))]}
   #?(:cljs
-     (ratom/track!
-      (fn []
-        (let [val @(re-frame/subscribe subscription)]
-          (when-some [event (or event (val->event val))]
-            (re-frame/dispatch event)))))))
+     (let [dispatched-first? (atom false)]
+       (ratom/track!
+        (fn []
+          (let [val @(re-frame/subscribe subscription)]
+            (when-some [event (or event (val->event val))]
+              (when (or dispatch-first?
+                        @dispatched-first?
+                        (do (reset! dispatched-first? true) nil))
+                (re-frame/dispatch event)))))))))
 
 (defn ensure-vec [x] (if (sequential? x) (vec x) (vector x)))
 
