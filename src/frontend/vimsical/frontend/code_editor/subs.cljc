@@ -15,13 +15,8 @@
    (code-editor.ui-db/get-active-file ui-db)))
 
 ;; NOTE this is different from vcs.subs/timeline-entry since the code-editors
-;; are tracking this sub to set their state and we want to disable that behavior
-;; while the editor is currently active
-
-;; NOTE 2: the behavior is currently incorrect since skimming while not playing
-;; will end up setting the state of the editor, we'll need something more
-;; fine-grained that takes into account the interactions with the editor
-;; elements
+;; are tracking this sub to set their state and but we only want that to
+;; happened while the timeline is either skimming or playing.
 
 (re-frame/reg-sub
  ::timeline-entry
@@ -40,20 +35,18 @@
  :<- [::vcs.subs/vcs]
  :<- [::timeline-entry]
  (fn string-sub
-   [[vcs [_ {delta-id :id} :as timeline-entry]] [_ {file-id :db/id}]]
+   [[vcs [_ {delta-id :id}]] [_ {file-id :db/id}]]
    {:pre [file-id]}
-   (when (some? timeline-entry)
-     (or (vcs/file-string vcs file-id delta-id) ""))))
+   (or (vcs/file-string vcs file-id delta-id) "")))
 
 (re-frame/reg-sub
  ::cursor
  :<- [::vcs.subs/vcs]
  :<- [::timeline-entry]
  (fn cursor-sub
-   [[vcs [_ {delta-id :id} :as timeline-entry]] [_ {file-id :db/id}]]
+   [[vcs [_ {delta-id :id}]] [_ {file-id :db/id}]]
    {:pre [file-id]}
-   (when (some? timeline-entry)
-     (or (vcs/file-cursor vcs file-id delta-id) 0))))
+   (or (vcs/file-cursor vcs file-id delta-id) 0)))
 
 (re-frame/reg-sub
  ::position
