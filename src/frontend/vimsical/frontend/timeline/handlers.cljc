@@ -50,6 +50,12 @@
  (fn [{:keys [ui-db]} [_ playing?]]
    {:ui-db (timeline.ui-db/set-playing ui-db playing?)}))
 
+(re-frame/reg-event-fx
+ ::set-skimming
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db]} [_ skimming?]]
+   {:ui-db (timeline.ui-db/set-skimming ui-db skimming?)}))
+
 ;;
 ;; ** Skimhead
 ;;
@@ -57,7 +63,21 @@
 ;; The following handlers are responsible for keeping the skimhead in the ui-db,
 ;; and the skimhead-entry in the db in sync
 
-(re-frame/reg-event-fx ::on-mouse-enter (fn [_ _]))
+(re-frame/reg-event-fx
+ ::on-mouse-enter
+ [(re-frame/inject-cofx :ui-db)
+  (util.re-frame/inject-sub [::vcs.subs/vcs])]
+ (fn [{:as             cofx
+       :keys           [db ui-db]
+       ::vcs.subs/keys [vcs]}
+      [_ coords coords-and-svg-node->timeline-position-fn]]
+   (let [[t entry] (ui-timeline-entry cofx coords coords-and-svg-node->timeline-position-fn)
+         vcs'      (vcs.db/set-skimhead-entry vcs entry)
+         db'       (mg/add db vcs')
+         ui-db'    (-> ui-db
+                       (timeline.ui-db/set-skimhead t)
+                       (timeline.ui-db/set-skimming true))]
+     {:db db' :ui-db ui-db'})))
 
 (re-frame/reg-event-fx
  ::on-mouse-wheel
@@ -95,10 +115,13 @@
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub [::vcs.subs/vcs])]
  (fn [{:keys [ui-db db] ::vcs.subs/keys [vcs]} _]
-   (let [vcs'   (vcs.db/set-skimhead-entry vcs nil)
-         db'    (mg/add db vcs')
-         ui-db' (timeline.ui-db/set-skimhead ui-db nil)]
-     {:db db' :ui-db ui-db'})))
+   (let [playhead-entry (vcs.db/get-playhead-entry vcs)
+         vcs'           (vcs.db/set-skimhead-entry vcs playhead-entry)
+         db'            (mg/add db vcs')
+         ui-db'         (timeline.ui-db/set-skimhead ui-db nil)]
+     {:db             db'
+      :ui-db          ui-db'
+      :dispatch-later [{:ms 16 :dispatch [::set-skimming false]}]})))
 
 ;;
 ;; ** Playhead

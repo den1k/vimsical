@@ -55,8 +55,11 @@
 ;; * Handlers
 ;;
 
-(defn on-mouse-enter [_]
-  (re-frame/dispatch [::handlers/on-mouse-enter]))
+(defn on-mouse-enter [e]
+  (re-frame/dispatch
+   [::handlers/on-mouse-enter
+    (e->mouse-coords e)
+    coords-and-svg-node->timeline-position]))
 
 (defn on-mouse-wheel [e]
   (.preventDefault e)  ; Prevent history navigation

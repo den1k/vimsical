@@ -43,7 +43,7 @@
    [[vcs [_ {delta-id :id} :as timeline-entry]] [_ {file-id :db/id}]]
    {:pre [file-id]}
    (when (some? timeline-entry)
-     (vcs/file-string vcs file-id delta-id))))
+     (or (vcs/file-string vcs file-id delta-id) ""))))
 
 (re-frame/reg-sub
  ::cursor
@@ -53,7 +53,7 @@
    [[vcs [_ {delta-id :id} :as timeline-entry]] [_ {file-id :db/id}]]
    {:pre [file-id]}
    (when (some? timeline-entry)
-     (vcs/file-cursor vcs file-id delta-id))))
+     (or (vcs/file-cursor vcs file-id delta-id) 0))))
 
 (re-frame/reg-sub
  ::position
