@@ -34,12 +34,15 @@
 
 (re-frame/reg-event-fx
  ::register
- [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ file editor-instance listeners]]
+ [(re-frame/inject-cofx :ui-db)
+  (util.re-frame/inject-sub
+   (fn [[_ file]] ^:ignore-warnings [::subs/playhead-string file]))]
+ (fn [{:keys       [ui-db]
+       ::subs/keys [playhead-string]} [_ file editor-instance listeners]]
    {:ui-db      (-> ui-db
                     (ui-db/set-editor file editor-instance)
                     (ui-db/set-listeners file listeners))
-    :dispatch-n [[::set-string nil file ""]
+    :dispatch-n [[::set-string nil file playhead-string]
                  [::bind-listeners file]
                  [::track-start file]]}))
 
