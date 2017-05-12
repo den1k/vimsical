@@ -95,10 +95,10 @@
 
 (defn severity-code [flag]
   (case flag
-    :error   3
+    :error 3
     :warning 2
-    :info    1
-    :ignore  0))
+    :info 1
+    :ignore 0))
 
 (defn model-marker
   [{:keys [pos msg severity]
@@ -251,7 +251,7 @@
  ::track-stop
  (fn [_ [_ file]]
    {:track
-    [{:id [::editor-str file]   :action :dispose}
+    [{:id [::editor-str file] :action :dispose}
      {:id [::editor-pos file] :action :dispose}]}))
 
 (re-frame/reg-event-fx
