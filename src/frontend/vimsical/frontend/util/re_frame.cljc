@@ -274,7 +274,7 @@
 
 (defn timestamp
   [context _]
-  (assoc context :timestamp (util/inst)))
+  (assoc context :timestamp (util/now)))
 
 (re-frame/reg-cofx :timestamp timestamp)
 
