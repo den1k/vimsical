@@ -1,6 +1,6 @@
 (ns vimsical.frontend.live-preview.handlers
   (:require [re-frame.core :as re-frame]
-            [vimsical.frontend.util.re-frame :as util.reframe :refer [<sub]]
+            [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
             [com.stuartsierra.mapgraph :as mg]
             [vimsical.frontend.vcs.subs :as vcs.subs]
             [vimsical.vcs.branch :as branch]
@@ -8,6 +8,7 @@
             [vimsical.frontend.live-preview.ui-db :as ui-db]
             [vimsical.vcs.lib :as lib]
             [vimsical.frontend.live-preview.subs :as subs]
+            [vimsical.frontend.live-preview.error-catcher :as error-catcher]
             [vimsical.common.util.core :as util]
             [vimsical.frontend.util.preprocess.core :as preprocess]
    #?@(:cljs [[reagent.dom.server]
@@ -77,17 +78,6 @@
 (defn- error-catcher-iframe [ui-db]
   (get-in ui-db error-catcher-iframe-path))
 
-(defn update-iframe-src
-  [{:keys [db ui-db]} [_ {::branch/keys [files libs]} {:keys [error-catcher?]}]]
-  #?(:cljs
-     (let [iframe        (ui-db/get-iframe ui-db)
-           prev-blob-url (ui-db/get-src-blob-url ui-db)
-           markup        (iframe-markup-string {:files files :libs libs})
-           blob-url      (util.dom/blob-url markup "text/html")]
-       (some-> prev-blob-url util.dom/revoke-blob-url)
-       (aset iframe "src" blob-url)
-       {:ui-db (ui-db/set-src-blob-url ui-db blob-url)})))
-
 (defmulti update-node!
   (fn [_ {::file/keys [sub-type]} _] sub-type))
 
@@ -119,60 +109,41 @@
           string (<sub [::vcs.subs/preprocessed-file-string file])]
       (swap-head-node! iframe sub-type attrs string))))
 
-#_(:cljs (js/console.debug
-          (let [js-markup (reagent.dom.server/render-to-static-markup
-                           [:script
-                            {:id                      :jsjsjsjs
-                             :dangerouslySetInnerHTML {:__html "throw new Error('Whoops!');"}}])
-                markup    (reagent.dom.server/render-to-static-markup
-                           [:html
-                            [:head]
-                            [:body
-                             {:id                      :BSDJSDN
-                              :dangerouslySetInnerHTML {:__html
-                                                        js-markup}}]])
-                id        "error-catcher"
-                src       (util.dom/blob-url markup "text/html")
-
-                iframe    (or
-                           (.getElementById js/document id)
-                           (-> (util.dom/create :iframe
-                                                {:id     id
-                                                 :onload #(js/console.debug "I LOADED")
-                                                 :style  "display: none"})
-                               (js/document.body.appendChild)))
-                script    (util.dom/create :javascript {} "throw new Error('Whoops!');")]
-            (js/console.debug :START)
-            (aset iframe "contentWindow" "onerror" #(js/console.log "NNONONON"))
-            (aset iframe "src" src)
-            ;(.. iframe -contentDocument -body (appendChild script))
-            (iframe.contentWindow.location.reload)
-
-            )
-          ))
-
 (re-frame/reg-event-fx
  ::register-and-init-iframe
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ iframe branch]]
-   {:ui-db    (ui-db/set-iframe ui-db iframe)
-    :dispatch [::update-iframe-src branch]}))
+   {:ui-db      (ui-db/set-iframe ui-db iframe)
+    :dispatch-n [[::error-catcher/init]
+                 [::update-iframe-src branch]]}))
 
 (re-frame/reg-event-fx
  ::update-iframe-src
- [(re-frame/inject-cofx :ui-db)]
- update-iframe-src)
+ [(re-frame/inject-cofx :ui-db)
+  (util.re-frame/inject-sub
+   (fn [[_ branch]]
+     [::subs/preprocessed-preview-markup branch]))]
+ (fn [{:keys [db ui-db] ::subs/keys [preprocessed-preview-markup]}
+      [_ {::branch/keys [files libs]} {:keys [error-catcher?]}]]
+   #?(:cljs
+      (let [iframe        (ui-db/get-iframe ui-db)
+            prev-blob-url (ui-db/get-src-blob-url ui-db)
+            blob-url      (util.dom/blob-url preprocessed-preview-markup "text/html")]
+        (some-> prev-blob-url util.dom/revoke-blob-url)
+        (aset iframe "src" blob-url)
+        {:ui-db (ui-db/set-src-blob-url ui-db blob-url)}))))
 
 (re-frame/reg-event-fx
  ::dispose-iframe
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_]]
-   {:ui-db (ui-db/remove-iframe ui-db)}))
+   {:ui-db    (ui-db/remove-iframe ui-db)
+    :dispatch [::error-catcher/remove]}))
 
 (re-frame/reg-event-fx
  ::update-live-preview
  [(re-frame/inject-cofx :ui-db)
-  (util.reframe/inject-sub
+  (util.re-frame/inject-sub
    (fn [[_ branch {::file/keys [sub-type] :as file}]]
      [::vcs.subs/file-lint-or-preprocessing-errors file]))]
  (fn [{:as             cofx
@@ -188,7 +159,7 @@
 (re-frame/reg-event-fx
  ::update-live-preview
  [(re-frame/inject-cofx :ui-db)
-  (util.reframe/inject-sub
+  (util.re-frame/inject-sub
    (fn [[_ _ file]] [::vcs.subs/file-lint-or-preprocessing-errors file]))]
  (fn [{:keys           [db ui-db]
        ::vcs.subs/keys [file-lint-or-preprocessing-errors]
