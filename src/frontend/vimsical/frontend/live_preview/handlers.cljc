@@ -8,7 +8,6 @@
             [vimsical.frontend.live-preview.ui-db :as ui-db]
             [vimsical.vcs.lib :as lib]
             [vimsical.frontend.live-preview.subs :as subs]
-            [vimsical.frontend.live-preview.error-catcher :as error-catcher]
             [vimsical.common.util.core :as util]
             [vimsical.frontend.util.preprocess.core :as preprocess]
    #?@(:cljs [[reagent.dom.server]
@@ -22,61 +21,6 @@
 
 (defn iframe-ready? [iframe]
   (= "complete" (iframe-ready-state iframe)))
-
-(defn- lib-node [{:keys [db/id] ::lib/keys [src sub-type] :as lib}]
-  (let [tag (case sub-type :html :body :css :style :javascript :script)]
-    [tag {:id id :src src}]))
-
-(defn- file-node [{:keys [db/id] ::file/keys [sub-type] :as file}]
-  (let [tag    (case sub-type :html :body :css :style :javascript :script)
-        string (<sub [::vcs.subs/preprocessed-file-string file])]
-    [tag
-     {:id                      id
-      :dangerouslySetInnerHTML {:__html string}}]))
-
-(defn- file-node-markup [file]
-  #?(:cljs
-     (reagent.dom.server/render-to-static-markup
-      [file-node file])))
-
-(defn- iframe-markup [{:keys [files libs]}]
-  (let [by-subtype (group-by ::file/sub-type files)]
-    [:html
-     [:head
-      (doall
-       (for [lib libs]
-         ^{:key (:db/id lib)} [lib-node lib]))
-      (doall
-       (for [file (:css by-subtype)]
-         ^{:key (:db/id file)} [file-node file]))]
-     (let [html-file   (first (:html by-subtype))
-           html-string (<sub [::vcs.subs/preprocessed-file-string html-file])
-           body-string (transduce
-                        (map file-node-markup)
-                        str
-                        html-string
-                        (:javascript by-subtype))]
-       [:body
-        {:id                      (:db/id html-file)
-         :dangerouslySetInnerHTML {:__html
-                                   body-string}}])]))
-
-(defn- iframe-markup-string [{:keys [files libs] :as opts}]
-  #?(:cljs
-     (reagent.dom.server/render-to-static-markup
-      (iframe-markup opts))))
-
-(def preview-iframe-path
-  [::iframes :preview])
-
-(def error-catcher-iframe-path
-  [::iframes :error-catcher])
-
-(defn- preview-iframe [ui-db]
-  (get-in ui-db preview-iframe-path))
-
-(defn- error-catcher-iframe [ui-db]
-  (get-in ui-db error-catcher-iframe-path))
 
 (defmulti update-node!
   (fn [_ {::file/keys [sub-type]} _] sub-type))
@@ -113,22 +57,21 @@
  ::register-and-init-iframe
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ iframe branch]]
-   {:ui-db      (ui-db/set-iframe ui-db iframe)
-    :dispatch-n [[::error-catcher/init]
-                 [::update-iframe-src branch]]}))
+   {:ui-db    (ui-db/set-iframe ui-db iframe)
+    :dispatch [::update-iframe-src branch]}))
 
 (re-frame/reg-event-fx
  ::update-iframe-src
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub
-   (fn [[_ branch]]
-     [::subs/preprocessed-preview-markup branch]))]
- (fn [{:keys [db ui-db] ::subs/keys [preprocessed-preview-markup]}
-      [_ {::branch/keys [files libs]} {:keys [error-catcher?]}]]
+   (fn [_]
+     [::subs/branch-preprocessed-preview-markup]))]
+ (fn [{:keys [db ui-db] ::subs/keys [branch-preprocessed-preview-markup]}
+      [_ {::branch/keys [files libs]}]]
    #?(:cljs
       (let [iframe        (ui-db/get-iframe ui-db)
             prev-blob-url (ui-db/get-src-blob-url ui-db)
-            blob-url      (util.dom/blob-url preprocessed-preview-markup "text/html")]
+            blob-url      (util.dom/blob-url branch-preprocessed-preview-markup "text/html")]
         (some-> prev-blob-url util.dom/revoke-blob-url)
         (aset iframe "src" blob-url)
         {:ui-db (ui-db/set-src-blob-url ui-db blob-url)}))))
@@ -137,24 +80,7 @@
  ::dispose-iframe
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_]]
-   {:ui-db    (ui-db/remove-iframe ui-db)
-    :dispatch [::error-catcher/remove]}))
-
-(re-frame/reg-event-fx
- ::update-live-preview
- [(re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub
-   (fn [[_ branch {::file/keys [sub-type] :as file}]]
-     [::vcs.subs/file-lint-or-preprocessing-errors file]))]
- (fn [{:as             cofx
-       ::vcs.subs/keys [file-lint-or-preprocessing-errors]
-       :keys           [db ui-db]}
-      [_ branch {::file/keys [sub-type] :as file}]]
-   (let [iframe (ui-db/get-iframe ui-db)]
-     (if (= :javascript sub-type)
-       (when (nil? file-lint-or-preprocessing-errors)
-         {:dispatch [::update-iframe-src branch]})
-       {:dispatch [::update-preview-node branch file]}))))
+   {:ui-db (ui-db/remove-iframe ui-db)}))
 
 (re-frame/reg-event-fx
  ::update-live-preview
@@ -165,11 +91,10 @@
        ::vcs.subs/keys [file-lint-or-preprocessing-errors]
        :as             cofx}
       [_ branch {::file/keys [sub-type] :as file}]]
-   (let [iframe (preview-iframe ui-db)]
-     (if (= :javascript sub-type)
-       (when (nil? file-lint-or-preprocessing-errors)
-         {:dispatch [::update-iframe-src branch]})
-       {:dispatch [::update-preview-node branch file]}))))
+   (if (= :javascript sub-type)
+     (when (nil? file-lint-or-preprocessing-errors)
+       {:dispatch [::update-iframe-src branch]})
+     {:dispatch [::update-preview-node branch file]})))
 
 (re-frame/reg-event-fx
  ::update-preview-node
