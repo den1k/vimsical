@@ -227,13 +227,13 @@
           (reduced {::halt (if retf (retf (rf result) input) input)})
           (rf result input)))))))
 
-#?(:cljs
-   (defn debounce [f interval]
-     (gfns/debounce f interval)))
+(defn debounce [f interval]
+  #?(:cljs (gfns/debounce f interval)
+     :clj  (assert false "Not implemented")))
 
-#?(:cljs
-   (defn throttle [f interval]
-     (gfns/debounce f interval)))
+(defn throttle [f interval]
+  #?(:cljs (gfns/throttle f interval)
+     :clj  (assert false "Not implemented")))
 
 #?(:cljs
    (defn url-encode [s]

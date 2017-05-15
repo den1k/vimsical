@@ -90,32 +90,32 @@
        (interop/dispose! ratom-or-reaction))))
 
 (defmulti inject-sub-cofx
-  (fn [context query-vector-or-event->query-vector-fn]
+  (fn [coeffects query-vector-or-event->query-vector-fn]
     (if (vector? query-vector-or-event->query-vector-fn)
       ::query-vector
       ::event->query-vector-fn)))
 
 (defmethod inject-sub-cofx ::query-vector
-  [context [id :as query-vector]]
+  [coeffects [id :as query-vector]]
   (let [sub (re-frame/subscribe query-vector)
         val (deref sub)]
     (dispose-maybe query-vector sub)
-    (assoc context id val)))
+    (assoc coeffects id val)))
 
 (defmethod inject-sub-cofx ::event->query-vector-fn
-  [{:keys [event] :as context} event->query-vector-fn]
+  [{:keys [event] :as coeffects} event->query-vector-fn]
   (if-some [[id :as query-vector] (event->query-vector-fn event)]
     (let [sub                   (re-frame/subscribe query-vector)
           val                   (deref sub)]
       (dispose-maybe query-vector sub)
-      (assoc context id val))
-    context))
+      (assoc coeffects id val))
+    coeffects))
 
 (defn inject-sub
   "Inject the `:sub` cofx.
 
   If `query-vector-or-event->query-vector-fn` is a query vector, subscribe and
-  dereference that subscription before assoc'ing its value in the context map
+  dereference that subscription before assoc'ing its value in the coeffects map
   under the id of the subscription and disposing of it.
 
   If `query-vector-or-event->query-vector-fn` is a fn, it should take a single
@@ -266,33 +266,54 @@
 ;; * UUID fn
 ;;
 
-(defn uuid-fn
-  [context _]
-  (assoc context :uuid-fn uuid/uuid))
+(defn uuid-fn-cofx
+  [coeffects _]
+  (assoc coeffects :uuid-fn uuid/uuid))
 
-(re-frame/reg-cofx :uuid-fn uuid-fn)
+(re-frame/reg-cofx :uuid-fn uuid-fn-cofx)
 
 ;;
 ;; * Timestamp
 ;;
 
-(defn timestamp
-  [context _]
-  (assoc context :timestamp (util/now)))
+(defn timestamp-cofx
+  [coeffects _]
+  (assoc coeffects :timestamp (util/now)))
 
-(re-frame/reg-cofx :timestamp timestamp)
+(re-frame/reg-cofx :timestamp timestamp-cofx)
 
 ;;
-;; * Time elapsed between two events
+;; * Time elapsed-cofx between two events
 ;;
 
 (defonce elapsed-register (atom {}))
 
-(defn elapsed
-  [context [id :as event]]
+(defn elapsed-cofx
+  [coeffects [id :as event]]
   (let [now  (util/now)
         prev (get @elapsed-register id -1)]
     (swap! elapsed-register assoc id now)
-    (assoc context :elapsed (if (neg? prev) -1 (- now prev)))))
+    (assoc coeffects :elapsed (if (neg? prev) -1 (- now prev)))))
 
-(re-frame/reg-cofx :elapsed elapsed)
+(re-frame/reg-cofx :elapsed elapsed-cofx)
+
+;;
+;; * Async Fxs (debounce, throttle)
+;;
+
+;; NOTE we don't gc the async thunks, maybe add an fx key for that?
+(defn new-async-fx
+  [register async-fn]
+  (fn [{:as   fx
+        :keys [ms dispatch event->id dispatch-first?]
+        :or   {event->id first dispatch-first? true}}]
+    (let [register-id (event->id dispatch)]
+      (if-some [async-thunk (get @register register-id)]
+        (async-thunk)
+        (let [async-thunk (async-fn (re-frame/dispatch dispatch) ms)]
+          (when dispatch-first?
+            (async-thunk))
+          (swap! register assoc register-id async-thunk))))))
+
+(re-frame/reg-fx :debounce (new-async-fx (atom {}) util/debounce))
+(re-frame/reg-fx :throttle (new-async-fx (atom {}) util/throttle))
