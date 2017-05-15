@@ -68,7 +68,8 @@
       [org.immutant/web        "2.1.5" :exclusions [ring/ring-core org.jboss.logging/jboss-logging]]
       [cc.qbits/alia-all       "3.3.0"]
       [cc.qbits/hayt           "4.0.0"]
-      [com.datomic/datomic-pro "0.9.5544" :exclusions [commons-codec]]]
+      [com.datomic/datomic-pro "0.9.5544" :exclusions [commons-codec]]
+      [ring                    "1.6.1"]]
      :global-vars
      {*warn-on-reflection* true *unchecked-math* :warn-on-boxed}}]
 
