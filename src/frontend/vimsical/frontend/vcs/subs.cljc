@@ -29,7 +29,7 @@
 ;; * Branch
 ;;
 
-(re-frame/reg-sub ::branches  :<- [::vcs] (fn [{::vcs/keys [branches]}] branches))
+(re-frame/reg-sub ::branches :<- [::vcs] (fn [{::vcs/keys [branches]}] branches))
 (re-frame/reg-sub ::branch-id :<- [::vcs] (fn [{::db/keys [branch-id]}] branch-id))
 
 (re-frame/reg-sub
@@ -126,7 +126,7 @@
  ::file-lint-or-preprocessing-errors
  (fn [[_ file]]
    [(re-frame/subscribe [::preprocessed-file-data file])
-    (re-frame/subscribe [::file-lint-data file])])
+    #_(re-frame/subscribe [::file-lint-data file])])
  (fn [[preprocessed {::lint/keys [errors]}] _]
    (or (some-> preprocessed ::preprocess/error vector)
        errors)))

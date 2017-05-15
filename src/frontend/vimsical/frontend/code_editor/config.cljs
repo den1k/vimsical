@@ -6,7 +6,7 @@
   (doto js/monaco.languages.typescript.javascriptDefaults
     ;; validation
     (.setDiagnosticsOptions
-     #js {:noSemanticValidation false
+     #js {:noSemanticValidation true
           :noSyntaxValidation   false})
     ;; compiler opts
     ;; https://github.com/Microsoft/monaco-editor/blob/3d17695d9322cb89dd2c9cee997807a6aadd7295/monaco.d.ts#L4948
