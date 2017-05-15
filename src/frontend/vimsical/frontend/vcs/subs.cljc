@@ -16,7 +16,7 @@
 
 (re-frame/reg-sub
  ::vcs
- (fn [db [vims]]
+ (fn [db [_ vims]]
    (if-some [lookup-ref (mg/ref-to db vims)]
      (-> db
          (mg/pull queries/vims-vcs lookup-ref)
