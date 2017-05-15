@@ -67,19 +67,24 @@
      [[com.taoensso/carmine    "2.15.0"]
       [org.immutant/web        "2.1.5" :exclusions [ring/ring-core org.jboss.logging/jboss-logging]]
       [cc.qbits/alia-all       "3.3.0"]
+      [cc.qbits/hayt           "4.0.0"]
       [com.datomic/datomic-pro "0.9.5544" :exclusions [commons-codec]]]
      :global-vars
      {*warn-on-reflection* true *unchecked-math* :warn-on-boxed}}]
 
    :backend-dev
    [:backend
+    :env.backend/dev
     {:dependencies
      [[criterium "0.4.4"]]
      :source-paths
      ["dev/backend"]}]
 
    :backend-test
-   [:test :backend :vcs :common
+   [:test
+    :backend-dev
+    :env.backend/test
+    :vcs :common
     {:test-paths
      ["test/backend" "test/vcs" "test/common"]}]
    ;;
