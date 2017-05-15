@@ -16,15 +16,15 @@
    automaticallly when we make blob, give it a URL and set it as `src` on iframe.
    We can also reload the iframe manually without having to reinject any of our code."
   (:require
-   [vimsical.common.util.core :as util]
-   [reagent.core :as reagent]
-   [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]
    [re-frame.core :as re-frame]
+   [reagent.core :as reagent]
+   [vimsical.common.util.core :as util]
    [vimsical.frontend.live-preview.handlers :as handlers]
-   [vimsical.frontend.util.re-frame :refer [<sub]]
-   [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.file :as file]
-   [vimsical.frontend.vcs.subs :as vcs.subs]))
+   [vimsical.vcs.branch :as branch]))
+
+;;
+;; * iFrame helpers
+;;
 
 (def iframe-sandbox-opts
   "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe"
@@ -35,49 +35,51 @@
                    "allow-same-origin"
                    "allow-scripts"))
 
+(defn- iframe-ref-handler
+  [ui-reg-key branch]
+  (fn [node]
+    (if node
+      ;; sync to make sure iframe is available before preview-nodes render
+      (re-frame/dispatch
+       [::handlers/register-and-init-iframe
+        ui-reg-key node branch])
+      (re-frame/dispatch
+       [::handlers/dispose-iframe ui-reg-key]))))
+
+(defn- iframe-on-load-handler
+  [ui-reg-key branch]
+  (fn []
+    (re-frame/dispatch [::handlers/move-script-nodes ui-reg-key branch])))
+
+(defn- iframe-attrs
+  [{:keys [ui-reg-key branch static?] :as opts}]
+  (cond-> {:key     ::iframe ; ref only works when key is present
+           :sandbox iframe-sandbox-opts
+           :ref     (iframe-ref-handler ui-reg-key branch)}
+    (not static?) (assoc :on-load (iframe-on-load-handler ui-reg-key branch))))
+
 ;;
 ;; * Components
 ;;
 
-(defn preview-node-dispatch [{:keys [ui-reg-key branch file]}]
-  (let [{::file/keys [sub-type]} file
-        ;; calling this sub to update live-preview
-        ;; may want to do this as a dispatch after file change
-        _string (<sub [::vcs.subs/file-string file])]
-    (re-frame/dispatch [::handlers/update-live-preview ui-reg-key branch file])
-    [:div]))
-
-(defn- iframe-attrs [{:keys [branch ui-reg-key static?] :as opts}]
-  (let [defaults
-        {:key     ::iframe              ; ref only works when key is present
-         :sandbox iframe-sandbox-opts
-         :ref     (fn [node]
-                    (if node
-                      ; sync to make sure iframe is available before preview-nodes render
-                      (re-frame/dispatch-sync
-                       [::handlers/register-and-init-iframe
-                        ui-reg-key node branch])
-                      (re-frame/dispatch-sync
-                       [::handlers/dispose-iframe ui-reg-key])))}]
-    (cond-> defaults
-      (not static?)
-      (assoc :on-load
-             #(re-frame/dispatch
-               [::handlers/move-script-nodes ui-reg-key branch])))))
-
-(defn live-preview [{:keys [branch ui-reg-key static?] :as opts}]
+(defn live-preview
+  [{:as                     opts
+    {::branch/keys [files]} :branch
+    :keys                   [ui-reg-key branch static?]}]
   (fn [_]
     (reagent/create-class
-     {; component should maybe never update? TBD
-      ;:should-component-update (fn [_ _ _] false)
+     {:component-did-mount
+      (fn [_]
+        (when-not static?
+          (doseq [file files]
+            (re-frame/dispatch [::handlers/track-start ui-reg-key branch file]))))
+
+      :component-will-unmount
+      (fn [_]
+        (when-not static?
+          (doseq [file files]
+            (re-frame/dispatch [::handlers/track-stop ui-reg-key branch file]))))
       :render
       (fn [_]
         [:div.live-preview
-         [:iframe.iframe
-          (iframe-attrs opts)]
-         (when-not static?
-           (for [file (::branch/files branch)]
-             ^{:key (:db/id file)}
-             [preview-node-dispatch {:ui-reg-key ui-reg-key
-                                     :branch     branch
-                                     :file       file}]))])})))
+         [:iframe.iframe (iframe-attrs opts)]])})))
