@@ -3,7 +3,6 @@
    [clojure.string :as str]
    [com.stuartsierra.component :as cp]
    [vimsical.backend.adapters.cassandra :as sut]
-   [vimsical.backend.adapters.cassandra.cql :as cql]
    [vimsical.common.env :as env])
   (:import java.util.UUID))
 
@@ -48,6 +47,9 @@
         sut/->connection
         (assoc :cluster *cluster*))))
 
+;; NOTE the connection automatically creates its keyspace when started, we only
+;; need to drop it in the finally clause, alternatively we could use a truncate
+;; approach which would be faster
 (defn connection
   [f]
   {:pre [*cluster*]}
@@ -56,4 +58,4 @@
       (try
         (f)
         (finally
-          (sut/execute *connection* (cql/drop-keyspace *keyspace*)))))))
+          (sut/drop-keyspace! *connection*))))))

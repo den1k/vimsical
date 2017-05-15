@@ -1,16 +1,23 @@
 (ns vimsical.backend.adapters.cassandra
+  "TODO
+  - Renamce execute to execute-chan and add execute-async
+  - Deal with prepared queries injected from the store (atom?)"
   (:require
    [clojure.core.async :as async]
    [clojure.spec :as s]
    [com.stuartsierra.component :as cp]
    [qbits.alia :as alia]
+   [qbits.hayt :as hayt]
    [qbits.alia.async :as alia.async]
+   [qbits.alia.codec :as codec]
    [qbits.alia.codec.nippy :as nippy]
    [vimsical.backend.adapters.cassandra.cluster :as cluster]
+   [vimsical.backend.adapters.cassandra.util :as util]
+   [vimsical.backend.adapters.cassandra.protocol :as protocol]
    [vimsical.backend.adapters.cassandra.cql :as cql]
-   [vimsical.common.util.core :as util])
+   [vimsical.common.util.core :as common.util])
   (:import
-   (com.datastax.driver.core Cluster ResultSetFuture Session Statement)))
+   (com.datastax.driver.core Cluster PreparedStatement ResultSetFuture Session Statement)))
 
 ;;
 ;; * Driver
@@ -24,6 +31,7 @@
 ;;
 
 (s/def ::Session (partial instance? Session))
+(s/def ::PreparedStatement (partial instance? PreparedStatement))
 (s/def ::Statement (partial instance? Statement))
 (s/def ::ResultSetFuture (partial instance? ResultSetFuture))
 
@@ -33,20 +41,18 @@
 
 (s/def ::raw-query (s/or :raw string? :hayt map?))
 (s/def ::query-identifier keyword?)
-(s/def ::alia-executable (s/or :raw ::raw-query :prep ::prepared-statement :stmt ::Statement))
+(s/def ::alia-executable (s/or :raw ::raw-query :prep ::PreparedStatement :stmt ::Statement))
 (s/def ::executable (s/or :key ::query-identifier :exec ::alia-executable))
-(s/def ::values (s/or :vec (s/every any?) :map (s/map-of ::query-identifier any?)))
+(s/def ::values (s/map-of :keyword any?))
 (s/def ::command (s/or :exec (s/tuple ::executable) :with-vals (s/tuple ::executable ::values)))
 (s/def ::queries (s/map-of ::query-identifier ::raw-query))
-(s/def ::prepared (s/map-of ::query-identifier ::prepared))
+(s/def ::prepared (s/map-of ::query-identifier ::PreparedStatement))
 
 ;;
 ;; * Prepared statemenents
 ;;
 
-(s/fdef ->prepared
-        :args (s/cat :session ::Session :queries ::queries)
-        :ret  ::queries)
+;; NOTE Can't spec those due to stateful components
 
 (defn ->prepared
   "Upgrade raw queries to prepared statements."
@@ -55,7 +61,7 @@
 
 (defn prepared
   [connection key]
-  (get-in connection [::prepared key]))
+  (get-in connection [:prepared key]))
 
 (defn prepared?
   [connection queries]
@@ -79,48 +85,29 @@
     commands)))
 
 ;;
-;; * Execution
-;;
-
-(defn execute
-  ([connection executable] (execute connection executable nil))
-  ([{:as connection :keys [session]}
-    executable
-    {:as opts :keys [channel]:or {channel (async/chan 1)}}]
-   {:pre [session]}
-   (if-let [executable (if (keyword? executable) (prepared connection executable) executable)]
-     ;; Note: alia/execute-chan-buffered because of https://github.com/mpenet/alia/issues/29
-     (alia.async/execute-chan-buffered session executable opts)
-     (doto channel
-       (async/put! (ex-info "invalid executable" {:executable executable}))
-       (async/close!)))))
-
-(defn execute-batch
-  ([connection commands] (execute-batch connection commands :logged))
-  ([connection commands batch-type] (execute-batch connection commands batch-type nil))
-  ([{:keys [session] :as connection} commands batch-type {:keys [channel] :as opts :or {channel (async/chan 1)}}]
-   (try
-     (let [statements (commands->statements connection commands)
-           batch      (alia/batch statements batch-type)]
-       (alia.async/execute-chan-buffered session batch opts))
-     (catch Throwable t
-       (doto channel
-         (async/put! t)
-         (async/close!))))))
-
-;;
-;; * Connection
+;; * Connection options
 ;;
 
 (defn- session-fetch-size
   [session]
   (-> session .getCluster .getConfiguration .getQueryOptions .getFetchSize))
 
-(defn- create-keyspace!
-  [{:keys [keyspace replication-factor cluster]}]
-  (let [session     (alia/connect cluster)
-        cql         (cql/create-keyspace keyspace replication-factor)]
-    (alia/execute session cql)))
+(def default-options
+  {:result-set-fn #(into [] (map util/underscores->hyphens) %)})
+
+(defn options [opts] (merge default-options opts))
+
+(defn async-options
+  [opts success error]
+  (assoc (options opts) :success success :error error))
+
+;;
+;; * Connection
+;;
+
+(defprotocol ICassandraInternal
+  (create-keyspace! [_])
+  (drop-keyspace!   [_]))
 
 (defrecord Connection
     [keyspace
@@ -133,13 +120,16 @@
   cp/Lifecycle
   (start [this]
     (assert (and cluster keyspace) "cluster and/or keyspace cannot be nil")
-    (create-keyspace! this)
-    (let [session            (alia/connect cluster keyspace)
-          default-fetch-size (session-fetch-size session)]
-      (cond-> (assoc this
-                     :session session
-                     :default-fetch-size default-fetch-size)
-        (seq queries) (assoc :prepared (->prepared session queries)))))
+    (do
+      ;; Create the keyspace before trying to connect
+      (create-keyspace! this)
+      ;; Establish session and prepare queries
+      (let [session            (alia/connect cluster keyspace)
+            default-fetch-size (session-fetch-size session)
+            this'              (assoc this
+                                      :session session
+                                      :default-fetch-size default-fetch-size)]
+        (protocol/prepare-queries this' queries))))
   (stop [this]
     (-> this
         (update :session alia/shutdown)
@@ -170,8 +160,9 @@
   (execute-async
     [{:as this :keys [session]} executable opts success error]
     {:pre [session]}
-    (if-some [statement (command->statement this executable)]
-      (let [opts' (async-options opts success error)]
+    (if-let [executable (if (keyword? executable) (prepared this executable) executable)]
+      (let [statement (command->statement this executable)
+            opts'     (async-options opts success error)]
         (alia/execute-async session statement opts'))
       (error (ex-info "invalid executable" {:executable executable}))))
 
@@ -184,11 +175,10 @@
   (execute-batch-async
     [{:keys [session] :as this} commands batch-type opts success error]
     (try
-      (if-some [statements (commands->statements this commands)]
-        (let [batch (alia/batch statements batch-type)
-              opts' (async-options opts success error)]
-          (alia/execute-async session batch opts'))
-        (error (ex-info "invalid commands" {:commands commands})))
+      (let [statements (commands->statements this commands)
+            batch      (alia/batch statements batch-type)
+            opts'      (async-options opts success error)]
+        (alia/execute-async session batch opts'))
       (catch Throwable t
         (error t))))
 
@@ -199,8 +189,9 @@
   (execute-chan
     [{:as this :keys [session]} executable {:as opts :keys [channel] :or {channel (async/chan 1)}}]
     {:pre [session]}
-    (if-some [statement (command->statement this executable)]
-      (let [opts' (options opts)]
+    (if-let [executable (if (keyword? executable) (prepared this executable) executable)]
+      (let [statement (command->statement this executable)
+            opts'     (options opts)]
         ;; Note: alia/execute-chan-buffered because of
         ;; https://github.com/mpenet/alia/issues/29
         (alia.async/execute-chan-buffered session statement opts'))
@@ -216,11 +207,10 @@
   (execute-batch-chan
     [{:keys [session] :as this} commands batch-type {:keys [channel] :as opts :or {channel (async/chan 1)}}]
     (try
-      (if-some [statements (commands->statements this commands)]
-        (let [batch (alia/batch statements batch-type)
-              opts' (options opts)]
-          (alia.async/execute-chan-buffered session batch opts'))
-        (throw (ex-info "invalid commands" {:commands commands})))
+      (let [statements (commands->statements this commands)
+            batch      (alia/batch statements batch-type)
+            opts'      (options opts)]
+        (alia.async/execute-chan-buffered session batch opts'))
       (catch Throwable t
         (doto channel
           (async/put! t)
@@ -229,7 +219,7 @@
 (s/def ::connection (partial instance? Connection))
 
 ;;
-;; * Conf
+;; * Conf & constructors
 ;;
 
 ;;
@@ -252,7 +242,7 @@
       (update :retry-policy cluster/->retry-policy)
       (update :load-balancing-policy cluster/->load-balancing-policy)))
 
-(s/fdef ->cluster :args (s/cat :conf ::cluster-conf) :ret ::Cluster)
+(s/fdef ->cluster :args (s/cat :conf ::cluster-conf) :ret ::cluster/cluster)
 
 (defn ->cluster [conf]
   (alia/cluster (->cluster-conf conf)))

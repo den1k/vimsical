@@ -3,7 +3,7 @@
    [clojure.core.async :as a]
    [clojure.test :refer [deftest is use-fixtures]]
    [orchestra.spec.test :as st]
-   [vimsical.backend.adapters.cassandra :as sut]
+   [vimsical.backend.adapters.cassandra.protocol :as p]
    [vimsical.backend.adapters.cassandra.fixture
     :as
     fixture
@@ -21,4 +21,4 @@
   (is (:session  *connection*)))
 
 (deftest keyspace-test
-  (is (nil? (a/<!! (sut/execute *connection* (format "use %s;" *keyspace*))))))
+  (is (nil? (a/<!! (p/execute-chan *connection* (format "use %s;" *keyspace*))))))

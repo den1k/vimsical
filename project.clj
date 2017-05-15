@@ -78,7 +78,9 @@
     {:dependencies
      [[criterium "0.4.4"]]
      :source-paths
-     ["dev/backend"]}]
+     ["dev/backend"
+      ;; Deps resolution in fixtures etc
+      "test/backend"]}]
 
    :backend-test
    [:test

@@ -1,6 +1,7 @@
 (ns vimsical.backend.adapters.cassandra.cql
   (:require
    [clojure.spec :as s]
+   [vimsical.backend.adapters.cassandra.util :as util]
    [qbits.hayt :as cql]))
 
 ;;
@@ -50,5 +51,15 @@
 
 (defn create-table
   [table column-definitions]
-  (cql/->raw
-   (cql/create-table table (cql/column-definitions column-definitions))))
+  (cql/create-table
+   table
+   (cql/if-not-exists)
+   (cql/column-definitions column-definitions)))
+
+;;
+;; * Schema
+;;
+
+(defn create-schema
+  [schema]
+  (cql/->raw (cql/batch (apply cql/queries schema))))

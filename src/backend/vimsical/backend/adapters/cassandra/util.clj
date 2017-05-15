@@ -2,15 +2,6 @@
   (:require [clojure.string :as str]))
 
 ;;
-;; * Statements
-;;
-
-(defn- ensure-semicolon [statement]
-  (if (str/ends-with? statement ";") statement (str statement ";")))
-
-(defn join-statements [& statements] (str/join " " (map ensure-semicolon statements)))
-
-;;
 ;; * Keywords case
 ;;
 
@@ -19,7 +10,6 @@
 ;;
 (defn key-fn [s]
   (keyword (str/replace s "_" "-")))
-
 
 ;;
 ;; ** Params
@@ -53,5 +43,4 @@
     (keyword-replace-map m match replacement)))
 
 (defn hyphens->underscores [x] (keyword-replace x "-" "_"))
-
-
+(defn underscores->hyphens [x] (keyword-replace x "_" "-"))
