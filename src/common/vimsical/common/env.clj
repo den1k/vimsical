@@ -56,6 +56,7 @@
 (s/def ::ratio   (conformer read-string))
 (s/def ::file    (conformer io/file))
 (s/def ::string  identity)
+(s/def ::keyword (conformer keyword))
 
 ;;
 ;; * High-order conformers
