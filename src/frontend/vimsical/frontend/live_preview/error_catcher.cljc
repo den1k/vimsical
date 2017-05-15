@@ -42,8 +42,9 @@
   (doto iframe
     (aset "contentWindow" "onerror"
           (fn [msg url line col error]
-            (let [err-info {:msg msg :url url :error error :pos {:line line
-                                                                 :col  col}}]
+            (let [pos      {:line (dec line) ; dec to account for wrapping of js
+                            :col  col}
+                  err-info {:msg msg :url url :error error :pos pos}]
               (re-frame/dispatch [::on-error err-info]))))))
 
 (defonce dispatch-status-message        ;; defonce to keep same fn ref over reloads
@@ -83,18 +84,8 @@
             prev-blob-url (ui-db/get-error-catcher-src-blob-url ui-db)
             blob-url      (util.dom/blob-url markup "text/html")]
         (some-> prev-blob-url util.dom/revoke-blob-url)
-        (set-error-handler catcher)
         (aset catcher "src" blob-url)
         {:ui-db (ui-db/set-error-catcher-src-blob-url ui-db blob-url)}))))
-
-(re-frame/reg-event-fx
- ::re-init-error-catcher
- [(re-frame/inject-cofx :ui-db)]
- #?(:cljs
-    (fn [{:keys [ui-db]} _]
-      (let [catcher (ui-db/get-error-catcher ui-db)]
-        (set-error-handler catcher)
-        nil))))
 
 (defn msg-wrap-js-string
   "Wraps js code in an IIFE (Immediately Invoked Function Expression) and
@@ -102,10 +93,12 @@
 
   The IIFE serves to encapsulate the js code and to avoid parse errors against
   the post message code. postMessage will only be called if the js code doesn't
-  throw."
+  throw.
+
+  New lines are added to calculate the relative position of the js code on error."
   [string]
   (str
-   "(function() {" string "})()
+   "(function() {\n" string " ;\n})()
    parent.postMessage({status: 'success'}, '*')"))
 
 (re-frame/reg-event-fx
@@ -127,8 +120,11 @@
 
 (re-frame/reg-event-fx
  ::on-load
- (fn [_ _]
-   {:dispatch [::re-init-error-catcher]}))
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db]} _]
+   (let [catcher (ui-db/get-error-catcher ui-db)]
+     (set-error-handler catcher)
+     nil)))
 
 (re-frame/reg-event-fx
  ::on-status
@@ -155,11 +151,15 @@
     [{:action       :register
       :id           ::error-catcher-markup
       :subscription [::subs/error-catcher-js-libs-markup]
-      :val->event   (fn [markup] [::update-error-catcher-src markup])}
-     {:action       :register
-      :id           ::error-catcher-files
-      :subscription [::subs/error-catcher-js-file-string]
-      :val->event   (fn [string] [::update-error-catcher-js string])}]}))
+      :val->event   (fn [markup]
+                      [::update-error-catcher-src markup])}
+     {:action          :register
+      ;; Don't check on first run. This allow the iframe to load libs first.
+      ;; Would be better to inject js the first time on-load runs
+      :dispatch-first? false
+      :id              ::error-catcher-files
+      :subscription    [::subs/error-catcher-js-file-string]
+      :val->event      (fn [string] [::update-error-catcher-js string])}]}))
 
 (re-frame/reg-event-fx
  ::track-stop

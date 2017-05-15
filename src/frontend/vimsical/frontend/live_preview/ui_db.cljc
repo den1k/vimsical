@@ -9,12 +9,31 @@
 (defn set-src-blob-url [ui-db url] (assoc-in ui-db [::iframe :src-blob-url] url))
 
 
-(defn get-error-catcher [ui-db] (get-in ui-db [::error-catcher :elem]))
-(defn set-error-catcher [ui-db iframe] (assoc-in ui-db [::error-catcher :elem] iframe))
-(defn remove-error-catcher [ui-db] (dissoc ui-db ::error-catcher))
+(def error-catcher-id ::error-catcher)
 
-(defn set-error-catcher-error [ui-db error] (assoc-in ui-db [::error-catcher :error] error))
-(defn get-error-catcher-error [ui-db] (get-in ui-db [::error-catcher :error]))
+(defn error-catcher-state [ui-db]
+  (get ui-db error-catcher-id))
 
-(defn get-error-catcher-src-blob-url [ui-db] (get-in ui-db [::error-catcher :src-blob-url]))
-(defn set-error-catcher-src-blob-url [ui-db url] (assoc-in ui-db [::error-catcher :src-blob-url] url))
+(def get-error-catcher
+  (comp :elem error-catcher-state))
+
+(defn set-error-catcher [ui-db iframe]
+  (update ui-db error-catcher-id assoc :elem iframe))
+
+(defn set-error-catcher-status [ui-db status]
+  (assoc-in ui-db [error-catcher-id :status] status))
+
+(defn remove-error-catcher [ui-db]
+  (dissoc ui-db error-catcher-id))
+
+(defn set-error-catcher-error [ui-db error]
+  (assoc-in ui-db [error-catcher-id :error] error))
+
+(def get-error-catcher-error
+  (comp :error error-catcher-state))
+
+(def get-error-catcher-src-blob-url
+  (comp :src-blob-url error-catcher-state))
+
+(defn set-error-catcher-src-blob-url [ui-db url]
+  (assoc-in ui-db [error-catcher-id :src-blob-url] url))
