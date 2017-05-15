@@ -24,7 +24,8 @@
             [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
             [vimsical.frontend.vcs.subs :as vcs.subs]
             [vimsical.vcs.branch :as branch]
-            [vimsical.vcs.file :as file]))
+            [vimsical.vcs.file :as file]
+            [vimsical.frontend.code-editor.handlers :as code-editor.handlers]))
 
 (defn error-catcher []
   #?(:cljs
@@ -134,7 +135,7 @@
      (.. catcher -contentWindow -location reload)
      (case status
        :success (re-frame/dispatch [::handlers/update-iframe-src])
-       :error (do #?(:cljs (js/console.debug "Error:" data)))))
+       :error (re-frame/dispatch [::code-editor.handlers/set-error-markers [data]])))
    nil))
 
 (re-frame/reg-event-fx

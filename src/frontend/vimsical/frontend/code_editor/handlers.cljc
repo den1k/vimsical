@@ -1,32 +1,20 @@
 (ns vimsical.frontend.code-editor.handlers
-  #?@(:clj
-      [(:require
-        [re-frame.core :as re-frame]
-        [vimsical.vcs.edit-event :as edit-event]
-        [vimsical.frontend.vcs.handlers :as vcs.handlers]
-        [vimsical.frontend.util.re-frame :refer [<sub]]
-        [vimsical.frontend.code-editor.ui-db :as ui-db]
-        [vimsical.common.util.core :as util]
-        [vimsical.frontend.code-editor.subs :as subs]
-        [vimsical.frontend.code-editor.interop :as interop]
-        [vimsical.frontend.util.re-frame :as util.re-frame]
-        [vimsical.frontend.timeline.subs :as timeline.subs]
-        [vimsical.frontend.vcs.subs :as vcs.subs]
-        [vimsical.vcs.core :as vcs])]
-      :cljs
-      [(:require
-        [re-frame.core :as re-frame]
-        [vimsical.vcs.edit-event :as edit-event]
-        [vimsical.frontend.vcs.handlers :as vcs.handlers]
-        [vimsical.frontend.util.re-frame :refer [<sub]]
-        [re-frame.loggers :refer [console]]
-        [vimsical.frontend.code-editor.ui-db :as ui-db]
-        [vimsical.frontend.code-editor.subs :as subs]
-        [vimsical.frontend.code-editor.interop :as interop]
-        [vimsical.frontend.util.re-frame :as util.re-frame]
-        [vimsical.frontend.timeline.subs :as timeline.subs]
-        [vimsical.frontend.vcs.subs :as vcs.subs]
-        [vimsical.vcs.core :as vcs])]))
+  (:require
+   [re-frame.core :as re-frame]
+   [vimsical.vcs.edit-event :as edit-event]
+   [vimsical.frontend.vcs.handlers :as vcs.handlers]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
+   [re-frame.loggers :refer [console]]
+   [vimsical.frontend.code-editor.ui-db :as ui-db]
+   [vimsical.frontend.code-editor.subs :as subs]
+   [vimsical.frontend.code-editor.interop :as interop]
+   [vimsical.frontend.util.re-frame :as util.re-frame]
+   [vimsical.frontend.timeline.subs :as timeline.subs]
+   [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.vcs.file :as file]
+   [vimsical.vcs.core :as vcs]
+   [vimsical.common.util.core :as util]
+   [vimsical.frontend.code-editor.util :as code-editor.util]))
 
 ;;
 ;; * Instance lifecycle
@@ -90,9 +78,6 @@
 ;; * Linting
 ;;
 
-(defn set-model-markers [model sub-type markers]
-  #?(:cljs (.. js/monaco -editor (setModelMarkers model (name sub-type) markers))))
-
 (defn severity-code [flag]
   (case flag
     :error 3
@@ -113,21 +98,20 @@
             :endLineNumber   line})))
 
 (re-frame/reg-event-fx
- ::check-code-errors
- [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ {:keys [db/id] :as file}]]
-   (when-let [errors (<sub [::vcs.subs/file-lint-or-preprocessing-errors file])]
-     (let [editor  (ui-db/get-editor ui-db file)
-           model   (.-model editor)
-           markers (into-array (map model-marker errors))]
-       ;; TODO fixme
-       #?(:cljs
-          (.setTimeout js/window
-                       #(set-model-markers model
-                                           :javascript
-                                           markers)
-                       1000))
-       nil))))
+ ::set-error-markers
+ [(re-frame/inject-cofx :ui-db)
+  ;; a bit hacky. all we really want is js editor-instance
+  (util.re-frame/inject-sub [::vcs.subs/files])]
+ (fn [{:keys           [ui-db]
+       ::vcs.subs/keys [files]} [_ errors]]
+   (let [js-file (util/ffilter (fn [{::file/keys [sub-type]}]
+                                 (= :javascript sub-type))
+                               files)
+         editor  (ui-db/get-editor ui-db js-file)
+         model   (.-model editor)
+         markers (map model-marker errors)]
+     (code-editor.util/set-model-markers model :javascript markers)
+     nil)))
 
 ;;
 ;; ** User actions
@@ -141,8 +125,7 @@
    (let [editor     (ui-db/get-editor ui-db file)
          model      (.-model editor)
          edit-event (interop/parse-content-event model e)]
-     {:dispatch-n [[::vcs.handlers/add-edit-event file edit-event]
-                   [::check-code-errors file]]})))
+     {:dispatch [::vcs.handlers/add-edit-event file edit-event]})))
 
 (re-frame/reg-event-fx
  ::cursor-change
