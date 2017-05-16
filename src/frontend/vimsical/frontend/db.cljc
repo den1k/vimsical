@@ -65,25 +65,25 @@
       :vims/author   author-ref
       :vims/title    title
       :vims/branches branches})))
-(let [state     {:app/user         {:db/id           (uuid :user)
-                                    :user/first-name "Jane"
-                                    :user/last-name  "Applecrust"
-                                    :user/email      "kalavox@gmail.com"
-                                    :user/vimsae
-                                    [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
-                                     (new-vims [:db/id (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs :compilers to-sub-type->compiler})]}
-                 :app/vims         [:db/id (uuid "NLP Chatbot running on React Fiber")]
-                 :app/quick-search {:db/id                            (uuid :quick-search)
-                                    :quick-search/show?               false
-                                    :quick-search/result-idx          0
-                                    :quick-search/query               ""
-                                    :quick-search/commands            quick-search.commands/commands
-                                    :quick-search/filter-idx          nil
-                                    :quick-search/filter-result-idx   nil
-                                    :quick-search/filter-category-idx nil}
-                 :app/libs         js-libs
-                 :app/compilers    compilers
-                 :app/route        :route/vcr}]
+(let [state {:app/user         {:db/id           (uuid :user)
+                                :user/first-name "Jane"
+                                :user/last-name  "Applecrust"
+                                :user/email      "kalavox@gmail.com"
+                                :user/vimsae
+                                                 [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
+                                                  (new-vims [:db/id (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs})]}
+             :app/vims         [:db/id (uuid "CatPhotoApp")]
+             :app/quick-search {:db/id                            (uuid :quick-search)
+                                :quick-search/show?               false
+                                :quick-search/result-idx          0
+                                :quick-search/query               ""
+                                :quick-search/commands            quick-search.commands/commands
+                                :quick-search/filter-idx          nil
+                                :quick-search/filter-result-idx   nil
+                                :quick-search/filter-category-idx nil}
+             :app/libs         js-libs
+             :app/compilers    compilers
+             :app/route        :route/vcr}]
 
   (def default-db
     (-> (mg/new-db)
