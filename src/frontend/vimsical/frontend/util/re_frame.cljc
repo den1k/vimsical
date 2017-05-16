@@ -304,23 +304,35 @@
 
 ;; NOTE we don't gc the async thunks, maybe add an fx key for that?
 (defn new-async-fx
+  "Fx wrapper for async-fns, e.g. debounce and throttle. Expects async-fn to
+  take a thunk and the ms timeout.
+   Returns a fx-fn that takes ms as timout, dispatch or dispatch-n vector, a
+   optional id or event->id fn and a  dispatch-first? bool.
+   Beware, timeout is never updated after initial call."
   [register async-fn]
   (fn [{:as   fx
-        :keys [ms dispatch event->id dispatch-first?]
-        :or   {event->id first dispatch-first? true}}]
-    {:pre [ms dispatch]}
-    (let [register-id   (event->id dispatch)
-          thunk-path    [register-id :async-thunk]
-          dispatch-path [register-id :dispatch]]
-      (assert register-id (str "No register id for async fx " fx))
-      (swap! register assoc-in dispatch-path dispatch)
+        :keys [ms dispatch dispatch-n id event->id dispatch-first?]
+        :or   {dispatch-first? true}}]
+    {:pre [ms (or dispatch dispatch-n)]}
+    (when dispatch-n (assert (or id event->id)
+                             "Must have id or event->id fn when using dispatch-n"))
+    (let [event->id              (or event->id first)
+          id                     (or id (event->id dispatch))
+          _                      (assert id (str "No register id for async-fx " fx))
+          dispatch-fn            (if dispatch
+                                   re-frame/dispatch
+                                   (fn [dn] (doseq [d dn] (re-frame/dispatch d))))
+          thunk-path             [id :async-thunk]
+          dispatch-path          [id :dispatch]
+          dispatch-or-dispatches (or dispatch dispatch-n)]
+      (swap! register assoc-in dispatch-path dispatch-or-dispatches)
       (if-some [async-thunk (get-in @register thunk-path)]
         (async-thunk)
-        (let [async-thunk (async-fn #(re-frame/dispatch
+        (let [async-thunk (async-fn #(dispatch-fn
                                       (get-in @register dispatch-path))
                                     ms)]
           (when dispatch-first?
-            (re-frame/dispatch dispatch))
+            (dispatch-fn dispatch-or-dispatches))
           (swap! register assoc-in thunk-path async-thunk))))))
 
 (re-frame/reg-fx :debounce (new-async-fx (atom {}) util/debounce))

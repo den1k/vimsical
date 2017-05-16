@@ -99,10 +99,12 @@
   the post message code. postMessage will only be called if the js code doesn't
   throw.
 
-  New lines are added to calculate the relative position of the js code on error."
+  Trims the string to its right to avoid errors around the trailing semicolon.
+  Adds new lines to ease calculating the relative position of the js code on
+  error. (see error-handler)"
   [string]
   (str
-   "(function() {\n" (string/trimr string) " ;\n})() ; no trim left to preserve pos
+   "(function() {\n" (string/trimr string) " ;\n})()
    parent.postMessage({status: 'success'}, '*')"))
 
 (re-frame/reg-event-fx
@@ -138,10 +140,12 @@
      (.. catcher -contentWindow -location reload)
      (cond->
       {:debounce
-       {:ms       500
-        :dispatch (case status
-                    :success [::handlers/update-iframe-src]
-                    :error [::code-editor.handlers/set-error-markers [data]])}}
+       {:id         ::on-status
+        :ms         500
+        :dispatch-n (case status
+                      :success [[::code-editor.handlers/clear-error-markers]
+                                [::handlers/update-iframe-src]]
+                      :error [[::code-editor.handlers/set-error-markers [data]]])}}
        (= :success status) (merge {:dispatch [::code-editor.handlers/clear-error-markers]})))))
 
 (re-frame/reg-event-fx
