@@ -93,3 +93,5 @@
   (redis/->redis {:host host :port port}))
 
 (s/def ::session-store (fn [x] (and x (instance? Redis x))))
+
+(def empty-session ^:recreate {})

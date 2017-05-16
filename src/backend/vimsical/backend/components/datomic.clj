@@ -130,6 +130,8 @@
     (->Datomic (conf-uri conf) nil)
     (throw (ex-info (s/explain ::conf conf) {}))))
 
+(s/def ::datomic (fn [x] (and x (instance? Datomic x))))
+
 ;;
 ;; * Schema Api
 ;;

@@ -41,3 +41,5 @@
 (defn ->redis
   [opts]
   (map->Redis opts))
+
+(s/def ::redis (fn [x] (and x (instance? Redis x))))

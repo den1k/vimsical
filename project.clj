@@ -37,7 +37,8 @@
    {:source-paths ["src/vcs"]
     :dependencies
     [[org.clojure/data.avl        "0.0.17"]
-     [diffit                      "1.0.0"]]}
+     [diffit                      "1.0.0"
+      :exclusions [org.clojure/tools.reader]]]}
    ;;
    ;; Common
    ;;
@@ -47,8 +48,8 @@
     :dependencies
     [[com.cognitect/transit-clj           "0.8.300"]
      [com.cognitect/transit-cljs          "0.8.239"]
-     [org.clojure/core.async              "0.3.442" :exclusions [org.clojure/tools.reader]]
-     [com.stuartsierra/component          "0.3.1"]
+     [org.clojure/core.async              "0.3.442"]
+     [com.stuartsierra/component          "0.3.2"]
      [medley                              "0.8.4"]
      [environ                             "1.1.0"]
      [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]]}
@@ -56,8 +57,7 @@
    ;; Backend
    ;;
    :backend
-   [:vcs :common
-    {:source-paths ["src/backend"]
+   [{:source-paths ["src/backend"]
      :main         vimsical.backend.core
      :repositories
      {"my.datomic.com"
@@ -65,14 +65,18 @@
        :username :env/datomic_login
        :password :env/datomic_password}}
      :dependencies
-     [[com.taoensso/carmine    "2.15.0"]
-      [org.immutant/web        "2.1.5" :exclusions [ring/ring-core org.jboss.logging/jboss-logging]]
-      [cc.qbits/alia-all       "3.3.0"]
-      [cc.qbits/hayt           "4.0.0"]
-      [com.datomic/datomic-pro "0.9.5544" :exclusions [commons-codec]]
-      [ring                    "1.6.1"]]
+     [[com.taoensso/carmine          "2.16.0"
+       :exclusions [org.clojure/tools.reader]]
+      [cc.qbits/alia-all             "3.3.0"]
+      [cc.qbits/hayt                 "4.0.0"]
+      [com.datomic/datomic-pro       "0.9.5544" :exclusions [commons-codec]]
+      ;; HTTP stack
+      [io.pedestal/pedestal.service  "0.5.2"]
+      [io.pedestal/pedestal.immutant "0.5.2"]
+      [buddy/buddy-hashers           "1.2.0"]]
      :global-vars
-     {*warn-on-reflection* true *unchecked-math* :warn-on-boxed}}]
+     {*warn-on-reflection* true *unchecked-math* :warn-on-boxed}}
+    :vcs :common]
 
    :backend-dev
    [:backend

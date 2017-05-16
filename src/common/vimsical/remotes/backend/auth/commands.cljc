@@ -1,4 +1,4 @@
-(ns vimsical.remotes.api.auth.commands
+(ns vimsical.remotes.backend.auth.commands
   (:require
    [clojure.spec :as s]
    [vimsical.user :as user]))

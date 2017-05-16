@@ -4,7 +4,8 @@
    [vimsical.backend.adapters.cassandra.protocol :as cassandra]
    [vimsical.backend.components.delta-store.protocol :as protocol]
    [vimsical.backend.components.delta-store.schema :as schema]
-   [vimsical.backend.components.delta-store.queries :as queries]))
+   [vimsical.backend.components.delta-store.queries :as queries]
+   [clojure.spec :as s]))
 
 ;;
 ;; * Queries
@@ -59,3 +60,5 @@
       (cassandra/execute-batch-chan cassandra commands :unlogged))))
 
 (defn ->delta-store [] (map->DeltaStore {}))
+
+(s/def ::delta-store (fn [x] (and x (instance? DeltaStore x))))

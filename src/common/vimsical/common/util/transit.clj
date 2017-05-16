@@ -1,5 +1,6 @@
 (ns vimsical.common.util.transit
   (:require
+   [io.pedestal.interceptor :as interceptor]
    [cognitect.transit :as transit])
   (:import
    (java.io ByteArrayOutputStream)
@@ -18,7 +19,9 @@
 
 (def ^:private transit-content-type-re #"^application/transit\+(json|msgpack)")
 (defn- get-header [req header] (some-> req :headers (get header)))
-(defn- content-type [req] (get-header req "content-type"))
+(defn- content-type [req]
+  (or (get-header req "content-type")
+      (get-header req "Content-Type")))
 
 ;;
 ;; ** Requests
@@ -50,11 +53,11 @@
   (or (transit-request? response) (coll? body)))
 
 (defn- encode-transit-response
-  [resp writer options]
+  [resp writer {:keys [content-type-key] :as options :or {content-type-key "content-type"}}]
   (if-not (transit-response? resp)
     resp
     (-> resp
-        (assoc-in [:headers "content-type"] "application/transit+json")
+        (assoc-in [:headers content-type-key] "application/transit+json")
         (update :body write-transit writer options))))
 
 ;;
@@ -62,13 +65,31 @@
 ;;
 
 (defn wrap-transit-body
-  [handler {:keys [reader reader-options writer writer-options]
-            :or   {reader-options {} writer-options {}}}]
-  (fn [req]
-    (-> req
-        (decode-transit-request reader reader-options)
-        (handler)
-        (encode-transit-response writer writer-options))))
+  ([handler] (wrap-transit-body handler nil))
+  ([handler {:keys [reader reader-options writer writer-options]
+             :or   {reader default-reader reader-options {}
+                    writer default-writer writer-options {}}}]
+   (fn [req]
+     (-> req
+         (decode-transit-request reader reader-options)
+         (handler)
+         (encode-transit-response writer writer-options)))))
+
+(defn new-transit-body-interceptor
+  ([] (new-transit-body-interceptor nil))
+  ([{:keys [reader reader-options writer writer-options]
+     :or   {reader default-reader reader-options {}
+            writer default-writer writer-options {}}}]
+   ;; Difference in case between Ring and Pedestal??
+   (let [writer-options' (assoc writer-options :content-type-key "Content-Type")]
+     (interceptor/interceptor
+      {:name  ::transit-body-interceptor
+       :enter (fn [context]
+                (println "PPPPPPPPPPPPPPPPPPPPREEE}")
+                (update context :request decode-transit-request reader reader-options))
+       :leave (fn [context]
+                (println "PPPPPPPPPPPPPPPPPPPOOOOST}")
+                (update context :response encode-transit-response writer writer-options'))}))))
 
 ;;
 ;; * Reader

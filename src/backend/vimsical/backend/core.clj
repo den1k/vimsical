@@ -1,11 +1,8 @@
 (ns vimsical.backend.core
   "TODO
-  - Implement handlers
-  - Async session
   - Have a strategy to measure latency and throughput
   - Add an nRepl server component for prod
-  - Silence logs in test
-  - Logging config for prod "
+  - Logging"
   (:require
    [com.stuartsierra.component :as cp]
    [vimsical.backend.system :as system]))

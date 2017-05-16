@@ -1,9 +1,9 @@
-(ns vimsical.remotes.api
+(ns vimsical.remotes.backend
   (:require
    [clojure.spec :as s]
    [vimsical.remotes.error :as error]
    [vimsical.remotes.event :as event]
-   [vimsical.remotes.api.auth.commands :as auth.commands]))
+   [vimsical.remotes.backend.auth.commands :as auth.commands]))
 
 ;;
 ;; * Generic event
@@ -11,7 +11,6 @@
 
 (defmulti event-args first)
 (s/def ::event-args (s/multi-spec event-args first))
-
 (s/def ::event
   (s/& ::event/event
        (fn [{:keys [id args] :as a}]
@@ -28,12 +27,18 @@
        (fn [{:keys [id args] :as a}]
          (s/conform ::query-response-args [id args]))))
 (s/def ::command-response empty?)
-(s/def ::response
-  (s/or :error ::error/error :command ::command-response :query ::query-response))
+(s/def ::response (s/or :error ::error/error :command ::command-response :query ::query-response))
 
 ;;
 ;; * Event args
 ;;
+
+;;
+;; ** Status
+;;
+
+(defmethod event-args ::status [_] empty?)
+(defmethod query-response-args ::status-response [_] :ok)
 
 ;;
 ;; ** Auth
