@@ -27,7 +27,8 @@
             [vimsical.frontend.vcs.subs :as vcs.subs]
             [vimsical.vcs.branch :as branch]
             [vimsical.vcs.file :as file]
-            [vimsical.frontend.code-editor.handlers :as code-editor.handlers]))
+            [vimsical.frontend.code-editor.handlers :as code-editor.handlers]
+            [clojure.string :as string]))
 
 (defn error-catcher []
   #?(:cljs
@@ -101,7 +102,7 @@
   New lines are added to calculate the relative position of the js code on error."
   [string]
   (str
-   "(function() {\n" string " ;\n})()
+   "(function() {\n" (string/trimr string) " ;\n})() ; no trim left to preserve pos
    parent.postMessage({status: 'success'}, '*')"))
 
 (re-frame/reg-event-fx
@@ -135,10 +136,13 @@
  (fn [{:keys [ui-db]} [_ {:keys [status data]}]]
    (let [catcher (ui-db/get-error-catcher ui-db)]
      (.. catcher -contentWindow -location reload)
-     (case status
-       :success (re-frame/dispatch [::handlers/update-iframe-src])
-       :error (re-frame/dispatch [::code-editor.handlers/set-error-markers [data]])))
-   nil))
+     (cond->
+      {:debounce
+       {:ms       500
+        :dispatch (case status
+                    :success [::handlers/update-iframe-src]
+                    :error [::code-editor.handlers/set-error-markers [data]])}}
+       (= :success status) (merge {:dispatch [::code-editor.handlers/clear-error-markers]})))))
 
 (re-frame/reg-event-fx
  ::on-error

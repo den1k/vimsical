@@ -93,7 +93,8 @@
       [_ branch {::file/keys [sub-type] :as file}]]
    (if (= :javascript sub-type)
      (when (nil? file-lint-or-preprocessing-errors)
-       {:dispatch [::update-iframe-src branch]})
+       {:debounce {:ms       500
+                   :dispatch [::update-iframe-src branch]}})
      {:dispatch [::update-preview-node branch file]})))
 
 (re-frame/reg-event-fx

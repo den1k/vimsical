@@ -1,6 +1,7 @@
 (ns vimsical.frontend.util.re-frame
   #?@(:clj
-      [(:require
+      [
+       (:require
         [re-frame.core :as re-frame]
         [re-frame.interop :as interop]
         [re-frame.loggers :refer [console]]
@@ -105,8 +106,8 @@
 (defmethod inject-sub-cofx ::event->query-vector-fn
   [{:keys [event] :as coeffects} event->query-vector-fn]
   (if-some [[id :as query-vector] (event->query-vector-fn event)]
-    (let [sub                   (re-frame/subscribe query-vector)
-          val                   (deref sub)]
+    (let [sub (re-frame/subscribe query-vector)
+          val (deref sub)]
       (dispose-maybe query-vector sub)
       (assoc coeffects id val))
     coeffects))
@@ -223,36 +224,36 @@
 (re-frame/reg-fx :track track-fx)
 
 (comment
-  (do
-    (require '[re-frame.interop :as interop])
-    (re-frame/reg-event-fx
-     ::start-trigger-track
-     (fn [cofx event]
-       {:track
-        {:action       :register
-         :id           42
-         :subscription [::query-vector  "blah"]
-         :val->event   (fn [val] [::trigger val])}}))
+ (do
+   (require '[re-frame.interop :as interop])
+   (re-frame/reg-event-fx
+    ::start-trigger-track
+    (fn [cofx event]
+      {:track
+       {:action       :register
+        :id           42
+        :subscription [::query-vector "blah"]
+        :val->event   (fn [val] [::trigger val])}}))
 
-    (re-frame/reg-event-fx
-     ::stop-trigger-track
-     (fn [cofx event]
-       {:track
-        {:action :dispose
-         :id     42}}))
-    ;; Define a sub and the event we want to trigger
-    (defonce foo (interop/ratom 0))
-    (re-frame/reg-sub-raw ::query-vector (fn [_ _] (interop/make-reaction #(deref foo))))
-    (re-frame/reg-event-db ::trigger (fn [db val] (println "Trigger" val) db))
-    ;; Start the track
-    (re-frame/dispatch [::start-trigger-track])
-    ;; Update the ::query-vector, will cause ::trigger to run
-    (swap! foo inc)
-    (swap! foo inc)
-    (swap! foo inc)
-    ;; Stop the track, updates to ::query-vector aren't tracked anymore
-    (re-frame/dispatch [::stop-trigger-track])
-    (swap! foo inc)))
+   (re-frame/reg-event-fx
+    ::stop-trigger-track
+    (fn [cofx event]
+      {:track
+       {:action :dispose
+        :id     42}}))
+   ;; Define a sub and the event we want to trigger
+   (defonce foo (interop/ratom 0))
+   (re-frame/reg-sub-raw ::query-vector (fn [_ _] (interop/make-reaction #(deref foo))))
+   (re-frame/reg-event-db ::trigger (fn [db val] (println "Trigger" val) db))
+   ;; Start the track
+   (re-frame/dispatch [::start-trigger-track])
+   ;; Update the ::query-vector, will cause ::trigger to run
+   (swap! foo inc)
+   (swap! foo inc)
+   (swap! foo inc)
+   ;; Stop the track, updates to ::query-vector aren't tracked anymore
+   (re-frame/dispatch [::stop-trigger-track])
+   (swap! foo inc)))
 
 ;;
 ;; * Scheduler
@@ -307,13 +308,20 @@
   (fn [{:as   fx
         :keys [ms dispatch event->id dispatch-first?]
         :or   {event->id first dispatch-first? true}}]
-    (let [register-id (event->id dispatch)]
-      (if-some [async-thunk (get @register register-id)]
+    {:pre [ms dispatch]}
+    (let [register-id   (event->id dispatch)
+          thunk-path    [register-id :async-thunk]
+          dispatch-path [register-id :dispatch]]
+      (assert register-id (str "No register id for async fx " fx))
+      (swap! register assoc-in dispatch-path dispatch)
+      (if-some [async-thunk (get-in @register thunk-path)]
         (async-thunk)
-        (let [async-thunk (async-fn (re-frame/dispatch dispatch) ms)]
+        (let [async-thunk (async-fn #(re-frame/dispatch
+                                      (get-in @register dispatch-path))
+                                    ms)]
           (when dispatch-first?
-            (async-thunk))
-          (swap! register assoc register-id async-thunk))))))
+            (re-frame/dispatch dispatch))
+          (swap! register assoc-in thunk-path async-thunk))))))
 
 (re-frame/reg-fx :debounce (new-async-fx (atom {}) util/debounce))
 (re-frame/reg-fx :throttle (new-async-fx (atom {}) util/throttle))
