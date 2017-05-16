@@ -12,10 +12,10 @@
    [vimsical.vcs.file :as file]
    [vimsical.vcs.state.chunk :as chunk]))
 
-(defonce timeline-height 100)
-(defonce timeline-vertical-center (/ timeline-height 2))
-(defonce master-branch-height (* 0.75 timeline-height))
-(defonce child-branch-height timeline-height)
+(def timeline-height 100)
+(def timeline-vertical-center (/ timeline-height 2))
+(def master-branch-height (* 0.75 timeline-height))
+(def child-branch-height timeline-height)
 
 ;;
 ;; * Mouse events helpers
@@ -94,7 +94,7 @@
   (get color/type-colors-timeline sub-type))
 
 (defn- chunk
-  [duration abs-time file {::chunk/keys [depth duration branch-start? branch-end?]}]
+  [timeline-dur abs-time file {::chunk/keys [depth duration branch-start? branch-end?]}]
   (let [left               abs-time
         right              (+ left duration)
         height             (case depth 0 master-branch-height 1 child-branch-height)
@@ -104,10 +104,11 @@
         bezel              12.5
         top-bezel          (+ top bezel)
         bottom-bezel       (- bottom bezel)
-        horizontal-padding 0
+        horizontal-padding (* 0.007 timeline-dur)
         left-padding       (+ left horizontal-padding)
         right-padding      (- right horizontal-padding)
         fill               (file-color file)]
+
     [:polygon
      {:fill fill
       :points
@@ -174,14 +175,13 @@
       :style         {:pointer-events "none"}}]))
 
 (defn chunks []
-  (let [duration           (<sub [::subs/duration])
+  (let [timeline-dur       (<sub [::subs/duration])
         chunks-by-abs-time (<sub [::subs/chunks-by-absolute-start-time])
-        chunks-html
-                           (doall
+        chunks-html        (doall
                             (for [[abs-time {::chunk/keys [id file-id] :as c}] chunks-by-abs-time
                                   :let [file (<sub [::vcs.subs/file file-id])]]
                               ^{:key id}
-                              [chunk duration abs-time file c]))]
+                              [chunk timeline-dur abs-time file c]))]
     [:g [:defs [:clipPath {:id clip-path-id} chunks-html]]
      chunks-html]))
 
