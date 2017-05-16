@@ -39,18 +39,16 @@
         (util.dom/append! head new-node)))))
 
 (defmethod update-node! :html
-  [iframe file]
+  [iframe file string]
   #?(:cljs
      (when (iframe-ready? iframe)
-       (let [body (.. iframe -contentDocument -body)
-             html (<sub [::vcs.subs/preprocessed-file-string file])]
-         (util.dom/set-inner-html! body html)))))
+       (let [body (.. iframe -contentDocument -body)]
+         (util.dom/set-inner-html! body string)))))
 
 (defmethod update-node! :css
-  [iframe {::file/keys [sub-type] :keys [db/id] :as file}]
+  [iframe {::file/keys [sub-type] :keys [db/id] :as file} string]
   (when (iframe-ready? iframe)
-    (let [attrs  {:id id}
-          string (<sub [::vcs.subs/preprocessed-file-string file])]
+    (let [attrs {:id id}]
       (swap-head-node! iframe sub-type attrs string))))
 
 (re-frame/reg-event-fx
@@ -90,20 +88,20 @@
  (fn [{:keys           [db ui-db]
        ::vcs.subs/keys [file-lint-or-preprocessing-errors]
        :as             cofx}
-      [_ branch {::file/keys [sub-type] :as file}]]
+      [_ branch {::file/keys [sub-type] :as file} file-string]]
    (if (= :javascript sub-type)
      (when (nil? file-lint-or-preprocessing-errors)
        {:debounce {:ms       500
                    :dispatch [::update-iframe-src branch]}})
-     {:dispatch [::update-preview-node branch file]})))
+     {:dispatch [::update-preview-node branch file file-string]})))
 
 (re-frame/reg-event-fx
  ::update-preview-node
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [db ui-db] :as cofx}
-      [_ branch {::file/keys [sub-type] :as file}]]
+      [_ branch {::file/keys [sub-type] :as file} string]]
    (let [iframe (ui-db/get-iframe ui-db)]
-     (do (update-node! iframe file) nil))))
+     (do (update-node! iframe file string) nil))))
 
 (re-frame/reg-event-fx
  ::move-script-nodes
@@ -125,7 +123,7 @@
     {:action       :register
      :id           [:iframe file]
      :subscription [::vcs.subs/file-string file]
-     :event        [::update-live-preview branch file]}}))
+     :val->event   (fn [string] [::update-live-preview branch file string])}}))
 
 (re-frame/reg-event-fx
  ::track-stop
