@@ -45,7 +45,8 @@
    {:source-paths
     ["src/common"]
     :dependencies
-    [[com.cognitect/transit-cljs          "0.8.239"]
+    [[com.cognitect/transit-clj           "0.8.300"]
+     [com.cognitect/transit-cljs          "0.8.239"]
      [org.clojure/core.async              "0.3.442" :exclusions [org.clojure/tools.reader]]
      [com.stuartsierra/component          "0.3.1"]
      [medley                              "0.8.4"]
