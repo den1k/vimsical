@@ -10,8 +10,10 @@
 
   Error Catcher is an invisible iframe that only loads js libs and files.
   Two things matter to Error Catcher.
+
   1. Did the code throw any errors?
   2. Did the code run successfully?
+
   For 1. it attaches an error handler to the iframe and then injects js code.
   For 2. it injects some js code after the user-written code that posts a message
   to the parent. If it never is, an errors have not been thrown, we're in a

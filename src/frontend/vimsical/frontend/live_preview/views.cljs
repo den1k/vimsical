@@ -14,7 +14,13 @@
    Why the static markup?
    To avoid ghost JavaScript we must be able to reload the iframe. This happens
    automaticallly when we make blob, give it a URL and set it as `src` on iframe.
-   We can also reload the iframe manually without having to reinject any of our code."
+   We can also reload the iframe manually without having to reinject any of our code.
+
+   Live-Preview with :error-catcher?
+   Error-Catcher is a invisible iframe in charge of loading a vims' js libs and
+   evaluating the user-written javascript to check for parse and runtime errors.
+   When it is active Live-Preview only tracks non-js files and lets
+   Error-Catcher check and run on js updates."
   (:require
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
