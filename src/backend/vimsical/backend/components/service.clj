@@ -6,7 +6,8 @@
    [vimsical.backend.handler]          ; Side-effects
    [vimsical.backend.handlers.mutlifn :as events.multifn]
    [vimsical.common.env :as env]
-   [vimsical.common.util.transit :as transit]))
+   [vimsical.backend.components.server.interceptors.transit :as interceptors.transit]
+   [vimsical.backend.components.server.interceptors.session :as interceptors.session]))
 
 ;;
 ;; * Handler
@@ -16,11 +17,11 @@
 (s/def ::request map?)
 (s/def ::response map?)
 
-(s/fdef event-context-handler
+(s/fdef context-event-handler
         :args (s/cat :context ::context)
         :ret ::context)
 
-(defn event-context-handler
+(defn context-event-handler
   [context]
   (let [event    (some-> context :request :body)
         result   (events.multifn/handle context event)
@@ -28,7 +29,7 @@
     (assoc context :response response)))
 
 (def ^:private event-interceptor
-  {:name :event :enter event-context-handler})
+  {:name :event :enter context-event-handler})
 
 ;;
 ;; * Routes
@@ -46,7 +47,8 @@
 ;;
 
 (def default-interceptors
-  [(transit/new-transit-body-interceptor)])
+  [interceptors.transit/body
+   interceptors.session/session])
 
 ;;
 ;; * Service map

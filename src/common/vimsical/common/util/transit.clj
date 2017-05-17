@@ -1,6 +1,5 @@
 (ns vimsical.common.util.transit
   (:require
-   [io.pedestal.interceptor :as interceptor]
    [cognitect.transit :as transit])
   (:import
    (java.io ByteArrayOutputStream)
@@ -34,7 +33,7 @@
            (second)
            (keyword)))
 
-(defn- decode-transit-request
+(defn decode-transit-request
   [req reader options]
   (if-not (transit-request? req)
     req
@@ -52,7 +51,7 @@
   [{:keys [body] :as response}]
   (or (transit-request? response) (coll? body)))
 
-(defn- encode-transit-response
+(defn encode-transit-response
   [resp writer {:keys [content-type-key] :as options :or {content-type-key "content-type"}}]
   (if-not (transit-response? resp)
     resp
@@ -132,21 +131,3 @@
          (decode-transit-request reader reader-options)
          (handler)
          (encode-transit-response writer writer-options)))))
-
-;;
-;; * Pedestal interceptor
-;;
-
-(defn new-transit-body-interceptor
-  ([] (new-transit-body-interceptor nil))
-  ([{:keys [reader reader-options writer writer-options]
-     :or   {reader default-reader reader-options {}
-            writer default-writer writer-options {}}}]
-   ;; Difference in case between Ring and Pedestal??
-   (let [writer-options' (assoc writer-options :content-type-key "Content-Type")]
-     (interceptor/interceptor
-      {:name  ::transit-body-interceptor
-       :enter (fn [context]
-                (update context :request decode-transit-request reader reader-options))
-       :leave (fn [context]
-                (update context :response encode-transit-response writer writer-options'))}))))

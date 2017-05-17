@@ -26,8 +26,10 @@
 (s/def ::session-store ::session-store/session-store)
 (s/def ::server ::server/server)
 
+;; NOTE use unqualified keys to avoid circular dependencies in downstream
+;; pedestal context consumers (see deps interceptor)
 (s/def ::system
-  (s/keys :req [::cassandra-cluster ::cassandra-connection ::delta-store ::datomic ::session-store ::server]))
+  (s/keys :req-un [::cassandra-cluster ::cassandra-connection ::delta-store ::datomic ::session-store ::server]))
 
 ;;
 ;; * System map
@@ -42,36 +44,36 @@
    ;; * Cassandra delta-store
    ;;
 
-   ::cassandra-cluster
+   :cassandra-cluster
    (cassandra/->cluster
     {::cassandra/contact-points (env/required :cassandra-contact-points (env/comma-separated ::env/string))
      ::cassandra/port           (env/required :cassandra-port ::env/int)
      ::cassandra/retry-policy   :default})
 
-   ::cassandra-connection
+   :cassandra-connection
    (cp/using
     (cassandra/->connection
      {::cassandra/keyspace           (env/required :cassandra-keyspace ::env/string)
       ::cassandra/replication-factor (env/required :cassandra-replication-factor ::env/int)})
-    {:cluster ::cassandra-cluster})
+    {:cluster :cassandra-cluster})
 
-   ::delta-store
+   :delta-store
    (cp/using
     (delta-store/->delta-store)
-    {:cassandra ::cassandra-connection})
+    {:cassandra :cassandra-connection})
 
    ;;
    ;; * Datomic database
    ;;
 
-   ::datomic
+   :datomic
    (datomic/->datomic (datomic/env-conf))
 
    ;;
    ;; * Redis sessions-store
    ;;
 
-   ::session-store
+   :session-store
    (session-store/->session-store
     {::session-store/host (env/required :redis-host ::env/string)
      ::session-store/port (env/required :redis-port ::env/int)})
@@ -80,8 +82,8 @@
    ;; * Immutant <> Pedestal HTTP stack
    ;;
 
-   ::server
+   :server
    (cp/using
     (server/->server
      {::server/service-map service/service-map})
-    [::datomic ::delta-store ::session-store])))
+    [:datomic :delta-store :session-store])))

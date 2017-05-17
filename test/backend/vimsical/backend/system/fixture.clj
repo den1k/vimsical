@@ -30,6 +30,6 @@
       (try
         (f)
         (finally
-          (some-> *system* ::system/datomic datomic/delete-database!)
-          (some-> *system* ::system/cassandra-connection cassandra/drop-keyspace!)
+          (some-> *system* :datomic datomic/delete-database!)
+          (some-> *system* :cassandra-connection cassandra/drop-keyspace!)
           (cp/stop *system*))))))
