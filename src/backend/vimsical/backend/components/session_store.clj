@@ -1,10 +1,10 @@
 (ns vimsical.backend.components.session-store
   (:require
-   [vimsical.backend.components.session-store.spec :as spec]
+   [clojure.spec :as s]
    [ring.middleware.session.store :as store]
    [taoensso.carmine :as car]
    [vimsical.backend.adapters.redis :as redis]
-   [clojure.spec :as s])
+   [vimsical.backend.components.session-store.spec :as spec])
   (:import
    (java.util UUID)
    (vimsical.backend.adapters.redis Redis)))
@@ -13,7 +13,7 @@
 ;; * Internal specs
 ;;
 
-(s/def ::read-key string?)
+(s/def ::read-key (s/nilable string?))
 (s/def ::write-key (s/nilable ::read-key))
 
 ;;
@@ -93,5 +93,3 @@
   (redis/->redis {:host host :port port}))
 
 (s/def ::session-store (fn [x] (and x (instance? Redis x))))
-
-(def empty-session ^:recreate {})

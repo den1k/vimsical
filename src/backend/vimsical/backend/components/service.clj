@@ -23,10 +23,7 @@
 
 (defn context-event-handler
   [context]
-  (let [event    (some-> context :request :body)
-        result   (events.multifn/handle context event)
-        response {:status 200 :body result}]
-    (assoc context :response response)))
+  (events.multifn/handle context (some-> context :request :body)))
 
 (def ^:private event-interceptor
   {:name :event :enter context-event-handler})

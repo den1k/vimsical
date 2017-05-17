@@ -57,7 +57,7 @@
   (-pull [_ query eid])
   (-q [_ query inputs]))
 
-(defn transact [component  entity-or-txs] (-transact component  entity-or-txs))
+(defn transact [component  entity-or-txs] (-transact component entity-or-txs))
 (defn pull [component query eid] (-pull component query eid))
 (defn q [component query & inputs] (-q component query inputs))
 
@@ -74,7 +74,6 @@
     (do
       (d/create-database uri)
       (let [conn  (d/connect uri)
-            _ (println conn)
             this' (assoc this :conn conn)]
         (if (s/valid? ::datomic this')
           (doto this' create-schema!)
