@@ -61,37 +61,6 @@
         (update :body write-transit writer options))))
 
 ;;
-;; * Ring middleware
-;;
-
-(defn wrap-transit-body
-  ([handler] (wrap-transit-body handler nil))
-  ([handler {:keys [reader reader-options writer writer-options]
-             :or   {reader default-reader reader-options {}
-                    writer default-writer writer-options {}}}]
-   (fn [req]
-     (-> req
-         (decode-transit-request reader reader-options)
-         (handler)
-         (encode-transit-response writer writer-options)))))
-
-(defn new-transit-body-interceptor
-  ([] (new-transit-body-interceptor nil))
-  ([{:keys [reader reader-options writer writer-options]
-     :or   {reader default-reader reader-options {}
-            writer default-writer writer-options {}}}]
-   ;; Difference in case between Ring and Pedestal??
-   (let [writer-options' (assoc writer-options :content-type-key "Content-Type")]
-     (interceptor/interceptor
-      {:name  ::transit-body-interceptor
-       :enter (fn [context]
-                (println "PPPPPPPPPPPPPPPPPPPPREEE}")
-                (update context :request decode-transit-request reader reader-options))
-       :leave (fn [context]
-                (println "PPPPPPPPPPPPPPPPPPPOOOOST}")
-                (update context :response encode-transit-response writer writer-options'))}))))
-
-;;
 ;; * Reader
 ;;
 
@@ -148,3 +117,36 @@
          ret  (.toString baos)]
      (.reset baos)
      ret)))
+
+;;
+;; * Ring middleware
+;;
+
+(defn wrap-transit-body
+  ([handler] (wrap-transit-body handler nil))
+  ([handler {:keys [reader reader-options writer writer-options]
+             :or   {reader default-reader reader-options {}
+                    writer default-writer writer-options {}}}]
+   (fn [req]
+     (-> req
+         (decode-transit-request reader reader-options)
+         (handler)
+         (encode-transit-response writer writer-options)))))
+
+;;
+;; * Pedestal interceptor
+;;
+
+(defn new-transit-body-interceptor
+  ([] (new-transit-body-interceptor nil))
+  ([{:keys [reader reader-options writer writer-options]
+     :or   {reader default-reader reader-options {}
+            writer default-writer writer-options {}}}]
+   ;; Difference in case between Ring and Pedestal??
+   (let [writer-options' (assoc writer-options :content-type-key "Content-Type")]
+     (interceptor/interceptor
+      {:name  ::transit-body-interceptor
+       :enter (fn [context]
+                (update context :request decode-transit-request reader reader-options))
+       :leave (fn [context]
+                (update context :response encode-transit-response writer writer-options'))}))))

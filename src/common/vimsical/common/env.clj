@@ -10,7 +10,7 @@
 ;; * Mutable env map
 ;;
 
-(defonce ^:private env-atom (atom env/env))
+(defonce env-atom (atom env/env))
 
 (defn reset! [key value] (do (swap! env-atom assoc key value) nil))
 (defn get!   [key] (get @env-atom key))
@@ -22,6 +22,23 @@
 (s/fdef target :ret #{:test :dev :prod})
 
 (defn env [] (-> env-atom deref :env keyword))
+
+(defmacro with-env
+  "Same as a let binding for environment values, meant to be used in tests."
+  [m & body]
+  `(let [before# (deref env-atom)]
+     (try
+       (clojure.core/swap! env-atom merge ~m)
+       (do ~@body)
+       (finally
+         (clojure.core/reset! env-atom before#)))))
+
+(comment
+  (do
+    (assert (nil? (get! ::foobar)))
+    (with-env {::foobar :bar!}
+      (assert (= :bar! (get! ::foobar))))
+    (assert (nil? (get! ::foobar)))))
 
 ;;
 ;; * Conformer helpers

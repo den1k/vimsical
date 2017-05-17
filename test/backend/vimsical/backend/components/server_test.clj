@@ -3,11 +3,16 @@
    [clojure.spec :as s]
    [clojure.test :refer [deftest is use-fixtures]]
    [io.pedestal.test :refer [response-for]]
+   [orchestra.spec.test :as st]
    [vimsical.backend.components.server :as sut]
-   [vimsical.backend.components.server-fixture :refer [*server* *service-fn* server]]
+   [vimsical.backend.components.server.fixture
+    :refer
+    [*server* *service-fn* server]]
    [vimsical.backend.components.service :as service]
-   [vimsical.remotes.backend :as backend]
-   [vimsical.common.util.transit :as transit]))
+   [vimsical.common.util.transit :as transit]
+   [vimsical.remotes.backend :as backend]))
+
+(st/instrument)
 
 ;;
 ;; * Helpers

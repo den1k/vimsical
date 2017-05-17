@@ -3,7 +3,8 @@
    [clojure.spec :as s]
    [io.pedestal.http :as http]
    [io.pedestal.http.route :as route]
-   [vimsical.backend.events.multifn :as events.multifn]
+   [vimsical.backend.handler]          ; Side-effects
+   [vimsical.backend.handlers.mutlifn :as events.multifn]
    [vimsical.common.env :as env]
    [vimsical.common.util.transit :as transit]))
 

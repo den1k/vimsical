@@ -1,23 +1,17 @@
 (ns vimsical.backend.adapters.cassandra
-  "TODO
-  - Renamce execute to execute-chan and add execute-async
-  - Deal with prepared queries injected from the store (atom?)"
   (:require
    [clojure.core.async :as async]
    [clojure.spec :as s]
    [com.stuartsierra.component :as cp]
    [qbits.alia :as alia]
-   [qbits.hayt :as hayt]
    [qbits.alia.async :as alia.async]
-   [qbits.alia.codec :as codec]
    [qbits.alia.codec.nippy :as nippy]
    [vimsical.backend.adapters.cassandra.cluster :as cluster]
-   [vimsical.backend.adapters.cassandra.util :as util]
-   [vimsical.backend.adapters.cassandra.protocol :as protocol]
    [vimsical.backend.adapters.cassandra.cql :as cql]
+   [vimsical.backend.adapters.cassandra.protocol :as protocol]
+   [vimsical.backend.adapters.cassandra.util :as util]
    [vimsical.common.util.core :as common.util])
-  (:import
-   (com.datastax.driver.core Cluster PreparedStatement ResultSetFuture Session Statement)))
+  (:import [com.datastax.driver.core PreparedStatement ResultSetFuture Session Statement]))
 
 ;;
 ;; * Driver
@@ -89,7 +83,7 @@
 ;;
 
 (defn- session-fetch-size
-  [session]
+  [^Session session]
   (-> session .getCluster .getConfiguration .getQueryOptions .getFetchSize))
 
 (def default-options

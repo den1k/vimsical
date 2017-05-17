@@ -64,12 +64,16 @@ dev-styles-player: deps
 infra/.env:
 	exit 1 "Copy ./infra/env.template to ./infra/.env and add secrets"
 
-infra: infra/.env
+infra-start: infra/.env
 	cd infra && \
 	docker-compose \
 	-f docker-compose.yml \
-	-f docker-compose.dev.yml up -d \
-	&& docker-compose logs -f
+	-f docker-compose.dev.yml up -d
+
+infra-logs: infra/.env
+	cd infra && docker-compose logs -f
+
+infra: infra-start infra-logs
 
 infra-stop:
 	cd infra \

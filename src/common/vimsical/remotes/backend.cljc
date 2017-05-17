@@ -9,8 +9,8 @@
 ;; * Generic event
 ;;
 
-(defmulti event-args first)
-(s/def ::event-args (s/multi-spec event-args first))
+(defmulti event-args-mspec first)
+(s/def ::event-args (s/multi-spec event-args-mspec first))
 (s/def ::event
   (s/& ::event/event
        (fn [{:keys [id args] :as a}]
@@ -20,8 +20,8 @@
 ;; * Generic response
 ;;
 
-(defmulti query-response-args first)
-(s/def ::query-reponse-args (s/multi-spec query-response-args first))
+(defmulti query-response-args-mspec first)
+(s/def ::query-reponse-args (s/multi-spec query-response-args-mspec first))
 (s/def ::query-response
   (s/& ::event/event
        (fn [{:keys [id args] :as a}]
@@ -37,13 +37,13 @@
 ;; ** Status
 ;;
 
-(defmethod event-args ::status [_] empty?)
-(defmethod query-response-args ::status-response [_] :ok)
+(defmethod event-args-mspec ::status [_] empty?)
+(defmethod query-response-args-mspec ::status-response [_] :ok)
 
 ;;
 ;; ** Auth
 ;;
 
-(defmethod event-args ::auth.commands/login!    [_] ::auth.commands/login-args)
-(defmethod event-args ::auth.commands/logout!   [_] ::auth.commands/logout-args)
-(defmethod event-args ::auth.commands/register! [_] ::auth.commands/register-args)
+(defmethod event-args-mspec ::auth.commands/login!    [_] ::auth.commands/login-args)
+(defmethod event-args-mspec ::auth.commands/logout!   [_] ::auth.commands/logout-args)
+(defmethod event-args-mspec ::auth.commands/register! [_] ::auth.commands/register-args)

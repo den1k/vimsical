@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as str]
    [com.stuartsierra.component :as cp]
-   [datomic.api :as datomic]
+   [datomic.api :as d]
    [vimsical.backend.components.datomic :as sut])
   (:import java.util.UUID))
 
@@ -16,14 +16,14 @@
 ;; * Helpers
 ;;
 
-(defn- uuid-name
+(defn name-uuid
   [name]
   (-> name (str "-test-" (UUID/randomUUID)) (str/replace "-" "_")))
 
 (defn- test-config
   []
   (-> (sut/env-conf)
-      (update :api.datomic/name uuid-name)))
+      (update :api.datomic/name name-uuid)))
 
 ;;
 ;; * Fixture
@@ -31,12 +31,10 @@
 
 (defn datomic
   [f]
-  (let [config                    (test-config)
-        {:keys [uri] :as datomic} (cp/start (sut/->datomic config))]
+  (binding [*datomic* (cp/start (sut/->datomic (test-config)))]
     (try
-      (binding [*datomic* datomic]
-        (sut/create-schema *datomic*)
-        (f))
+      (sut/create-schema! *datomic*)
+      (f)
       (finally
-        (datomic/delete-database uri)
-        (cp/stop datomic)))))
+        (sut/delete-database! *datomic*)
+        (cp/stop *datomic*)))))

@@ -1,12 +1,11 @@
-(ns vimsical.backend.events.auth.commands
+(ns vimsical.backend.handlers.auth.commands
   (:require
    [datomic.api :as d]
-   [vimsical.backend.util.auth :as util.auth]
-   [vimsical.user :as user]
    [vimsical.backend.components.session-store :as session-store]
-   [vimsical.backend.components.datomic :as datomic]
+   [vimsical.backend.handlers.mutlifn :refer [handle]]
+   [vimsical.backend.util.auth :as util.auth]
    [vimsical.remotes.backend.auth.commands :as commands]
-   [vimsical.backend.events.multifn :refer [handle]]))
+   [vimsical.user :as user]))
 
 ;;
 ;; * Queries

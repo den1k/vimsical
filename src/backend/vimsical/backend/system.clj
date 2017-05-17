@@ -4,15 +4,36 @@
   - Add an nRepl server component for prod
   - Logging"
   (:require
-
    [com.stuartsierra.component :as cp]
    [vimsical.backend.adapters.cassandra :as cassandra]
+   [vimsical.backend.adapters.cassandra.cluster :as cassandra-cluster]
    [vimsical.backend.components.datomic :as datomic]
    [vimsical.backend.components.service :as service]
    [vimsical.backend.components.server :as server]
    [vimsical.backend.components.delta-store :as delta-store]
    [vimsical.backend.components.session-store :as session-store]
-   [vimsical.common.env :as env]))
+   [vimsical.common.env :as env]
+   [clojure.spec :as s]))
+
+;;
+;; * Spec
+;;
+
+(s/def ::cassandra-cluster ::cassandra-cluster/cluster)
+(s/def ::cassandra-connection ::cassandra/connection)
+(s/def ::delta-store ::delta-store/delta-store)
+(s/def ::datomic ::datomic/datomic)
+(s/def ::session-store ::session-store/session-store)
+(s/def ::server ::server/server)
+
+(s/def ::system
+  (s/keys :req [::cassandra-cluster ::cassandra-connection ::delta-store ::datomic ::session-store ::server]))
+
+;;
+;; * System map
+;;
+
+(s/fdef new-system :ret ::system)
 
 (defn new-system []
   (cp/system-map
@@ -30,7 +51,8 @@
    ::cassandra-connection
    (cp/using
     (cassandra/->connection
-     {::cassandra/keyspace (env/required :cassandra-keyspace ::env/string)})
+     {::cassandra/keyspace           (env/required :cassandra-keyspace ::env/string)
+      ::cassandra/replication-factor (env/required :cassandra-replication-factor ::env/int)})
     {:cluster ::cassandra-cluster})
 
    ::delta-store

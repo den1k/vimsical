@@ -65,6 +65,8 @@
 ;; * Component
 ;;
 
+(declare create-schema!)
+
 (defrecord Datomic
     [uri conn]
   cp/Lifecycle
@@ -72,9 +74,10 @@
     (do
       (d/create-database uri)
       (let [conn  (d/connect uri)
+            _ (println conn)
             this' (assoc this :conn conn)]
         (if (s/valid? ::datomic this')
-          this'
+          (doto this' create-schema!)
           (throw (ex-info (s/explain-str ::datomic this') {}))))))
   (stop [this]
     (update this :conn d/release))
@@ -149,7 +152,9 @@
        more)
       {:datoms n})))
 
-(defn create-schema
-  ([datomic] (create-schema datomic (io/resource "backend/datomic/schema.edn")))
+(defn create-schema!
+  ([datomic] (create-schema! datomic (io/resource "backend/datomic/schema.edn")))
   ([{:keys [conn] :as datomic} file]
    (run-transactions conn (read-transactions file))))
+
+(defn delete-database! [{:keys [uri]}] (d/delete-database uri))

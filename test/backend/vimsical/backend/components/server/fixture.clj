@@ -1,4 +1,4 @@
-(ns vimsical.backend.components.server-fixture
+(ns vimsical.backend.components.server.fixture
   (:require
    [io.pedestal.http :as http]
    [com.stuartsierra.component :as cp]
