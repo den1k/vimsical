@@ -225,7 +225,8 @@
     [{:id           [::editor-str file]
       :action       :register
       :subscription [::subs/string file]
-      :val->event   (fn [string] [::update-editor-string file string])}
+      :val->event   (fn [string]
+                      [::update-editor-string file string])}
      {:id              [::editor-pos file]
       :action          :register
       ;; Prevents showing cursors on all editors when reloading

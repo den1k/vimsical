@@ -10,7 +10,8 @@
    [vimsical.frontend.vcr.handlers :as vcr.handlers]
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.vcs.file :as file]
-   [vimsical.vcs.state.chunk :as chunk]))
+   [vimsical.vcs.state.chunk :as chunk]
+   [vimsical.frontend.util.dom :as util.dom]))
 
 (def timeline-height 100)
 (def timeline-vertical-center (/ timeline-height 2))
@@ -24,14 +25,11 @@
 (def x-scroll-factor 10)
 (def y-scroll-factor (* 5 x-scroll-factor))
 
-(defn e->mouse-coords [e] [(.-clientX e) (.-clientY e)])
-(defn e->mouse-deltas [e] [(.-deltaX e) (.-deltaY e)])
-
 (defn scroll-event->timeline-offset
   [e]
   (letfn [(abs [x] (max x (- x)))
           (max-delta [e]
-            (let [[dx dy] (e->mouse-deltas e)]
+            (let [[dx dy] (util.dom/e->mouse-deltas e)]
               (if (< (abs dx) (abs dy))
                 [nil dy]
                 [dx nil])))]
@@ -58,7 +56,7 @@
 (defn on-mouse-enter [e]
   (re-frame/dispatch
    [::handlers/on-mouse-enter
-    (e->mouse-coords e)
+    (util.dom/e->mouse-coords e)
     coords-and-svg-node->timeline-position]))
 
 (defn on-mouse-wheel [e]
@@ -70,13 +68,13 @@
 (defn on-mouse-move [e]
   (re-frame/dispatch
    [::handlers/on-mouse-move
-    (e->mouse-coords e)
+    (util.dom/e->mouse-coords e)
     coords-and-svg-node->timeline-position]))
 
 (defn on-click [e]
   (re-frame/dispatch
    [::handlers/on-click
-    (e->mouse-coords e)
+    (util.dom/e->mouse-coords e)
     coords-and-svg-node->timeline-position
     [::vcr.handlers/step]]))
 

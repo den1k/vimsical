@@ -25,10 +25,13 @@
        :font-size   :22px}]]
     [:&.timeline-container
      [:.play-pause
-      {:height :20px}]
+      {:height :20px
+       :cursor :pointer}]
 
      [:.timeline
-      {:position :relative}
+      {:position :relative
+       :height   :100%
+       :cursor   :pointer}
       [:.progress
        {:height        :8px
         :width         :100%
@@ -37,16 +40,24 @@
        [:&.left
         {:background :lightgrey}]
        [:&.passed
-        {:background :black
-         :width      :55px}]]
+        {:background :black}]]
 
-      [:.playhead
-       {:left          :50px
-        :width         :16px
-        :height        :16px
-        :border-radius :50%
-        :background    :black
-        :position      :absolute}]]]]
+      [:.head
+       {:background          :black
+        :position            :absolute
+        :transition          "all 0.2s ease" ; `all` is overridden by transition-prop
+        :transition-property "margin-left, width, height, border-radius"}
+       [:&.playhead
+        {:height        :16px
+         :width         :16px
+         :margin-left   :-8px
+         :border-radius :50%}]
+       [:&.skimhead
+        {:height        :21px
+         :width         :6px
+         :margin-left   :-3px
+         :border-radius 0}]
+       ]]]]
    [:.preview-container
     {:position :relative}
     [:.play-button-overlay

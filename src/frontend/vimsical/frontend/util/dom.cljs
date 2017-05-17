@@ -78,7 +78,7 @@
           (set-inner-html! "")))
 
 ;;
-;; * Key Handlers
+;; * Event Transformers and Handlers
 ;;
 
 (defn e->key [e]
@@ -92,6 +92,56 @@
     (.preventDefault e)
     (f)))
 
+(defn e->mouse-coords [e] [(.-clientX e) (.-clientY e)])
+(defn e->mouse-deltas [e] [(.-deltaX e) (.-deltaY e)])
+
+;;
+;; * Dimensions
+;;
+
+(defn bounding-client-rect
+  "Returns a map of the bounding client rect of `elem`
+   as a map with [:top :left :right :bottom :width :height]"
+  [elem]
+  (let [r      (.getBoundingClientRect elem)
+        height (.-height r)]
+    {:top    (.-top r)
+     :bottom (.-bottom r)
+     :left   (.-left r)
+     :right  (.-right r)
+     :width  (.-width r)
+     :height height
+     :middle (/ height 2)}))
+
+(def component-rect
+  (comp bounding-client-rect
+        reagent/dom-node))
+
+(defn e->rel-mouse-coords
+  ([e] (e->rel-mouse-coords e (.-target e)))
+  ([e rel-to-elem]
+   (let [rect  (bounding-client-rect rel-to-elem)
+         [x y] (e->mouse-coords e)
+         rel-x (- x (:left rect))
+         rel-y (- y (:top rect))]
+     [rel-x rel-y])))
+
+(defn e->rel-mouse-coords-percs
+  ([e] (e->rel-mouse-coords e (.-target e)))
+  ([e rel-to-elem]
+   (let [{:keys [left top width height]} (bounding-client-rect rel-to-elem)
+         [x y] (e->mouse-coords e)
+         rel-x  (- x left)
+         rel-y  (- y top)
+         x-perc (-> rel-x (/ width) (* 100) (util/clamp 0 100))
+         y-perc (-> rel-y (/ height) (* 100) (util/clamp 0 100))]
+     [x-perc y-perc])))
+
+(defn rel-component-mouse-coords [c e]
+  (e->rel-mouse-coords e (reagent/dom-node c)))
+
+(defn rel-component-mouse-coords-percs [c e]
+  (e->rel-mouse-coords-percs e (reagent/dom-node c)))
 
 ;;
 ;; * Blobs

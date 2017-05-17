@@ -279,3 +279,7 @@
 #?(:cljs
    (defn norm-str [s]
      (some-> s not-empty gstr/collapseWhitespace)))
+
+(defn clamp                             ; from thi.ng.math.core/clamp
+  "Constraints x to be in closed interval [min max]."
+  [x min max] (if (< x min) min (if (> x max) max x)))

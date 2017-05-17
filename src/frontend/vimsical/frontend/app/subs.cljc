@@ -9,6 +9,11 @@
    (:app/route db)))
 
 (re-frame/reg-sub
+ ::vims
+ (fn [db [_ ?pattern]]
+   (util.mg/pull* db [:app/vims (or ?pattern '[*])])))
+
+(re-frame/reg-sub
  ::libs
  (fn [db [_ ?pattern]]
    (util.mg/pull* db [:app/libs (or ?pattern '[*])])))
