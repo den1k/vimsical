@@ -9,16 +9,16 @@
 (defprotocol ICassandraAsync
   (execute-async
     [this executable success error]
-    [this executable {:as opts :keys [channel]} success error])
+    [this executable success error opts])
   (execute-batch-async
     [this commands success error]
     [this commands batch-type success error]
-    [this commands batch-type {:keys [channel] :as opts} success error]))
+    [this commands batch-type success error opts]))
 
 (defprotocol ICassandraChan
   (execute-chan
     [this executable]
-    [this executable {:as opts :keys [channel]}])
+    [this executable {:keys [channel] :as opts}])
   (execute-batch-chan
     [this commands]
     [this commands batch-type]

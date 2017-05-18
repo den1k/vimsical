@@ -4,16 +4,17 @@
   - Add an nRepl server component for prod
   - Logging"
   (:require
+   [clojure.spec :as s]
    [com.stuartsierra.component :as cp]
    [vimsical.backend.adapters.cassandra :as cassandra]
    [vimsical.backend.adapters.cassandra.cluster :as cassandra-cluster]
    [vimsical.backend.components.datomic :as datomic]
-   [vimsical.backend.components.service :as service]
-   [vimsical.backend.components.server :as server]
    [vimsical.backend.components.delta-store :as delta-store]
+   [vimsical.backend.components.server :as server]
+   [vimsical.backend.components.service :as service]
    [vimsical.backend.components.session-store :as session-store]
-   [vimsical.common.env :as env]
-   [clojure.spec :as s]))
+   [vimsical.backend.components.snapshot-store :as snapshot-store]
+   [vimsical.common.env :as env]))
 
 ;;
 ;; * Spec
@@ -62,6 +63,11 @@
     (delta-store/->delta-store)
     {:cassandra :cassandra-connection})
 
+   :snapshot-store
+   (cp/using
+    (snapshot-store/->snapshot-store)
+    {:cassandra :cassandra-connection})
+
    ;;
    ;; * Datomic database
    ;;
@@ -86,4 +92,7 @@
    (cp/using
     (server/->server
      {::server/service-map service/service-map})
-    [:datomic :delta-store :session-store])))
+    [:datomic
+     :delta-store
+     :snapshot-store
+     :session-store])))

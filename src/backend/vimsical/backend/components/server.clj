@@ -31,7 +31,7 @@
 
 (defn- start-service
   [service-map component]
-  (let [context-dependencies-interceptor (interceptors.deps/new-context-dependencies-injector component :session-store :cassandra :datomic)
+  (let [context-dependencies-interceptor (interceptors.deps/new-context-dependencies-injector component)
         new-interceptors                 [context-dependencies-interceptor]]
     (-> service-map
         (add-default-interceptors)

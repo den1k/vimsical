@@ -15,7 +15,7 @@
 ;; * Helpers
 ;;
 
-(defn- new-delta-store []
+(defn- ->delta-store []
   (-> (delta-store/->delta-store)
       (assoc :cassandra cassandra/*connection*)
       (cp/start)))
@@ -23,7 +23,7 @@
 (defn- delta-store
   [f]
   {:pre [cassandra/*connection*]}
-  (binding [*delta-store* (new-delta-store)]
+  (binding [*delta-store* (->delta-store)]
     (try
       (f)
       (finally

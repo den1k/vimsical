@@ -55,13 +55,6 @@
 (s/def ::conf
   (s/keys :req-un [::contact-points ::port ::retry-policy ::load-balancing-policy]))
 
-(defn unqualify-map
-  [m]
-  (reduce-kv
-   (fn [m k v]
-     (assoc m (keyword (name k)) v))
-   (empty m) m))
-
 ;;
 ;; * Lifecycle
 ;;

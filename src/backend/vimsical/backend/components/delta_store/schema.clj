@@ -24,16 +24,7 @@
      [:pad         :bigint]
      [:meta        :blob]
      [:primary-key
-      [[:user_uid  :vims_uid] :ts :branch_uid :uid]]])
-   (cql/create-table
-    :file_preview
-    [[:user_uid    :uuid]
-     [:vims_uid    :uuid]
-     [:branch_uid  :uuid]
-     [:file_uid    :uuid]
-     [:text        :text]
-     [:primary-key
-      [[:user_uid  :vims_uid] :branch_uid :file_uid]]])])
+      [[:user_uid  :vims_uid] :ts :branch_uid :uid]]])])
 
 ;;
 ;; * Specs

@@ -89,11 +89,11 @@
 (def default-options
   {:result-set-fn #(into [] (map util/underscores->hyphens) %)})
 
-(defn options [opts] (merge default-options opts))
+(defn new-options [options] (merge default-options options))
 
 (defn async-options
-  [opts success error]
-  (assoc (options opts) :success success :error error))
+  [options success error]
+  (assoc (new-options options) :success success :error error))
 
 ;;
 ;; * Connection
@@ -150,14 +150,13 @@
   protocol/ICassandraAsync
   (execute-async
     [this executable success error]
-    (protocol/execute-async this executable nil success error))
+    (protocol/execute-async this executable success error nil))
   (execute-async
-    [{:as this :keys [session]} executable opts success error]
+    [{:as this :keys [session]} executable success error options]
     {:pre [session]}
-    (if-let [executable (if (keyword? executable) (prepared this executable) executable)]
-      (let [statement (command->statement this executable)
-            opts'     (async-options opts success error)]
-        (alia/execute-async session statement opts'))
+    (if-some [statement (command->statement this executable)]
+      (let [options' (async-options options success error)]
+        (alia/execute-async session statement options'))
       (error (ex-info "invalid executable" {:executable executable}))))
 
   (execute-batch-async
@@ -165,14 +164,15 @@
     (protocol/execute-batch-async this commands :logged success error))
   (execute-batch-async
     [this commands batch-type success error]
-    (protocol/execute-batch-async this commands batch-type nil success error))
+    (protocol/execute-batch-async this commands batch-type success error nil))
   (execute-batch-async
-    [{:keys [session] :as this} commands batch-type opts success error]
+    [{:keys [session] :as this} commands batch-type success error options]
     (try
-      (let [statements (commands->statements this commands)
-            batch      (alia/batch statements batch-type)
-            opts'      (async-options opts success error)]
-        (alia/execute-async session batch opts'))
+      (if-some [statements (commands->statements this commands)]
+        (let [batch    (alia/batch statements batch-type)
+              options' (async-options options success error)]
+          (alia/execute-async session batch options'))
+        (error (ex-info "invalid commands" {:commands commands})))
       (catch Throwable t
         (error t))))
 
@@ -181,17 +181,17 @@
     [this executable]
     (protocol/execute-chan this executable nil))
   (execute-chan
-    [{:as this :keys [session]} executable {:as opts :keys [channel] :or {channel (async/chan 1)}}]
+    [{:as this :keys [session]} executable {:as options :keys [channel] :or {channel (async/chan 1)}}]
     {:pre [session]}
-    (if-let [executable (if (keyword? executable) (prepared this executable) executable)]
-      (let [statement (command->statement this executable)
-            opts'     (options opts)]
+    (if-some [statement (command->statement this executable)]
+      (let [options' (new-options options)]
         ;; Note: alia/execute-chan-buffered because of
         ;; https://github.com/mpenet/alia/issues/29
-        (alia.async/execute-chan-buffered session statement opts'))
+        (alia.async/execute-chan-buffered session statement options'))
       (doto channel
         (async/put! (ex-info "invalid executable" {:executable executable}))
         (async/close!))))
+
   (execute-batch-chan
     [this commands]
     (protocol/execute-batch-chan this commands :logged))
@@ -199,12 +199,13 @@
     [this commands batch-type]
     (protocol/execute-batch-chan this commands batch-type nil))
   (execute-batch-chan
-    [{:keys [session] :as this} commands batch-type {:keys [channel] :as opts :or {channel (async/chan 1)}}]
+    [{:keys [session] :as this} commands batch-type {:keys [channel] :as options :or {channel (async/chan 1)}}]
     (try
-      (let [statements (commands->statements this commands)
-            batch      (alia/batch statements batch-type)
-            opts'      (options opts)]
-        (alia.async/execute-chan-buffered session batch opts'))
+      (if-some [statements (commands->statements this commands)]
+        (let [batch    (alia/batch statements batch-type)
+              options' (new-options options)]
+          (alia.async/execute-chan-buffered session batch options'))
+        (throw (ex-info "invalid commands" {:commands commands})))
       (catch Throwable t
         (doto channel
           (async/put! t)
@@ -232,7 +233,7 @@
 
 (defn ->cluster-conf [conf]
   (-> conf
-      (cluster/unqualify-map)
+      (common.util/unqualify-keys)
       (update :retry-policy cluster/->retry-policy)
       (update :load-balancing-policy cluster/->load-balancing-policy)))
 
