@@ -18,6 +18,8 @@
 
 (use-fixtures :each system)
 
+(defn status-ok? [{:keys [status]}] (<= 200 status 299))
+
 (deftest register-test
   (let [register-user {:db/uid           (uuid)
                        ::user/first-name "Foo"
@@ -28,6 +30,16 @@
                        *service-fn*
                        :post (service/url-for :events)
                        :headers {"Content-Type" "application/transit+json"}
-                       :body     (transit/write-transit [::auth.commands/register! register-user]))
-        expect        {:status 200}]
-    (is (= expect actual))))
+                       :body     (transit/write-transit [::auth.commands/register! register-user]))]
+    (is (status-ok? actual))))
+
+(deftest login-test
+  (do (register-test)
+      (let [login-user {::user/email    "foo@bar.com"
+                        ::user/password "foobar"}
+            actual     (response-for
+                        *service-fn*
+                        :post (service/url-for :events)
+                        :headers {"Content-Type" "application/transit+json"}
+                        :body     (transit/write-transit [::auth.commands/login! login-user]))]
+        (is (status-ok? actual)))))

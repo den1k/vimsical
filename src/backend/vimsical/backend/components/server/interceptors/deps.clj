@@ -1,6 +1,8 @@
 (ns vimsical.backend.components.server.interceptors.deps
   (:require
-   [io.pedestal.interceptor :as interceptor]))
+   [io.pedestal.interceptor :as interceptor]
+   [vimsical.backend.components.server.interceptors.spec :as interceptors.spec]
+   [clojure.spec :as s]))
 
 ;;
 ;; * Dependencies injection

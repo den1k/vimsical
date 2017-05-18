@@ -232,7 +232,7 @@
 
 (defn ->cluster-conf [conf]
   (-> conf
-      (cluster/remove-ns)
+      (cluster/unqualify-map)
       (update :retry-policy cluster/->retry-policy)
       (update :load-balancing-policy cluster/->load-balancing-policy)))
 

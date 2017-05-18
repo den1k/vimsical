@@ -1,4 +1,4 @@
-(ns vimsical.backend.handlers.mutlifn
+(ns vimsical.backend.handlers.multi
   (:require
    [clojure.spec :as s]
    [vimsical.remotes.backend :as backend]))
@@ -7,13 +7,13 @@
 ;; * Handler dispatch
 ;;
 
-(defn handler-dispatch [context [id]] id)
+(defn dispatch [context [id]] id)
 
 ;;
 ;; * Context spec
 ;;
 
-(defmulti context-mspec handler-dispatch)
+(defmulti context-mspec dispatch)
 (s/def ::context (s/multi-spec context-mspec first))
 
 ;;
@@ -32,4 +32,4 @@
 ;; * Multimethod
 ;;
 
-(defmulti handle handler-dispatch)
+(defmulti handle dispatch)

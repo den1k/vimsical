@@ -3,11 +3,11 @@
    [clojure.spec :as s]
    [io.pedestal.http :as http]
    [io.pedestal.http.route :as route]
-   [vimsical.backend.handler]          ; Side-effects
-   [vimsical.backend.handlers.mutlifn :as events.multifn]
-   [vimsical.common.env :as env]
+   [vimsical.backend.components.server.interceptors.session :as interceptors.session]
    [vimsical.backend.components.server.interceptors.transit :as interceptors.transit]
-   [vimsical.backend.components.server.interceptors.session :as interceptors.session]))
+   vimsical.backend.handler
+   [vimsical.backend.handlers.multi :as events.multifn]
+   [vimsical.common.env :as env]))
 
 ;;
 ;; * Handler
@@ -23,21 +23,27 @@
 
 (defn context-event-handler
   [context]
-  (events.multifn/handle context (some-> context :request :body)))
+  (letfn [(ensure-response [context]
+            (-> context
+                (update-in [:response :status] (fnil identity 200))
+                (update-in [:response :body] (fnil identity {}))))]
+    (let [event    (some-> context :request :body)
+          context' (events.multifn/handle context event)]
+      (ensure-response context'))))
 
 (def ^:private event-interceptor
-  {:name :event :enter context-event-handler})
+  {:name  :event
+   :enter context-event-handler})
 
 ;;
 ;; * Routes
 ;;
 
 (def routes
-  (route/expand-routes
-   #{["/events" :post event-interceptor :route-name :events]}))
+  #{["/events" :post [event-interceptor] :route-name :events]})
 
 (def url-for
-  (route/url-for-routes routes))
+  (route/url-for-routes (route/expand-routes routes)))
 
 ;;
 ;; * Interceptors

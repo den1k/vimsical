@@ -4,4 +4,4 @@
    [vimsical.user :as user]))
 
 (s/def ::session
-  (s/nilable (s/keys :opt [::user/id])))
+  (s/nilable (s/keys :opt [::user/uid])))

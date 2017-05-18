@@ -17,7 +17,7 @@
 ;; * Interceptors helpers
 ;;
 
-(defn- default-interceptors
+(defn- add-default-interceptors
   "Create the default interceptors from the `service-map` and prepend the
   interceptors found in `:http/default-interceptors`"
   [{::http/keys [default-interceptors] :as service-map}]
@@ -34,10 +34,10 @@
   (let [context-dependencies-interceptor (interceptors.deps/new-context-dependencies-injector component :session-store :cassandra :datomic)
         new-interceptors                 [context-dependencies-interceptor]]
     (-> service-map
-        default-interceptors
+        (add-default-interceptors)
         (interceptors.util/prepend-interceptors new-interceptors)
-        http/create-server
-        http/start)))
+        (http/create-server)
+        (http/start))))
 
 ;;
 ;; * Component

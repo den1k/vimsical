@@ -55,7 +55,7 @@
 (s/def ::conf
   (s/keys :req-un [::contact-points ::port ::retry-policy ::load-balancing-policy]))
 
-(defn remove-ns
+(defn unqualify-map
   [m]
   (reduce-kv
    (fn [m k v]
