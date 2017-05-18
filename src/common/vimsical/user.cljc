@@ -4,7 +4,8 @@
    [vimsical.vims :as vims]
    [vimsical.user.settings :as settings]))
 
-(s/def ::id uuid?)
+(s/def ::uid uuid?)
+(s/def :db/uid ::uid)
 (s/def ::first-name string?)
 (s/def ::last-name string?)
 (s/def ::email string?)
@@ -13,7 +14,8 @@
 (s/def ::setting (s/every ::settings/settings))
 
 (s/def ::user
-  (s/keys :opt [::first-name
+  (s/keys :opt [:db/uid
+                ::first-name
                 ::last-name
                 ::email
                 ::password

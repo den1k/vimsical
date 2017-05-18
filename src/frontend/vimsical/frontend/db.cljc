@@ -17,7 +17,7 @@
 ;;
 
 (def js-libs
-  [{:db/id         (uuid :lib-js-jquery)
+  [{:db/uid        (uuid :lib-js-jquery)
     ::lib/title    "jQuery"
     ::lib/type     :text
     ::lib/sub-type :javascript
@@ -26,7 +26,7 @@
 (def sub-type->libs (group-by ::lib/sub-type js-libs))
 
 (def compilers
-  [{:db/id                 (uuid :babel-compiler)
+  [{:db/uid                (uuid :babel-compiler)
     ::compiler/name        "Babel"
     ::compiler/type        :text
     ::compiler/sub-type    :babel
@@ -37,7 +37,7 @@
 (defn new-file
   ([uuid type sub-type] (new-file uuid type sub-type nil nil))
   ([uuid type sub-type lang-version compilers]
-   (-> {:db/id          uuid
+   (-> {:db/uid         uuid
         ::file/type     type
         ::file/sub-type sub-type}
        (util/assoc-some
@@ -46,12 +46,12 @@
 
 (defn new-branch
   [uuid name files libs]
-  (-> {:db/id                       uuid
-       ::branch/name                name
-       ::branch/start-delta-id      nil
-       ::branch/branch-off-delta-id nil
-       ::branch/created-at          (util/now)
-       ::branch/files               files}
+  (-> {:db/uid                       uuid
+       ::branch/name                 name
+       ::branch/start-delta-uid      nil
+       ::branch/branch-off-delta-uid nil
+       ::branch/created-at           (util/now)
+       ::branch/files                files}
       (util/assoc-some ::branch/libs libs)))
 
 (defn new-vims
@@ -61,19 +61,19 @@
                    (new-file (uuid title :file-css) :text :css)
                    (new-file (uuid title :file-js) :text :javascript "5" compilers)]
          branches [(new-branch (uuid title :master) "master" files (:javascript js-libs))]]
-     {:db/id         (uuid title)
+     {:db/uid        (uuid title)
       :vims/author   author-ref
       :vims/title    title
       :vims/branches branches})))
-(let [state {:app/user         {:db/id           (uuid :user)
+(let [state {:app/user         {:db/uid          (uuid :user)
                                 :user/first-name "Jane"
                                 :user/last-name  "Applecrust"
                                 :user/email      "kalavox@gmail.com"
                                 :user/vimsae
-                                                 [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
-                                                  (new-vims [:db/id (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs})]}
-             :app/vims         [:db/id (uuid "CatPhotoApp")]
-             :app/quick-search {:db/id                            (uuid :quick-search)
+                                [(new-vims [:db/uid (uuid :user)] "NLP Chatbot running on React Fiber")
+                                 (new-vims [:db/uid (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs})]}
+             :app/vims         [:db/uid (uuid "CatPhotoApp")]
+             :app/quick-search {:db/uid                           (uuid :quick-search)
                                 :quick-search/show?               false
                                 :quick-search/result-idx          0
                                 :quick-search/query               ""
@@ -87,7 +87,7 @@
 
   (def default-db
     (-> (mg/new-db)
-        (mg/add-id-attr :db/id)
+        (mg/add-id-attr :db/uid)
         (util.mg/add-linked-entities state))))
 
 (re-frame/reg-event-db ::init (constantly default-db))

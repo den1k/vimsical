@@ -11,40 +11,40 @@
 ;; * Spec
 ;;
 
-(s/def ::id uuid?)
+(s/def ::uid uuid?)
 (s/def ::depth nat-int?)
 (s/def ::count pos-int?)
 (s/def ::relative-time nat-int?)
 (s/def ::deltas-by-relative-time
   (s/every-kv ::relative-time ::delta/delta :kind sorted? :into (avl/sorted-map)))
 (s/def ::duration pos-int?)
-(s/def ::delta-start-id ::delta/id)
-(s/def ::delta-end-id ::delta/id)
-(s/def ::delta-branch-off-id ::delta/prev-id)
-(s/def ::branch-id ::branch/id)
-(s/def ::file-id ::file/id)
+(s/def ::delta-start-uid ::delta/uid)
+(s/def ::delta-end-uid ::delta/uid)
+(s/def ::delta-branch-off-uid ::delta/prev-uid)
+(s/def ::branch-uid ::branch/uid)
+(s/def ::file-uid ::file/uid)
 (s/def ::branch-start? boolean?)
 (s/def ::branch-end? boolean?)
 
 
 (s/def ::deltas
   (letfn [(same-branch? [deltas]
-            (every? (partial apply util/=by :branch-id) (partition 2 deltas)))
+            (every? (partial apply util/=by :branch-uid) (partition 2 deltas)))
           (same-file?   [deltas]
-            (every? (partial apply util/=by :file-id) (partition 2 deltas)))]
+            (every? (partial apply util/=by :file-uid) (partition 2 deltas)))]
     (s/and (s/every ::delta/delta) same-branch? same-file?)))
 
 (s/def ::chunk
-  (s/keys :req [::id
+  (s/keys :req [::uid
                 ::depth
                 ::count
                 ::deltas-by-relative-time
                 ::duration
-                ::delta-start-id
-                ::delta-end-id
-                ::branch-id
-                ::file-id]
-          :opt [::delta-branch-off-id]))
+                ::delta-start-uid
+                ::delta-end-uid
+                ::branch-uid
+                ::file-uid]
+          :opt [::delta-branch-off-uid]))
 
 (s/def ::timeline-annotations
   (s/keys :opt [::branch-start? ::branch-end?]))
@@ -75,28 +75,28 @@
 ;;
 
 (s/fdef new-chunk
-        :args (s/cat :id ::id :depth ::depth :deltas ::deltas :branch-off? boolean?)
+        :args (s/cat :uid ::uid :depth ::depth :deltas ::deltas :branch-off? boolean?)
         :ret ::chunk)
 
 (defn new-chunk
-  [id depth deltas branch-off?]
+  [uid depth deltas branch-off?]
   (let [{:keys
-         [branch-id file-id]
+         [branch-uid file-uid]
          ;; XXX faster accessors?
-         prev-id        :prev-id
-         delta-start-id :id :as first-delta} (first deltas)
-        {delta-end-id :id}                   (last deltas)
-        [duration deltas-by-relative-time]   (new-deltas-by-relative-time deltas)]
-    (cond-> {::id                      id
+         prev-uid        :prev-uid
+         delta-start-uid :uid}             (first deltas)
+        {delta-end-uid :uid}               (last deltas)
+        [duration deltas-by-relative-time] (new-deltas-by-relative-time deltas)]
+    (cond-> {::uid                      uid
              ::deltas-by-relative-time deltas-by-relative-time
              ::duration                duration
              ::count                   (count deltas)
              ::depth                   depth
-             ::delta-start-id          delta-start-id
-             ::delta-end-id            delta-end-id
-             ::branch-id               branch-id
-             ::file-id                 file-id}
-      branch-off? (assoc ::delta-branch-off-id prev-id))))
+             ::delta-start-uid         delta-start-uid
+             ::delta-end-uid           delta-end-uid
+             ::branch-uid              branch-uid
+             ::file-uid                file-uid}
+      branch-off? (assoc ::delta-branch-off-uid prev-uid))))
 
 ;;
 ;; * Adding deltas
@@ -105,9 +105,9 @@
 (defn conj?
   [chunk delta]
   (and
-   (util/=by ::delta-end-id :prev-id chunk delta)
-   (util/=by ::file-id :file-id chunk delta)
-   (util/=by ::branch-id :branch-id chunk delta)))
+   (util/=by ::delta-end-uid :prev-uid chunk delta)
+   (util/=by ::file-uid :file-uid chunk delta)
+   (util/=by ::branch-uid :branch-uid chunk delta)))
 
 
 (s/fdef add-delta
@@ -116,16 +116,16 @@
 
 (defn add-delta
   "Update `chunk` by adding `delta` to `::deltas-by-relative-time`, adding the
-  delta's `:pad` to the chunks' `::duration`, moving the `::delta-end-id` and
-  setting the `::delta-start-id` if it was previously nil."
-  [{::keys [duration] :as chunk} {:keys [id pad] :as delta}]
+  delta's `:pad` to the chunks' `::duration`, moving the `::delta-end-uid` and
+  setting the `::delta-start-uid` if it was previously nil."
+  [{::keys [duration] :as chunk} {:keys [uid pad] :as delta}]
   (if-not (conj? chunk delta)
     (throw (ex-info "Cannot conj delta onto chunk" {:delta delta :chunk chunk}))
     (let [t (+ duration pad)]
       (-> chunk
-          (assoc  ::delta-end-id id ::duration t)
+          (assoc  ::delta-end-uid uid ::duration t)
           (update ::count inc)
-          (update ::delta-start-id (fnil identity id))
+          (update ::delta-start-uid (fnil identity uid))
           (update ::deltas-by-relative-time (fnil assoc (avl/sorted-map)) t delta)))))
 
 (defn with-bounds [chunk start? end?]
@@ -144,7 +144,7 @@
                        (s/nilable ::chunk)))
 
 (defn split-at-delta-index
-  [{::keys [count depth delta-branch-off-id deltas-by-relative-time branch-start? branch-end?]} uuid-fn index]
+  [{::keys [count depth delta-branch-off-uid deltas-by-relative-time branch-start? branch-end?]} uuid-fn index]
   {:pre [(< index count)]}
   ;; XXX We should use the left and right deltas as is and keep a time offset on
   ;; the right chunk, this would avoid rebuilding the `deltas-by-relative-time`,
@@ -152,7 +152,7 @@
   (let [[left-deltas right-deltas] (mapv vals (avl/split-at index deltas-by-relative-time))
         left-chunk                 (when (seq left-deltas)
                                      (with-bounds
-                                       (new-chunk (uuid-fn) depth left-deltas (some? delta-branch-off-id))
+                                       (new-chunk (uuid-fn) depth left-deltas (some? delta-branch-off-uid))
                                        branch-start? false))
         right-chunk                (when (seq right-deltas)
                                      (with-bounds

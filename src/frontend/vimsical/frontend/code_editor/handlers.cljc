@@ -201,7 +201,7 @@
 (re-frame/reg-event-fx
  ::update-editor-string
  (fn update-editor
-   [_ [_ {file-id :db/id :as file} string]]
+   [_ [_ {file-uid :db/uid :as file} string]]
    (when (some? string)
      {:dispatch-n
       [[::clear-disposables file]
@@ -211,7 +211,7 @@
 (re-frame/reg-event-fx
  ::update-editor-position
  (fn update-editor
-   [_ [_ {file-id :db/id :as file} position]]
+   [_ [_ {file-uid :db/uid :as file} position]]
    (when (some? position)
      {:dispatch-n
       [[::clear-disposables file]

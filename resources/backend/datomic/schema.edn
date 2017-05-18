@@ -1,4 +1,13 @@
 ;;
+;; * UID
+;;
+
+[{:db/id          #db/id [:db.part/db]
+  :db/ident       :db/uid
+  :db/valueType   :db.type/uuid
+  :db/cardinality :db.cardinality/one}]
+
+;;
 ;; * User
 ;;
 
@@ -73,11 +82,11 @@
   :db/valueType   :db.type/string
   :db/cardinality :db.cardinality/one}
  {:db/id          #db/id [:db.part/db]
-  :db/ident       :vimsical.vcs.branch/start-delta-id
+  :db/ident       :vimsical.vcs.branch/start-delta-uid
   :db/valueType   :db.type/long
   :db/cardinality :db.cardinality/one}
  {:db/id          #db/id [:db.part/db]
-  :db/ident       :vimsical.vcs.branch/entry-delta-id
+  :db/ident       :vimsical.vcs.branch/entry-delta-uid
   :db/valueType   :db.type/long
   :db/cardinality :db.cardinality/one}
  {:db/id          #db/id [:db.part/db]

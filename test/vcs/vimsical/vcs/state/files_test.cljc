@@ -27,8 +27,8 @@
 ;;
 
 (deftest add-deltas-test
-  (let [states                          (sut/add-deltas sut/empty-state-by-file-id examples/deltas)
-        {::sut/keys [deltas] :as state} (get states examples/file1-id)]
+  (let [states                          (sut/add-deltas sut/empty-state-by-file-uid examples/deltas)
+        {::sut/keys [deltas] :as state} (get states examples/file1-uid)]
     (t/is (seq deltas))))
 
 ;;
@@ -39,13 +39,13 @@
   (letfn [(test-pad-fn [_] 1)
           (test-uuid-fn [e] (uuid))
           (test-timestamp-fn [_] 123)]
-    (let [branch-id    (uuid :<branch>)
-          file-id      (uuid :<file>)
+    (let [branch-uid   (uuid :<branch>)
+          file-uid     (uuid :<file>)
           test-effects {::editor/pad-fn       test-pad-fn
                         ::editor/uuid-fn      test-uuid-fn
                         ::editor/timestamp-fn test-timestamp-fn}
           state=       (fn [expected-string expected-cursor [states deltas]]
-                         (let [{::sut/keys [files string cursor]} (get states file-id)]
+                         (let [{::sut/keys [files string cursor]} (get states file-uid)]
                            (is (seq deltas))
                            (is (topo/sorted? deltas))
                            (is (= expected-string string))
@@ -53,28 +53,28 @@
       (testing "Spliced insert"
         (state= "abc" 3
                 (sut/add-edit-events
-                 sut/empty-state-by-file-id test-effects file-id branch-id nil
+                 sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                  (diff/diffs->edit-events "" ["abc"]))))
       (testing "Unspliced insert"
         (state= "abc" 3
                 (sut/add-edit-events
-                 sut/empty-state-by-file-id test-effects file-id branch-id nil
+                 sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                  (diff/diffs->edit-events "" "abc"))))
       (testing "Spliced Delete"
         (state= "a" 1
                 (sut/add-edit-events
-                 sut/empty-state-by-file-id test-effects file-id branch-id nil
+                 sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                  (diff/diffs->edit-events "" ["abc"] ["a"])))
         (state= "xyz" 3
                 (sut/add-edit-events
-                 sut/empty-state-by-file-id test-effects file-id branch-id nil
+                 sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                  (diff/diffs->edit-events "" ["abc"] ["xyz"]))))
       (testing "Unspliced Delete"
         (state= "a" 1
                 (sut/add-edit-events
-                 sut/empty-state-by-file-id test-effects file-id branch-id nil
+                 sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                  (diff/diffs->edit-events "" "abc" "a")))
         (state= "xyz" 3
                 (sut/add-edit-events
-                 sut/empty-state-by-file-id test-effects file-id branch-id nil
+                 sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                  (diff/diffs->edit-events "" "abc" "xyz")))))))

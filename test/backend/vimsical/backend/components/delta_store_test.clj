@@ -14,20 +14,20 @@
 (use-fixtures :each fixture/each)
 
 (deftest deltas-io-test
-  (let [deltas [{:id        (uuid :id0) ,
-                 :prev-id   nil,
-                 :op        [:str/ins nil "h"],
-                 :pad       0,
-                 :file-id   (uuid :file)
-                 :branch-id (uuid :branch)
-                 :meta      {:timestamp 1, :version 1.0}}
-                {:id        (uuid :id1) ,
-                 :prev-id   (uuid :id0) ,
-                 :op        [:str/ins (uuid :id0) "i"],
-                 :pad       100,
-                 :file-id   (uuid :file),
-                 :branch-id (uuid :branch),
-                 :meta      {:timestamp 1, :version 1.0}}]]
+  (let [deltas [{:uid        (uuid :uid0) ,
+                 :prev-uid   nil,
+                 :op         [:str/ins nil "h"],
+                 :pad        0,
+                 :file-uid   (uuid :file)
+                 :branch-uid (uuid :branch)
+                 :meta       {:timestamp 1, :version 1.0}}
+                {:uid        (uuid :uid1) ,
+                 :prev-uid   (uuid :uid0) ,
+                 :op         [:str/ins (uuid :uid0) "i"],
+                 :pad        100,
+                 :file-uid   (uuid :file),
+                 :branch-uid (uuid :branch),
+                 :meta       {:timestamp 1, :version 1.0}}]]
     (testing "IDeltaStoreChan"
       (is (nil? (<?? (p/insert-deltas-chan *delta-store* (uuid :user) (uuid :chan) deltas))))
       (is (= deltas (<?? (a/into [] (p/select-deltas-chan *delta-store* (uuid :user) (uuid :chan)))))))

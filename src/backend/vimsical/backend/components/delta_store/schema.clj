@@ -13,27 +13,27 @@
 (def schema
   [(cql/create-table
     :delta
-    [[:user_id     :uuid]
-     [:vims_id     :uuid]
-     [:branch_id   :uuid]
+    [[:user_uid    :uuid]
+     [:vims_uid    :uuid]
+     [:branch_uid  :uuid]
      [:ts          :timeuuid]
-     [:file_id     :uuid]
-     [:id          :uuid]
-     [:prev_id     :uuid]
+     [:file_uid    :uuid]
+     [:uid         :uuid]
+     [:prev_uid    :uuid]
      [:op          :blob]
      [:pad         :bigint]
      [:meta        :blob]
      [:primary-key
-      [[:user_id :vims_id] :ts :branch_id :id]]])
+      [[:user_uid  :vims_uid] :ts :branch_uid :uid]]])
    (cql/create-table
     :file_preview
-    [[:user_id     :uuid]
-     [:vims_id     :uuid]
-     [:branch_id   :uuid]
-     [:file_id     :uuid]
+    [[:user_uid    :uuid]
+     [:vims_uid    :uuid]
+     [:branch_uid  :uuid]
+     [:file_uid    :uuid]
      [:text        :text]
      [:primary-key
-      [[:user_id :vims_id] :branch_id :file_id]]])])
+      [[:user_uid  :vims_uid] :branch_uid :file_uid]]])])
 
 ;;
 ;; * Specs
@@ -46,34 +46,34 @@
 ;; *** External
 
 (s/def ::uuid uuid?)
-(s/def ::user-id ::uuid)
-(s/def ::vims-id ::uuid)
-(s/def ::branch-id ::branch/id)
-(s/def ::file-id ::file/id)
-(s/def ::id ::delta/id)
-(s/def ::prev-id ::delta/prev-id)
+(s/def ::user-uid ::uuid)
+(s/def ::vims-uid ::uuid)
+(s/def ::branch-uid ::branch/uid)
+(s/def ::file-uid ::file/uid)
+(s/def ::uid ::delta/uid)
+(s/def ::prev-uid ::delta/prev-uid)
 (s/def ::pad ::delta/pad)
 (s/def ::op ::delta/op)
 (s/def ::meta ::delta/meta)
 
 ;; *** Internal
 
-(s/def ::user_id ::user-id)
-(s/def ::vims_id ::vims-id)
-(s/def ::branch_id ::branch-id)
-(s/def ::file_id ::file-id)
-(s/def ::prev_id ::prev-id)
+(s/def ::user_uid ::user-uid)
+(s/def ::vims_uid ::vims-uid)
+(s/def ::branch_uid ::branch-uid)
+(s/def ::file_uid ::file-uid)
+(s/def ::prev_uid ::prev-uid)
 
 ;;
 ;; ** Partition and primary keys
 ;;
 
-(s/def ::partition-key (s/keys :req-un [::user-id ::vims-id]))
-(s/def ::primary-key (s/merge ::partition-key (s/keys :req-un [::branch-id ::id])))
+(s/def ::partition-key (s/keys :req-un [::user-uid ::vims-uid]))
+(s/def ::primary-key (s/merge ::partition-key (s/keys :req-un [::branch-uid ::uid])))
 
 ;;
 ;; ** Tables
 ;;
 
-(s/def ::select-row (s/keys :req-un [::branch-id ::file-id ::id ::prev-id ::prev-same-id ::pad ::op ::meta]))
-(s/def ::insert-row (s/merge (s/keys :req-un [::user-id ::vims-id]) ::select-row))
+(s/def ::select-row (s/keys :req-un [::branch-uid ::file-uid ::uid ::prev-uid ::pad ::op ::meta]))
+(s/def ::insert-row (s/merge (s/keys :req-un [::user-uid ::vims-uid]) ::select-row))

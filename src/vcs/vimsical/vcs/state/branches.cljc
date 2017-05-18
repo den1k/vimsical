@@ -12,17 +12,17 @@
 ;;
 
 (s/def ::deltas (s/and ::indexed/vector (s/every ::delta/delta) topo/sorted? topo/valid-ops?))
-(s/def ::deltas-by-branch-id (s/every-kv ::branch/id ::deltas))
+(s/def ::deltas-by-branch-uid (s/every-kv ::branch/uid ::deltas))
 
-(def empty-deltas-by-branch-id {})
+(def empty-deltas-by-branch-uid {})
 
 ;;
 ;; * Internal
 ;;
 
 (defn- new-vector
-  ([] (indexed/vector-by :id))
-  ([deltas] (indexed/vec-by :id deltas)))
+  ([] (indexed/vector-by :uid))
+  ([deltas] (indexed/vec-by :uid deltas)))
 
 (def conj-deltas (fnil conj (new-vector)))
 
@@ -35,43 +35,43 @@
 ;;
 
 (s/fdef add-delta
-        :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id :deltas ::delta/delta)
-        :ret ::deltas-by-branch-id)
+        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas ::delta/delta)
+        :ret ::deltas-by-branch-uid)
 
 (defn add-delta
-  [deltas-by-branch-id {:keys [branch-id] :as delta}]
-  {:pre [branch-id]}
-  (update deltas-by-branch-id branch-id update-deltas delta))
+  [deltas-by-branch-uid {:keys [branch-uid] :as delta}]
+  {:pre [branch-uid]}
+  (update deltas-by-branch-uid branch-uid update-deltas delta))
 
 (s/fdef add-deltas
-        :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id :deltas (s/every ::delta/delta))
-        :ret ::deltas-by-branch-id)
+        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas (s/every ::delta/delta))
+        :ret ::deltas-by-branch-uid)
 
 (defn add-deltas
-  [deltas-by-branch-id deltas]
-  (reduce add-delta deltas-by-branch-id deltas))
+  [deltas-by-branch-uid deltas]
+  (reduce add-delta deltas-by-branch-uid deltas))
 
 (s/fdef get-deltas
-        :args (s/cat :deltas-by-branch-id ::deltas-by-branch-id
+        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid
                      :branch (s/or :branch ::branch/branch :uuid uuid?))
         :ret  ::deltas)
 
 (defn get-deltas
-  [deltas-by-branch-id branch-or-branch-id]
-  (cond->> branch-or-branch-id
-    (map? branch-or-branch-id) (:db/id)
-    true                       (get deltas-by-branch-id)))
+  [deltas-by-branch-uid branch-or-branch-uid]
+  (cond->> branch-or-branch-uid
+    (map? branch-or-branch-uid) (:db/uid)
+    true                        (get deltas-by-branch-uid)))
 
 (s/fdef index-of-delta
         :args
-        (s/or :delta  (s/cat :deltas-by-branch-id ::deltas-by-branch-id :delta ::delta/delta)
-              :params (s/cat :deltas-by-branch-id ::deltas-by-branch-id :branch-id ::branch/id :delta-id ::delta/prev-id))
+        (s/or :delta  (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :delta ::delta/delta)
+              :params (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :branch-uid ::branch/uid :delta-uid ::delta/prev-uid))
         :ret  (s/nilable number?))
 
 (defn index-of-delta
-  ([deltas-by-branch-id {:keys [branch-id id] :as delta}]
-   (index-of-delta deltas-by-branch-id branch-id id))
-  ([deltas-by-branch-id branch-id delta-id]
-   (some-> deltas-by-branch-id
-           (get-deltas branch-id)
-           (indexed/index-of delta-id))))
+  ([deltas-by-branch-uid {:keys [branch-uid uid] :as delta}]
+   (index-of-delta deltas-by-branch-uid branch-uid uid))
+  ([deltas-by-branch-uid branch-uid delta-uid]
+   (some-> deltas-by-branch-uid
+           (get-deltas branch-uid)
+           (indexed/index-of delta-uid))))

@@ -12,29 +12,29 @@
 ;; * UUIDs
 ;;
 
-(def master-id (uuid :master))
-(def child-id (uuid :child))
-(def gchild-id (uuid :gchild))
-(def file1-id (uuid :file1))
-(def file2-id (uuid :file2))
+(def master-uid (uuid :master))
+(def child-uid  (uuid :child))
+(def gchild-uid (uuid :gchild))
+(def file1-uid  (uuid :file1))
+(def file2-uid  (uuid :file2))
 
-(def id0 (uuid :id0))
-(def id1 (uuid :id1))
-(def id2 (uuid :id2))
-(def id3 (uuid :id3))
-(def id4 (uuid :id4))
-(def id5 (uuid :id5))
-(def id6 (uuid :id6))
-(def id7 (uuid :id7))
-(def id8 (uuid :id8))
+(def id0 (uuid :uid0))
+(def id1 (uuid :uid1))
+(def id2 (uuid :uid2))
+(def id3 (uuid :uid3))
+(def id4 (uuid :uid4))
+(def id5 (uuid :uid5))
+(def id6 (uuid :uid6))
+(def id7 (uuid :uid7))
+(def id8 (uuid :uid8))
 
 ;;
 ;; * Branches
 ;;
 
-(def master {:db/id master-id})
-(def child  {:db/id child-id  ::branch/parent master ::branch/branch-off-delta-id id1 ::branch/start-deltas-id id2})
-(def gchild {:db/id gchild-id ::branch/parent child  ::branch/branch-off-delta-id id3 ::branch/start-deltas-id id4})
+(def master {:db/uid master-uid})
+(def child  {:db/uid child-uid, ::branch/parent master ::branch/branch-off-delta-uid id1 ::branch/start-deltas-uid id2})
+(def gchild {:db/uid gchild-uid ::branch/parent child, ::branch/branch-off-delta-uid id3 ::branch/start-deltas-uid id4})
 
 (def branches [master child gchild])
 
@@ -44,15 +44,15 @@
 ;; * Deltas
 ;;
 
-(def d0 {:branch-id master-id, :id id0 :prev-id nil, :file-id file1-id, :op [:str/ins nil "h"], :pad 0,   :meta {:timestamp 1, :version 1.0}})
-(def d1 {:branch-id master-id, :id id1 :prev-id id0, :file-id file1-id, :op [:crsr/mv id0], :pad 1, :meta {:timestamp 1, :version 1.0}})
-(def d2 {:branch-id child-id,  :id id2 :prev-id id1, :file-id file1-id, :op [:str/ins id0 "i"], :pad 100, :meta {:timestamp 1, :version 1.0}})
-(def d3 {:branch-id child-id,  :id id3 :prev-id id2, :file-id file1-id, :op [:crsr/mv id2],     :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d4 {:branch-id gchild-id, :id id4 :prev-id id3, :file-id file1-id, :op [:str/ins id2 "!"], :pad 100, :meta {:timestamp 1, :version 1.0}})
-(def d5 {:branch-id gchild-id, :id id5 :prev-id id4, :file-id file1-id, :op [:crsr/mv id4],     :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d6 {:branch-id gchild-id, :id id6 :prev-id id5, :file-id file1-id, :op [:str/rem id4 1],   :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d7 {:branch-id child-id,  :id id7 :prev-id id3, :file-id file1-id, :op [:str/rem id2 1],   :pad 1,   :meta {:timestamp 1, :version 1.0}})
-(def d8 {:branch-id master-id, :id id8 :prev-id id1, :file-id file1-id, :op [:str/ins id0 "ey"],:pad 1,   :meta {:timestamp 1, :version 1.0}})
+(def d0 {:branch-uid master-uid, :uid id0 :prev-uid nil, :file-uid file1-uid, :op [:str/ins nil "h"],, :pad 0,,, :meta {:timestamp 1, :version 1.0}})
+(def d1 {:branch-uid master-uid, :uid id1 :prev-uid id0, :file-uid file1-uid, :op [:crsr/mv id0],,,,,, :pad 1,,, :meta {:timestamp 1, :version 1.0}})
+(def d2 {:branch-uid child-uid,, :uid id2 :prev-uid id1, :file-uid file1-uid, :op [:str/ins id0 "i"],, :pad 100, :meta {:timestamp 1, :version 1.0}})
+(def d3 {:branch-uid child-uid,, :uid id3 :prev-uid id2, :file-uid file1-uid, :op [:crsr/mv id2],,,,,, :pad 1,,, :meta {:timestamp 1, :version 1.0}})
+(def d4 {:branch-uid gchild-uid, :uid id4 :prev-uid id3, :file-uid file1-uid, :op [:str/ins id2 "!"],, :pad 100, :meta {:timestamp 1, :version 1.0}})
+(def d5 {:branch-uid gchild-uid, :uid id5 :prev-uid id4, :file-uid file1-uid, :op [:crsr/mv id4],,,,,, :pad 1,,, :meta {:timestamp 1, :version 1.0}})
+(def d6 {:branch-uid gchild-uid, :uid id6 :prev-uid id5, :file-uid file1-uid, :op [:str/rem id4 1],,,, :pad 1,,, :meta {:timestamp 1, :version 1.0}})
+(def d7 {:branch-uid child-uid,, :uid id7 :prev-uid id3, :file-uid file1-uid, :op [:str/rem id2 1],,,, :pad 1,,, :meta {:timestamp 1, :version 1.0}})
+(def d8 {:branch-uid master-uid, :uid id8 :prev-uid id1, :file-uid file1-uid, :op [:str/ins id0 "ey"], :pad 1,,, :meta {:timestamp 1, :version 1.0}})
 
 (def deltas [d0 d1 d2 d3 d4 d5 d6 d7 d8])
 
@@ -63,27 +63,27 @@
 ;;
 
 (def latest-file-deltas
-  {master-id {file1-id d8}
-   child-id  {file1-id d3 file2-id d7}
-   gchild-id {file1-id d5 file2-id d6}})
+  {master-uid {file1-uid d8}
+   child-uid  {file1-uid d3 file2-uid d7}
+   gchild-uid {file1-uid d5 file2-uid d6}})
 
 ;;
 ;; * Branches
 ;;
 
-(def deltas-by-branch-id
-  {master-id (indexed/vec-by :id [d0 d1 d8])
-   child-id  (indexed/vec-by :id [d2 d3 d7])
-   gchild-id (indexed/vec-by :id [d4 d5 d6])})
+(def deltas-by-branch-uid
+  {master-uid (indexed/vec-by :uid [d0 d1 d8])
+   child-uid  (indexed/vec-by :uid [d2 d3 d7])
+   gchild-uid (indexed/vec-by :uid [d4 d5 d6])})
 
-(s/assert* ::state.branches/deltas-by-branch-id deltas-by-branch-id)
+(s/assert* ::state.branches/deltas-by-branch-uid deltas-by-branch-uid)
 
-(def branch-pointers-by-branch-id
-  {master-id {::state.branch-pointers/start (:id d0) ::state.branch-pointers/end (:id d8)}
-   child-id  {::state.branch-pointers/start (:id d2) ::state.branch-pointers/end (:id d7)}
-   gchild-id {::state.branch-pointers/start (:id d4) ::state.branch-pointers/end (:id d6)}})
+(def branch-pointers-by-branch-uid
+  {master-uid {::state.branch-pointers/start (:uid d0) ::state.branch-pointers/end (:uid d8)}
+   child-uid  {::state.branch-pointers/start (:uid d2) ::state.branch-pointers/end (:uid d7)}
+   gchild-uid {::state.branch-pointers/start (:uid d4) ::state.branch-pointers/end (:uid d6)}})
 
-(s/assert* ::state.branch-pointers/branch-pointers-by-branch-id branch-pointers-by-branch-id)
+(s/assert* ::state.branch-pointers/branch-pointers-by-branch-uid branch-pointers-by-branch-uid)
 
 ;;
 ;; * Branch tree

@@ -110,42 +110,42 @@
     [:polygon
      {:fill fill
       :points
-            (cond
-              (and branch-start? branch-end?)
-              (util/space-join
-               left bottom-bezel
-               left top-bezel
-               left-padding top
-               right-padding top
-               right top-bezel
-               right bottom-bezel
-               right-padding bottom
-               left-padding bottom)
+      (cond
+        (and branch-start? branch-end?)
+        (util/space-join
+         left bottom-bezel
+         left top-bezel
+         left-padding top
+         right-padding top
+         right top-bezel
+         right bottom-bezel
+         right-padding bottom
+         left-padding bottom)
 
-              branch-start?
-              (util/space-join
-               left bottom-bezel
-               left top-bezel
-               left-padding top
-               right top
-               right bottom
-               left-padding bottom)
+        branch-start?
+        (util/space-join
+         left bottom-bezel
+         left top-bezel
+         left-padding top
+         right top
+         right bottom
+         left-padding bottom)
 
-              branch-end?
-              (util/space-join
-               left top
-               right-padding top
-               right top-bezel
-               right bottom-bezel
-               right-padding bottom
-               left bottom)
+        branch-end?
+        (util/space-join
+         left top
+         right-padding top
+         right top-bezel
+         right bottom-bezel
+         right-padding bottom
+         left bottom)
 
-              :else
-              (util/space-join
-               left top
-               right top
-               right bottom
-               left bottom))}]))
+        :else
+        (util/space-join
+         left top
+         right top
+         right bottom
+         left bottom))}]))
 
 (defn- skimhead-line
   [clip-path-id]
@@ -175,11 +175,12 @@
 (defn chunks []
   (let [timeline-dur       (<sub [::subs/duration])
         chunks-by-abs-time (<sub [::subs/chunks-by-absolute-start-time])
-        chunks-html        (doall
-                            (for [[abs-time {::chunk/keys [id file-id] :as c}] chunks-by-abs-time
-                                  :let [file (<sub [::vcs.subs/file file-id])]]
-                              ^{:key id}
-                              [chunk timeline-dur abs-time file c]))]
+        chunks-html
+        (doall
+         (for [[abs-time {::chunk/keys [uid file-uid] :as c}] chunks-by-abs-time
+               :let                                           [file (<sub [::vcs.subs/file file-uid])]]
+           ^{:key uid}
+           [chunk timeline-dur abs-time file c]))]
     [:g [:defs [:clipPath {:id clip-path-id} chunks-html]]
      chunks-html]))
 

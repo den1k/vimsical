@@ -30,16 +30,16 @@
 ;; * Branch
 ;;
 
-(re-frame/reg-sub ::branches :<- [::vcs] (fn [{::vcs/keys [branches]}] branches))
-(re-frame/reg-sub ::branch-id :<- [::vcs] (fn [{::db/keys [branch-id]}] branch-id))
+(re-frame/reg-sub ::branches  :<- [::vcs] (fn [{::vcs/keys [branches]}] branches))
+(re-frame/reg-sub ::branch-uid :<- [::vcs] (fn [{::db/keys [branch-uid]}] branch-uid))
 
 (re-frame/reg-sub
  ::branch
- :<- [::branch-id]
+ :<- [::branch-uid]
  :<- [::branches]
- (fn [[branch-id branches] _]
+ (fn [[branch-uid branches] _]
    (util/ffilter
-    (partial util/=by identity :db/id branch-id)
+    (partial util/=by identity :db/uid branch-uid)
     branches)))
 
 ;;
@@ -72,25 +72,25 @@
 
 (re-frame/reg-sub
  ::file
- (fn [db [_ file-id]]
-   {:pre [file-id]}
-   (mg/pull db queries/file [:db/id file-id])))
+ (fn [db [_ file-uid]]
+   {:pre [file-uid]}
+   (mg/pull db queries/file [:db/uid file-uid])))
 
 (re-frame/reg-sub
  ::file-string
  :<- [::vcs]
  :<- [::timeline-entry]
- (fn [[vcs [_ {delta-id :id}]] [_ {file-id :db/id}]]
-   (when (and file-id delta-id)
-     (vcs/file-string vcs file-id delta-id))))
+ (fn [[vcs [_ {delta-uid :uid}]] [_ {file-uid :db/uid}]]
+   (when (and file-uid delta-uid)
+     (vcs/file-string vcs file-uid delta-uid))))
 
 (re-frame/reg-sub
  ::file-cursor
  :<- [::vcs]
  :<- [::timeline-entry]
- (fn [[vcs [_ {delta-id :id}]] [_ {file-id :db/id}]]
-   (when (and file-id delta-id)
-     (vcs/file-cursor vcs file-id delta-id))))
+ (fn [[vcs [_ {delta-uid :uid}]] [_ {file-uid :db/uid}]]
+   (when (and file-uid delta-uid)
+     (vcs/file-cursor vcs file-uid delta-uid))))
 
 ;;
 ;; * Pre-processors

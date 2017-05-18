@@ -9,52 +9,52 @@
 ;; * Spec
 ;;
 
-(s/def ::start ::delta/prev-id)
-(s/def ::end ::delta/prev-id)
+(s/def ::start ::delta/prev-uid)
+(s/def ::end ::delta/prev-uid)
 (s/def ::branch-pointers (s/keys :req [::start ::end]))
-(s/def ::branch-pointers-by-branch-id (s/map-of ::branch/id ::branch-pointers))
+(s/def ::branch-pointers-by-branch-uid (s/map-of ::branch/uid ::branch-pointers))
 
 ;;
 ;; * State
 ;;
 
-(def empty-branch-pointers-by-branch-id {})
+(def empty-branch-pointers-by-branch-uid {})
 
 (defn- update-pointers
-  [{::keys [start end] :as branch-pointers} start-id end-id]
+  [{::keys [start end] :as branch-pointers} start-uid end-uid]
   (cond-> branch-pointers
-    (nil? start) (assoc ::start start-id)
-    true         (assoc ::end end-id)))
+    (nil? start) (assoc ::start start-uid)
+    true         (assoc ::end end-uid)))
 
 ;;
 ;; * API
 ;;
 
 (s/fdef add-delta
-        :args (s/cat :bpbb ::branch-pointers-by-branch-id ::deltas ::delta/delta)
-        :ret ::branch-pointers-by-branch-id)
+        :args (s/cat :bpbb ::branch-pointers-by-branch-uid ::deltas ::delta/delta)
+        :ret ::branch-pointers-by-branch-uid)
 
 (defn add-delta
-  [branch-pointers-by-branch-id {:keys [id branch-id] :as delta}]
-  (update branch-pointers-by-branch-id branch-id update-pointers id id))
+  [branch-pointers-by-branch-uid {:keys [uid branch-uid] :as delta}]
+  (update branch-pointers-by-branch-uid branch-uid update-pointers uid uid))
 
 (s/fdef add-deltas
-  :args (s/cat :bpbb ::branch-pointers-by-branch-id ::deltas (s/every ::delta/delta))
-  :ret ::branch-pointers-by-branch-id)
+        :args (s/cat :bpbb ::branch-pointers-by-branch-uid ::deltas (s/every ::delta/delta))
+        :ret ::branch-pointers-by-branch-uid)
 
 (defn add-deltas
-  [branch-pointers-by-branch-id deltas]
+  [branch-pointers-by-branch-uid deltas]
   (reduce-kv
-   (fn [branch-pointers-by-branch-id branch-id deltas]
-     (let [start (-> deltas first :id)
-           end   (-> deltas last :id)]
-       (update branch-pointers-by-branch-id branch-id update-pointers start end )))
-   branch-pointers-by-branch-id (group-by :branch-id deltas)))
+   (fn [branch-pointers-by-branch-uid branch-uid deltas]
+     (let [start (-> deltas first :uid)
+           end   (-> deltas last :uid)]
+       (update branch-pointers-by-branch-uid branch-uid update-pointers start end )))
+   branch-pointers-by-branch-uid (group-by :branch-uid deltas)))
 
 (defn start?
-  [branch-pointers-by-branch-id {:keys [branch-id id] :as delta}]
-  (= id (get-in branch-pointers-by-branch-id [branch-id ::start])))
+  [branch-pointers-by-branch-uid {:keys [branch-uid uid] :as delta}]
+  (= uid (get-in branch-pointers-by-branch-uid [branch-uid ::start])))
 
 (defn end?
-  [branch-pointers-by-branch-id {:keys [branch-id id] :as delta}]
-  (= id (get-in branch-pointers-by-branch-id [branch-id ::end])))
+  [branch-pointers-by-branch-uid {:keys [branch-uid uid] :as delta}]
+  (= uid (get-in branch-pointers-by-branch-uid [branch-uid ::end])))

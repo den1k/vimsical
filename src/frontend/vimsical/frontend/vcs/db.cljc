@@ -6,11 +6,11 @@
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.state.timeline :as timeline]))
 
-(s/def ::branch-id ::branch/id)
-(s/def ::delta-id ::delta/prev-id)
+(s/def ::branch-uid ::branch/uid)
+(s/def ::delta-uid ::delta/prev-uid)
 (s/def ::playhead-entry (s/nilable ::timeline/entry))
 (s/def ::skimhead-entry (s/nilable ::timeline/entry))
-(s/def ::state (s/keys :req [::branch-id ::delta-id] :opt [::playhead-entry ::skimhead-entry]))
+(s/def ::state (s/keys :req [::branch-uid ::delta-uid] :opt [::playhead-entry ::skimhead-entry]))
 (s/def ::vcs (s/merge ::vcs/vcs ::state ))
 
 (s/fdef get-playhead-entry :args (s/cat :vcs ::vcs) :ret ::playhead-entry)

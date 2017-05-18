@@ -16,9 +16,9 @@
 (def select-deltas
   (cql/select
    :delta
-   (cql/columns :branch_id :file_id :id :prev_id :pad :op :meta)
+   (cql/columns :branch_uid :file_uid :uid :prev_uid :pad :op :meta)
    (cql/where
-    [[= (cql/token :user_id :vims_id) (cql/token cql/? cql/?)]])))
+    [[= (cql/token :user_uid :vims_uid) (cql/token cql/? cql/?)]])))
 
 (assert (string? (pr-str (cql/->raw select-deltas))))
 
@@ -26,16 +26,16 @@
   (cql/insert
    :delta
    (cql/values
-    {"user_id"   :user_id
-     "vims_id"   :vims_id
-     "ts"        (cql/now)
-     "branch_id" :branch_id
-     "file_id"   :file_id
-     "id"        :id
-     "prev_id"   :prev_id
-     "op"        :op
-     "pad"       :pad
-     "meta"      :meta})))
+    {"user_uid"   :user_uid
+     "vims_uid"   :vims_uid
+     "ts"         (cql/now)
+     "branch_uid" :branch_uid
+     "file_uid"   :file_uid
+     "uid"        :uid
+     "prev_uid"   :prev_uid
+     "op"         :op
+     "pad"        :pad
+     "meta"       :meta})))
 
 (assert (string? (cql/->raw insert-delta)))
 
@@ -50,21 +50,21 @@
       (update :meta nippy/serializable!)))
 
 (defn- serializable-delta->values
-  [delta user-id vims-id]
+  [delta user-uid vims-uid]
   (merge
    (util/hyphens->underscores delta)
-   {:user_id user-id :vims_id vims-id}))
+   {:user_uid user-uid :vims_uid vims-uid}))
 
 (defn delta->insert-values
-  ([user-id vims-id]
+  ([user-uid vims-uid]
    (fn [delta]
      (-> delta
          (delta->serializable-delta)
-         (serializable-delta->values user-id vims-id))))
-  ([user-id vims-id delta]
+         (serializable-delta->values user-uid vims-uid))))
+  ([user-uid vims-uid delta]
    (-> delta
        (delta->serializable-delta)
-       (serializable-delta->values user-id vims-id))))
+       (serializable-delta->values user-uid vims-uid))))
 
 ;;
 ;; * Files previews
@@ -75,8 +75,8 @@
   (cql/insert :file_preview (cql/values file-preview)))
 
 (defn select-file-preview
-  [user-id vims-id]
+  [user-uid vims-uid]
   (cql/select
    :file_preview
    (cql/where
-    [['= (cql/token :user_id :vims_id) (cql/token user-id vims-id)]])))
+    [['= (cql/token :user_uid :vims_uid) (cql/token user-uid vims-uid)]])))

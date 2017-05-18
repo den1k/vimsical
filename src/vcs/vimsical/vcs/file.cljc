@@ -10,8 +10,8 @@
 ;; * Attributes
 ;;
 
-(s/def ::id uuid?)
-(s/def :db/id ::id)
+(s/def ::uid uuid?)
+(s/def :db/uid ::uid)
 (s/def ::type #{:text})
 (s/def ::sub-type sub-types)
 (s/def ::name string?)
@@ -20,9 +20,7 @@
 
 ;;
 ;; * Entity
-;;
-
-(s/def ::file (s/keys :req [:db/id ::type ::sub-type]
+(s/def ::file (s/keys :req [:db/uid ::type ::sub-type]
                       :opt [::name ::compiler ::lang-version]))
 
 ;;

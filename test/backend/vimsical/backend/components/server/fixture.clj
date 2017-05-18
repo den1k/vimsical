@@ -1,12 +1,12 @@
 (ns vimsical.backend.components.server.fixture
   (:require
+   [com.stuartsierra.component :as cp]
    [io.pedestal.http :as http]
    [io.pedestal.interceptor :as interceptor]
-   [com.stuartsierra.component :as cp]
+   [ring.middleware.session.memory :as middleware.session.memory]
    [vimsical.backend.components.server :as server]
    [vimsical.backend.components.server.interceptors.util :as interceptors.util]
-   [vimsical.backend.components.service :as service]
-   [ring.middleware.session.memory :as middleware.session.memory]))
+   [vimsical.backend.components.service :as service]))
 
 ;;
 ;; * State

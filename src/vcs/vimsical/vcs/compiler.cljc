@@ -7,8 +7,8 @@
 
 ;; * Attributes
 
-(s/def ::id uuid?)
-(s/def :db/id ::id)
+(s/def ::uid uuid?)
+(s/def :db/uid ::uid)
 (s/def ::type #{:text})
 (s/def ::sub-type sub-types)
 (s/def ::to-sub-type to-sub-types)
@@ -16,4 +16,4 @@
 
 ;; * Entity
 (s/def ::compiler
-  (s/keys :req [:db/id ::type ::sub-type ::to-sub-type ::name]))
+  (s/keys :req [:db/uid ::type ::sub-type ::to-sub-type ::name]))

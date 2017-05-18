@@ -5,7 +5,7 @@
 ;; * Spec
 
 (s/def ::lib
-  (s/keys :req [:db/id ::src ::type ::sub-type]
+  (s/keys :req [:db/uid ::src ::type ::sub-type]
           :opt [::title]))              ; libs have titles, files have names
 
 
@@ -13,8 +13,8 @@
 
 (def sub-types #{:css :javascript})
 
-(s/def ::id uuid?)
-(s/def :db/id ::id)
+(s/def ::uid uuid?)
+(s/def :db/uid ::uid)
 (s/def ::src string?)
 (s/def ::type #{:text})
 (s/def ::sub-type sub-types)

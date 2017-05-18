@@ -1,9 +1,9 @@
 (ns vimsical.backend.components.delta-store.protocol)
 
 (defprotocol IDeltaStoreAsync
-  (select-deltas-async [_ user-id vims-id success error])
-  (insert-deltas-async [_ user-id vims-id deltas success error]))
+  (select-deltas-async [_ user-uid vims-uid success error])
+  (insert-deltas-async [_ user-uid vims-uid deltas success error]))
 
 (defprotocol IDeltaStoreChan
-  (select-deltas-chan [_ user-id vims-id])
-  (insert-deltas-chan [_ user-id vims-id deltas]))
+  (select-deltas-chan [_ user-uid vims-uid])
+  (insert-deltas-chan [_ user-uid vims-uid deltas]))

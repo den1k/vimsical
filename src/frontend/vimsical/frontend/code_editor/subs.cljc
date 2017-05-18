@@ -24,21 +24,21 @@
 ;;
 
 (defn string-handler
-  [[vcs timeline-entry] [_ {file-id :db/id}]]
-  {:pre [file-id]}
+  [[vcs timeline-entry] [_ {file-uid :db/uid}]]
+  {:pre [file-uid]}
   (when-not (= ::sentinel timeline-entry)
-    (let [[_ {delta-id :id}] timeline-entry]
-      (or (vcs/file-string vcs file-id delta-id) ""))))
+    (let [[_ {delta-uid :uid}] timeline-entry]
+      (or (vcs/file-string vcs file-uid delta-uid) ""))))
 
 (defn cursor-handler
-  [[vcs timeline-entry] [_ {file-id :db/id}]]
-  {:pre [file-id]}
+  [[vcs timeline-entry] [_ {file-uid :db/uid}]]
+  {:pre [file-uid]}
   (when-not (= ::sentinel timeline-entry)
-    (let [[_ {delta-id :id}] timeline-entry]
-      (or (vcs/file-cursor vcs file-id delta-id) 0))))
+    (let [[_ {delta-uid :uid}] timeline-entry]
+      (or (vcs/file-cursor vcs file-uid delta-uid) 0))))
 
 (defn position-handler
-  [[cursor string] [_ {file-id :db/id}]]
+  [[cursor string] [_ {file-uid :db/uid}]]
   (when (and cursor string)
     (interop/idx->pos cursor string)))
 

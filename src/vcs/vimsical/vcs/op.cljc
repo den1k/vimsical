@@ -2,12 +2,12 @@
   (:require
    [clojure.spec :as s]))
 
-(s/def ::id (s/nilable uuid?))
+(s/def ::uid (s/nilable uuid?))
 (s/def ::amt pos-int?)
-(s/def :vimsical.vcs.op.str/ins    (s/tuple #{:str/ins} ::id string?))
-(s/def :vimsical.vcs.op.str/rem    (s/tuple #{:str/rem} ::id ::amt))
-(s/def :vimsical.vcs.op.crsr/move  (s/tuple #{:crsr/mv} ::id))
-(s/def :vimsical.vcs.op.crsr/sel   (s/tuple #{:crsr/sel} (s/tuple ::id ::id)))
+(s/def :vimsical.vcs.op.str/ins    (s/tuple #{:str/ins} ::uid string?))
+(s/def :vimsical.vcs.op.str/rem    (s/tuple #{:str/rem} ::uid ::amt))
+(s/def :vimsical.vcs.op.crsr/move  (s/tuple #{:crsr/mv} ::uid))
+(s/def :vimsical.vcs.op.crsr/sel   (s/tuple #{:crsr/sel} (s/tuple ::uid ::uid)))
 
 (s/def ::op
   (s/or

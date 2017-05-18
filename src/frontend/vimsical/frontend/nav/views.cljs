@@ -48,16 +48,16 @@
                                 hovering?)))]
     (fn []
       (let
-          [user            (<sub [:q [:app/user [:db/id]]])
+          [user            (<sub [:q [:app/user [:db/uid]]])
 
            {:vims/keys [title author] :as vims}
            (<sub [:q [:app/vims
                       [:vims/title
-                       {:vims/author [:db/id]}]]])
+                       {:vims/author [:db/uid]}]]])
 
            {:keys [editing? title-too-long?]} @state
 
-           editable-title? (=by :db/id user author)
+           editable-title? (=by :db/uid user author)
            title-html
            [:div.title
             (when editable-title?
@@ -89,14 +89,14 @@
       [show-popup? (reagent/atom false)
        {:user/keys [first-name last-name vimsae] :as user}
        (<sub [:q [:app/user
-                  [:db/id
+                  [:db/uid
                    :user/first-name
                    :user/last-name
                    :user/email
-                   {:user/vimsae [:db/id :vims/title]}]]])
+                   {:user/vimsae [:db/uid :vims/title]}]]])
 
        {:vims/keys [title] :as app-vims} (<sub [:q [:app/vims
-                                                    [:db/id
+                                                    [:db/uid
                                                      :vims/title]]])]
     [:div.main-nav.ac.jsb
      [:div.logo-and-type

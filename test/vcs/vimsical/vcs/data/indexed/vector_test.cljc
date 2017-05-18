@@ -23,10 +23,10 @@
 (defn test-data
   ([] (test-data (range 0 100 10)))
   ([range]
-   (let [key->val (fn [k] (when k {:id k}))
+   (let [key->val (fn [k] (when k {:uid k}))
          vals     (map key->val range)
          v        (sut/vec vals)
-         vb       (sut/vec-by :id vals)]
+         vb       (sut/vec-by :uid vals)]
      {:key->val key->val :vals vals :v v :vb vb})))
 
 
@@ -54,9 +54,9 @@
 (deftest vector-test
   (let [{:keys [v]} (test-data)]
     (are [val idx] (is (= idx (sut/index-of v val)))
-      {:id 0}  0
-      {:id 50} 5
-      {:id 90} 9)))
+      {:uid 0}  0
+      {:uid 50} 5
+      {:uid 90} 9)))
 
 (deftest vector-by-test
   (let [{:keys [vb]} (test-data)]
@@ -69,21 +69,21 @@
   (let [{:keys [v vb]} (test-data)]
     (are [val idx] (do (is (= val (nth v idx)))
                        (is (= val (nth vb idx))))
-      {:id 0}  0
-      {:id 50} 5
-      {:id 90} 9)))
+      {:uid 0}  0
+      {:uid 50} 5
+      {:uid 90} 9)))
 
 (deftest peek-test
   (let [{:keys [v vb]} (test-data)]
-    (is (= {:id 90} (peek v)))
-    (is (= {:id 90} (peek vb)))))
+    (is (= {:uid 90} (peek v)))
+    (is (= {:uid 90} (peek vb)))))
 
 (deftest update-test
   (let [{:keys [v vb]} (test-data)]
     (is (thrown?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
-         (= {:id 0 :foo :bar} (first (update v 0 assoc :foo :bar)))))
-    (is (= {:id 0 :foo :bar} (first (update vb 0 assoc :foo :bar))))))
+         (= {:uid 0 :foo :bar} (first (update v 0 assoc :foo :bar)))))
+    (is (= {:uid 0 :foo :bar} (first (update vb 0 assoc :foo :bar))))))
 
 (deftest next-test
   (testing "equality"
@@ -136,9 +136,9 @@
     (is (= v-expect  (seq actual-v)))
     (is (= vb-expect (seq actual-vb)))
     (are [val idx] (is (= idx (sut/index-of actual-v val)))
-      {:id 0} 0
-      {:id 4} 4
-      {:id 8} 8)))
+      {:uid 0} 0
+      {:uid 4} 4
+      {:uid 8} 8)))
 
 (deftest split-append-test
   (let [{:keys [v vb]} (test-data)
@@ -152,10 +152,10 @@
 (deftest splice-test
   (let [{:keys [v vb vals]} (test-data)
         idx                 3
-        spliced-v1           (sut/vec [{:id 1000}])
-        spliced-v2           (sut/vec [{:id 2000}])
-        spliced-vb1          (sut/vec-by :id [{:id 1000}])
-        spliced-vb2          (sut/vec-by :id [{:id 2000}])
+        spliced-v1          (sut/vec [{:uid 1000}])
+        spliced-v2          (sut/vec [{:uid 2000}])
+        spliced-vb1         (sut/vec-by :uid [{:uid 1000}])
+        spliced-vb2         (sut/vec-by :uid [{:uid 2000}])
         expect              (splittable/splice (splittable/splice (vec vals) idx (seq spliced-v1)) idx (seq spliced-v2))
         actual-v            (splittable/splice (splittable/splice v idx spliced-v1) idx spliced-v2)
         actual-vb           (splittable/splice (splittable/splice vb idx spliced-vb1) idx spliced-vb2)]
