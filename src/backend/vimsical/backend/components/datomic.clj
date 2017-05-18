@@ -152,7 +152,7 @@
       {:datoms n})))
 
 (defn create-schema!
-  ([datomic] (create-schema! datomic (io/resource "backend/datomic/schema.edn")))
+  ([datomic] (create-schema! datomic (io/resource "datomic/schema.edn")))
   ([{:keys [conn] :as datomic} file]
    (run-transactions conn (read-transactions file))))
 

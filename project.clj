@@ -43,8 +43,7 @@
    ;; Common
    ;;
    :common
-   {:source-paths
-    ["src/common"]
+   {:source-paths ["src/common"]
     :dependencies
     [[com.cognitect/transit-clj           "0.8.300"]
      [com.cognitect/transit-cljs          "0.8.239"]
@@ -57,23 +56,27 @@
    ;; Backend
    ;;
    :backend
-   [{:source-paths ["src/backend"]
-     :main         vimsical.backend.core
+   [{:source-paths   ["src/backend"]
+     :resource-paths ["resources/backend" "resources/backend/logback/prod"]
+     :main           vimsical.backend.core
      :repositories
      {"my.datomic.com"
       {:url      "https://my.datomic.com/repo"
        :username :env/datomic_login
        :password :env/datomic_password}}
      :dependencies
-     [[com.taoensso/carmine          "2.16.0"
+     [[com.taoensso/carmine           "2.16.0"
        :exclusions [org.clojure/tools.reader]]
-      [cc.qbits/alia-all             "3.3.0"]
-      [cc.qbits/hayt                 "4.0.0"]
-      [com.datomic/datomic-pro       "0.9.5544" :exclusions [commons-codec]]
+      [cc.qbits/alia-all              "3.3.0"]
+      [cc.qbits/hayt                  "4.0.0"]
+      [com.datomic/datomic-pro        "0.9.5544"
+       :exclusions [commons-codec org.slf4j/slf4j-nop org.slf4j/slf4j-log4j12]]
+      [ch.qos.logback/logback-classic "1.0.1"]
+      [org.clojure/tools.logging      "0.3.1"]
       ;; HTTP stack
-      [io.pedestal/pedestal.service  "0.5.2"]
-      [io.pedestal/pedestal.immutant "0.5.2"]
-      [buddy/buddy-hashers           "1.2.0"]]
+      [io.pedestal/pedestal.service   "0.5.2"]
+      [io.pedestal/pedestal.immutant  "0.5.2"]
+      [buddy/buddy-hashers            "1.2.0"]]
      :global-vars
      {*warn-on-reflection* true *unchecked-math* :warn-on-boxed}}
     :vcs :common]
@@ -83,25 +86,24 @@
     :env.backend/dev
     {:dependencies
      [[criterium "0.4.4"]]
-     :source-paths
-     ["dev/backend"
-      ;; Deps resolution in fixtures etc
-      "test/backend"]}]
+     ;; Get proper deps resolution for fixtures etc
+     :source-paths   ["dev/backend" "test/vcs" "test/backend" "test/common"]
+     :resource-paths ["resources/backend/logback/dev"]}]
 
    :backend-test
-   [:test
-    :backend-dev
+   [:backend
+    :test
+    :env.backend/dev
     :env.backend/test
     :vcs :common
-    {:test-paths
-     ["test/backend" "test/vcs" "test/common"]}]
+    {:test-paths     ["test/backend" "test/vcs" "test/common"]
+     :resource-paths ["resources/backend/logback/test"]}]
    ;;
    ;; Frontend
    ;;
 
    :-frontend-config
-   {:source-paths
-    ["src/frontend"]
+   {:source-paths ["src/frontend"]
     :plugins
     [[lein-cljsbuild "1.1.5"
       :exclusions [org.apache.commons/commons-compress]]]
@@ -119,8 +121,7 @@
      [thi.ng/color              "1.2.0"]]}
 
    :-frontend-dev-config
-   {:source-paths
-    ["dev/frontend"]
+   {:source-paths ["dev/frontend"]
     :plugins
     [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]]
     :dependencies
