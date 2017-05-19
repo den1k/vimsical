@@ -7,15 +7,15 @@
 
 (re-frame/reg-sub
  ::active-file-id
- :<- [::code-editor.subs/timeline-entry]
+ :<- [::vcs.subs/skimhead-entry]
  :<- [::vcs.subs/playhead-entry]
- (fn [[timeline-entry playhead-entry] _]
-   ;; todo this should be timeline entry instead
-   (some-> playhead-entry second :file-id)))
+ (fn [[skimhead-entry playhead-entry] _]
+   (some-> (or skimhead-entry playhead-entry) second :file-id)))
 
 (re-frame/reg-sub
  ::playback-unset?
  :<- [::vcs.subs/playhead-entry]
  :<- [::timeline.subs/playing?]
- (fn [[entry playing?] _]
-   (and (nil? entry) (not playing?))))
+ :<- [::timeline.subs/skimming?]
+ (fn [[entry playing? skimming?] _]
+   (and (nil? entry) (not (or playing? skimming?)))))
