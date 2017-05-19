@@ -24,6 +24,7 @@
       {:font-weight 300
        :font-size   :22px}]]
     [:&.timeline-container
+     {:padding "0 18px"}                ; less pad than top bar
      [:.play-pause
       {:height :20px
        :cursor :pointer}]
@@ -56,7 +57,11 @@
         {:height        :18px
          :width         :4px
          :margin-left   :-2px
-         :border-radius 0}]]]]]
+         :border-radius 0}]]]
+     [:.time-or-speed-control
+      {:cursor      :pointer
+       ;; monospaced avoids shifting timeline
+       :font-family "Droid Sans Mono"}]]]
    [:.preview-container
     {:position :relative}
     [:.play-button-overlay
@@ -111,7 +116,7 @@
      :margin-bottom :50px}]
    code-editor
    [:.logo-and-file-type.bar
-    {:padding    "0 10px"
+    {:padding    "0 18px"
      :position   :absolute
      :width      :100%
      :bottom     0

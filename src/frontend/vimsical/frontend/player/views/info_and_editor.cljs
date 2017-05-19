@@ -69,7 +69,6 @@
             (when desc
               [:div.desc desc])]
            (get file-id->code-editor active-file-id)
-           ;(val (second file-id->code-editor))
            [:div.logo-and-file-type.bar
             [icons/logo-and-type]
             (active-file-badge {:file active-file})]]))})))

@@ -256,7 +256,11 @@
 
 (re-frame/reg-event-fx
  ::reset-all-editors-to-playhead
- [(util.re-frame/inject-sub ^:ignore-warnings [::vcs.subs/files])]
- (fn [{::vcs.subs/keys [files]} _]
+ [(re-frame/inject-cofx :ui-db)
+  (util.re-frame/inject-sub ^:ignore-warnings [::vcs.subs/files])]
+ (fn [{:keys           [ui-db]
+       ::vcs.subs/keys [files]} _]
    {:dispatch-n
-    (for [file files] [::reset-editor-to-playhead file])}))
+    (for [file files
+          :when (ui-db/get-editor ui-db file)]
+      [::reset-editor-to-playhead file])}))

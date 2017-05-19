@@ -11,7 +11,8 @@
             [vimsical.frontend.timeline.subs :as timeline.subs]
             [vimsical.frontend.player.subs :as subs]
             [vimsical.frontend.player.views.timeline :refer [timeline]]
-            [vimsical.frontend.player.handlers :as handlers]))
+            [vimsical.frontend.player.handlers :as handlers]
+            [vimsical.common.util.core :as util]))
 
 (defn central-play-button []
   (let [unset? (<sub [::subs/playback-unset?])]
@@ -36,6 +37,24 @@
          :bar-width     30
          :gap-width     60
          :border-radius 10}])]))
+
+(defn time-or-speed-control []
+  (let [show-speed? (reagent/atom false)
+        speed-range (reagent/atom [1.0 1.5 1.75 2 2.25 2.5])]
+    (fn []
+      (let [time (util/time-ms->fmt-time (<sub [::timeline.subs/playhead]))]
+        [:div.time-or-speed-control
+         {:on-mouse-enter (e> (reset! show-speed? true))
+          :on-mouse-out   (e> (reset! show-speed? false))}
+         (if-not @show-speed?
+           [:div.time time]
+           [re-com/popover-tooltip
+            :label "speed control"
+            :position :above-left
+            :showing? show-speed?
+            :anchor [:div.speed-control
+                     {:on-click (e> (swap! speed-range util/rotate))}
+                     (str (first @speed-range) "x")]])]))))
 
 (defn preview-container []
   (let [liked    (reagent/atom false)
@@ -65,5 +84,4 @@
           :gap "18px"
           :children [[play-pause]
                      [timeline]
-                     [:div.speed-control
-                      "1.5x"]]]]))))
+                     [time-or-speed-control]]]]))))
