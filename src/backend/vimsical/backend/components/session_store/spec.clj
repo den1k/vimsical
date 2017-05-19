@@ -5,3 +5,6 @@
 
 (s/def ::session
   (s/nilable (s/keys :opt [::user/uid])))
+
+(s/def ::active-session
+  (s/keys :req [::user/uid]))

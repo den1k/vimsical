@@ -1,5 +1,7 @@
 (ns vimsical.frontend.db
   (:require
+   [vimsical.vims :as vims]
+   [vimsical.user :as user]
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
    [vimsical.common.test :refer [uuid]]
@@ -45,8 +47,9 @@
         ::file/compiler (get compilers sub-type)))))
 
 (defn new-branch
-  [uuid name files libs]
-  (-> {:db/uid                       uuid
+  [uid owner-uid name files libs]
+  (-> {:db/uid                       uid
+       ::branch/owner                {:db/uid owner-uid}
        ::branch/name                 name
        ::branch/start-delta-uid      nil
        ::branch/branch-off-delta-uid nil
@@ -55,39 +58,41 @@
       (util/assoc-some ::branch/libs libs)))
 
 (defn new-vims
-  ([author-ref title] (new-vims author-ref title {}))
-  ([author-ref title {:keys [js-libs compilers]}]
+  ([owner-ref title] (new-vims owner-ref title {}))
+  ([owner-ref title {:keys [js-libs compilers]}]
    (let [files    [(new-file (uuid title :file-html) :text :html)
                    (new-file (uuid title :file-css) :text :css)
                    (new-file (uuid title :file-js) :text :javascript "5" compilers)]
-         branches [(new-branch (uuid title :master) "master" files (:javascript js-libs))]]
-     {:db/uid        (uuid title)
-      :vims/author   author-ref
-      :vims/title    title
-      :vims/branches branches})))
-(let [state {:app/user         {:db/uid          (uuid :user)
-                                :user/first-name "Jane"
-                                :user/last-name  "Applecrust"
-                                :user/email      "kalavox@gmail.com"
-                                :user/vimsae
-                                [(new-vims [:db/uid (uuid :user)] "NLP Chatbot running on React Fiber")
-                                 (new-vims [:db/uid (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs})]}
-             :app/vims         [:db/uid (uuid "CatPhotoApp")]
-             :app/quick-search {:db/uid                           (uuid :quick-search)
-                                :quick-search/show?               false
-                                :quick-search/result-idx          0
-                                :quick-search/query               ""
-                                :quick-search/commands            quick-search.commands/commands
-                                :quick-search/filter-idx          nil
-                                :quick-search/filter-result-idx   nil
-                                :quick-search/filter-category-idx nil}
-             :app/libs         js-libs
-             :app/compilers    compilers
-             :app/route        :route/vcr}]
+         branches [(new-branch (uuid :master) "master" files (:javascript js-libs))]]
+     {:db/uid         (uuid title)
+      ::vims/owner    owner-ref
+      ::vims/title    title
+      ::vims/branches branches})))
 
-  (def default-db
-    (-> (mg/new-db)
-        (mg/add-id-attr :db/uid)
-        (util.mg/add-linked-entities state))))
+(def state
+  {:app/user         {:db/uid           (uuid :user)
+                      ::user/first-name "Jane"
+                      ::user/last-name  "Applecrust"
+                      ::user/email      "kalavox@gmail.com"
+                      ::user/vimsae
+                      [(new-vims [:db/uid (uuid :user)] "NLP Chatbot running on React Fiber")
+                       (new-vims [:db/uid (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs :compilers to-sub-type->compiler})]}
+   :app/vims         [:db/uid (uuid "CatPhotoApp")]
+   :app/quick-search {:db/uid                           (uuid :quick-search)
+                      :quick-search/show?               false
+                      :quick-search/result-idx          0
+                      :quick-search/query               ""
+                      :quick-search/commands            quick-search.commands/commands
+                      :quick-search/filter-idx          nil
+                      :quick-search/filter-result-idx   nil
+                      :quick-search/filter-category-idx nil}
+   :app/libs         js-libs
+   :app/compilers    compilers
+   :app/route        :route/vcr})
+
+(def default-db
+  (-> (mg/new-db)
+      (mg/add-id-attr :db/uid)
+      (util.mg/add-linked-entities state)))
 
 (re-frame/reg-event-db ::init (constantly default-db))

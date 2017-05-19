@@ -12,8 +12,7 @@
 ;;
 
 (s/def ::branch
-  (s/keys :req [:db/uid]
-          :opt [::start-delta-uid ::entry-delta-uid ::parent ::files ::name]))
+  (s/keys :req [:db/uid] :opt [::start-delta-uid ::entry-delta-uid ::parent ::files ::name]))
 
 ;;
 ;; ** Attributes
@@ -23,6 +22,7 @@
 (s/def :db/uid ::uid)
 (s/def ::name string?)
 (s/def ::start-delta-uid (s/nilable ::delta/uid))
+(s/def ::entry-delta-uid (s/nilable ::delta/uid))
 (s/def ::branch-off-delta-uid (s/nilable ::delta/uid))
 (s/def ::created-at nat-int?)
 

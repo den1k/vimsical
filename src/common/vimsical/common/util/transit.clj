@@ -28,7 +28,8 @@
 
 (defn- transit-request?
   [req]
-  (some->> (content-type req)
+  (some->> req
+           (content-type)
            (re-find transit-content-type-re)
            (second)
            (keyword)))

@@ -58,4 +58,5 @@
       (try
         (f)
         (finally
-          (sut/drop-keyspace! *connection*))))))
+          (sut/drop-keyspace! *connection*)
+          (cp/stop *connection*))))))

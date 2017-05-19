@@ -1,5 +1,6 @@
 (ns vimsical.frontend.vcs.subs
   (:require
+   [vimsical.vims :as vims]
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
    [vimsical.common.util.core :as util]
@@ -21,10 +22,10 @@
    (if-some [lookup-ref (mg/ref-to db vims)]
      (-> db
          (mg/pull queries/vims-vcs lookup-ref)
-         (get-in [:vims/vcs]))
+         (get-in [::vims/vcs]))
      (-> db
          (mg/pull [{[:app/vims '_] queries/vims-vcs}])
-         (get-in [:app/vims :vims/vcs])))))
+         (get-in [:app/vims ::vims/vcs])))))
 
 ;;
 ;; * Branch

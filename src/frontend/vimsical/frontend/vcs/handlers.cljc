@@ -1,5 +1,6 @@
 (ns vimsical.frontend.vcs.handlers
   (:require
+   [vimsical.vims :as vims]
    [com.stuartsierra.mapgraph :as mg]
    ;; [vimsical.frontend.db :as db]
    [re-frame.core :as re-frame]
@@ -20,16 +21,16 @@
 
 (defn init-vims
   [db [_]]
-  (let [{:as        vims
-         :keys      [db/uid]
-         :vims/keys [branches]} (util.mg/pull* db [:app/vims queries/vims])
-        master                  (branch/master branches)
-        vcs-state               (vcs/empty-vcs branches)
-        vcs-frontend-state      {:db/uid             (uuid)
-                                 ::vcs.db/branch-uid (:db/uid master)
-                                 ::vcs.db/delta-uid  nil}
-        vcs-entity              (merge vcs-state vcs-frontend-state)
-        vims'                   (assoc vims :vims/vcs vcs-entity)]
+  (let [{:as         vims
+         :keys       [db/uid]
+         ::vims/keys [branches]} (util.mg/pull* db [:app/vims queries/vims])
+        master                   (branch/master branches)
+        vcs-state                (vcs/empty-vcs branches)
+        vcs-frontend-state       {:db/uid             (uuid)
+                                  ::vcs.db/branch-uid (:db/uid master)
+                                  ::vcs.db/delta-uid  nil}
+        vcs-entity               (merge vcs-state vcs-frontend-state)
+        vims'                    (assoc vims ::vims/vcs vcs-entity)]
     (mg/add db vims')))
 
 (re-frame/reg-event-db ::init-vims init-vims)

@@ -1,16 +1,10 @@
 (ns vimsical.backend.handlers.auth.commands-test
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures]]
-   [io.pedestal.test :refer [response-for]]
+   [clojure.test :refer [deftest is use-fixtures]]
    [orchestra.spec.test :as st]
-   [vimsical.backend.components.datomic :as datomic]
-   [vimsical.backend.components.server.interceptors.session :as session]
-   [vimsical.backend.components.service :as service]
-   [vimsical.backend.handlers.multi :refer [handle]]
-   [vimsical.backend.system.fixture :refer [*service-fn* *system* system]]
-   [vimsical.backend.util.auth :as util.auth]
+   [vimsical.backend.components.server.test :as server.test]
+   [vimsical.backend.system.fixture :refer [system]]
    [vimsical.common.test :refer [uuid]]
-   [vimsical.common.util.transit :as transit]
    [vimsical.remotes.backend.auth.commands :as auth.commands]
    [vimsical.user :as user]))
 
@@ -18,28 +12,20 @@
 
 (use-fixtures :each system)
 
-(defn status-ok? [{:keys [status]}] (<= 200 status 299))
-
 (deftest register-test
   (let [register-user {:db/uid           (uuid)
                        ::user/first-name "Foo"
                        ::user/last-name  "Bar"
                        ::user/email      "foo@bar.com"
                        ::user/password   "foobar"}
-        actual        (response-for
-                       *service-fn*
-                       :post (service/url-for :events)
-                       :headers {"Content-Type" "application/transit+json"}
-                       :body     (transit/write-transit [::auth.commands/register! register-user]))]
-    (is (status-ok? actual))))
+        actual        (server.test/response-for [::auth.commands/register register-user])]
+    (is (server.test/status-ok? actual))
+    (is (server.test/active-session? actual))))
 
 (deftest login-test
   (do (register-test)
       (let [login-user {::user/email    "foo@bar.com"
                         ::user/password "foobar"}
-            actual     (response-for
-                        *service-fn*
-                        :post (service/url-for :events)
-                        :headers {"Content-Type" "application/transit+json"}
-                        :body     (transit/write-transit [::auth.commands/login! login-user]))]
-        (is (status-ok? actual)))))
+            actual     (server.test/response-for [::auth.commands/login login-user])]
+        (is (server.test/status-ok? actual))
+        (is (server.test/active-session? actual)))))

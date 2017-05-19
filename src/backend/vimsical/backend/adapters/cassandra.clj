@@ -10,6 +10,7 @@
    [vimsical.backend.adapters.cassandra.cql :as cql]
    [vimsical.backend.adapters.cassandra.protocol :as protocol]
    [vimsical.backend.adapters.cassandra.util :as util]
+   [vimsical.backend.util.log :as log]
    [vimsical.common.util.core :as common.util])
   (:import [com.datastax.driver.core PreparedStatement ResultSetFuture Session Statement]))
 
@@ -126,7 +127,7 @@
         (protocol/prepare-queries this' queries))))
   (stop [this]
     (-> this
-        (update :session alia/shutdown)
+        (update :session #(future (alia/shutdown %)))
         (dissoc :prepared)))
 
   ICassandraInternal
@@ -259,3 +260,26 @@
    {:keyspace           keyspace
     :replication-factor replication-factor
     :queries            queries}))
+
+;;
+;; * Async helpers
+;;
+
+(defn new-error-chan
+  "Return a chan of size `n`. If the producer puts a `Throwable` and
+  `ex->response-fn` is not nil and returns a non nil value, will put that
+  value on the chan instead.
+
+  This lets us inject the error handling logic in the producer rather than
+  handle it in every consumer context."
+  ([] (new-error-chan nil nil))
+  ([n] (new-error-chan n nil))
+  ([n ex->response-fn]
+   (letfn [(error? [x] (instance? Throwable x))]
+     (let [xf (keep
+               (fn [x]
+                 (cond
+                   (not (error? x))       x
+                   (nil? ex->response-fn) (log/error x)
+                   :else                  (ex->response-fn x))))]
+       (async/chan n xf (fn [e] (log/error "ex->response-fn error" e)))))))

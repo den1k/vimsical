@@ -1,5 +1,6 @@
 (ns vimsical.backend.components.session-store
   (:require
+   [vimsical.backend.util.log :as log]
    [clojure.spec :as s]
    [ring.middleware.session.store :as store]
    [taoensso.carmine :as car]
@@ -35,9 +36,9 @@
 (defn read-session*
   [redis k]
   (try
-    (car/wcar
-     redis
-     (car/get k))
+    (let [session (car/wcar redis (car/get k))]
+      (log/debug "read-session..." k session)
+      session)
     (catch Throwable t
       (println "Error getting session" {:key k :ex t})
       (throw t))))
@@ -49,6 +50,7 @@
 (defn write-session*
   [redis k val]
   (try
+    (log/debug "write-session..." k val)
     (let [k' (or k (random-key))]
       (do
         (car/wcar
@@ -66,6 +68,7 @@
   [redis k]
   (try
     (do
+      (log/debug "delete-session..." k)
       (car/wcar
        redis
        (car/del k))

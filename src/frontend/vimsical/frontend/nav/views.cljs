@@ -1,5 +1,7 @@
 (ns vimsical.frontend.nav.views
   (:require
+   [vimsical.vims :as vims]
+   [vimsical.user :as user]
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
    [re-com.core :as re-com]
@@ -50,14 +52,14 @@
       (let
           [user            (<sub [:q [:app/user [:db/uid]]])
 
-           {:vims/keys [title author] :as vims}
+           {::vims/keys [title owner] :as vims}
            (<sub [:q [:app/vims
-                      [:vims/title
-                       {:vims/author [:db/uid]}]]])
+                      [::vims/title
+                       {::vims/owner [:db/uid]}]]])
 
            {:keys [editing? title-too-long?]} @state
 
-           editable-title? (=by :db/uid user author)
+           editable-title? (=by :db/uid user owner)
            title-html
            [:div.title
             (when editable-title?
@@ -70,7 +72,7 @@
                :on-blur                           (e>
                                                    (swap! state assoc :editing? false)
                                                    (re-frame/dispatch
-                                                    [:vims/set-title (util/norm-str inner-html)]))})
+                                                    [::vims/set-title (util/norm-str inner-html)]))})
             (or title
                 (if editing?
                   ""
@@ -87,17 +89,17 @@
 (defn nav []
   (let
       [show-popup? (reagent/atom false)
-       {:user/keys [first-name last-name vimsae] :as user}
+       {::user/keys [first-name last-name vimsae] :as user}
        (<sub [:q [:app/user
                   [:db/uid
-                   :user/first-name
-                   :user/last-name
-                   :user/email
-                   {:user/vimsae [:db/uid :vims/title]}]]])
+                   ::user/first-name
+                   ::user/last-name
+                   ::user/email
+                   {::user/vimsae [:db/uid ::vims/title]}]]])
 
-       {:vims/keys [title] :as app-vims} (<sub [:q [:app/vims
-                                                    [:db/uid
-                                                     :vims/title]]])]
+       {::vims/keys [title] :as app-vims} (<sub [:q [:app/vims
+                                                     [:db/uid
+                                                      ::vims/title]]])]
     [:div.main-nav.ac.jsb
      [:div.logo-and-type
       [:span.logo icons/vimsical-logo]
@@ -105,7 +107,7 @@
      (when app-vims
        [vims-info])
      #_[:div.vims-list
-        (for [{:vims/keys [title] :as vims} vimsae]
+        (for [{::vims/keys [title] :as vims} vimsae]
           ^{:key title}
           [:div.vims-title
            {:on-click (e> (re-frame/dispatch [::app/open-vims vims]))}

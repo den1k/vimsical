@@ -1,6 +1,7 @@
 (defproject vimsical "0.1.0-SNAPSHOT"
   :dependencies
-  [[org.clojure/clojure "1.9.0-alpha15"]]
+  [[org.clojure/clojure "1.9.0-alpha15"]
+   [metosin/spec-tools "0.1.1"]]
 
   :source-paths []                      ; ignore src/ in all profiles
   :test-paths []

@@ -1,4 +1,4 @@
-(ns vimsical.common.core)
+(ns vimsical.common.core )
 
 (defn =by
   ([f a]

@@ -1,4 +1,6 @@
 (ns vimsical.backend.system.fixture
+  "NOTE:
+  - We're not clearing the session state after running the fixture"
   (:require
    [com.stuartsierra.component :as cp]
    [io.pedestal.http :as http]
@@ -11,6 +13,7 @@
 
 ;;
 ;; * State
+;;
 
 (def ^:dynamic *system* nil)
 (def ^:dynamic *service-fn* nil)

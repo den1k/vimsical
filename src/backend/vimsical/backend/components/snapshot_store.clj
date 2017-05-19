@@ -40,8 +40,10 @@
    (map cassandra.util/underscores->hyphens)
    (map (util/qualify-keys (namespace ::snapshot/snapshot)))))
 
-(def options
+(def default-options
   {:result-set-fn #(into [] result-xf %)})
+
+(defn new-options [options] (merge default-options options))
 
 ;;
 ;; * Component
@@ -61,18 +63,25 @@
   protocol/ISnapshotStoreAsync
   (select-snapshots-async [_ user-uid vims-uid success error]
     (let [command (select-snapshots-command user-uid vims-uid)]
-      (cassandra/execute-async cassandra command success error options)))
+      (cassandra/execute-async cassandra command success error default-options)))
   (insert-snapshots-async [_ user-uid vims-uid snapshots success error]
     (let [commands (insert-snapshots-commands user-uid vims-uid snapshots)]
-      (cassandra/execute-batch-async cassandra commands :unlogged success error options)))
+      (cassandra/execute-batch-async cassandra commands :unlogged success error default-options)))
 
   protocol/ISnapshotStoreChan
-  (select-snapshots-chan [_ user-uid vims-uid]
-    (let [command (select-snapshots-command user-uid vims-uid)]
-      (cassandra/execute-chan cassandra command options)))
-  (insert-snapshots-chan [_ user-uid vims-uid snapshots]
-    (let [commands (insert-snapshots-commands user-uid vims-uid snapshots)]
-      (cassandra/execute-batch-chan cassandra commands :unlogged options))))
+  (select-snapshots-chan [this user-uid vims-uid]
+    (protocol/select-snapshots-chan this user-uid vims-uid nil))
+  (select-snapshots-chan [_ user-uid vims-uid options]
+    (let [command  (select-snapshots-command user-uid vims-uid)
+          options' (new-options options)]
+      (cassandra/execute-chan cassandra command options')))
+
+  (insert-snapshots-chan [this user-uid vims-uid snapshots]
+    (protocol/insert-snapshots-chan this user-uid vims-uid snapshots nil))
+  (insert-snapshots-chan [_ user-uid vims-uid snapshots options]
+    (let [commands (insert-snapshots-commands user-uid vims-uid snapshots)
+          options' (new-options options)]
+      (cassandra/execute-batch-chan cassandra commands :unlogged options'))))
 
 (defn ->snapshot-store [] (map->SnapshotStore {}))
 
