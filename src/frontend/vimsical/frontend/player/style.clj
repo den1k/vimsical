@@ -33,7 +33,7 @@
        :height   :100%
        :cursor   :pointer}
       [:.progress
-       {:height        :8px
+       {:height        :4px
         :width         :100%
         :border-radius :4px
         :position      :absolute}
@@ -53,11 +53,10 @@
          :margin-left   :-8px
          :border-radius :50%}]
        [:&.skimhead
-        {:height        :21px
-         :width         :6px
-         :margin-left   :-3px
-         :border-radius 0}]
-       ]]]]
+        {:height        :18px
+         :width         :4px
+         :margin-left   :-2px
+         :border-radius 0}]]]]]
    [:.preview-container
     {:position :relative}
     [:.play-button-overlay

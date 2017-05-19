@@ -18,6 +18,15 @@
             [clojure.string :as string]
             [vimsical.common.util.core :as util]))
 
+(defn active-file-badge [{:keys [file]}]
+  (let [{::file/keys [sub-type]} file]
+    [:div.active-file-type
+     {:class sub-type}
+     (-> sub-type name string/upper-case)]))
+
+(defn user-full-name [{:user/keys [first-name last-name]}]
+  (util/space-join first-name last-name))
+
 (defn info-and-editor-container []
   (let [show-info? (reagent/atom true)
         desc       (util.content/lorem-ipsum 2)]
@@ -31,22 +40,18 @@
                                             {:vims/author [:user/first-name
                                                            :user/last-name
                                                            :user/email]}]])
-              author-full-name     (->> author
-                                        ((juxt :user/first-name :user/last-name))
-                                        (string/join " "))
-              {:as           branch
-               ::branch/keys [files]} (<sub [::vcs.subs/branch])
-              temp-first-file      (-> branch ::branch/files first)
-              active-file-id       (<sub [::subs/active-file-id])
-              active-file          (util/ffilter #(= active-file-id (:db/id %)) files)
-              sub-type->file       (util/project ::file/sub-type files)
-              file-id->code-editor (util/into-hashmap
-                                    :db/id
+              files                (<sub [::vcs.subs/files])
+              temp-first-file      (first files)
+              active-file-id       (or (<sub [::subs/active-file-id])
+                                       (:db/id temp-first-file))
+              id->file             (util/project :db/id files)
+              active-file          (get id->file active-file-id)
+              file-id->code-editor (util/map-vals
                                     (fn [fl]
                                       ^{:key (:db/id fl)}
                                       [code-editor {:file     fl
                                                     :compact? true}])
-                                    files)]
+                                    id->file)]
           [:div.info-and-editor-panel.dc
            {:on-mouse-enter (e>
                              (reset! show-info? true))
@@ -60,13 +65,11 @@
               {:user author}]
              [:div.title-and-creator
               [:div.title.truncate title]
-              [:div.creator.truncate author-full-name]]]
+              [:div.creator.truncate (user-full-name author)]]]
             (when desc
               [:div.desc desc])]
            (get file-id->code-editor active-file-id)
+           ;(val (second file-id->code-editor))
            [:div.logo-and-file-type.bar
             [icons/logo-and-type]
-            ;; todo dynamic
-            [:div.active-file-type.css
-             ;; todo dynamic
-             "HTML"]]]))})))
+            (active-file-badge {:file active-file})]]))})))

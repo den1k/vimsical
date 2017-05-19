@@ -55,7 +55,7 @@
 
           scrollbar-defaults
           {:scrollbar
-           { ;; setting to be explicit, bar won't
+           {;; setting to be explicit, bar won't
             ;; show when wrappingColumn is 0
             :useShadows            false
             ;; horizontal should never be needed
@@ -74,11 +74,11 @@
            :scrollbar                  {:verticalScrollbarSize 7}}]
 
       {:editor
-       (util/deep-merge
-        defaults
-        scrollbar-defaults
-        (when compact? compact-defaults)
-        custom-opts)
+              (util/deep-merge
+               defaults
+               scrollbar-defaults
+               (when compact? compact-defaults)
+               custom-opts)
        ;; https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.itextmodelupdateoptions.html
        :model {:tabSize 2}})))
 

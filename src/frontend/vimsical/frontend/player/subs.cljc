@@ -9,8 +9,13 @@
  ::active-file-id
  :<- [::vcs.subs/skimhead-entry]
  :<- [::vcs.subs/playhead-entry]
- (fn [[skimhead-entry playhead-entry] _]
-   (some-> (or skimhead-entry playhead-entry) second :file-id)))
+ :<- [::vcs.subs/timeline-first-entry]
+ (fn [[skimhead-entry playhead-entry timeline-first-entry] _]
+   (some-> (or skimhead-entry
+               playhead-entry
+               timeline-first-entry)
+           second
+           :file-id)))
 
 (re-frame/reg-sub
  ::playback-unset?
