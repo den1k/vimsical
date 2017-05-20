@@ -21,8 +21,8 @@
      [:.social-buttons
       {:display :flex}]
      [:.edit
-      {:font-weight 300
-       :font-size   :22px}]]
+      {:font-weight 500
+       :font-size   :18px}]]
     [:&.timeline-container
      {:padding "0 18px"}                ; less pad than top bar
      [:.play-pause
