@@ -15,10 +15,11 @@
     :or   {read-only? false}}]
   (letfn [(file-lang [{::file/keys [sub-type]}] (name sub-type))]
     (let [defaults
-          {:value                ""
-           :language             (file-lang file)
-           :readOnly             read-only?
-           :theme                "vs"  ; default
+          {:value                     ""
+           :language                  (file-lang file)
+           :readOnly                  read-only?
+           :theme                     "vs" ; default
+           :quickSuggestions          false
            ;; FIXME! Odd things happen to monaco's line-width calculations
            ;; when using FiraCode regardless of ligatures
            ;; :fontFamily           "FiraCode-Retina"
@@ -26,31 +27,31 @@
            ;; :fontSize             13
            ;; columns within the .decorationsOverviewRuler (under scrollbar) in
            ;; which decorations like errors are rendered.
-           :overviewRulerLanes 1
+           :overviewRulerLanes        1
            ;; removes the ugly black bar signifying the position of the cursor
            :hideCursorInOverviewRuler true
            ;; two chars gap between line nums and code
-           :lineDecorationsWidth "2ch"
-           :lineNumbersMinChars  1
+           :lineDecorationsWidth      "2ch"
+           :lineNumbersMinChars       1
            ;; "none" | "gutter" | "line" | "all"
-           :renderLineHighlight  "line"
-           :renderIndentGuides   false ; default
+           :renderLineHighlight       "line"
+           :renderIndentGuides        false ; default
            ;; Enable that the editor will install an interval to check if its container
            ;; dom node size has changed. Enabling this might have a severe performance
            ;; impact. Defaults to false.
-           :automaticLayout      true
-           :contextmenu          false
+           :automaticLayout           true
+           :contextmenu               false
            ;; cmd + scroll changes font-size
-           :mouseWheelZoom       true
+           :mouseWheelZoom            true
            ;; Control the wrapping strategy of the editor. Using -1 means no
            ;; wrapping whatsoever. Using 0 means viewport width wrapping
            ;; (ajusts with the resizing of the editor). Using a positive number
            ;; means wrapping after a fixed number of characters. Defaults to 300.
            ;; https://microsoft.github.io/monaco-editor/api/modules/monaco.editor.html#definetheme
-           :wrappingColumn       0
+           :wrappingColumn            0
            ;; "none" | "same" | "indent"
-           :wrappingIndent       "indent"
-           :useTabStops          false}
+           :wrappingIndent            "indent"
+           :useTabStops               false}
 
           scrollbar-defaults
           {:scrollbar

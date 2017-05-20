@@ -1,32 +1,20 @@
 (ns vimsical.frontend.code-editor.handlers
-  #?@(:clj
-      [(:require
-        [re-frame.core :as re-frame]
-        [vimsical.vcs.edit-event :as edit-event]
-        [vimsical.frontend.vcs.handlers :as vcs.handlers]
-        [vimsical.frontend.util.re-frame :refer [<sub]]
-        [vimsical.frontend.code-editor.ui-db :as ui-db]
-        [vimsical.common.util.core :as util]
-        [vimsical.frontend.code-editor.subs :as subs]
-        [vimsical.frontend.code-editor.interop :as interop]
-        [vimsical.frontend.util.re-frame :as util.re-frame]
-        [vimsical.frontend.timeline.subs :as timeline.subs]
-        [vimsical.frontend.vcs.subs :as vcs.subs]
-        [vimsical.vcs.core :as vcs])]
-      :cljs
-      [(:require
-        [re-frame.core :as re-frame]
-        [vimsical.vcs.edit-event :as edit-event]
-        [vimsical.frontend.vcs.handlers :as vcs.handlers]
-        [vimsical.frontend.util.re-frame :refer [<sub]]
-        [re-frame.loggers :refer [console]]
-        [vimsical.frontend.code-editor.ui-db :as ui-db]
-        [vimsical.frontend.code-editor.subs :as subs]
-        [vimsical.frontend.code-editor.interop :as interop]
-        [vimsical.frontend.util.re-frame :as util.re-frame]
-        [vimsical.frontend.timeline.subs :as timeline.subs]
-        [vimsical.frontend.vcs.subs :as vcs.subs]
-        [vimsical.vcs.core :as vcs])]))
+  (:require
+   [re-frame.core :as re-frame]
+   [vimsical.vcs.edit-event :as edit-event]
+   [vimsical.frontend.vcs.handlers :as vcs.handlers]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
+   [re-frame.loggers :refer [console]]
+   [vimsical.frontend.code-editor.ui-db :as ui-db]
+   [vimsical.frontend.code-editor.subs :as subs]
+   [vimsical.frontend.code-editor.interop :as interop]
+   [vimsical.frontend.util.re-frame :as util.re-frame]
+   [vimsical.frontend.timeline.subs :as timeline.subs]
+   [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.vcs.file :as file]
+   [vimsical.vcs.core :as vcs]
+   [vimsical.common.util.core :as util]
+   [vimsical.frontend.code-editor.util :as code-editor.util]))
 
 ;;
 ;; * Instance lifecycle
@@ -34,12 +22,15 @@
 
 (re-frame/reg-event-fx
  ::register
- [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ file editor-instance listeners]]
+ [(re-frame/inject-cofx :ui-db)
+  (util.re-frame/inject-sub
+   (fn [[_ file]] ^:ignore-warnings [::subs/playhead-string file]))]
+ (fn [{:keys       [ui-db]
+       ::subs/keys [playhead-string]} [_ file editor-instance listeners]]
    {:ui-db      (-> ui-db
                     (ui-db/set-editor file editor-instance)
                     (ui-db/set-listeners file listeners))
-    :dispatch-n [[::set-string nil file ""]
+    :dispatch-n [[::set-string nil file playhead-string]
                  [::bind-listeners file]
                  [::track-start file]]}))
 
@@ -87,15 +78,12 @@
 ;; * Linting
 ;;
 
-(defn set-model-markers [model sub-type markers]
-  #?(:cljs (.. js/monaco -editor (setModelMarkers model (name sub-type) markers))))
-
 (defn severity-code [flag]
   (case flag
-    :error   3
+    :error 3
     :warning 2
-    :info    1
-    :ignore  0))
+    :info 1
+    :ignore 0))
 
 (defn model-marker
   [{:keys [pos msg severity]
@@ -110,21 +98,23 @@
             :endLineNumber   line})))
 
 (re-frame/reg-event-fx
- ::check-code-errors
- [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ {:keys [db/id] :as file}]]
-   (when-let [errors (<sub [::vcs.subs/file-lint-or-preprocessing-errors file])]
-     (let [editor  (ui-db/get-editor ui-db file)
-           model   (.-model editor)
-           markers (into-array (map model-marker errors))]
-       ;; TODO fixme
-       #?(:cljs
-          (.setTimeout js/window
-                       #(set-model-markers model
-                                           :javascript
-                                           markers)
-                       1000))
-       nil))))
+ ::set-error-markers
+ [(util.re-frame/inject-sub [::subs/editor-instance-for-subtype :javascript])]
+ (fn [{:keys     [ui-db]
+       js-editor ::subs/editor-instance-for-subtype} [_ errors]]
+   (let [model   (.-model js-editor)
+         markers (map model-marker errors)]
+     (code-editor.util/set-model-markers model :javascript markers)
+     nil)))
+
+(re-frame/reg-event-fx
+ ::clear-error-markers
+ [(util.re-frame/inject-sub [::subs/editor-instance-for-subtype :javascript])]
+ (fn [{:keys     [ui-db]
+       js-editor ::subs/editor-instance-for-subtype} _]
+   (let [model (.-model js-editor)]
+     (code-editor.util/set-model-markers model :javascript [])
+     nil)))
 
 ;;
 ;; ** User actions
@@ -138,8 +128,7 @@
    (let [editor     (ui-db/get-editor ui-db file)
          model      (.-model editor)
          edit-event (interop/parse-content-event model e)]
-     {:dispatch-n [[::vcs.handlers/add-edit-event file edit-event]
-                   [::check-code-errors file]]})))
+     {:dispatch [::vcs.handlers/add-edit-event file edit-event]})))
 
 (re-frame/reg-event-fx
  ::cursor-change
@@ -248,7 +237,7 @@
  ::track-stop
  (fn [_ [_ file]]
    {:track
-    [{:id [::editor-str file]   :action :dispose}
+    [{:id [::editor-str file] :action :dispose}
      {:id [::editor-pos file] :action :dispose}]}))
 
 (re-frame/reg-event-fx

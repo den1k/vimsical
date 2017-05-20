@@ -9,6 +9,9 @@
     [:.scrollbar.vertical
      [:.slider
       {:border-radius :5px}]]
+    [:.monaco-editor-hover-content
+     [".hover-row:nth-child(n+2)"
+      {:display :none}]]
     [:.view-overlays
      [:.current-line
       {:border :none}]

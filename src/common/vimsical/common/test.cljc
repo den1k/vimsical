@@ -56,17 +56,17 @@
 (defn uuid
   "Return a stable uuid for the given value."
   ([] (uuid/uuid))
-  ([tag]
-   (or (get (deref *tag->uuid*) tag)
+  ([& tags]
+   (or (get (deref *tag->uuid*) tags)
        (let [uuid (uuid/uuid)]
-         (swap! *tag->uuid* assoc tag uuid)
-         (swap! *uuid->tag* assoc uuid tag)
+         (swap! *tag->uuid* assoc tags uuid)
+         (swap! *uuid->tag* assoc uuid tags)
          uuid))))
 
 (defn- uuid-seq*
   [sym current]
   (lazy-seq
-   (cons (uuid [sym current]) (uuid-seq* sym (inc current)))))
+   (cons (uuid sym current) (uuid-seq* sym (inc current)))))
 
 (defn uuid-seq
   "Return a lazy-seq of uuids. Values are both unique and stable per seq."

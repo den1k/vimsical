@@ -8,6 +8,7 @@
    [vimsical.frontend.vcs.db :as db]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.file :as file]
    [vimsical.vcs.core :as vcs]))
 
 ;;
@@ -16,7 +17,7 @@
 
 (re-frame/reg-sub
  ::vcs
- (fn [db [vims]]
+ (fn [db [_ vims]]
    (if-some [lookup-ref (mg/ref-to db vims)]
      (-> db
          (mg/pull queries/vims-vcs lookup-ref)
@@ -29,7 +30,7 @@
 ;; * Branch
 ;;
 
-(re-frame/reg-sub ::branches  :<- [::vcs] (fn [{::vcs/keys [branches]}] branches))
+(re-frame/reg-sub ::branches :<- [::vcs] (fn [{::vcs/keys [branches]}] branches))
 (re-frame/reg-sub ::branch-id :<- [::vcs] (fn [{::db/keys [branch-id]}] branch-id))
 
 (re-frame/reg-sub
@@ -60,6 +61,13 @@
 ;;
 
 (re-frame/reg-sub ::files :<- [::branch] (fn [{::branch/keys [files]}] files))
+
+(re-frame/reg-sub
+ ::file-for-subtype
+ :<- [::files]
+ (fn [files [_ sub-type]]
+   {:pre [sub-type]}
+   (util/ffilter (fn [file] (= (::file/sub-type file) sub-type)) files)))
 
 (re-frame/reg-sub
  ::file
@@ -126,7 +134,7 @@
  ::file-lint-or-preprocessing-errors
  (fn [[_ file]]
    [(re-frame/subscribe [::preprocessed-file-data file])
-    (re-frame/subscribe [::file-lint-data file])])
+    #_(re-frame/subscribe [::file-lint-data file])])
  (fn [[preprocessed {::lint/keys [errors]}] _]
    (or (some-> preprocessed ::preprocess/error vector)
        errors)))

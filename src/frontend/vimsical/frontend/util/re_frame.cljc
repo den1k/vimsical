@@ -1,6 +1,7 @@
 (ns vimsical.frontend.util.re-frame
   #?@(:clj
-      [(:require
+      [
+       (:require
         [re-frame.core :as re-frame]
         [re-frame.interop :as interop]
         [re-frame.loggers :refer [console]]
@@ -105,8 +106,8 @@
 (defmethod inject-sub-cofx ::event->query-vector-fn
   [{:keys [event] :as coeffects} event->query-vector-fn]
   (if-some [[id :as query-vector] (event->query-vector-fn event)]
-    (let [sub                   (re-frame/subscribe query-vector)
-          val                   (deref sub)]
+    (let [sub (re-frame/subscribe query-vector)
+          val (deref sub)]
       (dispose-maybe query-vector sub)
       (assoc coeffects id val))
     coeffects))
@@ -223,36 +224,36 @@
 (re-frame/reg-fx :track track-fx)
 
 (comment
-  (do
-    (require '[re-frame.interop :as interop])
-    (re-frame/reg-event-fx
-     ::start-trigger-track
-     (fn [cofx event]
-       {:track
-        {:action       :register
-         :id           42
-         :subscription [::query-vector  "blah"]
-         :val->event   (fn [val] [::trigger val])}}))
+ (do
+   (require '[re-frame.interop :as interop])
+   (re-frame/reg-event-fx
+    ::start-trigger-track
+    (fn [cofx event]
+      {:track
+       {:action       :register
+        :id           42
+        :subscription [::query-vector "blah"]
+        :val->event   (fn [val] [::trigger val])}}))
 
-    (re-frame/reg-event-fx
-     ::stop-trigger-track
-     (fn [cofx event]
-       {:track
-        {:action :dispose
-         :id     42}}))
-    ;; Define a sub and the event we want to trigger
-    (defonce foo (interop/ratom 0))
-    (re-frame/reg-sub-raw ::query-vector (fn [_ _] (interop/make-reaction #(deref foo))))
-    (re-frame/reg-event-db ::trigger (fn [db val] (println "Trigger" val) db))
-    ;; Start the track
-    (re-frame/dispatch [::start-trigger-track])
-    ;; Update the ::query-vector, will cause ::trigger to run
-    (swap! foo inc)
-    (swap! foo inc)
-    (swap! foo inc)
-    ;; Stop the track, updates to ::query-vector aren't tracked anymore
-    (re-frame/dispatch [::stop-trigger-track])
-    (swap! foo inc)))
+   (re-frame/reg-event-fx
+    ::stop-trigger-track
+    (fn [cofx event]
+      {:track
+       {:action :dispose
+        :id     42}}))
+   ;; Define a sub and the event we want to trigger
+   (defonce foo (interop/ratom 0))
+   (re-frame/reg-sub-raw ::query-vector (fn [_ _] (interop/make-reaction #(deref foo))))
+   (re-frame/reg-event-db ::trigger (fn [db val] (println "Trigger" val) db))
+   ;; Start the track
+   (re-frame/dispatch [::start-trigger-track])
+   ;; Update the ::query-vector, will cause ::trigger to run
+   (swap! foo inc)
+   (swap! foo inc)
+   (swap! foo inc)
+   ;; Stop the track, updates to ::query-vector aren't tracked anymore
+   (re-frame/dispatch [::stop-trigger-track])
+   (swap! foo inc)))
 
 ;;
 ;; * Scheduler
@@ -303,17 +304,36 @@
 
 ;; NOTE we don't gc the async thunks, maybe add an fx key for that?
 (defn new-async-fx
+  "Fx wrapper for async-fns, e.g. debounce and throttle. Expects async-fn to
+  take a thunk and the ms timeout.
+   Returns a fx-fn that takes ms as timout, dispatch or dispatch-n vector, a
+   optional id or event->id fn and a  dispatch-first? bool.
+   Beware, timeout is never updated after initial call."
   [register async-fn]
   (fn [{:as   fx
-        :keys [ms dispatch event->id dispatch-first?]
-        :or   {event->id first dispatch-first? true}}]
-    (let [register-id (event->id dispatch)]
-      (if-some [async-thunk (get @register register-id)]
+        :keys [ms dispatch dispatch-n id event->id dispatch-first?]
+        :or   {dispatch-first? true}}]
+    {:pre [ms (or dispatch dispatch-n)]}
+    (when dispatch-n (assert (or id event->id)
+                             "Must have id or event->id fn when using dispatch-n"))
+    (let [event->id              (or event->id first)
+          id                     (or id (event->id dispatch))
+          _                      (assert id (str "No register id for async-fx " fx))
+          dispatch-fn            (if dispatch
+                                   re-frame/dispatch
+                                   (fn [dn] (doseq [d dn] (re-frame/dispatch d))))
+          thunk-path             [id :async-thunk]
+          dispatch-path          [id :dispatch]
+          dispatch-or-dispatches (or dispatch dispatch-n)]
+      (swap! register assoc-in dispatch-path dispatch-or-dispatches)
+      (if-some [async-thunk (get-in @register thunk-path)]
         (async-thunk)
-        (let [async-thunk (async-fn (re-frame/dispatch dispatch) ms)]
+        (let [async-thunk (async-fn #(dispatch-fn
+                                      (get-in @register dispatch-path))
+                                    ms)]
           (when dispatch-first?
-            (async-thunk))
-          (swap! register assoc register-id async-thunk))))))
+            (dispatch-fn dispatch-or-dispatches))
+          (swap! register assoc-in thunk-path async-thunk))))))
 
 (re-frame/reg-fx :debounce (new-async-fx (atom {}) util/debounce))
 (re-frame/reg-fx :throttle (new-async-fx (atom {}) util/throttle))

@@ -9,7 +9,8 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.compiler :as compiler]
    [vimsical.vcs.file :as file]
-   [vimsical.vcs.lib :as lib]))
+   [vimsical.vcs.lib :as lib])
+  (:refer-clojure :exclude [uuid]))
 
 ;;
 ;; * State
@@ -56,33 +57,33 @@
 (defn new-vims
   ([author-ref title] (new-vims author-ref title {}))
   ([author-ref title {:keys [js-libs compilers]}]
-   (let [files    [(new-file (uuid :file-htmlr) :text :html)
-                   (new-file (uuid :file-css) :text :css)
-                   (new-file (uuid :file-js) :text :javascript "5" compilers)]
-         branches [(new-branch (uuid :master) "master" files (:javascript js-libs))]]
+   (let [files    [(new-file (uuid title :file-html) :text :html)
+                   (new-file (uuid title :file-css) :text :css)
+                   (new-file (uuid title :file-js) :text :javascript "5" compilers)]
+         branches [(new-branch (uuid title :master) "master" files (:javascript js-libs))]]
      {:db/id         (uuid title)
       :vims/author   author-ref
       :vims/title    title
       :vims/branches branches})))
-(let [state     {:app/user         {:db/id           (uuid :user)
-                                    :user/first-name "Jane"
-                                    :user/last-name  "Applecrust"
-                                    :user/email      "kalavox@gmail.com"
-                                    :user/vimsae
-                                    [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
-                                     (new-vims [:db/id (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs :compilers to-sub-type->compiler})]}
-                 :app/vims         [:db/id (uuid "CatPhotoApp")]
-                 :app/quick-search {:db/id                            (uuid :quick-search)
-                                    :quick-search/show?               false
-                                    :quick-search/result-idx          0
-                                    :quick-search/query               ""
-                                    :quick-search/commands            quick-search.commands/commands
-                                    :quick-search/filter-idx          nil
-                                    :quick-search/filter-result-idx   nil
-                                    :quick-search/filter-category-idx nil}
-                 :app/libs         js-libs
-                 :app/compilers    compilers
-                 :app/route        :route/vcr}]
+(let [state {:app/user         {:db/id           (uuid :user)
+                                :user/first-name "Jane"
+                                :user/last-name  "Applecrust"
+                                :user/email      "kalavox@gmail.com"
+                                :user/vimsae
+                                                 [(new-vims [:db/id (uuid :user)] "NLP Chatbot running on React Fiber")
+                                                  (new-vims [:db/id (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs})]}
+             :app/vims         [:db/id (uuid "CatPhotoApp")]
+             :app/quick-search {:db/id                            (uuid :quick-search)
+                                :quick-search/show?               false
+                                :quick-search/result-idx          0
+                                :quick-search/query               ""
+                                :quick-search/commands            quick-search.commands/commands
+                                :quick-search/filter-idx          nil
+                                :quick-search/filter-result-idx   nil
+                                :quick-search/filter-category-idx nil}
+             :app/libs         js-libs
+             :app/compilers    compilers
+             :app/route        :route/vcr}]
 
   (def default-db
     (-> (mg/new-db)

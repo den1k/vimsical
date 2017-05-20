@@ -11,7 +11,7 @@
    (create type attrs nil))
   ([type attrs inner-html]
    (-> {:css "style" :javascript "script"}
-       (get type)
+       (get type (name type))
        (gdom/createDom (clj->js attrs) inner-html))))
 
 (defn append!
