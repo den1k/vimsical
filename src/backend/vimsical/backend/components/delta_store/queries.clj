@@ -15,19 +15,19 @@
       (update :meta nippy/serializable!)))
 
 (defn- serializable-delta->values
-  [delta user-uid vims-uid]
+  [delta vims-uid]
   (merge
    (util/hyphens->underscores delta)
-   {:user_uid user-uid :vims_uid vims-uid}))
+   {:vims_uid vims-uid}))
 
 (defn delta->insert-values
-  ([user-uid vims-uid]
+  ([vims-uid]
    (fn [delta]
-     (delta->insert-values user-uid vims-uid delta)))
-  ([user-uid vims-uid delta]
+     (delta->insert-values vims-uid delta)))
+  ([vims-uid delta]
    (-> delta
        (delta->serializable-delta)
-       (serializable-delta->values user-uid vims-uid))))
+       (serializable-delta->values vims-uid))))
 
 ;;
 ;; * Queries
@@ -38,7 +38,7 @@
    :delta
    (cql/columns :branch_uid :file_uid :uid :prev_uid :pad :op :meta)
    (cql/where
-    [[= (cql/token :user_uid :vims_uid) (cql/token cql/? cql/?)]])))
+    [[= (cql/token :vims_uid) (cql/token cql/?)]])))
 
 (assert (string? (pr-str (cql/->raw select-deltas))))
 
@@ -46,8 +46,7 @@
   (cql/insert
    :delta
    (cql/values
-    {"user_uid"   :user_uid
-     "vims_uid"   :vims_uid
+    {"vims_uid"   :vims_uid
      "ts"         (cql/now)
      "branch_uid" :branch_uid
      "file_uid"   :file_uid

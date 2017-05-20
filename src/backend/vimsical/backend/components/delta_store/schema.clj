@@ -13,8 +13,7 @@
 (def schema
   [(cql/create-table
     :delta
-    [[:user_uid    :uuid]
-     [:vims_uid    :uuid]
+    [[:vims_uid    :uuid]
      [:branch_uid  :uuid]
      [:ts          :timeuuid]
      [:file_uid    :uuid]
@@ -23,8 +22,7 @@
      [:op          :blob]
      [:pad         :bigint]
      [:meta        :blob]
-     [:primary-key
-      [[:user_uid  :vims_uid] :ts :branch_uid :uid]]])])
+     [:primary-key [[:vims_uid] :ts :branch_uid :uid]]])])
 
 ;;
 ;; * Specs
@@ -37,7 +35,6 @@
 ;; *** External
 
 (s/def ::uuid uuid?)
-(s/def ::user-uid ::uuid)
 (s/def ::vims-uid ::uuid)
 (s/def ::branch-uid ::branch/uid)
 (s/def ::file-uid ::file/uid)
@@ -49,7 +46,6 @@
 
 ;; *** Internal
 
-(s/def ::user_uid ::user-uid)
 (s/def ::vims_uid ::vims-uid)
 (s/def ::branch_uid ::branch-uid)
 (s/def ::file_uid ::file-uid)
@@ -59,7 +55,7 @@
 ;; ** Partition and primary keys
 ;;
 
-(s/def ::partition-key (s/keys :req-un [::user-uid ::vims-uid]))
+(s/def ::partition-key (s/keys :req-un [::vims-uid]))
 (s/def ::primary-key (s/merge ::partition-key (s/keys :req-un [::branch-uid ::uid])))
 
 ;;
@@ -67,4 +63,4 @@
 ;;
 
 (s/def ::select-row (s/keys :req-un [::branch-uid ::file-uid ::uid ::prev-uid ::pad ::op ::meta]))
-(s/def ::insert-row (s/merge (s/keys :req-un [::user-uid ::vims-uid]) ::select-row))
+(s/def ::insert-row (s/merge (s/keys :req-un [::vims-uid]) ::select-row))

@@ -29,13 +29,13 @@
                  :branch-uid (uuid :branch),
                  :meta       {:timestamp 1, :version 1.0}}]]
     (testing "IDeltaStoreChan"
-      (is (nil? (<?? (p/insert-deltas-chan *delta-store* (uuid :user) (uuid :chan) deltas))))
-      (is (= deltas (<?? (a/into [] (p/select-deltas-chan *delta-store* (uuid :user) (uuid :chan)))))))
+      (is (nil? (<?? (p/insert-deltas-chan *delta-store* (uuid :chan) deltas))))
+      (is (= deltas (<?? (a/into [] (p/select-deltas-chan *delta-store* (uuid :chan)))))))
     (testing "IDeltaStoreAync"
       (let [wc     (a/chan 1)
             rc     (a/chan 1)
-            _      (p/insert-deltas-async *delta-store* (uuid :user) (uuid :async) deltas (partial a/put! wc) (partial a/put! wc))
+            _      (p/insert-deltas-async *delta-store* (uuid :async) deltas (partial a/put! wc) (partial a/put! wc))
             _      (a/<!! wc)
-            _      (p/select-deltas-async *delta-store* (uuid :user) (uuid :async) (partial a/put! rc) (partial a/put! rc))
+            _      (p/select-deltas-async *delta-store* (uuid :async) (partial a/put! rc) (partial a/put! rc))
             actual (a/<!! rc)]
         (is (= deltas actual))))))

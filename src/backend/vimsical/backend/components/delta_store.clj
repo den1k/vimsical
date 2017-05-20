@@ -19,13 +19,13 @@
 ;; * Commands
 ;;
 
-(defn- select-deltas-command [user-uid vims-uid]
-  [::select-deltas [user-uid vims-uid]])
+(defn- select-deltas-command [vims-uid]
+  [::select-deltas [vims-uid]])
 
-(defn- insert-deltas-commands [user-uid vims-uid deltas]
+(defn- insert-deltas-commands [vims-uid deltas]
   (mapv
    (fn [delta]
-     [::insert-delta (queries/delta->insert-values user-uid vims-uid delta)])
+     [::insert-delta (queries/delta->insert-values vims-uid delta)])
    deltas))
 
 ;;
@@ -44,19 +44,19 @@
   (stop  [this] this)
 
   protocol/IDeltaStoreAsync
-  (select-deltas-async [_ user-uid vims-uid success error]
-    (let [command (select-deltas-command user-uid vims-uid)]
+  (select-deltas-async [_ vims-uid success error]
+    (let [command (select-deltas-command vims-uid)]
       (cassandra/execute-async cassandra command success error)))
-  (insert-deltas-async [_ user-uid vims-uid deltas success error]
-    (let [commands (insert-deltas-commands user-uid vims-uid deltas)]
+  (insert-deltas-async [_ vims-uid deltas success error]
+    (let [commands (insert-deltas-commands vims-uid deltas)]
       (cassandra/execute-batch-async cassandra commands :unlogged success error)))
 
   protocol/IDeltaStoreChan
-  (select-deltas-chan [_ user-uid vims-uid]
-    (let [command (select-deltas-command user-uid vims-uid)]
+  (select-deltas-chan [_ vims-uid]
+    (let [command (select-deltas-command vims-uid)]
       (cassandra/execute-chan cassandra command)))
-  (insert-deltas-chan [_ user-uid vims-uid deltas]
-    (let [commands (insert-deltas-commands user-uid vims-uid deltas)]
+  (insert-deltas-chan [_ vims-uid deltas]
+    (let [commands (insert-deltas-commands vims-uid deltas)]
       (cassandra/execute-batch-chan cassandra commands :unlogged))))
 
 (defn ->delta-store [] (map->DeltaStore {}))
