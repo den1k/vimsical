@@ -53,6 +53,14 @@
    (code-editor.ui-db/get-active-file ui-db)))
 
 (re-frame/reg-sub
+ ::editor-instance-for-subtype
+ (fn [[_ sub-type]]
+   [(re-frame/subscribe [::ui-db/ui-db])
+    (re-frame/subscribe [::vcs.subs/file-for-subtype sub-type])])
+ (fn [[ui-db file] _]
+   (code-editor.ui-db/get-editor ui-db file)))
+
+(re-frame/reg-sub
  ::timeline-entry
  :<- [::vcs.subs/skimhead-entry]
  :<- [::vcs.subs/playhead-entry]

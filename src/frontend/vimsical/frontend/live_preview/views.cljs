@@ -70,7 +70,7 @@
   "Error Catcher tracks the js files already. So if it is on, we remove them
   from Live Preview's tracking"
   [files]
-  (remove (fn [{::file/keys [sub-type]}] (= :javascript sub-type)) files))
+  (remove file/javascript? files))
 
 ;;
 ;; * Components

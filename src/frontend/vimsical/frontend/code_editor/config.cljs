@@ -19,7 +19,7 @@
           :allowNonTsExtensions true})))
 
 
-
+;; Code using monaco's typescript compiler webworker to compile js es6 to es5
 #_(let [model-uri (-> (js/monaco.editor.getModels) last .-uri)]
     (-> (js/monaco.languages.typescript.getJavaScriptWorker)
         (.then
@@ -34,18 +34,3 @@
                              .-outputFiles
                              first
                              .-text)))))))))))
-
-;(let [model-uri (-> (js/monaco.editor.getModels) second .-uri)]
-;    (-> (js/monaco.languages.css)
-;        (.then
-;         (fn [w]
-;           (-> (w model-uri)
-;               (.then
-;                (fn [client]
-;                  (-> (.getEmitOutput client (str model-uri))
-;                      (.then
-;                       (fn [r]
-;                         (-> r
-;                             .-outputFiles
-;                             first
-;                             .-text)))))))))))

@@ -20,5 +20,16 @@
 
 ;;
 ;; * Entity
+;;
+
 (s/def ::file (s/keys :req [:db/id ::type ::sub-type]
                       :opt [::name ::compiler ::lang-version]))
+
+;;
+;; * Helpers
+;;
+
+(defn sub-type= [{::keys [sub-type]} sb-type] (= sub-type sb-type))
+(defn html? [file] (sub-type= file :html))
+(defn css? [file] (sub-type= file :css))
+(defn javascript? [file] (sub-type= file :javascript))

@@ -82,11 +82,7 @@
  (fn [branch _]
    (-> branch
        (dissoc ::branch/files)
-       (update ::branch/libs
-               (fn [libs]
-                 (filter (fn [{::lib/keys [sub-type]}]
-                           (= :javascript sub-type))
-                         libs))))))
+       (update ::branch/libs (fn [libs] (filter lib/javascript? libs))))))
 
 (re-frame/reg-sub
  ::error-catcher-js-libs-markup
@@ -99,7 +95,5 @@
  (fn [_ _]
    (interop/make-reaction
     #(let [{::branch/keys [files]} (<sub [::vcs.subs/branch])
-           js-file (util/ffilter
-                    (fn [file]
-                      (= :javascript (::file/sub-type file))) files)]
+           js-file (util/ffilter file/javascript? files)]
        (<sub [::vcs.subs/preprocessed-file-string js-file])))))

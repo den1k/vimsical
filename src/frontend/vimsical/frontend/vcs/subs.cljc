@@ -8,6 +8,7 @@
    [vimsical.frontend.vcs.db :as db]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.file :as file]
    [vimsical.vcs.core :as vcs]))
 
 ;;
@@ -60,6 +61,13 @@
 ;;
 
 (re-frame/reg-sub ::files :<- [::branch] (fn [{::branch/keys [files]}] files))
+
+(re-frame/reg-sub
+ ::file-for-subtype
+ :<- [::files]
+ (fn [files [_ sub-type]]
+   {:pre [sub-type]}
+   (util/ffilter (fn [file] (= (::file/sub-type file) sub-type)) files)))
 
 (re-frame/reg-sub
  ::file

@@ -85,11 +85,11 @@
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub
    (fn [[_ _ file]] [::vcs.subs/file-lint-or-preprocessing-errors file]))]
- (fn [{:keys           [db ui-db]
-       ::vcs.subs/keys [file-lint-or-preprocessing-errors]
-       :as             cofx}
+ (fn [{:keys       [db ui-db]
+       ::subs/keys [file-lint-or-preprocessing-errors]
+       :as         cofx}
       [_ branch {::file/keys [sub-type] :as file} file-string]]
-   (if (= :javascript sub-type)
+   (if (file/javascript? file)
      (when (nil? file-lint-or-preprocessing-errors)
        {:debounce {:ms       500
                    :dispatch [::update-iframe-src branch]}})
@@ -110,7 +110,7 @@
    (let [iframe       (ui-db/get-iframe ui-db)
          doc          (.-contentDocument iframe)
          head         (.-head doc)
-         js-files     (filter (fn [file] (= :javascript (::file/sub-type file))) files)
+         js-files     (filter file/javascript? files)
          script-nodes (mapv (fn [{:keys [db/id]}]
                               (.getElementById doc id)) js-files)]
      (doseq [node script-nodes]

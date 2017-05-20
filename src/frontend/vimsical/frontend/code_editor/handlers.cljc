@@ -99,32 +99,20 @@
 
 (re-frame/reg-event-fx
  ::set-error-markers
- [(re-frame/inject-cofx :ui-db)
-  ;; a bit hacky. all we really want is js editor-instance
-  (util.re-frame/inject-sub [::vcs.subs/files])]
- (fn [{:keys           [ui-db]
-       ::vcs.subs/keys [files]} [_ errors]]
-   (let [js-file (util/ffilter (fn [{::file/keys [sub-type]}]
-                                 (= :javascript sub-type))
-                               files)
-         editor  (ui-db/get-editor ui-db js-file)
-         model   (.-model editor)
+ [(util.re-frame/inject-sub [::subs/editor-instance-for-subtype :javascript])]
+ (fn [{:keys     [ui-db]
+       js-editor ::subs/editor-instance-for-subtype} [_ errors]]
+   (let [model   (.-model js-editor)
          markers (map model-marker errors)]
      (code-editor.util/set-model-markers model :javascript markers)
      nil)))
 
 (re-frame/reg-event-fx
  ::clear-error-markers
- [(re-frame/inject-cofx :ui-db)
-  ;; a bit hacky. all we really want is js editor-instance
-  (util.re-frame/inject-sub [::vcs.subs/files])]
- (fn [{:keys           [ui-db]
-       ::vcs.subs/keys [files]} _]
-   (let [js-file (util/ffilter (fn [{::file/keys [sub-type]}]
-                                 (= :javascript sub-type))
-                               files)
-         editor  (ui-db/get-editor ui-db js-file)
-         model   (.-model editor)]
+ [(util.re-frame/inject-sub [::subs/editor-instance-for-subtype :javascript])]
+ (fn [{:keys     [ui-db]
+       js-editor ::subs/editor-instance-for-subtype} _]
+   (let [model (.-model js-editor)]
      (code-editor.util/set-model-markers model :javascript [])
      nil)))
 
