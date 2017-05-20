@@ -43,7 +43,7 @@
         speed-range (reagent/atom [1.0 1.5 1.75 2 2.25 2.5])]
     (fn []
       (let [time (util/time-ms->fmt-time (<sub [::timeline.subs/playhead]))]
-        [:div.time-or-speed-control
+        [:div.time-or-speed-control.ac
          {:on-mouse-enter (e> (reset! show-speed? true))
           :on-mouse-out   (e> (reset! show-speed? false))}
          (if-not @show-speed?
