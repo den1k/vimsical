@@ -10,8 +10,8 @@
             [vimsical.frontend.live-preview.subs :as subs]
             [vimsical.common.util.core :as util]
             [vimsical.frontend.util.preprocess.core :as preprocess]
-   #?@(:cljs [[reagent.dom.server]
-              [vimsical.frontend.util.dom :as util.dom]])))
+            #?@(:cljs [[reagent.dom.server]
+                       [vimsical.frontend.util.dom :as util.dom]])))
 
 (defn iframe-ready-state [iframe]
   (.. iframe -contentDocument -readyState))
@@ -46,9 +46,9 @@
          (util.dom/set-inner-html! body string)))))
 
 (defmethod update-node! :css
-  [iframe {::file/keys [sub-type] :keys [db/id] :as file} string]
+  [iframe {::file/keys [sub-type] :keys [db/uid] :as file} string]
   (when (iframe-ready? iframe)
-    (let [attrs {:id id}]
+    (let [attrs {:id uid}]
       (swap-head-node! iframe sub-type attrs string))))
 
 (re-frame/reg-event-fx
@@ -111,8 +111,8 @@
          doc          (.-contentDocument iframe)
          head         (.-head doc)
          js-files     (filter file/javascript? files)
-         script-nodes (mapv (fn [{:keys [db/id]}]
-                              (.getElementById doc id)) js-files)]
+         script-nodes (mapv (fn [{:keys [db/uid]}]
+                              (.getElementById doc uid)) js-files)]
      (doseq [node script-nodes]
        (.appendChild head node)))))
 

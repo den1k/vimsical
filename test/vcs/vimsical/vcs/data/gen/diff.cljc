@@ -213,18 +213,18 @@
 (s/fdef diffs->vcs
         :args (s/cat :vcs ::vcs/vcs
                      :effects ::editor/effects
-                     :file-id ::file/id
-                     :branch-id ::branch/id
-                     :delta-id ::delta/prev-id
+                     :file-uid ::file/uid
+                     :branch-uid ::branch/uid
+                     :delta-uid ::delta/prev-uid
                      :strs (s/* ::splice-or-string))
-        :ret (s/tuple ::vcs/vcs ::delta/id))
+        :ret (s/tuple ::vcs/vcs ::delta/uid))
 
 (defn diffs->vcs
-  [vcs effects file-id branch-id delta-id & strs]
+  [vcs effects file-uuid branch-uid delta-uid & strs]
   (assert (string? (first strs)))
   (assert (every? vector? (next strs)))
   (letfn [(splice-strs [strs] (mapv (fn [str] (if (vector? str) str [str])) strs))]
     (reduce
-     (fn [[vcs delta-id] edit-event]
-       (vcs/add-edit-event vcs effects file-id branch-id delta-id edit-event))
-     [vcs delta-id] (apply diffs->edit-events (splice-strs strs)))))
+     (fn [[vcs delta-uid] edit-event]
+       (vcs/add-edit-event vcs effects file-uuid branch-uid delta-uid edit-event))
+     [vcs delta-uid] (apply diffs->edit-events (splice-strs strs)))))

@@ -1,0 +1,14 @@
+version: '2'
+
+services:
+  # Disable transactor, the peer uses the in-memory store
+  #
+  datomic:
+    command: /bin/true
+
+  # Lower Cassandra's memory consumption
+  #
+  cassandra:
+    environment:
+      MAX_HEAP_SIZE: 512m
+      HEAP_NEWSIZE: 128m

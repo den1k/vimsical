@@ -10,16 +10,16 @@
    [vimsical.common.util.core :as util]
    [re-frame.interop :as interop]))
 
-(defn- file-node [{:keys [db/id] ::file/keys [sub-type] :as file} string]
+(defn- file-node [{:keys [db/uid] ::file/keys [sub-type] :as file} string]
   (let [tag (case sub-type :html :body :css :style :javascript :script)]
     [tag
-     {:id                      id
+     {:id                      uid
       :dangerouslySetInnerHTML {:__html string}}]))
 
-(defn- lib-node [{:keys [db/id] ::lib/keys [src sub-type] :as lib}]
+(defn- lib-node [{:keys [db/uid] ::lib/keys [src sub-type] :as lib}]
   (let [tag (case sub-type :html :body :css :style :javascript :script)]
     [tag
-     {:id  id
+     {:id  uid
       :src src}]))
 
 (defn- file-node-markup [file string]
@@ -54,7 +54,7 @@
           {:dangerouslySetInnerHTML
            {:__html head-string}}]
          [:body
-          {:id                      (:db/id html-file)
+          {:id                      (:db/uid html-file)
            :dangerouslySetInnerHTML {:__html body-string}}]]))))
 
 (re-frame/reg-sub

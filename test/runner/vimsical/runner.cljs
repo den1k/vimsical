@@ -10,6 +10,8 @@
    [doo.runner :refer-macros [doo-all-tests doo-tests]]
    [vimsical.common.core-test]
    [vimsical.common.test-test]
+   [vimsical.common.util.transit-test]
+   [vimsical.remotes.event-test]
    [vimsical.vcs.alg.topo-test]
    [vimsical.vcs.alg.traversal-test]
    [vimsical.vcs.branch-test]

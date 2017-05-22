@@ -148,13 +148,21 @@
              (recur (inc idx)))
            -1))))))
 
-(defn namespace-keys
-  "Namespaces keys in a map if they aren't already namespaced."
-  [ns map]
-  (letfn [(prefix [x] (if (namespace x)
-                        x
-                        (str (name ns) "/" (name x))))]
-    (md/map-keys (comp keyword prefix) map)))
+(defn qualify-keys
+  "Qualify keys in a map if they aren't already qualified."
+  ([ns] (fn [m] (qualify-keys m ns)))
+  ([m ns]
+   (letfn [(prefix [x] (if (namespace x)
+                         x
+                         (str (name ns) "/" (name x))))]
+     (md/map-keys (comp keyword prefix) m))))
+
+(defn unqualify-keys
+  [m]
+  (reduce-kv
+   (fn [m k v]
+     (assoc m (keyword (name k)) v))
+   (empty m) m))
 
 (defn update-when
   "Calls pred with every item of coll and applies f & args to it when true."

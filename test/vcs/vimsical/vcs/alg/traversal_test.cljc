@@ -48,54 +48,55 @@
   (is (= [0 1 2 3 4 5]
          (sut/reduce-tree
           :children
-          (fn f [acc {:keys [id]}]
-            (conj acc id))
-          [] {:id        5
-              :children [{:id 2 :children [{:id 1 :children [{:id 0}]}]}
-                         {:id 4 :children [{:id 3}]}]}))))
+          (fn f [acc {:keys [uid]}]
+            (conj acc uid))
+          [] {:uid      5
+              :children [{:uid 2 :children [{:uid 1 :children [{:uid 0}]}]}
+                         {:uid 4 :children [{:uid 3}]}]}))))
 
 (defn ascending?  [comparison-result] (== sut/asc comparison-result))
 (defn descending? [comparison-result] (== sut/desc comparison-result))
 
 (deftest comparator-test
-  (let [cpr (sut/new-branch-comparator examples/deltas-by-branch-id)]
-    (are [pred left right] (is (pred (cpr left right))) ascending?  examples/master examples/child
-         ascending?  examples/master examples/gchild
-         ascending?  examples/child  examples/gchild
-         descending? examples/child  examples/master
-         descending? examples/gchild examples/master
-         descending? examples/gchild examples/child)))
+  (let [cpr (sut/new-branch-comparator examples/deltas-by-branch-uid)]
+    (are [pred left right] (is (pred (cpr left right)))
+      ascending?  examples/master examples/child
+      ascending?  examples/master examples/gchild
+      ascending?  examples/child  examples/gchild
+      descending? examples/child  examples/master
+      descending? examples/gchild examples/master
+      descending? examples/gchild examples/child)))
 
 
 (deftest inlining-test
   (testing "Nested branches"
-    (is (= (sut/inline examples/deltas-by-branch-id examples/branches))))
+    (is (= (sut/inline examples/deltas-by-branch-uid examples/branches))))
 
   (testing "Multiple children"
     (let [branches
-          [{:db/id (uuid :b0)}
-           {:db/id (uuid :b1-1) ::branch/parent {:db/id (uuid :b0)} ::branch/branch-off-delta-id (uuid :d0) }
-           {:db/id (uuid :b1-2) ::branch/parent {:db/id (uuid :b0)} ::branch/branch-off-delta-id (uuid :d1)}]
+          [{:db/uid (uuid :b0)}
+           {:db/uid (uuid :b1-1) ::branch/parent {:db/uid (uuid :b0)} ::branch/branch-off-delta-uid (uuid :d0) }
+           {:db/uid (uuid :b1-2) ::branch/parent {:db/uid (uuid :b0)} ::branch/branch-off-delta-uid (uuid :d1)}]
 
           [d00 d01 d02
            d10 d11 d12
            d20 d21 d22 :as deltas]
-          [{:branch-id (uuid :b0),   :file-id (uuid :f0), :id (uuid :d0) :prev-id nil,        :op [:str/ins nil        "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
-           {:branch-id (uuid :b0),   :file-id (uuid :f0), :id (uuid :d1) :prev-id (uuid :d0), :op [:str/ins (uuid :d0) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
-           {:branch-id (uuid :b0),   :file-id (uuid :f0), :id (uuid :d2) :prev-id (uuid :d1), :op [:str/ins (uuid :d1) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
+          [{:branch-uid (uuid :b0), :file-uid (uuid :f0), :uid (uuid :d0) :prev-uid nil, :op [:str/ins nil        "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
+           {:branch-uid (uuid :b0), :file-uid (uuid :f0), :uid (uuid :d1) :prev-uid (uuid :d0), :op [:str/ins (uuid :d0) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
+           {:branch-uid (uuid :b0), :file-uid (uuid :f0), :uid (uuid :d2) :prev-uid (uuid :d1), :op [:str/ins (uuid :d1) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
 
-           {:branch-id (uuid :b1-1), :file-id (uuid :f0), :id (uuid :d3) :prev-id (uuid :d2), :op [:str/ins (uuid :d0) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
-           {:branch-id (uuid :b1-1), :file-id (uuid :f0), :id (uuid :d4) :prev-id (uuid :d3), :op [:str/ins (uuid :d3) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
-           {:branch-id (uuid :b1-1), :file-id (uuid :f0), :id (uuid :d5) :prev-id (uuid :d4), :op [:str/ins (uuid :d4) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
+           {:branch-uid (uuid :b1-1), :file-uid (uuid :f0), :uid (uuid :d3) :prev-uid (uuid :d2), :op [:str/ins (uuid :d0) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
+           {:branch-uid (uuid :b1-1), :file-uid (uuid :f0), :uid (uuid :d4) :prev-uid (uuid :d3), :op [:str/ins (uuid :d3) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
+           {:branch-uid (uuid :b1-1), :file-uid (uuid :f0), :uid (uuid :d5) :prev-uid (uuid :d4), :op [:str/ins (uuid :d4) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
 
-           {:branch-id (uuid :b1-2), :file-id (uuid :f0), :id (uuid :d6) :prev-id (uuid :d5), :op [:str/ins (uuid :d1) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
-           {:branch-id (uuid :b1-2), :file-id (uuid :f0), :id (uuid :d7) :prev-id (uuid :d6), :op [:str/ins (uuid :d6) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
-           {:branch-id (uuid :b1-2), :file-id (uuid :f0), :id (uuid :d8) :prev-id (uuid :d7), :op [:str/ins (uuid :d7) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}]
+           {:branch-uid (uuid :b1-2), :file-uid (uuid :f0), :uid (uuid :d6) :prev-uid (uuid :d5), :op [:str/ins (uuid :d1) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
+           {:branch-uid (uuid :b1-2), :file-uid (uuid :f0), :uid (uuid :d7) :prev-uid (uuid :d6), :op [:str/ins (uuid :d6) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}
+           {:branch-uid (uuid :b1-2), :file-uid (uuid :f0), :uid (uuid :d8) :prev-uid (uuid :d7), :op [:str/ins (uuid :d7) "h"], :pad 1, :meta {:timestamp 1, :version 1.0}}]
 
-          deltas-by-branch-id (state.branches/add-deltas state.branches/empty-deltas-by-branch-id deltas)]
+          deltas-by-branch-uid (state.branches/add-deltas state.branches/empty-deltas-by-branch-uid deltas)]
       (is (= [d00
               d10 d11 d12
               d01
               d20 d21 d22
               d02]
-             (sut/inline deltas-by-branch-id branches))))))
+             (sut/inline deltas-by-branch-uid branches))))))

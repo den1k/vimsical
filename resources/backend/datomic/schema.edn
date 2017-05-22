@@ -1,0 +1,125 @@
+;;
+;; * UID
+;;
+
+[{:db/id          #db/id [:db.part/db]
+  :db/ident       :db/uid
+  :db/valueType   :db.type/uuid
+  :db/cardinality :db.cardinality/one}]
+
+;;
+;; * User
+;;
+
+[{:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.user/first-name
+  :db/valueType   :db.type/string
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.user/last-name
+  :db/valueType   :db.type/string
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.user/email
+  :db/valueType   :db.type/string
+  :db/cardinality :db.cardinality/one
+  :db/unique      :db.unique/value}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.user/password
+  :db/valueType   :db.type/string
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.user/vimsae
+  :db/valueType   :db.type/ref
+  :db/cardinality :db.cardinality/many}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.user/settings
+  :db/valueType   :db.type/ref
+  :db/cardinality :db.cardinality/one
+  :db/isComponent true}]
+
+;;
+;; * Settings
+;;
+
+[{:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.user.settings/playback
+  :db/valueType   :db.type/ref
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.user.settings.playback/speed
+  :db/valueType   :db.type/double
+  :db/cardinality :db.cardinality/one}]
+
+;;
+;; * Vims
+;;
+
+[{:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vims/title
+  :db/valueType   :db.type/string
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vims/cast?
+  :db/valueType   :db.type/boolean
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vims/owner
+  :db/valueType   :db.type/ref
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vims/branches
+  :db/valueType   :db.type/ref
+  :db/cardinality :db.cardinality/many
+  :db/isComponent true}]
+
+;;
+;; * Branches
+;;
+
+[{:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.branch/title
+  :db/valueType   :db.type/string
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.branch/start-delta-uid
+  :db/valueType   :db.type/long
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.branch/entry-delta-uid
+  :db/valueType   :db.type/long
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.branch/created-at
+  :db/valueType   :db.type/long
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.branch/parent
+  :db/valueType   :db.type/ref
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.branch/owner
+  :db/valueType   :db.type/ref
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.branch/files
+  :db/valueType   :db.type/ref
+  :db/isComponent true
+  :db/cardinality :db.cardinality/many}]
+
+;;
+;; * Files
+;;
+
+[{:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.file/name
+  :db/valueType   :db.type/string
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.file/type
+  :db/valueType   :db.type/keyword
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.file/sub-type
+  :db/valueType   :db.type/keyword
+  :db/cardinality :db.cardinality/one}]

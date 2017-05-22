@@ -9,9 +9,9 @@
 ;; * Spec
 ;;
 
-(s/def ::chunks-by-branch-id (s/every-kv ::branch/id (s/every ::chunk/chunk :kind vector?)))
+(s/def ::chunks-by-branch-uid (s/every-kv ::branch/uid (s/every ::chunk/chunk :kind vector?)))
 
-(def emtpy-chunks-by-branch-id {})
+(def emtpy-chunks-by-branch-uid {})
 
 ;;
 ;; * Branch annotations
@@ -40,18 +40,18 @@
 
 ;; XXX more efficient way to get the depth
 (defn add-delta
-  [chunks-by-branch-id
+  [chunks-by-branch-uid
    branches
    uuid-fn
-   {:keys [branch-id] :as delta}]
+   {:keys [branch-uid] :as delta}]
   (let [branch (util/ffilter
-                (partial util/=by  identity :db/id branch-id)
+                (partial util/=by  identity :db/uid branch-uid)
                 branches)
         depth  (branch/depth branch)]
     (letfn [(conj-onto-last-chunk? [chunks delta]
               (and (some? chunks) (chunk/conj? (peek chunks) delta)))
-            (first-chunk-in-branch? [chunks-by-branch-id {:keys [branch-id] :as delta}]
-              (nil? (get chunks-by-branch-id branch-id)))
+            (first-chunk-in-branch? [chunks-by-branch-uid {:keys [branch-uid] :as delta}]
+              (nil? (get chunks-by-branch-uid branch-uid)))
             (conj-onto-last-chunk [chunks delta]
               (let [last-index (dec (count chunks))]
                 (update chunks last-index chunk/add-delta delta)))
@@ -59,7 +59,7 @@
               (cond
                 (conj-onto-last-chunk? chunks delta) (conj-onto-last-chunk chunks delta)
                 :else
-                (let [branch-start? (first-chunk-in-branch? chunks-by-branch-id delta)
+                (let [branch-start? (first-chunk-in-branch? chunks-by-branch-uid delta)
                       chunk'        (chunk/new-chunk (uuid-fn) depth [delta] branch-start?)
                       f             (fnil conj [])]
                   (f chunks chunk'))))
@@ -77,6 +77,6 @@
                     (update before-last-index remove-annotations)
 
                     true (update last-index  annotate-chunk-end)))))]
-      (-> chunks-by-branch-id
-          (update branch-id update-chunks uuid-fn delta)
-          (update branch-id annotate-branch-start-and-end)))))
+      (-> chunks-by-branch-uid
+          (update branch-uid update-chunks uuid-fn delta)
+          (update branch-uid annotate-branch-start-and-end)))))

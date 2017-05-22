@@ -12,18 +12,18 @@
 ;;
 
 (s/def ::branch
-  (s/keys :req [:db/id]
-          :opt [::start-delta-id ::entry-delta-id ::parent ::files ::name]))
+  (s/keys :req [:db/uid] :opt [::start-delta-uid ::entry-delta-uid ::parent ::files ::name]))
 
 ;;
 ;; ** Attributes
 ;;
 
-(s/def ::id uuid?)
-(s/def :db/id ::id)
+(s/def ::uid uuid?)
+(s/def :db/uid ::uid)
 (s/def ::name string?)
-(s/def ::start-delta-id (s/nilable ::delta/id))
-(s/def ::branch-off-delta-id (s/nilable ::delta/id))
+(s/def ::start-delta-uid (s/nilable ::delta/uid))
+(s/def ::entry-delta-uid (s/nilable ::delta/uid))
+(s/def ::branch-off-delta-uid (s/nilable ::delta/uid))
 (s/def ::created-at nat-int?)
 
 ;;
@@ -42,7 +42,7 @@
 
 (defn parent?
   [parent child]
-  (=by :db/id (comp :db/id ::parent) parent child))
+  (=by :db/uid (comp :db/uid ::parent) parent child))
 
 (defn master
   [branches]
@@ -74,7 +74,7 @@
         ancestors-b (ancestors branch-b)]
     (some-val
      (fn [ancestor-a]
-       (some-val (=by :db/id ancestor-a) ancestors-b))
+       (some-val (=by :db/uid ancestor-a) ancestors-b))
      ancestors-a)))
 
 (defn depth
@@ -88,7 +88,7 @@
   "Return the count of ancestors between `base` and `child`. Returns 0 is base
   and child are equal, nil if they have no common ancestor."
   ([base child]
-   (let [pred (=by :db/id base)]
+   (let [pred (=by :db/uid base)]
      (if (pred child)
        0
        (some
@@ -105,7 +105,7 @@
   ([lineage branch other]
    (boolean
     (some
-     (=by :db/id other)
+     (=by :db/uid other)
      lineage))))
 
 ;;
@@ -120,16 +120,16 @@
 ;;
 
 (defn- tree*
-  [branches-by-parent-id {:keys [db/id] :as branch}]
+  [branches-by-parent-uid {:keys [db/uid] :as branch}]
   (letfn [(assoc-maybe [m k v] (cond-> m (some? v) (assoc k v)))
           (recur-children [children]
             (cond->> children
               (seq children)
-              (mapv (fn [child] (tree* branches-by-parent-id child)))))]
+              (mapv (fn [child] (tree* branches-by-parent-uid child)))))]
     (assoc-maybe
      branch ::children
      (recur-children
-      (get branches-by-parent-id id)))))
+      (get branches-by-parent-uid uid)))))
 
 ;;
 ;; ** API
@@ -141,9 +141,9 @@
 
 (defn branch-tree
   [branches]
-  (letfn [(parent-id [branch] (-> branch ::parent :db/id))]
-    (let [branches-by-parent-id (group-by parent-id branches)
-          [master & error] (get branches-by-parent-id nil)]
+  (letfn [(parent-uid [branch] (-> branch ::parent :db/uid))]
+    (let [branches-by-parent-uid (group-by parent-uid branches)
+          [master & error]       (get branches-by-parent-uid nil)]
       (if error
         (throw (ex-info "Found more than one branch with no parent:" {:error error :master master}))
-        (tree* branches-by-parent-id master)))))
+        (tree* branches-by-parent-uid master)))))

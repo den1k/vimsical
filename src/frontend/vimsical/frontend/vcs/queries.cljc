@@ -1,5 +1,6 @@
 (ns vimsical.frontend.vcs.queries
   (:require
+   [vimsical.vims :as vims]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]
    [vimsical.vcs.core :as vcs]))
@@ -11,10 +12,10 @@
   ['* {::branch/files file} {::branch/libs ['*]}])
 
 (def vims
-  [:db/id {:vims/branches branch}])
+  [:db/uid {::vims/branches branch}])
 
 (def vcs
   ['* {::vcs/branches branch}])
 
 (def vims-vcs
-  [:db/id {:vims/vcs vcs}])
+  [:db/uid {::vims/vcs vcs}])

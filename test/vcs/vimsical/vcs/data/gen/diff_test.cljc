@@ -40,14 +40,14 @@
 (deftest diffs->edit-deltas
   ;; NOTE can't really track the uuids used for deltas since we update the whole
   ;; vcs, creating chunks etc...
-  (let [{uuid-fn :f}   (uuid-gen)
-        effects        {::editor/pad-fn       (constantly 1)
-                        ::editor/timestamp-fn (constantly 2)
-                        ::editor/uuid-fn      uuid-fn}
-        branches       [{:db/id (uuid :master)}]
-        vcs            (vcs/empty-vcs branches)
-        [vcs delta-id] (sut/diffs->vcs vcs effects (uuid :file) (uuid :master) nil "" ["abc"])
-        deltas         (vcs/deltas vcs delta-id)]
+  (let [{uuid-fn :f}    (uuid-gen)
+        effects         {::editor/pad-fn       (constantly 1)
+                         ::editor/timestamp-fn (constantly 2)
+                         ::editor/uuid-fn      uuid-fn}
+        branches        [{:db/uid (uuid :master)}]
+        vcs             (vcs/empty-vcs branches)
+        [vcs delta-uid] (sut/diffs->vcs vcs effects (uuid :file) (uuid :master) nil "" ["abc"])
+        deltas          (vcs/deltas vcs delta-uid)]
     ;; Assertion is trivial but rely on the deltas spec to check for the topo
     ;; sort as wel as valid delta ops
     (is (= 6 (count deltas)))))

@@ -1,3 +1,4 @@
-(ns vimsical.frontend.timeline.queries)
+(ns vimsical.frontend.timeline.queries
+  (:require [vimsical.vims :as vims]))
 
-(def vims-timeline [:vims/timeline])
+(def vims-timeline [::vims/timeline])

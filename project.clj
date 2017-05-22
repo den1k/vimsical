@@ -1,6 +1,7 @@
 (defproject vimsical "0.1.0-SNAPSHOT"
   :dependencies
-  [[org.clojure/clojure "1.9.0-alpha15"]]
+  [[org.clojure/clojure "1.9.0-alpha15"]
+   [metosin/spec-tools "0.1.1"]]
 
   :source-paths []                      ; ignore src/ in all profiles
   :test-paths []
@@ -37,17 +38,18 @@
    {:source-paths ["src/vcs"]
     :dependencies
     [[org.clojure/data.avl        "0.0.17"]
-     [diffit                      "1.0.0"]]}
+     [diffit                      "1.0.0"
+      :exclusions [org.clojure/tools.reader]]]}
    ;;
    ;; Common
    ;;
    :common
-   {:source-paths
-    ["src/common"]
+   {:source-paths ["src/common"]
     :dependencies
-    [[com.cognitect/transit-cljs          "0.8.239"]
-     [org.clojure/core.async              "0.3.442" :exclusions [org.clojure/tools.reader]]
-     [com.stuartsierra/component          "0.3.1"]
+    [[com.cognitect/transit-clj           "0.8.300"]
+     [com.cognitect/transit-cljs          "0.8.239"]
+     [org.clojure/core.async              "0.3.442"]
+     [com.stuartsierra/component          "0.3.2"]
      [medley                              "0.8.4"]
      [environ                             "1.1.0"]
      [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]]}
@@ -55,40 +57,55 @@
    ;; Backend
    ;;
    :backend
-   [:vcs :common
-    {:source-paths ["src/backend"]
-     :main         vimsical.backend.core
+   [{:source-paths   ["src/backend"]
+     :resource-paths ["resources/backend" "resources/backend/logback/prod"]
+     :main           vimsical.backend.core
      :repositories
      {"my.datomic.com"
       {:url      "https://my.datomic.com/repo"
        :username :env/datomic_login
        :password :env/datomic_password}}
      :dependencies
-     [[com.taoensso/carmine    "2.15.0"]
-      [org.immutant/web        "2.1.5" :exclusions [ring/ring-core org.jboss.logging/jboss-logging]]
-      [cc.qbits/alia-all       "3.3.0"]
-      [com.datomic/datomic-pro "0.9.5544" :exclusions [commons-codec]]]
+     [[com.taoensso/carmine           "2.16.0"
+       :exclusions [org.clojure/tools.reader]]
+      [cc.qbits/alia-all              "3.3.0"]
+      [cc.qbits/hayt                  "4.0.0"]
+      [com.datomic/datomic-pro        "0.9.5544"
+       :exclusions [commons-codec org.slf4j/slf4j-nop org.slf4j/slf4j-log4j12]]
+      [ch.qos.logback/logback-classic "1.0.1"]
+      [org.clojure/tools.logging      "0.3.1"]
+      ;; HTTP stack
+      [io.pedestal/pedestal.service   "0.5.2"]
+      [io.pedestal/pedestal.immutant  "0.5.2"]
+      [buddy/buddy-hashers            "1.2.0"]
+      [net.cgrand/xforms               "0.9.3"]]
      :global-vars
-     {*warn-on-reflection* true *unchecked-math* :warn-on-boxed}}]
+     {*warn-on-reflection* true *unchecked-math* :warn-on-boxed}}
+    :vcs :common]
 
    :backend-dev
    [:backend
+    :env.backend/dev
     {:dependencies
      [[criterium "0.4.4"]]
-     :source-paths
-     ["dev/backend"]}]
+     ;; Get proper deps resolution for fixtures etc
+     :source-paths   ["dev/backend" "test/vcs" "test/backend" "test/common"]
+     :resource-paths ["resources/backend/logback/dev"]}]
 
    :backend-test
-   [:test :backend :vcs :common
-    {:test-paths
-     ["test/backend" "test/vcs" "test/common"]}]
+   [:backend
+    :test
+    :env.backend/dev
+    :env.backend/test
+    :vcs :common
+    {:test-paths     ["test/backend" "test/vcs" "test/common"]
+     :resource-paths ["resources/backend/logback/test"]}]
    ;;
    ;; Frontend
    ;;
 
    :-frontend-config
-   {:source-paths
-    ["src/frontend"]
+   {:source-paths ["src/frontend"]
     :plugins
     [[lein-cljsbuild "1.1.5"
       :exclusions [org.apache.commons/commons-compress]]]
@@ -106,8 +123,7 @@
      [thi.ng/color              "1.2.0"]]}
 
    :-frontend-dev-config
-   {:source-paths
-    ["dev/frontend"]
+   {:source-paths ["dev/frontend"]
     :plugins
     [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]]
     :dependencies

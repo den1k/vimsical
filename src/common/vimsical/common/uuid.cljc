@@ -8,7 +8,7 @@
         [cljs-uuid-utils.core :as uuid]
         [clojure.spec :as s])]))
 
-(s/def :db/uuid uuid?)
+(s/def :db/uid uuid?)
 
 (defn uuid []
   #?(:cljs (uuid/make-random-squuid)

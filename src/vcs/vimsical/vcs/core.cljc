@@ -1,7 +1,7 @@
 (ns vimsical.vcs.core
   "* TODO
 
-  - rename ::delta-id to ::last-delta-id
+  - rename ::delta-uid to ::last-delta-uid
 
   Make it clear we're not tracking vcr state, only the bare minimum to be
   consistent, the vcr can add ::timeline-entry and use it as a sub without us
@@ -9,7 +9,7 @@
 
   - remove set-delta
 
-  - remove ::branch-id and add branch-id as an argument to add-edit-event
+  - remove ::branch-uid and add branch-uid as an argument to add-edit-event
 
   same rationale
 
@@ -38,9 +38,9 @@
 ;;
 
 (s/def ::branches (s/every ::branch/branch))
-(s/def ::state (s/keys :req [::state.files/state-by-file-id ::state.deltas/deltas]))
-(s/def ::state-by-delta-id (s/every-kv ::delta/prev-id ::state))
-(s/def ::vcs (s/keys :req [::branches ::timeline ::state-by-delta-id]))
+(s/def ::state (s/keys :req [::state.files/state-by-file-uid ::state.deltas/deltas]))
+(s/def ::state-by-delta-uid (s/every-kv ::delta/prev-uid ::state))
+(s/def ::vcs (s/keys :req [::branches ::timeline ::state-by-delta-uid]))
 
 ;;
 ;; * Updates
@@ -57,9 +57,9 @@
 (defn empty-vcs
   [branches]
   (letfn [(master-branch [branches] (first (filter branch/master? branches)))]
-    {::state-by-delta-id {}
-     ::branches          branches
-     ::timeline          state.timeline/empty-timeline}))
+    {::state-by-delta-uid {}
+     ::branches           branches
+     ::timeline           state.timeline/empty-timeline}))
 
 ;;
 ;; ** Reading (existing vims deltas')
@@ -72,16 +72,16 @@
         :ret  ::vcs)
 
 (defn add-delta
-  [{:as vcs ::keys [branches state-by-delta-id timeline]} uuid-fn {:keys [prev-id branch-id id] :as delta}]
-  (let [state                   (get state-by-delta-id prev-id)
-        all-deltas              (get state ::state.deltas/deltas state.deltas/empty-deltas)
-        all-deltas'             (state.deltas/add-delta all-deltas delta)
-        files-state-by-file-id  (get state ::state.files/state-by-file-id state.files/empty-state-by-file-id)
-        files-state-by-file-id' (state.files/add-delta files-state-by-file-id delta)
-        timeline'               (state.timeline/add-delta timeline branches uuid-fn delta)]
+  [{:as vcs ::keys [branches state-by-delta-uid timeline]} uuid-fn {:keys [prev-uid branch-uid uid] :as delta}]
+  (let [state                    (get state-by-delta-uid prev-uid)
+        all-deltas               (get state ::state.deltas/deltas state.deltas/empty-deltas)
+        all-deltas'              (state.deltas/add-delta all-deltas delta)
+        files-state-by-file-uid  (get state ::state.files/state-by-file-uid state.files/empty-state-by-file-uid)
+        files-state-by-file-uid' (state.files/add-delta files-state-by-file-uid delta)
+        timeline'                (state.timeline/add-delta timeline branches uuid-fn delta)]
     (-> vcs
-        (assoc-in [::state-by-delta-id id ::state.deltas/deltas] all-deltas')
-        (assoc-in [::state-by-delta-id id ::state.files/state-by-file-id] files-state-by-file-id')
+        (assoc-in [::state-by-delta-uid uid ::state.deltas/deltas] all-deltas')
+        (assoc-in [::state-by-delta-uid uid ::state.files/state-by-file-uid] files-state-by-file-uid')
         (assoc ::timeline timeline'))))
 
 
@@ -92,32 +92,32 @@
 (s/fdef add-edit-event
         :args (s/cat :vcs ::vcs
                      :effects ::editor/effects
-                     :file-id ::file/id
-                     :branch-id ::branch/id
-                     :delta-id ::delta/prev-id
+                     :file-uid ::file/uid
+                     :branch-uid ::branch/uid
+                     :delta-uid ::delta/prev-uid
                      :edit-event ::edit-event/edit-event)
-        :ret (s/tuple ::vcs ::delta/id))
+        :ret (s/tuple ::vcs ::delta/uid))
 
 (defn add-edit-event
-  [{:as vcs ::keys [branches state-by-delta-id timeline]}
+  [{:as vcs ::keys [branches state-by-delta-uid timeline]}
    {:as effects ::editor/keys [uuid-fn]}
-   file-id
-   branch-id
-   delta-id
+   file-uid
+   branch-uid
+   delta-uid
    edit-event]
-  (let [state                  (get state-by-delta-id delta-id)
-        all-deltas             (get state ::state.deltas/deltas state.deltas/empty-deltas)
-        files-state-by-file-id (get state ::state.files/state-by-file-id state.files/empty-state-by-file-id)
-        [files-state-by-file-id'
+  (let [state                   (get state-by-delta-uid delta-uid)
+        all-deltas              (get state ::state.deltas/deltas state.deltas/empty-deltas)
+        files-state-by-file-uid (get state ::state.files/state-by-file-uid state.files/empty-state-by-file-uid)
+        [files-state-by-file-uid'
          deltas'
-         delta-id']            (state.files/add-edit-event files-state-by-file-id effects file-id branch-id delta-id edit-event)
-        all-deltas'            (state.deltas/add-deltas all-deltas deltas')
-        timeline'              (state.timeline/add-deltas timeline branches uuid-fn deltas')
-        vcs'                   (-> vcs
-                                   (assoc-in [::state-by-delta-id delta-id' ::state.deltas/deltas] all-deltas')
-                                   (assoc-in [::state-by-delta-id delta-id' ::state.files/state-by-file-id] files-state-by-file-id')
-                                   (assoc ::timeline timeline'))]
-    [vcs' delta-id']))
+         delta-uid']            (state.files/add-edit-event files-state-by-file-uid effects file-uid branch-uid delta-uid edit-event)
+        all-deltas'             (state.deltas/add-deltas all-deltas deltas')
+        timeline'               (state.timeline/add-deltas timeline branches uuid-fn deltas')
+        vcs'                    (-> vcs
+                                    (assoc-in [::state-by-delta-uid delta-uid' ::state.deltas/deltas] all-deltas')
+                                    (assoc-in [::state-by-delta-uid delta-uid' ::state.files/state-by-file-uid] files-state-by-file-uid')
+                                    (assoc ::timeline timeline'))]
+    [vcs' delta-uid']))
 
 ;;
 ;; * Queries
@@ -127,51 +127,51 @@
 ;; ** Deltas
 ;;
 
-(defn- delta-id->state
-  [vcs delta-id]
-  (get-in vcs [::state-by-delta-id delta-id]))
+(defn- delta-uid->state
+  [vcs delta-uid]
+  (get-in vcs [::state-by-delta-uid delta-uid]))
 
-(defn- delta-id->state-by-file-id
-  [vcs delta-id]
-  (get-in vcs [::state-by-delta-id delta-id ::state.files/state-by-file-id]))
+(defn- delta-uid->state-by-file-uid
+  [vcs delta-uid]
+  (get-in vcs [::state-by-delta-uid delta-uid ::state.files/state-by-file-uid]))
 
 (defn deltas
-  [vcs delta-id]
-  (some-> vcs (delta-id->state delta-id) ::state.deltas/deltas))
+  [vcs delta-uid]
+  (some-> vcs (delta-uid->state delta-uid) ::state.deltas/deltas))
 
 ;;
 ;; * Files
 ;;
 
 (s/fdef file-deltas
-        :args (s/cat :vcs ::vcs :file-id ::file/id :delta-id ::delta/prev-id)
+        :args (s/cat :vcs ::vcs :file-uid ::file/uid :delta-uid ::delta/prev-uid)
         :ret  (s/every ::delta/delta))
 
 (defn file-deltas
-  [vcs file-id delta-id]
+  [vcs file-uid delta-uid]
   (some-> vcs
-          (delta-id->state-by-file-id delta-id)
-          (state.files/deltas file-id)))
+          (delta-uid->state-by-file-uid delta-uid)
+          (state.files/deltas file-uid)))
 
 (s/fdef file-string
-        :args (s/cat :vcs ::vcs :file-id ::file/id :delta-id ::delta/prev-id)
+        :args (s/cat :vcs ::vcs :file-uid ::file/uid :delta-uid ::delta/prev-uid)
         :ret  (s/nilable string?))
 
 (defn file-string
-  [vcs file-id delta-id]
+  [vcs file-uid delta-uid]
   (some-> vcs
-          (delta-id->state-by-file-id delta-id)
-          (state.files/string file-id)))
+          (delta-uid->state-by-file-uid delta-uid)
+          (state.files/string file-uid)))
 
 (s/fdef file-cursor
-        :args (s/cat :vcs ::vcs :file-id ::file/id :delta-id ::delta/prev-id)
+        :args (s/cat :vcs ::vcs :file-uid ::file/uid :delta-uid ::delta/prev-uid)
         :ret  (s/nilable nat-int?))
 
 (defn file-cursor
-  [vcs file-id delta-id]
+  [vcs file-uid delta-uid]
   (some-> vcs
-          (delta-id->state-by-file-id delta-id)
-          (state.files/cursor file-id)))
+          (delta-uid->state-by-file-uid delta-uid)
+          (state.files/cursor file-uid)))
 
 ;;
 ;; * Timeline

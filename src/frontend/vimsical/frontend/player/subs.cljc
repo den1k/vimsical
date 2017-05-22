@@ -6,7 +6,7 @@
             [vimsical.frontend.code-editor.subs :as code-editor.subs]))
 
 (re-frame/reg-sub
- ::active-file-id
+ ::active-file-uid
  :<- [::vcs.subs/skimhead-entry]
  :<- [::vcs.subs/playhead-entry]
  :<- [::vcs.subs/timeline-first-entry]
@@ -15,7 +15,7 @@
                playhead-entry
                timeline-first-entry)
            second
-           :file-id)))
+           :file-uid)))
 
 (re-frame/reg-sub
  ::playback-unset?
