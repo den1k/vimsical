@@ -1,5 +1,14 @@
 (ns vimsical.common.env-cljs
-  #?(:clj (:require [vimsical.common.env :as env])))
+  #?(:clj (:require [clojure.spec :as s] [vimsical.common.env :as env])))
+
+#?(:clj (s/def ::boolean ::env/boolean))
+#?(:clj (s/def ::int ::env/int))
+#?(:clj (s/def ::long ::env/long))
+#?(:clj (s/def ::double ::env/double))
+#?(:clj (s/def ::ratio ::env/ratio))
+#?(:clj (s/def ::file ::env/file))
+#?(:clj (s/def ::string ::env/string))
+#?(:clj (s/def ::keyword ::env/keyword))
 
 #?(:clj
    (defmacro optional

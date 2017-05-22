@@ -22,11 +22,12 @@
 
  :env.backend/test
  {:env
-  {:env                          "test"}}
+  {:env "test"}}
 
  :env.frontend/dev
  {:env
-  {:remote-protocol "http"
-   :remote-host     "localhost"
-   :remote-path     "/remote"
-   :remote-port     "8080"}}}
+  {:csrf             "false"
+   :backend-protocol "http"
+   :backend-host     "localhost"
+   :backend-path     "/api"
+   :backend-port     "8080"}}}
