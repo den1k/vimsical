@@ -6,6 +6,7 @@
    [re-frame.core :as re-frame]
    [vimsical.common.test :refer [uuid]]
    [vimsical.common.util.core :as util]
+   [vimsical.remotes.backend.status.queries :as status.queries]
    [vimsical.frontend.quick-search.commands :as quick-search.commands]
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.vcs.branch :as branch]
@@ -95,4 +96,12 @@
       (mg/add-id-attr :db/uid)
       (util.mg/add-linked-entities state)))
 
-(re-frame/reg-event-db ::init (constantly default-db))
+(re-frame/reg-event-fx
+ ::init
+ (fn [_ _]
+   {:db     default-db
+    :remote {:id :backend :event [::status.queries/status]}}))
+
+(re-frame/reg-event-fx
+ ::status.queries/status-result
+ (fn [_ [_ result]] (println result)))

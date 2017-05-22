@@ -34,9 +34,12 @@
 
 (def service-map
   {:env                        (env/env)
+   ::http/host                 (env/optional :http-host ::env/string)
    ::http/port                 (env/required :http-port ::env/int)
    ::http/type                 :immutant
    ::http/routes               routes
    ::http/join?                false
-   ::http/allowed-origins      (constantly true)
+   ::http/allowed-origins      {:creds           true
+                                :allowed-origins (constantly true)}
+   ::http/resource-path        "/public"
    ::http/default-interceptors default-interceptors})

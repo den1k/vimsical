@@ -14,7 +14,6 @@
 
 (s/def ::user_uid ::user/uid)
 (s/def ::vims_uid ::vims/uid)
-(s/def ::branch_uid ::branch/uid)
 (s/def ::file_uid ::file/uid)
 (s/def ::delta_uid ::delta/uid)
 (s/def ::text string?)

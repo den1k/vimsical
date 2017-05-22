@@ -103,7 +103,6 @@
    ;;
    ;; Frontend
    ;;
-
    :-frontend-config
    {:source-paths ["src/frontend"]
     :plugins
@@ -143,7 +142,7 @@
    [:vcs :common :cljs :css :-frontend-config]
 
    :frontend-dev
-   [:frontend :-frontend-dev-config]
+   [:frontend :-frontend-dev-config :env.frontend/dev]
 
    :frontend-test
    [:test :frontend :vcs :common
