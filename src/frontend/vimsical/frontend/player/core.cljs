@@ -3,7 +3,7 @@
   (:require [re-frame.core :as re-frame]
             [reagent.core :as reagent]
             [vimsical.frontend.code-editor.core :as code-editor.core]
-            [vimsical.frontend.player.views :refer [player]]
+            [vimsical.frontend.player.views.player :refer [player]]
             [vimsical.frontend.player.embed :as player.embed]))
 
 (defn mount-root []

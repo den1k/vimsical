@@ -14,7 +14,7 @@
 (re-frame/reg-sub ::skimhead  :<- [::ui-db/ui-db] (fn [{::timeline.ui-db/keys [skimhead]} _] skimhead))
 (re-frame/reg-sub ::playing?  :<- [::ui-db/ui-db] (fn [{::timeline.ui-db/keys [playing?]} _] (boolean playing?)))
 (re-frame/reg-sub ::skimming? :<- [::ui-db/ui-db] (fn [{::timeline.ui-db/keys [skimming?]} _] (boolean skimming?)))
-
+(re-frame/reg-sub ::time :<- [::skimhead] :<- [::playhead] (fn [[skimhead playhead] _] (or skimhead playhead)))
 ;;
 ;; * Db
 ;;

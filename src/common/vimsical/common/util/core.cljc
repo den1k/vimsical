@@ -279,3 +279,23 @@
 #?(:cljs
    (defn norm-str [s]
      (some-> s not-empty gstr/collapseWhitespace)))
+
+(defn clamp                             ; from thi.ng.math.core/clamp
+  "Constraints x to be in closed interval [min max]."
+  [x min-x max-x] (clojure.core/max min-x (clojure.core/min max-x x)))
+
+(defn round [num decimals]
+  #?(:cljs (js/Number (str (js/Math.round (str num "e" decimals)) "e-" decimals))
+     :clj  (assert false "not implemented")))
+
+(defn time-ms->fmt-time [ms]
+  #?(:cljs (let [secs (js/parseInt (mod (/ ms 1e3) 60))
+                 mins (js/parseInt (mod (/ ms 6e4) 60))
+                 secs (cond->> secs
+                        (> 10 secs) (str "0"))]
+             (str mins ":" secs))
+     :clj  (assert false "not implemented")))
+
+(defn rotate
+  ([coll] (rotate 1 coll))
+  ([n coll] (vec (take (count coll) (drop n (cycle coll))))))

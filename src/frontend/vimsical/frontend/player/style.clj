@@ -21,32 +21,47 @@
      [:.social-buttons
       {:display :flex}]
      [:.edit
-      {:font-weight 300
-       :font-size   :22px}]]
+      {:font-weight 500
+       :font-size   :18px}]]
     [:&.timeline-container
+     {:padding "0 18px"}                ; less pad than top bar
      [:.play-pause
-      {:height :20px}]
+      {:height :20px
+       :cursor :pointer}]
 
      [:.timeline
-      {:position :relative}
+      {:position :relative
+       :height   :100%
+       :cursor   :pointer}
       [:.progress
-       {:height        :8px
+       {:height        :4px
         :width         :100%
         :border-radius :4px
         :position      :absolute}
        [:&.left
         {:background :lightgrey}]
        [:&.passed
-        {:background :black
-         :width      :55px}]]
+        {:background :black}]]
 
-      [:.playhead
-       {:left          :50px
-        :width         :16px
-        :height        :16px
-        :border-radius :50%
-        :background    :black
-        :position      :absolute}]]]]
+      [:.head
+       {:background          :black
+        :position            :absolute
+        :transition          "all 0.2s ease" ; `all` is overridden by transition-prop
+        :transition-property "margin-left, width, height, border-radius"}
+       [:&.playhead
+        {:height        :16px
+         :width         :16px
+         :margin-left   :-8px
+         :border-radius :50%}]
+       [:&.skimhead
+        {:height        :18px
+         :width         :4px
+         :margin-left   :-2px
+         :border-radius 0}]]]
+     [:.time-or-speed-control
+      {:cursor      :pointer
+       ;; monospaced avoids shifting timeline
+       :font-family "Droid Sans Mono"}]]]
    [:.preview-container
     {:position :relative}
     [:.play-button-overlay
@@ -101,7 +116,7 @@
      :margin-bottom :50px}]
    code-editor
    [:.logo-and-file-type.bar
-    {:padding    "0 10px"
+    {:padding    "0 18px"
      :position   :absolute
      :width      :100%
      :bottom     0
