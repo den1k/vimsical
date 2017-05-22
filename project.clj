@@ -77,7 +77,8 @@
       ;; HTTP stack
       [io.pedestal/pedestal.service   "0.5.2"]
       [io.pedestal/pedestal.immutant  "0.5.2"]
-      [buddy/buddy-hashers            "1.2.0"]]
+      [buddy/buddy-hashers            "1.2.0"]
+      [net.cgrand/xforms               "0.9.3"]]
      :global-vars
      {*warn-on-reflection* true *unchecked-math* :warn-on-boxed}}
     :vcs :common]
