@@ -104,9 +104,10 @@
 (defn optional
   ([key] (optional key nil))
   ([key spec-or-conformer]
-   (cond->> (get! key)
-     (some? spec-or-conformer) (s/conform spec-or-conformer)
-     true                      (valid! key spec-or-conformer))))
+   (when-some [val (get! key)]
+     (cond->> val
+       (some? spec-or-conformer) (s/conform spec-or-conformer)
+       true                      (valid! key spec-or-conformer)))))
 
 (defn required
   ([key] (required key nil))
