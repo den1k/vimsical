@@ -13,11 +13,14 @@
 
 (defn player-iframe [opts]
   {:pre [(:src opts)]}
-  [:iframe
-   (merge
-    {:sandbox iframe-sandbox-opts}
-    opts)])
+  [:iframe (merge {:sandbox iframe-sandbox-opts} opts)])
+
+(defn player-script [opts]
+  {:pre [(:src opts)]}
+  [:script (merge {:async "async"} opts)])
 
 (defn player-iframe-markup [opts]
-  (reagent.dom.server/render-to-static-markup
-   [player-iframe opts]))
+  (reagent.dom.server/render-to-static-markup [player-iframe opts]))
+
+(defn player-script-markup [opts]
+  (reagent.dom.server/render-to-static-markup [player-script opts]))
