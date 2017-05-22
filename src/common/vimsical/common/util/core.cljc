@@ -282,7 +282,7 @@
 
 (defn clamp                             ; from thi.ng.math.core/clamp
   "Constraints x to be in closed interval [min max]."
-  [x min max] (if (< x min) min (if (> x max) max x)))
+  [x min-x max-x] (clojure.core/max min-x (clojure.core/min max-x x)))
 
 (defn round [num decimals]
   #?(:cljs (js/Number (str (js/Math.round (str num "e" decimals)) "e-" decimals))

@@ -33,13 +33,7 @@
     (reagent/create-class
      {:render
       (fn [c]
-        (let [{:as        vims
-               :vims/keys [title
-                           author]} (<sub [::app.subs/vims
-                                           [:vims/title
-                                            {:vims/author [:user/first-name
-                                                           :user/last-name
-                                                           :user/email]}]])
+        (let [{:as vims :vims/keys [title author]} (<sub [::app.subs/vims-info])
               files                (<sub [::vcs.subs/files])
               temp-first-file      (first files)
               active-file-id       (or (<sub [::subs/active-file-id])

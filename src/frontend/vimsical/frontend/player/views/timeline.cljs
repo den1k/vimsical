@@ -1,6 +1,4 @@
 (ns vimsical.frontend.player.views.timeline
-  ;; timeline.subs should be vcs.timeline.subs, since player's timeline has
-  ;; nothing to do with vcr's timeline
   (:require [vimsical.frontend.timeline.subs :as timeline.subs]
             [vimsical.frontend.util.dom :as util.dom :refer-macros [e> e->]]
             [vimsical.frontend.util.re-frame :refer [<sub]]
@@ -8,7 +6,7 @@
             [re-frame.core :as re-frame]
             [vimsical.frontend.player.handlers :as handlers]))
 
-(defn time->perc [duration playhead]
+(defn time->pct [duration playhead]
   (-> playhead (/ duration) (* 100)))
 
 (defn perc->time [duration perc]
@@ -32,8 +30,8 @@
       (let [dur           (<sub [::timeline.subs/duration])
             playhead      (<sub [::timeline.subs/playhead])
             skimhead      (<sub [::timeline.subs/skimhead])
-            playhead-perc (str (time->perc dur playhead) "%")
-            skimhead-perc (when skimhead (str (time->perc dur skimhead) "%"))]
+            playhead-perc (str (time->pct dur playhead) "%")
+            skimhead-perc (when skimhead (str (time->pct dur skimhead) "%"))]
         [:div.timeline.ac.f1
          (handlers c dur)
          [:div.progress.left]

@@ -4,7 +4,7 @@
    [vimsical.frontend.nav.views :refer [nav]]
    [vimsical.frontend.vcr.views :refer [vcr]]
    [vimsical.frontend.landing.views :refer [landing]]
-   [vimsical.frontend.player.views :refer [player]]
+   [vimsical.frontend.player.views.player :refer [player]]
    [vimsical.frontend.quick-search.views :refer [quick-search]]
    [vimsical.frontend.window-listeners.views :refer [window-listeners]]
    [vimsical.frontend.util.re-frame :refer-macros [with-subs]]
