@@ -113,7 +113,6 @@
   (t/testing "Update with branches"
     (let [first-deltas  (stub-deltas)
           second-deltas (stub-new-branch-deltas)
-          {:keys [id]}  (last second-deltas)
           expect        {(:branch-uid (last first-deltas))  (last first-deltas)
                          (:branch-uid (last second-deltas)) (last second-deltas)}
           actual        (-> {}

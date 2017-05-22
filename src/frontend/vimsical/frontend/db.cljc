@@ -63,7 +63,7 @@
    (let [files    [(new-file (uuid title :file-html) :text :html)
                    (new-file (uuid title :file-css) :text :css)
                    (new-file (uuid title :file-js) :text :javascript "5" compilers)]
-         branches [(new-branch (uuid :master) "master" files (:javascript js-libs))]]
+         branches [(new-branch (uuid :master) (uuid :user) "master" files (:javascript js-libs))]]
      {:db/uid         (uuid title)
       ::vims/owner    owner-ref
       ::vims/title    title
@@ -76,7 +76,7 @@
                       ::user/email      "kalavox@gmail.com"
                       ::user/vimsae
                       [(new-vims [:db/uid (uuid :user)] "NLP Chatbot running on React Fiber")
-                       (new-vims [:db/uid (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs :compilers to-sub-type->compiler})]}
+                       (new-vims [:db/uid (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs})]}
    :app/vims         [:db/uid (uuid "CatPhotoApp")]
    :app/quick-search {:db/uid                           (uuid :quick-search)
                       :quick-search/show?               false
