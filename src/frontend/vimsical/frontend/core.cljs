@@ -3,6 +3,8 @@
    [clojure.spec.test :as st]
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
+   [vimsical.frontend.remotes.fx] ;; side-effects
+   [vimsical.frontend.remotes.backend] ;; side-effects
    [vimsical.frontend.app.views :refer [app]]
    [vimsical.frontend.code-editor.core :as code-editor.core]
    [vimsical.frontend.db :as db]
