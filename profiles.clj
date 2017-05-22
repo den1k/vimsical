@@ -3,7 +3,7 @@
  {:env
   {:env                          "dev"
    ;; HTTP server
-   :http-bind-host               "localhost"
+   :http-host                    "localhost"
    :http-port                    "8080"
    :csrf                         "false"
    ;; Datomic
@@ -29,5 +29,5 @@
   {:csrf             "false"
    :backend-protocol "http"
    :backend-host     "localhost"
-   :backend-path     "/api"
+   :backend-path     "/events"
    :backend-port     "8080"}}}

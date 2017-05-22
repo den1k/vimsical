@@ -1,8 +1,7 @@
 (ns vimsical.backend.system
   "TODO
   - Have a strategy to measure latency and throughput
-  - Add an nRepl server component for prod
-  - Logging"
+  - Add an nRepl server component for prod"
   (:require
    [clojure.spec :as s]
    [com.stuartsierra.component :as cp]
@@ -30,7 +29,12 @@
 ;; NOTE use unqualified keys to avoid circular dependencies in downstream
 ;; pedestal context consumers (see deps interceptor)
 (s/def ::system
-  (s/keys :req-un [::cassandra-cluster ::cassandra-connection ::delta-store ::datomic ::session-store ::server]))
+  (s/keys :req-un [::cassandra-cluster
+                   ::cassandra-connection
+                   ::delta-store
+                   ::datomic
+                   ::session-store
+                   ::server]))
 
 ;;
 ;; * System map
