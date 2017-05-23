@@ -35,6 +35,35 @@
 (s/def ::libs (s/coll-of ::lib/lib))
 
 ;;
+;; * Constructor
+;;
+
+(s/fdef new-branch
+        :args (s/or :master
+                    (s/cat :uid ::uid
+                           :created-at ::created-at
+                           :files ::files)
+                    :child
+                    (s/cat :uid ::uid
+                           :created-at ::created-at
+                           :parent ::branch
+                           :first-delta ::delta/delta))
+        :ret ::branch)
+
+(defn new-branch
+  ([uuid created-at files]
+   {:db/uid      uuid
+    ::created-at created-at
+    ::files      files})
+  ([uuid created-at {:keys [db/uid] ::keys [files] :as parent} {:keys [uid prev-uid]}]
+   {:db/uid                uuid
+    ::parent               parent
+    ::start-delta-uid      uid
+    ::branch-off-delta-uid prev-uid
+    ::created-at           created-at
+    ::files                files}))
+
+;;
 ;; * Lineage
 ;;
 

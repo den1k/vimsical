@@ -44,7 +44,7 @@
           test-effects {::editor/pad-fn       test-pad-fn
                         ::editor/uuid-fn      test-uuid-fn
                         ::editor/timestamp-fn test-timestamp-fn}
-          state=       (fn [expected-string expected-cursor [states deltas]]
+          state=       (fn [expected-string expected-cursor [states deltas delta-uid]]
                          (let [{::sut/keys [files string cursor]} (get states file-uid)]
                            (is (seq deltas))
                            (is (topo/sorted? deltas))
