@@ -2,9 +2,10 @@
   (:require
    [clojure.spec :as s]
    [vimsical.frontend.util.xhr :as xhr]
-   [vimsical.common.env-cljs :as env :include-macros true]
    [vimsical.common.util.transit :as transit]
-   [vimsical.frontend.remotes.remote :as remote]))
+   [vimsical.frontend.remotes.remote :as remote])
+  (:require-macros
+   [vimsical.common.env-cljs :as env]))
 
 ;;
 ;; * Spec

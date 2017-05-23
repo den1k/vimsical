@@ -6,7 +6,8 @@
    [clojure.string :as str]
    [goog.dom :as gdom]
    [goog.events :as gevents]
-   [goog.net.EventType :as EventType]
+   [goog.net.EventType :as EventType])
+  (:require-macros
    [vimsical.common.env-cljs :as env]))
 
 ;;

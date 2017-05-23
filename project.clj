@@ -145,7 +145,7 @@
    [:frontend :-frontend-dev-config :env.frontend/dev]
 
    :frontend-test
-   [:test :frontend :vcs :common
+   [:test :frontend :env.frontend/dev :vcs :common
     {:test-paths
      ["test/frontend" "test/vcs" "test/common"]
      :plugins [[lein-doo "0.1.7"]]}]
