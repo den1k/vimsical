@@ -40,7 +40,7 @@
       (log/debug "read-session..." session-key session)
       session)
     (catch Throwable t
-      (println "Error getting session" {:key session-key :ex t})
+      (log/error "Error getting session" {:key session-key :ex t})
       (throw t))))
 
 (s/fdef write-session*
@@ -58,7 +58,7 @@
          (car/set session-key' value))
         session-key'))
     (catch Throwable t
-      (println "Error writing session" {:key session-key :val value :ex t})
+      (log/error "Error writing session" {:key session-key :val value :ex t})
       (throw t))))
 
 (s/fdef delete-session*
@@ -74,7 +74,7 @@
        (car/del session-key))
       nil)
     (catch Throwable t
-      (println "Error deleting session" {:key session-key :ex t})
+      (log/error "Error deleting session" {:key session-key :ex t})
       (throw t))))
 
 ;;
