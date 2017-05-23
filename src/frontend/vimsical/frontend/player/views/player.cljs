@@ -1,5 +1,7 @@
 (ns vimsical.frontend.player.views.player
   (:require
+   [vimsical.frontend.util.re-frame :refer [<sub]]
+   [vimsical.frontend.ui.subs :as ui.subs]
    [vimsical.frontend.views.splits :as splits]
    [vimsical.frontend.player.views.elems :as elems]
    [vimsical.frontend.player.views.preview :refer [social-bar preview-panel preview-container]]
@@ -19,18 +21,15 @@
 
 (defn portrait []
   [:div.portrait-split
-   [social-bar {:show-logo? true}]
+   [social-bar]
    [preview-container]
    [timeline-bar]
    [info-and-editor-container]])
 
-(defn player
-  ([] (player {}))
-  ([{:keys [orientation]
-     :or   {orientation :portrait}}]
-   {:pre (contains? #{:landscape :portrait} orientation)}
-   [:div.vimsical-frontend-player
-    {:class (name orientation)}
-    (case orientation
-      :landscape [landscape]
-      :portrait [portrait])]))
+(defn player []
+  (let [orientation (<sub [::ui.subs/orientation])]
+    [:div.vimsical-frontend-player
+     {:class (name orientation)}
+     (case orientation
+       :landscape [landscape]
+       :portrait [portrait])]))

@@ -10,6 +10,7 @@
             [vimsical.frontend.vcs.subs :as vcs.subs]
             [vimsical.frontend.timeline.subs :as timeline.subs]
             [vimsical.frontend.player.subs :as subs]
+            [vimsical.frontend.ui.subs :as ui.subs]
             [vimsical.frontend.player.views.timeline :refer [timeline-bar]]
             [vimsical.frontend.player.handlers :as handlers]
             [vimsical.common.util.core :as util]
@@ -27,8 +28,7 @@
    [central-play-button]
    [live-preview]])
 
-(defn social-bar [{:keys [show-edit? show-logo?]}]
-  {:pre [(not= show-edit? show-logo?)]}
+(defn social-bar []
   (let [liked (reagent/atom false)]
     (fn []
       [:div.bar.social
@@ -41,12 +41,12 @@
                     :md-icon-name "zmdi-share" :tooltip "share" :class "share"]
                    [re-com/md-icon-button
                     :md-icon-name "zmdi-time" :tooltip "watch later" :class "watch-later"]]]
-       (cond
-         show-edit? [elems/edit-on-vimsical]
-         show-logo? [icons/logo-and-type])])))
+       (case (<sub [::ui.subs/orientation])
+         :landscape [elems/edit-on-vimsical]
+         :portrait [icons/logo-and-type])])))
 
 (defn preview-panel []
   [:div.preview-panel.jsb.dc
-   [social-bar {:show-edit? true}]
+   [social-bar]
    [preview-container]
    [timeline-bar]])

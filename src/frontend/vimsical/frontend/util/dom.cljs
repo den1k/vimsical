@@ -117,6 +117,9 @@
   (comp bounding-client-rect
         reagent/dom-node))
 
+(defn body-rect []
+  (bounding-client-rect (.-body js/document)))
+
 (defn e->rel-mouse-coords
   ([e] (e->rel-mouse-coords e (.-target e)))
   ([e rel-to-elem]
