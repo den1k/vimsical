@@ -176,3 +176,6 @@
   (let [user-agent (str/lower-case (.. js/window -navigator -userAgent))
         rxp        #"android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini"]
     (boolean (re-find rxp user-agent))))
+
+(defn first-touch->e [e]
+  (get (.-targetTouches e) 0))

@@ -24,7 +24,8 @@
   {:on-mouse-enter (e> (re-frame/dispatch [::handlers/on-mouse-enter (e->time c e dur)]))
    :on-mouse-move  (e> (re-frame/dispatch [::handlers/on-mouse-move (e->time c e dur)]))
    :on-mouse-leave (e> (re-frame/dispatch [::handlers/on-mouse-leave]))
-   :on-click       (e> (re-frame/dispatch [::handlers/on-click (e->time c e dur)]))})
+   :on-click       (e> (re-frame/dispatch [::handlers/on-click (e->time c e dur)]))
+   :on-touch-move  (e> (re-frame/dispatch [::handlers/on-click (e->time c (util.dom/first-touch->e e) dur)]))})
 
 
 (defn play-pause []
