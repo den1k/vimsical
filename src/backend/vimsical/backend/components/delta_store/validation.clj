@@ -2,10 +2,19 @@
   (:require
    [clojure.spec :as s]
    [net.cgrand.xforms :as x]
-   [vimsical.backend.components.delta-store.protocol :as p]))
+   [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.delta :as delta]))
 
+;;
+;; * Spec
+;;
 
+(s/def ::delta (s/keys :req-un [::delta/uid ::delta/prev-uid ::delta/branch-uid]))
+(s/def ::deltas-by-branch-uid (s/every-kv ::branch/uid ::delta))
+
+;;
 ;; * Deltas validation
+;;
 
 (defn- first-delta?
   [deltas-by-branch-uid {:keys [prev-uid] :as delta}]
@@ -31,7 +40,7 @@
      (next-in-branch? deltas-by-branch-uid branch-uid delta))
    (keys deltas-by-branch-uid)))
 
-(defn- validate-contiguous
+(defn- validate-contiguous-xf
   [rf]
   (fn
     ([] (rf))
@@ -45,8 +54,24 @@
        (throw
         (ex-info "Validation error" {:last-deltas-by-branch-uid deltas-by-branch-uid :delta delta}))))))
 
+;;
+;; * API
+;;
+
+(defn group-by-branch-uid-xf
+  ([] (x/by-key :branch-uid (map identity)))
+  ([xform] (x/by-key :branch-uid xform)))
+
+(defn group-by-branch-uid-rf []
+  (completing (fn [m [k v]] (assoc m k v))))
+
+(s/fdef update-deltas-by-branch-uid
+        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas (s/every ::delta))
+        :ret  ::deltas-by-branch-uid)
+
 (defn update-deltas-by-branch-uid
   [deltas-by-branch-uid deltas]
-  (let [xf (x/by-key :branch-uid validate-contiguous)
-        f  (completing (fn [m [k v]] (assoc m k v)))]
-    (transduce xf f deltas-by-branch-uid deltas)))
+  (transduce
+   (group-by-branch-uid-xf validate-contiguous-xf)
+   (group-by-branch-uid-rf)
+   deltas-by-branch-uid deltas))

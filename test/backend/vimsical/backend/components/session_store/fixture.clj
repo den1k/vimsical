@@ -16,10 +16,9 @@
 ;;
 
 (defn- new-session-store []
-  (cp/start
-   (sut/->session-store
-    {::sut/host (env/required :redis-host ::env/string)
-     ::sut/port (env/required :redis-port ::env/int)})))
+  (sut/->session-store
+   {::sut/host (env/required :redis-host ::env/string)
+    ::sut/port (env/required :redis-port ::env/int)}))
 
 ;;
 ;; * Fixture
@@ -27,7 +26,7 @@
 
 (defn session-store
   [f]
-  (binding [*session-store* (new-session-store)]
+  (binding [*session-store* (cp/start (new-session-store))]
     (try
       (f)
       (finally

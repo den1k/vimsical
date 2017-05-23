@@ -1,26 +1,31 @@
-*.log
-*.iml
-.nrepl-port
+# Macos
 .DS_Store
+
+# Emacs
+*.org
 .dir-locals.el
 
-target
-.lein*
-checkouts
+# Intellij
+*.iml
+.idea
 
-resources/public/js
+# Js
+resources/public/js/
+resources/public/vs/
 resources/public/css/app.css
 resources/public/css/player.css
 
+# Templates
 infra/.env
 infra/.env.sh
 
-.idea
+# Lein
+target/
+checkouts/
+.lein*
 
-/.lein-env
-/*.org
-/.lein-failures
-/resources/public/js/compiled
-/.nrepl-port
-/figwheel_server.log
-/checkouts
+# nRepl
+.nrepl-port
+
+# Figwheel
+figwheel_server.log
