@@ -11,7 +11,7 @@
    {:position :relative
     :height   :100%
     :cursor   :pointer}
-   [:.progress
+   [:.time
     {:height        :4px
      :width         :100%
      :border-radius :4px
@@ -47,8 +47,11 @@
    timeline
    [:.time-or-speed-control
     {:cursor      :pointer
-     ;; monospaced avoids shifting timeline
-     :font-family "Droid Sans Mono"}]])
+     ;; monospaced to accurately measure width
+     :font-family "Droid Sans Mono"
+     ;; hardcode width of 4 characters to avoid shifting timeline
+     ;; time default, e.g. `3:42`
+     :width       :33px}]])
 
 (def preview-panel
   [:.preview-panel

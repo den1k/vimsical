@@ -50,7 +50,7 @@
         speed-range (reagent/atom [1.0 1.5 1.75 2 2.25 2.5])]
     (fn []
       (let [time (util/time-ms->fmt-time (<sub [::timeline.subs/time]))]
-        [:div.time-or-speed-control.ac
+        [:div.time-or-speed-control.ac.jc
          {:on-mouse-enter (e> (reset! show-speed? true))
           :on-mouse-out   (e> (reset! show-speed? false))}
          (if-not @show-speed?
@@ -74,8 +74,8 @@
             skimhead-perc (when skimhead (str (time->pct dur skimhead) "%"))]
         [:div.timeline.ac.f1
          (handlers c dur)
-         [:div.progress.left]
-         [:div.progress.passed
+         [:div.time.left]               ; .progress class clashes with bootstrap
+         [:div.time.passed
           {:style {:width playhead-perc}}]
          [:div.head
           {:class (if skimhead "skimhead" "playhead")

@@ -12,7 +12,7 @@
     {:border-bottom "solid 2px #eceff3"
      :background    :white
      :padding       "8px 25px"}
-    [:.vims-info {:margin-left :80px}
+    [:.vims-info
      [:* {:white-space :nowrap}]
 
      [:.title {:font-size      :1rem
