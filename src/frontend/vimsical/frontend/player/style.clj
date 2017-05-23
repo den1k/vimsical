@@ -105,7 +105,7 @@
      :overflow-y    :scroll
      :padding       "5px 22px 0px 22px"
      :margin-bottom :15px}
-    ; sutle scrollbar
+    ; sutle scrollbar to match code-editor
     ["&::-webkit-scrollbar"
      {:background :white
       :width      :7px
@@ -141,6 +141,10 @@
      ;; height of .bar
      :margin-bottom :50px}]
    code-editor
+   [:.code-editor
+    [:.slider
+     {:background :white
+      :border     "1px solid lightgray"}]]
    [:.logo-and-file-type.bar
     {:padding    "0 18px"
      :position   :absolute
