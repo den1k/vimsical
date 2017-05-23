@@ -56,7 +56,9 @@
     :class "divider-line"]])
 
 (defn explore []
-  [:div.explore.truncate
-   "Explore"
-   (when (= :landscape (<sub [::ui.subs/orientation]))
-     " on Vimsical")])
+  ; can't go to vcr when on mobile, so don't show explore
+  (when-not (<sub [::ui.subs/on-mobile?])
+    [:div.explore.truncate
+     "Explore"
+     (when (= :landscape (<sub [::ui.subs/orientation]))
+       " on Vimsical")]))
