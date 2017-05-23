@@ -70,5 +70,5 @@
            [:div.logo-and-file-type.bar
             (case (<sub [::ui.subs/orientation])
               :landscape [icons/logo-and-type]
-              :portrait [elems/edit-on-vimsical])
+              :portrait [elems/explore])
             (active-file-badge {:file active-file})]]))})))

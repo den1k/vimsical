@@ -42,7 +42,7 @@
                    [re-com/md-icon-button
                     :md-icon-name "zmdi-time" :tooltip "watch later" :class "watch-later"]]]
        (case (<sub [::ui.subs/orientation])
-         :landscape [elems/edit-on-vimsical]
+         :landscape [elems/explore]
          :portrait [icons/logo-and-type])])))
 
 (defn preview-panel []

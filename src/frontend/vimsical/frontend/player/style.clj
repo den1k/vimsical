@@ -78,8 +78,8 @@
     :stroke :black
     :cursor :pointer}])
 
-(def edit-on-vimsical
-  [:.edit
+(def explore
+  [:.explore
    {:font-weight 500
     :font-size   :18px}])
 
@@ -92,7 +92,7 @@
    live-preview
 
    play-pause-buttons
-   edit-on-vimsical])
+   explore])
 
 (def editor-panel
   [:.info-and-editor-panel
@@ -101,11 +101,21 @@
    [:.info
     {:transition    "all 0.5s ease"
      :max-height    :60%
-     :overflow-y    :hidden
+     :overflow-y    :scroll
      :padding       "5px 22px 0px 22px"
      :margin-bottom :15px}
+    ; sutle scrollbar
+    ["&::-webkit-scrollbar"
+     {:background :white
+      :width      :7px
+      :outline    "1px solid slategrey"}]
+    ["&::-webkit-scrollbar-thumb"
+     {:background :white
+      :border     "1px solid lightgrey"
+      :right      :5px}]
     [:&.pan-out
-     {:max-height    0
+     {:padding-top   0
+      :max-height    0
       :margin-bottom 0}]
     [:.header
      [:.avatar
@@ -124,7 +134,6 @@
      {:margin-top    :12px
       :font-size     :1rem
       :line-height   :1.45
-      :overflow      :hidden
       :text-overflow :ellipsis}]]
    [:.code-editor
     {:flex          1
