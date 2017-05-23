@@ -28,7 +28,7 @@
      {:class sub-type}
      (-> sub-type name string/upper-case)]))
 
-(defn user-full-name [{::user.views/keys [first-name last-name]}]
+(defn user-full-name [{::user/keys [first-name last-name]}]
   (util/space-join first-name last-name))
 
 (defn info-and-editor-container []

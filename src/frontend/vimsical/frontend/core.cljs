@@ -6,6 +6,7 @@
    [vimsical.frontend.app.views :refer [app]]
    [vimsical.frontend.code-editor.core :as code-editor.core]
    [vimsical.frontend.db :as db]
+   [vimsical.frontend.ui.handlers :as ui.handlers]
    [vimsical.frontend.vcs.handlers :as vcs.handlers]))
 
 (defn mount-root []
@@ -20,5 +21,6 @@
   (code-editor.core/require-monaco
    #(do
       (re-frame/dispatch-sync [::db/init])
+      (re-frame/dispatch-sync [::ui.handlers/init])
       (re-frame/dispatch-sync [::vcs.handlers/init-vims])
       (mount-root))))

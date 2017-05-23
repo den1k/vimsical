@@ -61,13 +61,10 @@
                    "resize"  handle-resize}]
     (reagent/create-class
      {:component-did-mount
-      (fn [_]
-        (handle-resize)                 ; measure once on init
-        (doseq [[event-type handler] listeners]
-          (.addEventListener js/window event-type handler)))
+      #(doseq [[event-type handler] listeners]
+         (.addEventListener js/window event-type handler))
       :component-will-unmount
-      (fn [_]
-        (doseq [[event-type handler] listeners]
-          (.removeEventListener js/window event-type handler)))
+      #(doseq [[event-type handler] listeners]
+         (.removeEventListener js/window event-type handler))
       :render
       (fn [] [:div])})))
