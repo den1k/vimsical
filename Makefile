@@ -34,6 +34,9 @@ test-cljs: deps clean
 test-cljs-advanced: deps clean
 	lein with-profile +frontend-test,-css doo node test-advanced once
 
+test-integration: deps clea
+	lein with-profile integration-test test
+
 #
 # Build
 #

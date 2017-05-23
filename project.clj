@@ -155,6 +155,13 @@
    :player-dev
    [:player :-frontend-dev-config]
 
+   :integration-test
+   [:backend-test
+    :-frontend-config
+    {:source-paths ["test/integration"]
+     :test-paths   ["test/integration"]
+     :dependencies [[day8.re-frame/test "0.1.3-SNAPSHOT"]]}]
+
    ;;
    ;; CSS
    ;;
