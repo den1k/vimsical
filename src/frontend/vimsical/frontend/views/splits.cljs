@@ -44,12 +44,11 @@
         splitters-height       (* splitters-count splitter-size-int)
 
         make-splitter-children (fn [{:keys [panels splitter-child splitter-children]}]
-                                 (let [panel-count (count panels)]
-                                   (if splitter-children
-                                     (do (assert (= (count panels)
-                                                    (count splitter-children)))
-                                         splitter-children)
-                                     (repeat panel-count splitter-child))))
+                                 (if splitter-children
+                                   (do (assert (= (count panels)
+                                                  (count splitter-children)))
+                                       splitter-children)
+                                   (repeat panel-count splitter-child)))
 
         stop-drag              (fn []
                                  (when on-split-change (on-split-change @percs))
@@ -163,7 +162,11 @@
         dragging?            (reagent/atom false) ;; is the user dragging the splitter (mouse is down)?
         over?                (reagent/atom false) ;; is the mouse over the splitter, if so, highlight it
         panel-count          (count panels)
-        percs                (reagent/atom (vec (repeat panel-count (/ 100 panel-count))))
+        initial-split        (js/parseInt initial-split)
+        percs                (reagent/atom
+                              (if (= 2 panel-count)
+                                [initial-split (- 100 initial-split)]
+                                (vec (repeat panel-count (/ 100 panel-count)))))
         prev-mouse-x         (reagent/atom 0)
         splitter-idx         (reagent/atom nil)
         splitter-count       (dec panel-count)

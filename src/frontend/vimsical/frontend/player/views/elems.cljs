@@ -52,3 +52,6 @@
    [:div.stretcher]
    [re-com/line
     :class "divider-line"]])
+
+(defn edit-on-vimsical []
+  [:div.edit "Edit on Vimsical"])
