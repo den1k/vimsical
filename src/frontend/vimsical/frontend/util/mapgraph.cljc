@@ -52,6 +52,24 @@
   (reduce-kv add-to db state))
 
 ;;
+;; ** Removing entities
+;;
+(declare remove-entity)
+
+(defn- remove-ref [db ref]
+  (reduce-kv
+   (fn [db k v]
+     (cond
+       (mg/ref? db v) (remove-ref db v)
+       (coll? v)      (reduce remove-ref db v)
+       :else          db))
+   (dissoc db ref) (get db ref)))
+
+
+(defn remove-entity [db entity]
+  (remove-ref db (mg/ref-to db entity)))
+
+;;
 ;; ** Shorthand link syntax
 ;;
 
