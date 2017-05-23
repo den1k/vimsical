@@ -54,7 +54,7 @@
       nil)))
 
 (defn handle-resize [& _]
-  (re-frame/dispatch [::ui.handlers/on-resize (util.dom/body-rect)]))
+  (re-frame/dispatch [::ui.handlers/on-resize]))
 
 (defn window-listeners []
   (let [listeners {"keydown" handle-shortcut
@@ -67,4 +67,4 @@
       #(doseq [[event-type handler] listeners]
          (.removeEventListener js/window event-type handler))
       :render
-      (fn [] [:div])})))
+      (fn [_] [:div])})))

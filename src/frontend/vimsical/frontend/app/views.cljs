@@ -8,17 +8,18 @@
    [vimsical.frontend.quick-search.views :refer [quick-search]]
    [vimsical.frontend.window-listeners.views :refer [window-listeners]]
    [vimsical.frontend.util.re-frame :refer-macros [with-subs]]
-   [vimsical.frontend.app.subs :as subs]))
+   [vimsical.frontend.app.subs :as subs]
+   [vimsical.frontend.ui.subs :as ui.subs]))
 
 (defn app []
   (fn []
-    (with-subs [route [::subs/route]]
+    (with-subs [route      [::subs/route]
+                on-mobile? [::ui.subs/on-mobile?]]
       [:div.app
        {:class (str "route-" (name route))}
-       [nav]
+       (when-not on-mobile? [nav])
        (case route
          :route/landing [landing]
-         :route/vcr [vcr]
-         :route/player [player])
+         :route/vims [(if on-mobile? player vcr)])
        [window-listeners]
        [quick-search]])))

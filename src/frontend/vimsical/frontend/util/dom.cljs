@@ -163,3 +163,16 @@
 
 (defn revoke-blob-url [url]
   (.revokeObjectURL js/URL url))
+
+;;
+;; * Mobile
+;;
+
+(defn orientation []
+  (let [{:keys [width height]} (body-rect)]
+    (if (> width height) :landscape :portrait)))
+
+(defn on-mobile? []
+  (let [user-agent (str/lower-case (.. js/window -navigator -userAgent))
+        rxp        #"android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini"]
+    (boolean (re-find rxp user-agent))))

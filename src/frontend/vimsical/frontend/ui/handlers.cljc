@@ -6,14 +6,11 @@
  ::init
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} _]
-   #?(:cljs
-      (let [{:keys [width height]} (util.dom/body-rect)
-            orientation (if (> width height) :landscape :portrait)]
-        {:ui-db (assoc ui-db :orientation orientation)}))))
+   {:ui-db (assoc ui-db :orientation (util.dom/orientation))}))
 
 (re-frame/reg-event-fx
  ::on-resize
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ {:keys [width height] :as bounding-rect}]]
-   (let [orientation (if (> width height) :landscape :portrait)]
-     {:ui-db (assoc ui-db :orientation orientation)})))
+ (fn [{:keys [ui-db]} _]
+   {:ui-db (assoc ui-db :orientation (util.dom/orientation)
+                        :on-mobile? (util.dom/on-mobile?))}))

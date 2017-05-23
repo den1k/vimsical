@@ -88,7 +88,7 @@
                       :quick-search/filter-category-idx nil}
    :app/libs         js-libs
    :app/compilers    compilers
-   :app/route        :route/vcr})
+   :app/route        :route/vims})
 
 (def default-db
   (-> (mg/new-db)
