@@ -1,6 +1,8 @@
 (ns vimsical.frontend.player.views.elems
   (:require [vimsical.frontend.views.shapes :as shapes]
-            [re-com.core :as re-com]))
+            [re-com.core :as re-com]
+            [vimsical.frontend.util.re-frame :refer [<sub]]
+            [vimsical.frontend.ui.subs :as ui.subs]))
 
 (defn play-symbol [opts]
   [shapes/triangle
@@ -54,4 +56,7 @@
     :class "divider-line"]])
 
 (defn explore []
-  [:div.explore "Explore"])
+  [:div.explore.truncate
+   "Explore"
+   (when (= :landscape (<sub [::ui.subs/orientation]))
+     " on Vimsical")])

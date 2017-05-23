@@ -81,6 +81,7 @@
 (def explore
   [:.explore
    {:font-weight 500
+    :cursor      :pointer
     :font-size   :18px}])
 
 (def preview
@@ -215,7 +216,9 @@
     {:min-width :700px                  ; max embed width on medium
      :max-width :1200px
      :height    "100vh"}
-    landscape-split]
+    landscape-split
+    [:.explore
+     {:margin-left :18px}]]
    [:&.portrait
     {:display        :flex
      :flex-direction :column
