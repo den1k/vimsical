@@ -21,8 +21,24 @@
 
 (s/def :vimsical.backend.handlers.multi.response/body (s/or :result ::event/result :error ::event/error))
 (s/def ::response (s/keys :req-un [:vimsical.backend.handlers.multi.response/body]))
-(s/def ::response-context (s/keys :req-un [::request]))
 
+(defn response-context->result-event-conformer
+  "Conform a response context to a result event compatible with
+  `vimsical.remotes.event/result-spec`."
+  [context]
+  (let [[event-id] (-> context :request :body)
+        result     (-> context :response :body)]
+    (if (and event-id result)
+      [event-id result]
+      ::s/invalid)))
+
+(s/def ::response-context->result-event-conformer
+  (s/conformer response-context->result-event-conformer))
+
+(s/def ::response-context
+  (s/and ::response-context->result-event-conformer
+         (s/or :error  ::event/error
+               :result ::event/result)))
 ;;
 ;; * Event handler
 ;;
@@ -31,6 +47,7 @@
 ;;
 ;; [context, event] => context or response or result
 ;;
+;; We spec the context handler instead, after lifting the event handler's result
 
 (defn handle-event-dispatch [context [id]] id)
 
@@ -40,17 +57,16 @@
 ;; * Context handler
 ;;
 
-(def context-dispatch (comp first :event))      ; event id
+;; Define additional constraints on the request context, allowing handlers to
+;; spec their components and/or session dependencies
+
+(def event-context-dispatch (comp first :event))      ; event id
 
 (defmulti context-spec
   "Handlers should provide a method for the event id that they handle-event, and
-  spec their dependencies."  context-dispatch)
+  spec their dependencies."  event-context-dispatch)
+(defmethod context-spec :default [_] any?)
+(s/def ::context-spec (s/multi-spec context-spec event-context-dispatch))
 
-(s/def ::context-spec (s/multi-spec context-spec context-dispatch))
-(s/def ::context-in  (s/and ::request-context ::context-spec))
-(s/def ::context-out (s/and ::response-context))
-
-(s/fdef handle-context :args (s/cat :context ::context-in) :ret ::context-out)
-
-(defn handle-context [{:keys [event] :as context}]
-  (handle-event context event))
+(s/def ::context-in  (s/and  ::request-context ::context-spec))
+(s/def ::context-out ::response-context)

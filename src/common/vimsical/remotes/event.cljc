@@ -41,29 +41,20 @@
 (defmulti event-spec dispatch)
 (s/def ::event (s/multi-spec event-spec dispatch))
 
-
 ;;
-;; ** Response
+;; ** Result
 ;;
 
 (defmulti result-spec dispatch)
 (s/def ::result (s/multi-spec result-spec dispatch))
 
-(defn event-result
-  [event-or-event-id & args]
-  (let [id      (id event-or-event-id)
-        resp-id (id-append id :result)]
-    (apply vector resp-id args)))
-
 ;;
 ;; ** Error
 ;;
 
-(defmulti error-spec dispatch)
-(s/def ::error (s/multi-spec error-spec dispatch))
+;; NOTE could have a multi-spec here too...
 
-(defn event-error
-  [event-or-event-id & args]
-  (let [id      (id event-or-event-id)
-        resp-id (id-append id :error)]
-    (apply vector resp-id args)))
+(s/def ::msg string?)
+(s/def ::data any?)
+(s/def ::cause string?)
+(s/def ::error (s/keys :opt [::msg ::data ::cause]))

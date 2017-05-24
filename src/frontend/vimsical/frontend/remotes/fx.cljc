@@ -46,9 +46,7 @@
 ;; ** Spec
 ;;
 
-(defn- ex-info? [x] (and x (instance? clojure.lang.ExceptionInfo x)))
-
-(s/def ::error ex-info?)
+(s/def ::error map?)
 
 (s/def ::status
   (s/nilable
@@ -56,7 +54,7 @@
          :success #{::success}
          :error     ::error)))
 
-(s/fdef get-status :args (s/cat :registry map? :id ::id :event ::event?))
+(s/fdef get-status :args (s/cat :registry map? :id ::id :event ::event))
 
 (defn- get-status [status-registry remote-id event]
   (get-in status-registry [remote-id event]))

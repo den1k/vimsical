@@ -21,7 +21,7 @@
   (some-> context :request :session ::user/uid))
 
 (defn transact-event!
-  [{:keys [datomic] :as context} [vims :as event]]
+  [{:keys [datomic] :as context} [_ vims :as event]]
   (try
     (do (deref (datomic/transact datomic vims)) nil)
     (catch Throwable t

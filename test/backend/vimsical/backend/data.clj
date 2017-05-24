@@ -47,8 +47,6 @@
   (-> {:db/uid                       uuid
        ::branch/owner                {:db/uid user-uid}
        ::branch/name                 name
-       ::branch/start-delta-uid      nil
-       ::branch/branch-off-delta-uid nil
        ::branch/created-at           (util/now)
        ::branch/files                files}
       (util/assoc-some ::branch/libs libs)))

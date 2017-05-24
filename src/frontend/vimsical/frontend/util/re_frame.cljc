@@ -215,36 +215,36 @@
 (re-frame/reg-fx :track track-fx)
 
 (comment
- (do
-   (require '[re-frame.interop :as interop])
-   (re-frame/reg-event-fx
-    ::start-trigger-track
-    (fn [cofx event]
-      {:track
-       {:action       :register
-        :id           42
-        :subscription [::query-vector "blah"]
-        :val->event   (fn [val] [::trigger val])}}))
+  (do
+    (require '[re-frame.interop :as interop])
+    (re-frame/reg-event-fx
+     ::start-trigger-track
+     (fn [cofx event]
+       {:track
+        {:action       :register
+         :id           42
+         :subscription [::query-vector "blah"]
+         :val->event   (fn [val] [::trigger val])}}))
 
-   (re-frame/reg-event-fx
-    ::stop-trigger-track
-    (fn [cofx event]
-      {:track
-       {:action :dispose
-        :id     42}}))
-   ;; Define a sub and the event we want to trigger
-   (defonce foo (interop/ratom 0))
-   (re-frame/reg-sub-raw ::query-vector (fn [_ _] (interop/make-reaction #(deref foo))))
-   (re-frame/reg-event-db ::trigger (fn [db val] (println "Trigger" val) db))
-   ;; Start the track
-   (re-frame/dispatch [::start-trigger-track])
-   ;; Update the ::query-vector, will cause ::trigger to run
-   (swap! foo inc)
-   (swap! foo inc)
-   (swap! foo inc)
-   ;; Stop the track, updates to ::query-vector aren't tracked anymore
-   (re-frame/dispatch [::stop-trigger-track])
-   (swap! foo inc)))
+    (re-frame/reg-event-fx
+     ::stop-trigger-track
+     (fn [cofx event]
+       {:track
+        {:action :dispose
+         :id     42}}))
+    ;; Define a sub and the event we want to trigger
+    (defonce foo (interop/ratom 0))
+    (re-frame/reg-sub-raw ::query-vector (fn [_ _] (interop/make-reaction #(deref foo))))
+    (re-frame/reg-event-db ::trigger (fn [db val] (println "Trigger" val) db))
+    ;; Start the track
+    (re-frame/dispatch [::start-trigger-track])
+    ;; Update the ::query-vector, will cause ::trigger to run
+    (swap! foo inc)
+    (swap! foo inc)
+    (swap! foo inc)
+    ;; Stop the track, updates to ::query-vector aren't tracked anymore
+    (re-frame/dispatch [::stop-trigger-track])
+    (swap! foo inc)))
 
 ;;
 ;; * Scheduler
@@ -347,18 +347,18 @@
 
 
 
-;(defmulti subscribe-spec first)
-;
-;(defmethod subscribe-spec :default [_] any?)
-;
-;(s/def ::subscribe-args (s/multi-spec subscribe-spec first))
-;
-;(s/fdef re-frame/subscribe :args ::subscribe-args)
-;
-;(defmethod subscribe-spec ::abc
-; [_]
-;  (s/cat :id any? :num integer?))
-;(re-frame/subscribe [::abc])
+                                        ;(defmulti subscribe-spec first)
+                                        ;
+                                        ;(defmethod subscribe-spec :default [_] any?)
+                                        ;
+                                        ;(s/def ::subscribe-args (s/multi-spec subscribe-spec first))
+                                        ;
+                                        ;(s/fdef re-frame/subscribe :args ::subscribe-args)
+                                        ;
+                                        ;(defmethod subscribe-spec ::abc
+                                        ; [_]
+                                        ;  (s/cat :id any? :num integer?))
+                                        ;(re-frame/subscribe [::abc])
 
 
-;(s/explain ::subscribe-args [::abc 1])
+                                        ;(s/explain ::subscribe-args [::abc 1])

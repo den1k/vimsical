@@ -2,7 +2,7 @@
   "Authentication logic for event handlers.
 
   Event handlers that require user authentication can implement an
-  `authenticated-event?` method that returns true for their event id.
+  `require-auth?` method that returns true for their event id.
 
   If the session does not contain a `::user/uid` the context will be terminated
   and the appropriate HTTP status will be returned.
@@ -19,8 +19,8 @@
 ;; * Event predicate
 ;;
 
-(defmulti  authenticated-event? event/dispatch)
-(defmethod authenticated-event? :default [_] false)
+(defmulti  require-auth? event/dispatch)
+(defmethod require-auth? :default [_] false)
 
 ;;
 ;; * Internal
@@ -31,7 +31,7 @@
 
 (defn- authenticate?
   [context]
-  (some-> context :request :body authenticated-event?))
+  (some-> context :request :body require-auth?))
 
 (defn- context->user-uid
   [context]

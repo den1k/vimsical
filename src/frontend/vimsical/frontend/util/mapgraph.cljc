@@ -54,7 +54,6 @@
 ;;
 ;; ** Removing entities
 ;;
-(declare remove-entity)
 
 (defn- remove-ref [db ref]
   (reduce-kv
@@ -68,6 +67,9 @@
 
 (defn remove-entity [db entity]
   (remove-ref db (mg/ref-to db entity)))
+
+(defn remove-links [db & keywords]
+  (reduce remove-ref db (map keywords db)))
 
 ;;
 ;; ** Shorthand link syntax
