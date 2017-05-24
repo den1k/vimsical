@@ -1,6 +1,5 @@
 (ns vimsical.frontend.app.handlers
   (:require [re-frame.core :as re-frame]
-   ;; alias often used mapgraph stuff
             [com.stuartsierra.mapgraph :as mg]))
 
 (re-frame/reg-event-db

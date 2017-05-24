@@ -1,8 +1,9 @@
 (ns vimsical.frontend.window-listeners.views
   (:require [reagent.core :as reagent]
             [re-frame.core :as re-frame]
-            [vimsical.frontend.util.dom :refer-macros [e-> e->> e>]]
-            [vimsical.frontend.quick-search.handlers :as quick-search]))
+            [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
+            [vimsical.frontend.quick-search.handlers :as quick-search.handlers]
+            [vimsical.frontend.ui.handlers :as ui.handlers]))
 
 ;;
 ;; * Shortcuts
@@ -49,11 +50,15 @@
     (case shortcut
       :option-forwardslash (do
                              (.preventDefault e) ;; prevent typing
-                             (re-frame/dispatch [::quick-search/toggle]))
+                             (re-frame/dispatch [::quick-search.handlers/toggle]))
       nil)))
 
+(defn handle-resize [& _]
+  (re-frame/dispatch [::ui.handlers/on-resize]))
+
 (defn window-listeners []
-  (let [listeners {"keydown" handle-shortcut}]
+  (let [listeners {"keydown" handle-shortcut
+                   "resize"  handle-resize}]
     (reagent/create-class
      {:component-did-mount
       #(doseq [[event-type handler] listeners]
@@ -62,4 +67,4 @@
       #(doseq [[event-type handler] listeners]
          (.removeEventListener js/window event-type handler))
       :render
-      (fn [] [:div])})))
+      (fn [_] [:div])})))

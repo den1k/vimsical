@@ -129,7 +129,7 @@
    code-editor])
 
 (def vcr
-  [:.route-vcr
+  [:.route-vims
    {:height :100vh}
    [:.vcr
     ;; Styles to prevent code-editor from overflowing beyond VCR's boundaries

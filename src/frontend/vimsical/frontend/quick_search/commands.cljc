@@ -16,12 +16,7 @@
 
          ["lorem" "ipsum"]  {:title    "Lorem Ipsum"
                              :dispatch [::code-editor.handlers/paste
-                                        (util.content/lorem-ipsum 1)]}
-         ["go to" "player"] {:title    "Go to Player"
-                             :dispatch [::handlers/go-to :route/player]}
-
-         ["go to" "vcr"]    {:title    "Go to VCR"
-                             :dispatch [::handlers/go-to :route/vcr]}}
+                                        (util.content/lorem-ipsum 1)]}}
         dev
         {["clear" "console"] {:title    "Clear JS Console"
                               :dispatch [::handlers/clear-console]}}]

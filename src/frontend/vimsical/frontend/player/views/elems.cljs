@@ -1,6 +1,8 @@
 (ns vimsical.frontend.player.views.elems
   (:require [vimsical.frontend.views.shapes :as shapes]
-            [re-com.core :as re-com]))
+            [re-com.core :as re-com]
+            [vimsical.frontend.util.re-frame :refer [<sub]]
+            [vimsical.frontend.ui.subs :as ui.subs]))
 
 (defn play-symbol [opts]
   [shapes/triangle
@@ -52,3 +54,11 @@
    [:div.stretcher]
    [re-com/line
     :class "divider-line"]])
+
+(defn explore []
+  ; can't go to vcr when on mobile, so don't show explore
+  (when-not (<sub [::ui.subs/on-mobile?])
+    [:div.explore.truncate
+     "Explore"
+     (when (= :landscape (<sub [::ui.subs/orientation]))
+       " on Vimsical")]))

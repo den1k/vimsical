@@ -28,6 +28,8 @@
    [vimsical.frontend.live-preview.handlers :as handlers]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]
+   [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.live-preview.error-catcher :as error-catcher]))
 
 ;;
@@ -77,11 +79,11 @@
 ;;
 
 (defn live-preview
-  [{:as                     opts
-    {::branch/keys [files]} :branch
-    :keys                   [branch static? error-catcher?]
-    :or                     {error-catcher? true}}]
-  (let [files (cond-> files error-catcher? err-catcher-files)]
+  [{:as   opts
+    :keys [static? error-catcher?]
+    :or   {error-catcher? true}}]
+  (let [{:as branch ::branch/keys [files]} (<sub [::vcs.subs/branch])
+        files (cond-> files error-catcher? err-catcher-files)]
     (reagent/create-class
      (merge
       (when-not static?

@@ -74,7 +74,7 @@
     [:div.control.play-pause
      (if-not playing?
        [:svg
-        {:class    "icon play" ;; rename to button
+        {:class    "icon play"          ;; rename to button
          :view-box "0 0 100 100"
          :on-click (e> (re-frame/dispatch [::handlers/play]))}
         (shapes/triangle {:origin          [50 50]
@@ -82,7 +82,7 @@
                           :stroke-linejoin "round"
                           :stroke-width    15
                           :rotate          90})]
-       [:svg {:class    "icon pause" ;; rename to button
+       [:svg {:class    "icon pause"    ;; rename to button
               :view-box "0 0 90 100"
               :on-click (e> (re-frame/dispatch [::handlers/pause]))}
         (let [attrs {:y 0 :width 30 :height 100 :rx 5 :ry 5}]
@@ -124,8 +124,7 @@
                                       :editor-reg-key :vcr/editors}]})
 
 (defn vcr []
-  (let [{:as           branch
-         ::branch/keys [files libs]} (<sub [::vcs.subs/branch])
+  (let [files                  (<sub [::vcs.subs/files])
         editor-comps           (->> files (map editor-components) editor-components-by-file-type)
         visible-files          (visible-files files)
         visi-components        (views-for-files visible-files editor-comps)
@@ -138,8 +137,7 @@
      [[playback]
       [splits/n-h-split
        :class "live-preview-and-editors"
-       :panels [[live-preview
-                 {:branch branch}]
+       :panels [[live-preview]
                 [splits/n-v-split
                  :height "100%"
                  :splitter-size "31px"

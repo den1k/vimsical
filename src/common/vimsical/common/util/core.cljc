@@ -16,6 +16,13 @@
         [goog.string :as gstr])
        (:require-macros [cljs.core.async.macros :refer [alt! go-loop]])]))
 
+#?(:cljs
+   (extend-protocol ILookup
+     object
+     (-lookup
+       ([m k] (aget m k))
+       ([m k not-found] (or (aget m k) not-found)))))
+
 (defn- next-item-with-comparator [comparator]
   (let [pos-fn (cond
                  (#{> >=} comparator) first

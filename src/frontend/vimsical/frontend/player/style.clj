@@ -6,63 +6,59 @@
             [vimsical.frontend.views.style :as views]
             [vimsical.frontend.styles.color :as color]))
 
+(def timeline
+  [:.timeline
+   {:position :relative
+    :height   :100%
+    :cursor   :pointer}
+   [:.time
+    {:height        :4px
+     :width         :100%
+     :border-radius :4px
+     :position      :absolute}
+    [:&.left
+     {:background :lightgrey}]
+    [:&.passed
+     {:background :black}]]
+
+   [:.head
+    {:background          :black
+     :position            :absolute
+     :transition          "all 0.2s ease" ; `all` is overridden by transition-prop
+     :transition-property "margin-left, width, height, border-radius"}
+    [:&.playhead
+     {:height        :16px
+      :width         :16px
+      :margin-left   :-8px
+      :border-radius :50%}]
+    [:&.skimhead
+     {:height        :18px
+      :width         :4px
+      :margin-left   :-2px
+      :border-radius 0}]]])
+
+(def timeline-container
+  [:.timeline-container
+   {:padding "0 18px"
+    :width   "100%"}                    ; less pad than top bar
+   [:.play-pause
+    {:height :20px
+     :cursor :pointer}]
+   timeline
+   [:.time-or-speed-control
+    {:cursor      :pointer
+     ;; monospaced to accurately measure width
+     :font-family "Droid Sans Mono"
+     ;; hardcode width of 4 characters to avoid shifting timeline
+     ;; time default, e.g. `3:42`
+     :width       :33px}]])
+
 (def preview-panel
   [:.preview-panel
-   {:width :100%}
+   {:width :100%}])
 
-   [:.play-symbol :.pause-symbol
-    {:fill   :black                     ;; temp
-     :stroke :black
-     :cursor :pointer}]
-
-   [:.bar
-    {:padding "0 25px"}
-    [:&.social
-     [:.social-buttons
-      {:display :flex}]
-     [:.edit
-      {:font-weight 500
-       :font-size   :18px}]]
-    [:&.timeline-container
-     {:padding "0 18px"}                ; less pad than top bar
-     [:.play-pause
-      {:height :20px
-       :cursor :pointer}]
-
-     [:.timeline
-      {:position :relative
-       :height   :100%
-       :cursor   :pointer}
-      [:.progress
-       {:height        :4px
-        :width         :100%
-        :border-radius :4px
-        :position      :absolute}
-       [:&.left
-        {:background :lightgrey}]
-       [:&.passed
-        {:background :black}]]
-
-      [:.head
-       {:background          :black
-        :position            :absolute
-        :transition          "all 0.2s ease" ; `all` is overridden by transition-prop
-        :transition-property "margin-left, width, height, border-radius"}
-       [:&.playhead
-        {:height        :16px
-         :width         :16px
-         :margin-left   :-8px
-         :border-radius :50%}]
-       [:&.skimhead
-        {:height        :18px
-         :width         :4px
-         :margin-left   :-2px
-         :border-radius 0}]]]
-     [:.time-or-speed-control
-      {:cursor      :pointer
-       ;; monospaced avoids shifting timeline
-       :font-family "Droid Sans Mono"}]]]
-   [:.preview-container
+(def preview-container
+  [[:.preview-container
     {:position :relative}
     [:.play-button-overlay
      {:position       :absolute
@@ -76,20 +72,54 @@
        :pointer-events :all}
       [:.button-circle
        {:fill "rgba(200,200,200,0.4)"}]]]]
-   live-preview])
+   [:.portrait :.preview-container
+    {:flex :2}]])
+
+(def play-pause-buttons
+  [:.play-symbol :.pause-symbol
+   {:fill   :black                      ;; temp
+    :stroke :black
+    :cursor :pointer}])
+
+(def explore
+  [:.explore
+   {:font-weight 500
+    :cursor      :pointer
+    :font-size   :18px}])
+
+(def preview
+  "Styles for preview area. Not nested to allow for reuse between landscape and
+  portrait orientation."
+  [preview-panel
+   preview-container                    ; inside panel in landscape
+   timeline-container
+   live-preview
+
+   play-pause-buttons
+   explore])
 
 (def editor-panel
-  [:div.info-and-editor-panel
+  [:.info-and-editor-panel
    {:position :relative
     :overflow :hidden}
    [:.info
     {:transition    "all 0.5s ease"
      :max-height    :60%
-     :overflow-y    :hidden
+     :overflow-y    :scroll
      :padding       "5px 22px 0px 22px"
      :margin-bottom :15px}
+    ; sutle scrollbar to match code-editor
+    ["&::-webkit-scrollbar"
+     {:background :white
+      :width      :7px
+      :outline    "1px solid slategrey"}]
+    ["&::-webkit-scrollbar-thumb"
+     {:background :white
+      :border     "1px solid lightgrey"
+      :right      :5px}]
     [:&.pan-out
-     {:max-height    0
+     {:padding-top   0
+      :max-height    0
       :margin-bottom 0}]
     [:.header
      [:.avatar
@@ -108,13 +138,16 @@
      {:margin-top    :12px
       :font-size     :1rem
       :line-height   :1.45
-      :overflow      :hidden
       :text-overflow :ellipsis}]]
    [:.code-editor
     {:flex          1
      ;; height of .bar
      :margin-bottom :50px}]
    code-editor
+   [:.code-editor
+    [:.slider
+     {:background :white
+      :border     "1px solid lightgray"}]]
    [:.logo-and-file-type.bar
     {:padding    "0 18px"
      :position   :absolute
@@ -138,33 +171,70 @@
       {:color        (:javascript color/type->colors-editors)
        :border-color (:javascript color/type->colors-editors)}]]]])
 
-(def player
-  [:.vimsical-frontend-player
-   {:min-width :700px                   ; max embed width on medium
-    :max-width :1200px
-    :height    "100vh"}
-   [:.rc-n-h-split
-    ;; todo splitter-child line color
-    {:height :100%}
-    [:.rc-n-h-split-splitter
-     {:position :relative}
-     [:.resizer
-      {:z-index 1}                      ;; lift above editor
-      [:.stretcher
-       {:position    :absolute
-        :width       :20px
-        :margin-left :-10px             ;; half-width to center
-        :height      :100%}]
-      [:.divider-line
-       {:position :absolute
-        :height   :100%
-        :width    :1px}]]]]
+(def landscape-split
+  [:.landscape-split
+   ;; todo splitter-child line color
+   {:height :100%}
+   [:.rc-n-h-split-splitter
+    {:position :relative}
+    [:.resizer
+     {:z-index 1}                       ;; lift above editor
+     [:.stretcher
+      {:position    :absolute
+       :width       :20px
+       :margin-left :-10px              ;; half-width to center
+       :height      :100%}]
+     [:.divider-line
+      {:position :absolute
+       :height   :100%
+       :width    :1px}]]]])
+
+(def portrait-split
+  [:.portrait-split
+   {:height         :100%
+    :display        :flex
+    :flex-direction :column}])
+
+(def portrait-info-and-editor-panel
+  [:.info-and-editor-panel
+   {:flex :1}
+   [:.info
+    {:max-height "100%"}]])
+
+(def bar
+  [[:&.portrait
+    [:.bar
+     {:padding "0 18px"}]]
+   [:&.landscape
+    [:.bar
+     {:padding "0 25px"}]]
    [:.bar
     {:height          "50px"
      :display         :flex
      :justify-content :space-between
-     :align-items     :center}]
-   preview-panel
+     :align-items     :center}
+    [:&.social
+     [:.social-buttons
+      {:display :flex}]]]])
+
+(def player
+  [:.vimsical-frontend-player
+   [:&.landscape
+    {:min-width :700px                  ; max embed width on medium
+     :max-width :1200px
+     :height    "100vh"}
+    landscape-split
+    [:.explore
+     {:margin-left :18px}]]
+   [:&.portrait
+    {:display        :flex
+     :flex-direction :column
+     :width          :100vw
+     :height         :100vh}
+    portrait-split
+    portrait-info-and-editor-panel]
+   bar
+   preview
    editor-panel])
 
 (def embed-styles

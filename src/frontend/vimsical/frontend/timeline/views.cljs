@@ -81,6 +81,9 @@
 (defn on-mouse-leave [_]
   (re-frame/dispatch [::handlers/on-mouse-leave]))
 
+(defn on-touch-move [e]
+  (on-click (util.dom/first-touch->e e)))
+
 ;;
 ;; * Components
 ;;
@@ -205,7 +208,8 @@
         :on-wheel              on-mouse-wheel
         :on-mouse-move         on-mouse-move
         :on-click              on-click
-        :on-mouse-leave        on-mouse-leave}
+        :on-mouse-leave        on-mouse-leave
+        :on-touch-move         on-touch-move}
        [chunks]
        [playhead-line clip-path-id]
        [skimhead-line clip-path-id]]]]))
