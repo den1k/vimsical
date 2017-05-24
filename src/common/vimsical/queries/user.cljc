@@ -12,3 +12,12 @@
    ::user/password
    {::user/vimsae vims/pull-query}
    {::user/settings settings/pull-query}])
+
+(def datomic-pull-query
+  [:db/uid
+   ::user/first-name
+   ::user/last-name
+   ::user/email
+   ::user/password
+   {::user/vimsae vims/datomic-pull-query}
+   {::user/settings settings/datomic-pull-query}])

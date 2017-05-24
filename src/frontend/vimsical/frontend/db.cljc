@@ -6,7 +6,6 @@
    [re-frame.core :as re-frame]
    [vimsical.common.test :refer [uuid]]
    [vimsical.common.util.core :as util :include-macros true]
-   [vimsical.remotes.backend.status.queries :as status.queries]
    [vimsical.frontend.quick-search.commands :as quick-search.commands]
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.vcs.branch :as branch]
@@ -21,7 +20,7 @@
 
 (def js-libs
   [{:db/uid        (uuid :lib-js-jquery)
-    ::lib/title    "jQuery"
+    ::lib/name    "jQuery"
     ::lib/type     :text
     ::lib/sub-type :javascript
     ::lib/src      "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"}])
@@ -96,12 +95,5 @@
       (mg/add-id-attr :db/uid)
       (util.mg/add-linked-entities state)))
 
-(re-frame/reg-event-fx
- ::init
- (fn [_ _]
-   {:db     default-db
-    :remote {:id :backend :event [::status.queries/status]}}))
-
-(re-frame/reg-event-fx
- ::status.queries/status-result
- (fn [_ [_ result]] (println result)))
+(re-frame/reg-event-db ::init (constantly default-db))
+(re-frame/reg-sub ::db (fn [db _] db))

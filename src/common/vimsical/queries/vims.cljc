@@ -9,3 +9,10 @@
    ::vims/cast
    {::vims/owner [:db/uid]}
    {::vims/branches branch/pull-query}])
+
+(def datomic-pull-query
+  [:db/uid
+   ::vims/title
+   ::vims/cast
+   {::vims/owner [:db/uid]}
+   {::vims/branches branch/datomic-pull-query}])

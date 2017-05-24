@@ -5,3 +5,5 @@
 (def pull-query
   [:db/uid
    ::settings/default-playback-speed])
+
+(def datomic-pull-query pull-query)

@@ -7,4 +7,4 @@
    ::lib/src
    ::lib/type
    ::lib/sub-type
-   ::lib/title])
+   ::lib/name])

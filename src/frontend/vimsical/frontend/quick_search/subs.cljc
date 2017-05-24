@@ -67,7 +67,7 @@
 
 (defmethod filters->categories :libs
   [[type libs]]
-  (filters->categories* ::lib/sub-type ::lib/title :TODO/toggle-lib libs))
+  (filters->categories* ::lib/sub-type ::lib/name :TODO/toggle-lib libs))
 
 (defmethod filters->categories :compilers
   [[_ compilers]]
