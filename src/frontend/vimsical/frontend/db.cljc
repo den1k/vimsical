@@ -15,7 +15,7 @@
   (:refer-clojure :exclude [uuid]))
 
 ;;
-;; * State
+;; * Entities
 ;;
 
 (def js-libs
@@ -69,7 +69,11 @@
       ::vims/title    title
       ::vims/branches branches})))
 
-(def state
+;;
+;; * State
+;;
+
+(def default-state
   {:app/user         {:db/uid           (uuid :user)
                       ::user/first-name "Jane"
                       ::user/last-name  "Applecrust"
@@ -90,10 +94,21 @@
    :app/compilers    compilers
    :app/route        :route/vims})
 
-(def default-db
+;;
+;; * Mapgraph db
+;;
+
+(defn new-db
+  [state]
   (-> (mg/new-db)
       (mg/add-id-attr :db/uid)
       (util.mg/add-linked-entities state)))
+
+(def default-db (new-db default-state))
+
+;;
+;; * Re-frame
+;;
 
 (re-frame/reg-event-db ::init (constantly default-db))
 (re-frame/reg-sub ::db (fn [db _] db))

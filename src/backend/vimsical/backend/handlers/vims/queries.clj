@@ -16,7 +16,7 @@
 (defmethod multi/context-spec ::queries/vims [_] (s/keys :req-un [::datomic/datomic]))
 (defmethod multi/handle-event ::queries/vims
   [{:keys [datomic]} [_ vims-uid]]
-  (deref (datomic/pull datomic queries.vims/pull-query [:db/uid vims-uid])))
+  (datomic/pull datomic queries.vims/pull-query [:db/uid vims-uid]))
 
 ;;
 ;; * Deltas

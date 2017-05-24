@@ -20,5 +20,3 @@
                   (mg/add-id-attr :id)
                   (mg/add {:id 1 :children [{:id 2}]}))]
     (t/is (= db (sut/add-join db' {:id 2} :children {:id 3})))))
-
-(mg/add db {:id 1 :children [{:id 5}]})

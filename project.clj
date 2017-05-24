@@ -23,7 +23,7 @@
     [[org.clojure/test.check "0.9.0"]
      [orchestra              "0.2.0"]]
     :global-vars
-    {*warn-on-reflection* false *unchecked-math* false}}
+    {*assert* true *warn-on-reflection* false *unchecked-math* false}}
 
    :uberjar
    {:aot          :all
@@ -77,7 +77,7 @@
       [buddy/buddy-hashers            "1.2.0"]
       [net.cgrand/xforms              "0.9.3"    :exclusions [org.clojure/clojurescript]]]
      :global-vars
-     {*warn-on-reflection* true *unchecked-math* :warn-on-boxed}}
+     {*assert* true *warn-on-reflection* true *unchecked-math* :warn-on-boxed}}
     :vcs :common]
 
    :backend-log-dev

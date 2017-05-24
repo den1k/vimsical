@@ -13,15 +13,7 @@
     delta-store.validation]
    [vimsical.backend.handlers.multi :as multi]
    [vimsical.backend.util.log :as log]
-   [vimsical.remotes.backend.vcs.commands :as commands]
-   [vimsical.user :as user]
-   [vimsical.vcs.core :as vcs.core]))
-
-;;
-;; * Session helpers
-;;
-
-(defn context->user-uid [context] (some-> context :request :session ::user/uid))
+   [vimsical.remotes.backend.vcs.commands :as commands]))
 
 ;;
 ;; * Transaction helpers
@@ -40,7 +32,6 @@
 
 (s/def ::datomic-context (s/keys :req-un [::datomic/datomic]))
 (s/def ::deltas-context (s/keys :req-un [::delta-store/delta-store]))
-
 
 ;;
 ;; * Branch

@@ -9,12 +9,12 @@
 ;; * Vims
 ;;
 
-(defmethod event/event-spec    ::vims [_] (s/cat :id any? :vims-uid ::vims/uid))
-(defmethod event/result-spec ::vims [_] ::vims/vims)
+(defmethod event/event-spec  ::vims [_] (s/cat :id any? :vims-uid ::vims/uid))
+(defmethod event/result-spec ::vims [_] (s/cat :id any? :vims ::vims/vims))
 
 ;;
 ;; * Deltas
 ;;
 
-(defmethod event/event-spec    ::deltas [_] (s/cat :id any? :vims-uid ::vims/uid))
-(defmethod event/result-spec ::deltas [_] (s/every ::delta/delta))
+(defmethod event/event-spec  ::deltas [_] (s/cat :id any? :vims-uid ::vims/uid))
+(defmethod event/result-spec ::deltas [_] (s/cat :id any? :deltas (s/every ::delta/delta)))

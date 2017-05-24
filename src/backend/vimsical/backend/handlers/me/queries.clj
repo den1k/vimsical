@@ -4,20 +4,15 @@
    [clojure.spec :as s]
    [vimsical.backend.components.datomic :as datomic]
    [vimsical.backend.components.snapshot-store :as snapshot-store]
+   [vimsical.remotes.backend.user.queries :as user.queries]
    [vimsical.backend.components.snapshot-store.protocol :as snapshot-store.protocol]
    [vimsical.backend.handlers.multi :as multi]
    [vimsical.queries.user :as queries.user]
    [vimsical.user :as user]
    [vimsical.vcs.branch :as vcs.branch]
    [vimsical.vcs.snapshot :as snapshot]
-   [vimsical.vims :as vims]))
-
-;;
-;; * Session helpers
-;;
-
-(defn- context->user-uid
-  [context] (some-> context :request :session ::user/uid))
+   [vimsical.vims :as vims]
+   [vimsical.backend.components.server.interceptors.event-auth :as event-auth]))
 
 ;;
 ;; * Cross-stores join helpers
@@ -52,20 +47,19 @@
 ;; * Event handler
 ;;
 
-(defmethod multi/context-spec ::me [_]
-  (s/keys :req-un [::datomic/datomic ::snapshot-store/snapshot-store]))
-
-(defmethod multi/handle-event ::me
-  [{:keys [datomic snapshot-store] :as context} _]
-  (let [out-chan (a/chan)]
-    (when-some [user-uid (context->user-uid context)]
-      (let [{user-uid :db/uid :as user} (datomic/pull datomic queries.user/pull-query [:db/uid user-uid])]
-        (snapshot-store.protocol/select-snapshots-async
-         snapshot-store user-uid nil
-         (fn [snapshots]
-           (doto out-chan
-             (a/put! (user-join-snapshots user snapshots))
-             (a/close!)))
-         (fn [error]
-           (a/close! out-chan)))))
+(defmethod event-auth/require-auth? ::user.queries/me [_] true)
+(defmethod multi/context-spec ::user.queries/me [_] (s/keys :req-un [::datomic/datomic ::snapshot-store/snapshot-store]))
+(defmethod multi/handle-event ::user.queries/me
+  [{:keys [datomic snapshot-store user/uid] :as context} _]
+  (let [out-chan (a/chan)               ; try a promise-chan ?
+        user     (datomic/pull datomic queries.user/pull-query [:db/uid uid])]
+    (letfn [(success [snapshots]
+              (doto out-chan
+                (a/put! (user-join-snapshots user snapshots))
+                (a/close!)))
+            (error [error]
+              (doto out-chan
+                (a/put! error)
+                (a/close!)))]
+      (snapshot-store.protocol/select-snapshots-async snapshot-store uid nil success error))
     out-chan))

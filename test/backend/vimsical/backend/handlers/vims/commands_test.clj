@@ -26,7 +26,7 @@
 ;; * Title
 ;;
 
-::sut/set-title!
+::sut/title
 
 ;;
 ;; * Snapshots

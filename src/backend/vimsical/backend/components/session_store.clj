@@ -48,17 +48,17 @@
         :ret  ::read-key)
 
 (defn write-session*
-  [redis session-key value]
+  [redis session-key session]
   (try
-    (log/debug "write-session..." session-key value)
+    (log/debug "write-session..." session-key session)
     (let [session-key' (or session-key (random-key))]
       (do
         (car/wcar
          redis
-         (car/set session-key' value))
+         (car/set session-key' session))
         session-key'))
     (catch Throwable t
-      (log/error "Error writing session" {:key session-key :val value :ex t})
+      (log/error "Error writing session" {:key session-key :val session :ex t})
       (throw t))))
 
 (s/fdef delete-session*
@@ -84,7 +84,7 @@
 (extend-protocol store/SessionStore
   Redis
   (read-session   [redis session-key]       (read-session* redis session-key))
-  (write-session  [redis session-key value] (write-session* redis session-key value))
+  (write-session  [redis session-key session] (write-session* redis session-key session))
   (delete-session [redis session-key]       (delete-session* redis session-key)))
 
 ;;

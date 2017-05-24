@@ -47,6 +47,7 @@
 
 (defmulti result-spec dispatch)
 (s/def ::result (s/multi-spec result-spec dispatch))
+(s/def ::command-success empty?)
 
 ;;
 ;; ** Error

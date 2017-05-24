@@ -1,22 +1,31 @@
 (ns vimsical.backend.components.server.test
-  (:require [clojure.spec :as s]
-            [io.pedestal.test :as pedestal.test]
-            [vimsical.backend.components.service :as service]
-            [vimsical.backend.components.session-store :as session-store]
-            [vimsical.backend.components.session-store.spec :as session-store.spec]
-            [vimsical.backend.system.fixture :refer [*service-fn* *system*]]
-            [vimsical.common.util.transit :as transit]))
+  (:require
+   [clojure.spec :as s]
+   [io.pedestal.test :as pedestal.test]
+   [vimsical.backend.components.service :as service]
+   [vimsical.backend.components.session-store :as session-store]
+   [vimsical.backend.components.session-store.spec :as session-store.spec]
+   [vimsical.backend.system.fixture :refer [*service-fn* *session-key* *system*]]
+   [vimsical.common.util.transit :as transit]))
 
 (defn response-for
-  ([event] (response-for *service-fn* event))
+  ([event]
+   (response-for *service-fn* event *session-key*))
   ([service-fn event]
-   (pedestal.test/response-for
-    service-fn
-    :post (service/url-for :events)
-    :headers {"Content-Type" "application/transit+json"}
-    :body (transit/write-transit event))))
+   (response-for service-fn event *session-key*))
+  ([service-fn event session-key]
+   (letfn [(session-cookie [session-key]
+             (str "ring-session=" session-key))
+           (req-headers [session-key]
+             (cond-> {"Content-Type" "application/transit+json"}
+               (some? session-key) (assoc "cookie" (session-cookie session-key))))]
+     (pedestal.test/response-for
+      service-fn
+      :post (service/url-for :events)
+      :headers (req-headers session-key)
+      :body (transit/write-transit event)))))
 
-(defn status-ok? [{:keys [status]}] (<= 200 status 299))
+(defn status-ok? [{:keys [status]}] (and (number? status) (<= 200 status 299)))
 
 (defn response->session-key [{{:strs [Set-Cookie]} :headers}]
   (some->> Set-Cookie first (re-find #"ring-session=(.+);Path=.+") second))
