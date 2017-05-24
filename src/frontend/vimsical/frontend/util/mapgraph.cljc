@@ -51,6 +51,17 @@
   [db state]
   (reduce-kv add-to db state))
 
+(defn add-join
+  "Add `join-entity` to the `db` and conj its ref onto the `join-key` on
+  `entity`. Will default to a vector if the join doesn't exist."
+  [db entity join-key join-entity]
+  (let [ref       (mg/ref-to db entity)
+        join-path [ref join-key]
+        join-ref  (mg/ref-to db join-entity)]
+    (-> db
+        (mg/add join-entity)
+        (update-in join-path (fnil conj []) join-ref))))
+
 ;;
 ;; ** Removing entities
 ;;
