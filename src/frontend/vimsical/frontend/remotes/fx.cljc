@@ -20,8 +20,11 @@
 
 (s/def ::id keyword?)
 (s/def ::event ::event/event)
+(s/def ::disptach-success (s/or :disabled false? :handler-id keyword?))
 (s/def ::disptach-error keyword?)
-(s/def ::fx (s/keys :req-un [::id ::event/event] :opt-un [::disptach-error]))
+(s/def ::status-key some?)
+(s/def ::fx (s/keys :req-un [::id ::event/event]
+                    :opt-un [::status-key ::dispatch-success ::disptach-error]))
 
 ;;
 ;; * Remotes registry
@@ -54,15 +57,25 @@
          :success #{::success}
          :error     ::error)))
 
-(s/fdef get-status :args (s/cat :registry map? :id ::id :event ::event))
+(s/fdef get-status
+        :args (s/cat :registry map?
+                     :remote-id ::id
+                     :status-key ::status-key)
+        :ret ::status)
 
-(defn- get-status [status-registry remote-id event]
-  (get-in status-registry [remote-id event]))
+(defn- get-status [status-registry remote-id status-key]
+  (get-in status-registry [remote-id status-key]))
 
-(s/fdef set-fx-status :args (s/cat :registry map? :fx ::fx :status ::status) :ret map?)
+(s/fdef set-status
+        :args (s/cat :registry map?
+                     :remote-id ::id
+                     :status-key (s/nilable ::status-key)
+                     :status ::status)
+        :ret map?)
 
-(defn- set-fx-status [status-registry {:keys [id event] :as fx} status]
-  (assoc-in status-registry [id event] status))
+(defn- set-status [status-registry remote-id status-key status]
+  (cond-> status-registry
+    (some? status-key) (assoc-in [remote-id status-key] status)))
 
 ;;
 ;; * Event status subscription
@@ -70,12 +83,26 @@
 
 (re-frame/reg-sub-raw
  ::status
- (fn [_ [_ remote-id event]]
-   (s/assert ::id remote-id)
-   (s/assert ::event event)
+ (fn [_ [_ remote-id status-key]]
    (interop/make-reaction
     (fn []
-      (get-status @status-registry remote-id event)))))
+      (get-status @status-registry remote-id status-key)))))
+
+;;
+;; * Event status dispatches
+;;
+
+(defn dispatch-success!
+  [{:keys [event dispatch-success]} result]
+  (when-not (false? dispatch-success)
+    (let [[event-id] event
+          dispatch-id (or dispatch-success event-id)]
+      (re-frame/dispatch [dispatch-id result]))))
+
+(defn dispatch-error!
+  [{:keys [dispatch-error]} error]
+  (when dispatch-error
+    (re-frame/dispatch [dispatch-error error])))
 
 ;;
 ;; * Fx
@@ -84,30 +111,20 @@
 (s/fdef remote-fx :args (s/cat :fx ::fx))
 
 (defn- remote-fx
-  [{:keys [id event dispatch-error] :as fx}]
+  [{:keys [id event status-key] :as fx}]
   (let [remote (get-remote fx)]
     (letfn [(result-cb [result]
-              (let [[event-id] event]
-                (do
-                  ;; Update the status registry with the ::success flag
-                  (swap! status-registry set-fx-status fx ::success)
-                  ;; Disptach the event with the result
-                  (re-frame/dispatch [event-id result]))))
+              (do (swap! status-registry set-status id status-key ::success)
+                  (dispatch-success! fx result)))
             (error-cb [error]
-              (do
-                ;; Update the registry with the error
-                (swap! status-registry set-fx-status fx error)
-                ;; Conditionally dispatch if the fx specifies a handler
-                (when dispatch-error
-                  (re-frame/dispatch [dispatch-error error]))))]
-      (do
-        ;; Update the status to ::pending
-        (swap! status-registry set-fx-status fx ::pending)
-        ;; Send and update the remotes registry with the new state if the method
-        ;; doesn't return nil. This might not be a good fit, since it may be
-        ;; more natural to want to keep track of a per-event state, like a
-        ;; connection?
-        (when-some [remote (p/send! id remote event result-cb error-cb)]
-          (swap! remotes-registry assoc id remote))))))
+              (do (swap! status-registry set-status id status-key error)
+                  (dispatch-error! fx error)))]
+      (do (swap! status-registry set-status id status-key ::pending)
+          ;; Send and update the remotes registry with the new state if the method
+          ;; doesn't return nil. This might not be a good fit, since it may be
+          ;; more natural to want to keep track of a per-event state, like a
+          ;; connection?
+          (when-some [remote (p/send! id remote event result-cb error-cb)]
+            (swap! remotes-registry assoc id remote))))))
 
 (re-frame/reg-fx :remote remote-fx)
