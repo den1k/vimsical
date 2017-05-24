@@ -117,11 +117,12 @@
       {:on-click (e> (swap! show-popup? not))}
       (if true                          ;'logged-in?
         [:div.user.ac
-         [auth.views/logout-popover-anchor
+         [auth.views/logout-popover
           {:showing? show-popup?
            :anchor   [user.views/avatar {:user user}]}]
          [user.views/full-name {:user user}]]
         [:div.auth
-         [auth.views/login-popover-anchor
+         [auth.views/login-popover
           {:showing? show-popup?
+           :position :below-left
            :anchor   [:div.button "login"]}]])]]))
