@@ -1,6 +1,6 @@
 (ns vimsical.frontend.player.embed
   (:require [reagent.dom.server]
-            [vimsical.common.util.core :as util]))
+            [vimsical.common.util.core :as util :include-macros true]))
 
 (def iframe-sandbox-opts
   "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe"

@@ -24,7 +24,7 @@
   (:require
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
-   [vimsical.common.util.core :as util]
+   [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.live-preview.handlers :as handlers]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]
@@ -103,4 +103,5 @@
       {:render
        (fn [_]
          [:div.live-preview
+          ;; NOTE: iframe is initialized through :ref cb in iframe-attrs
           [:iframe.iframe (iframe-attrs opts)]])}))))

@@ -8,7 +8,7 @@
             [vimsical.frontend.live-preview.ui-db :as ui-db]
             [vimsical.vcs.lib :as lib]
             [vimsical.frontend.live-preview.subs :as subs]
-            [vimsical.common.util.core :as util]
+            [vimsical.common.util.core :as util :include-macros true]
             [vimsical.frontend.util.preprocess.core :as preprocess]
             #?@(:cljs [[reagent.dom.server]
                        [vimsical.frontend.util.dom :as util.dom]])))

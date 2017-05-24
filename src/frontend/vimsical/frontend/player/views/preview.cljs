@@ -13,7 +13,7 @@
             [vimsical.frontend.ui.subs :as ui.subs]
             [vimsical.frontend.player.views.timeline :refer [timeline-bar]]
             [vimsical.frontend.player.handlers :as handlers]
-            [vimsical.common.util.core :as util]
+            [vimsical.common.util.core :as util :include-macros true]))
             [vimsical.frontend.views.icons :as icons]))
 
 (defn central-play-button []

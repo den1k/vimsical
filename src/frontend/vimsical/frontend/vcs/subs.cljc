@@ -3,7 +3,7 @@
    [vimsical.vims :as vims]
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
-   [vimsical.common.util.core :as util]
+   [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.util.lint.core :as lint]
    [vimsical.frontend.util.preprocess.core :as preprocess]
    [vimsical.frontend.vcs.db :as db]
@@ -39,9 +39,7 @@
  :<- [::branch-uid]
  :<- [::branches]
  (fn [[branch-uid branches] _]
-   (util/ffilter
-    (partial util/=by identity :db/uid branch-uid)
-    branches)))
+   (util/ffilter (partial util/=by identity :db/uid branch-uid) branches)))
 
 ;;
 ;; * Heads (timeline entries)

@@ -5,7 +5,7 @@
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
    [vimsical.common.test :refer [uuid]]
-   [vimsical.common.util.core :as util]
+   [vimsical.common.util.core :as util :include-macros true]
    [vimsical.remotes.backend.status.queries :as status.queries]
    [vimsical.frontend.quick-search.commands :as quick-search.commands]
    [vimsical.frontend.util.mapgraph :as util.mg]

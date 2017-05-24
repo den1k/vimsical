@@ -1,5 +1,5 @@
 (ns vimsical.frontend.live-preview.ui-db
-  (:require [vimsical.common.util.core :as util]))
+  (:require [vimsical.common.util.core :as util :include-macros true]))
 
 (defn get-iframe [ui-db] (get-in ui-db [::iframe :elem]))
 (defn set-iframe [ui-db iframe] (assoc-in ui-db [::iframe :elem] iframe))

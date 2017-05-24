@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [chunk])
   (:require
    [re-frame.core :as re-frame]
-   [vimsical.common.util.core :as util]
+   [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.styles.color :as color]
    [vimsical.frontend.timeline.handlers :as handlers]
    [vimsical.frontend.timeline.subs :as subs]

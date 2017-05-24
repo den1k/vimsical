@@ -3,7 +3,7 @@
    [re-com.core :as re-com]
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
-   [vimsical.common.util.core :as util]
+   [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.code-editor.views :refer [code-editor]]
    [vimsical.frontend.live-preview.views :refer [live-preview]]
    [vimsical.frontend.timeline.subs :as timeline.subs]

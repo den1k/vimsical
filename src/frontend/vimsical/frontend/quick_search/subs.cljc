@@ -5,7 +5,7 @@
             [vimsical.frontend.util.search :as util.search]
             [vimsical.frontend.db :as db]
             [vimsical.frontend.app.subs :as app.subs]
-            [vimsical.common.util.core :as util]
+            [vimsical.common.util.core :as util :include-macros true]
             [vimsical.vcs.lib :as lib]
             [vimsical.vcs.compiler :as compiler]))
 

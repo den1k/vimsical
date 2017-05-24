@@ -15,7 +15,7 @@
         [re-frame.loggers :refer [console]]
         [reagent.ratom :as ratom]
         [vimsical.common.uuid :as uuid]
-        [vimsical.common.util.core :as util]
+        [vimsical.common.util.core :as util :include-macros true]
         [vimsical.frontend.util.scheduler :as scheduler])]))
 
 #?(:clj
