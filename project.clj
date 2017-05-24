@@ -1,7 +1,6 @@
 (defproject vimsical "0.1.0-SNAPSHOT"
   :dependencies
-  [[org.clojure/clojure "1.9.0-alpha15"]
-   [metosin/spec-tools "0.1.1"]]
+  [[org.clojure/clojure "1.9.0-alpha15"]]
 
   :source-paths []                      ; ignore src/ in all profiles
   :test-paths []
@@ -22,7 +21,7 @@
    :test
    {:dependencies
     [[org.clojure/test.check "0.9.0"]
-     [orchestra "0.2.0"]]
+     [orchestra              "0.2.0"]]
     :global-vars
     {*warn-on-reflection* false *unchecked-math* false}}
 
@@ -36,9 +35,8 @@
    :vcs
    {:source-paths ["src/vcs"]
     :dependencies
-    [[org.clojure/data.avl        "0.0.17"]
-     [diffit                      "1.0.0"
-      :exclusions [org.clojure/tools.reader]]]}
+    [[org.clojure/data.avl "0.0.17"]
+     [diffit               "1.0.0" :exclusions [org.clojure/tools.reader]]]}
    ;;
    ;; Common
    ;;
@@ -65,40 +63,46 @@
        :username :env/datomic_login
        :password :env/datomic_password}}
      :dependencies
-     [[com.taoensso/carmine           "2.16.0"
-       :exclusions [org.clojure/tools.reader]]
-      [cc.qbits/alia-all              "3.3.0"]
+     [[com.taoensso/carmine           "2.16.0"   :exclusions [org.clojure/tools.reader]]
+      [cc.qbits/alia                  "3.2.0"]
+      [cc.qbits/alia-async            "3.2.0"]
+      [cc.qbits/alia-nippy            "3.1.4"]
       [cc.qbits/hayt                  "4.0.0"]
-      [com.datomic/datomic-pro        "0.9.5544"
-       :exclusions [commons-codec org.slf4j/slf4j-nop org.slf4j/slf4j-log4j12]]
-      [ch.qos.logback/logback-classic "1.0.1"]
+      [com.datomic/datomic-pro        "0.9.5544" :exclusions [commons-codec org.slf4j/slf4j-nop org.slf4j/slf4j-log4j12]]
+      [ch.qos.logback/logback-classic "1.2.3"]
       [org.clojure/tools.logging      "0.3.1"]
       ;; HTTP stack
       [io.pedestal/pedestal.service   "0.5.2"]
-      [io.pedestal/pedestal.immutant  "0.5.2"]
+      [io.pedestal/pedestal.immutant  "0.5.2"    :exclusions [org.jboss.logging/jboss-logging ch.qos.logback/logback-classic]]
       [buddy/buddy-hashers            "1.2.0"]
-      [net.cgrand/xforms               "0.9.3"]]
+      [net.cgrand/xforms              "0.9.3"    :exclusions [org.clojure/clojurescript]]]
      :global-vars
      {*warn-on-reflection* true *unchecked-math* :warn-on-boxed}}
     :vcs :common]
 
+   :backend-log-dev
+   {:resource-paths ["resources/backend/logback/dev"]}
+
+   :backend-log-test
+   {:resource-paths ["resources/backend/logback/test"]}
+
    :backend-dev
    [:backend
     :env.backend/dev
+    :backend-log-dev
     {:dependencies
      [[criterium "0.4.4"]]
      ;; Get proper deps resolution for fixtures etc
-     :source-paths   ["dev/backend" "test/vcs" "test/backend" "test/common"]
-     :resource-paths ["resources/backend/logback/dev"]}]
+     :source-paths ["dev/backend" "test/vcs" "test/backend" "test/common"]}]
 
    :backend-test
    [:backend
     :test
     :env.backend/dev
     :env.backend/test
+    :backend-log-test
     :vcs :common
-    {:test-paths     ["test/backend" "test/vcs" "test/common"]
-     :resource-paths ["resources/backend/logback/test"]}]
+    {:test-paths ["test/backend" "test/vcs" "test/common"]}]
    ;;
    ;; Frontend
    ;;
@@ -108,9 +112,7 @@
     [[lein-cljsbuild "1.1.5"
       :exclusions [org.apache.commons/commons-compress]]]
     :dependencies
-    [[org.clojure/clojurescript "1.9.518"]
-     ;; Dependency of Google Closure compiler
-     [com.google.guava/guava    "21.0"]
+    [[org.clojure/clojurescript "1.9.518" :exclusions [org.clojure/tools.reader]]
      ;; Our mapgraph fork. Must be be symlinked in checkouts.
      [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
      [reagent                   "0.6.1" :exclusions [org.clojure/clojurescript]]
@@ -127,7 +129,7 @@
     :dependencies
     [[com.cemerick/piggieback "0.2.2-SNAPSHOT"]
      [figwheel-sidecar        "0.5.10" :exclusions [org.clojure/clojurescript]]
-     [re-frisk                "0.4.4" :exclusions [re-frame org.clojure/clojurescript]]
+     [re-frisk                "0.4.4"  :exclusions [re-frame org.clojure/clojurescript]]
      ;; needed as a dep for re-frame.trace
      [binaryage/devtools      "0.8.3"]
      ;; re-frame.trace - clone and install to use
@@ -155,12 +157,20 @@
    :player-dev
    [:player :-frontend-dev-config]
 
-   :integration-test
-   [:backend-test
-    :-frontend-config
-    {:source-paths ["test/integration"]
+   :integration-dev
+   [{:source-paths ["test/integration"]
      :test-paths   ["test/integration"]
-     :dependencies [[day8.re-frame/test "0.1.3-SNAPSHOT"]]}]
+     :dependencies
+     [[day8.re-frame/test "0.1.3" :exclusions [re-frame org.clojure/clojurescript]]
+      ;; Need more exclusions because guava conflicts with datomic
+      [org.clojure/clojurescript "1.9.518" :exclusions [com.google.guava/guava org.clojure/tools.reader]]]}
+    :-frontend-config
+    :env.frontend/dev
+    :backend-test
+    :backend-log-dev]
+
+   :integration-test
+   [:integration :backend-log-test]
 
    ;;
    ;; CSS
