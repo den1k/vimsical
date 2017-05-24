@@ -2,4 +2,4 @@
 
 (def debug?
   #?(:clj  false
-     :cljs ^boolean js/goog.DEBUG))
+     :cljs ^boolean goog.DEBUG))
