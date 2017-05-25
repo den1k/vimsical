@@ -52,7 +52,7 @@
 
 (defn vims-list-popover [{:keys [showing? anchor]}]
   [popovers/popover
-   {:anchor   anchor
-    :showing? showing?
-    :position :below-left
-    :child    [vims-list]}])
+   {:anchor          anchor
+    :showing?        showing?
+    :position-offset 70
+    :child           [vims-list]}])

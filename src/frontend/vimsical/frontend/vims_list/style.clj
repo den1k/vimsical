@@ -2,57 +2,39 @@
   (:require [vimsical.frontend.styles.color :refer [colors]]))
 
 (def vims-preview
-  [:.vims-preview
-   {:position :relative
-    :display  :inline-block}
-   [:.live-preview-wrap
-    {:transition       "transform 0.5s ease"
-     :transform-origin :left}
-    ;; keep iframe from stealing mouse interactions
-    ["&:before"
-     {:content  "''"
-      :position :absolute
-      :cursor   :pointer
-      :width    :100%
-      :height   :100%}]
-    ;["&:hover:before"] ; for overlay
-    [:.iframe
-     {:border     "none"
-      :margin     0
-      :padding    0
-      :display    :block
-      :background "white"
-      :width      :230px
-      :height     :150px}]]])
+  [:.live-preview
+   {:width            :200px
+    :height           :130px
+    :flex             :none             ; overwrite live-preview defaults
+    :transform-origin :left
+    :transform        "scale(0.98)"
+    :transition       "transform 0.5s ease"
+    :position         :relative}
+   ;; keep iframe from stealing mouse interactions
+   ["&:before"
+    {:content  "''"
+     :position :absolute
+     :cursor   :pointer
+     :width    :100%
+     :height   :100%}]
+   ;["&:hover:before"] ; for overlay
+   ])
 
 (def vims-list-item
   [:.vims-list-item
-   {:padding          :20px
-    :cursor           :pointer
-    :transform-origin :left
-    ;; FIXME transform breaks tooltip positioning
-    ;; temp fix below: adding scale to title only
-    ;:transform        "scale(0.95)"
-    ;:transition       "transform 0.5s ease"
-    }
-   #_[:&:hover
-      {:transform "scale(1)"}
-      [:.live-preview-wrap
-       {:box-shadow "0 3px 10px 1 lightgrey"}]]
+   {:padding-top :10px
+    :cursor      :pointer}
+   [:&:first-child {:padding-top 0}]
    vims-preview
    [:&:hover
-    [:.vims-title-and-delete
-     [:.vims-title
-      {:transform "scale(1)"}]]]
+    [:.live-preview
+     {:transform "scale(1)"}]]
    [:.vims-title-and-delete
     {:flex-grow 1
      :padding   :25px}
     [:.vims-title
      {:font-size   :20px
-      :font-weight :500}
-     {:transform  "scale(0.95)"
-      :transform-origin :left
-      :transition "transform 0.5s ease"}]
+      :font-weight :500}]
     [:.delete-button
      {:margin-left :30px
       :visibility  :hidden
@@ -69,7 +51,6 @@
     [:&:hover
      [:.delete-button
       {:visibility :visible}]]]
-   [:&:first-child {:margin-top 0}]
    [:.delete-warning
     {:flex-grow 1
      :padding   :15px}
@@ -79,7 +60,7 @@
 
 (def vims-list
   [:.vims-list
-   {:background (:beatwhite colors)
+   {:width      :500px
     :max-height :600px
     :overflow-y :auto}
    [:.title

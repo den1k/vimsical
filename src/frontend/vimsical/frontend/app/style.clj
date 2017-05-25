@@ -93,11 +93,10 @@
      :align-items     :center
      :border-radius   :5px
      :padding         "10px 14px"
-     :outline         :none}
+     :outline         :none
+     :white-space     :nowrap}
     [:&:hover
      {:color  (str (:darkgrey colors) " !important")
-      :border (str "1px solid " (:grey colors))}]
-    [:.btn-title
-     {:white-space :nowrap}]]
+      :border (str "1px solid " (:grey colors))}]]
    ["input:-webkit-autofill"
     {:box-shadow "0 0 0px 1000px white inset"}]])
