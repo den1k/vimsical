@@ -124,7 +124,8 @@
                                       :editor-reg-key :vcr/editors}]})
 
 (defn vcr []
-  (let [files                  (<sub [::vcs.subs/files])
+  (let [branch                 (<sub [::vcs.subs/branch])
+        files                  (<sub [::vcs.subs/files])
         editor-comps           (->> files (map editor-components) editor-components-by-file-type)
         visible-files          (visible-files files)
         visi-components        (views-for-files visible-files editor-comps)
@@ -137,7 +138,7 @@
      [[playback]
       [splits/n-h-split
        :class "live-preview-and-editors"
-       :panels [[live-preview]
+       :panels [[live-preview {:branch branch}]
                 [splits/n-v-split
                  :height "100%"
                  :splitter-size "31px"

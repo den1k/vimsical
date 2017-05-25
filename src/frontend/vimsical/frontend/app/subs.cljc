@@ -32,10 +32,10 @@
 
 (re-frame/reg-sub-raw
  ::vims-info
- :<- [::vims
-      [::vims/title
-       {::vims/owner [::user/first-name
-                      ::user/last-name
-                      ::user/email]}]]
- (fn [info _]
-   info))
+ (fn [_ _]
+   (re-frame/subscribe
+    [::vims
+     [::vims/title
+      {::vims/owner [::user/first-name
+                     ::user/last-name
+                     ::user/email]}]])))

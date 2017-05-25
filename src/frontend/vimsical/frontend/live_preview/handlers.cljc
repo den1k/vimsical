@@ -71,12 +71,15 @@
    (fn [[_ branch]]
      (if branch
        [::subs/preprocessed-preview-markup branch]
-       [::subs/branch-preprocessed-preview-markup])))]
+       [::subs/branch-preprocessed-preview-markup])))
+  (util.re-frame/inject-sub [::vcs.subs/branch])]
  (fn [{:keys       [db ui-db]
-       ::subs/keys [preprocessed-preview-markup branch-preprocessed-preview-markup]}
+       ::subs/keys [preprocessed-preview-markup branch-preprocessed-preview-markup]
+       cur-branch  ::vcs.subs/branch}
       [_ {:as branch ::branch/keys [files libs]}]]
    #?(:cljs
-      (let [markup        (or preprocessed-preview-markup branch-preprocessed-preview-markup)
+      (let [branch        (or branch cur-branch)
+            markup        (or preprocessed-preview-markup branch-preprocessed-preview-markup)
             iframe        (ui-db/get-iframe ui-db branch)
             prev-blob-url (ui-db/get-src-blob-url ui-db branch)
             blob-url      (util.dom/blob-url markup "text/html")]

@@ -17,7 +17,7 @@
             [vimsical.vcs.branch :as branch]
             [vimsical.vcs.file :as file]
             [clojure.string :as string]
-            [vimsical.common.util.core :as util]
+            [vimsical.common.util.core :as util :include-macros true]
             [vimsical.vims :as vims]
             [vimsical.user :as user]
             [vimsical.frontend.player.views.elems :as elems]))
