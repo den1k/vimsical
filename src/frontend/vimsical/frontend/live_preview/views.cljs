@@ -28,8 +28,6 @@
    [vimsical.frontend.live-preview.handlers :as handlers]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]
-   [vimsical.frontend.vcs.subs :as vcs.subs]
-   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.live-preview.error-catcher :as error-catcher]))
 
 ;;
@@ -54,7 +52,7 @@
         (re-frame/dispatch [::handlers/register-and-init-iframe node branch]))
       (do
         (re-frame/dispatch [::error-catcher/dispose])
-        (re-frame/dispatch [::handlers/dispose-iframe])))))
+        (re-frame/dispatch [::handlers/dispose-iframe branch])))))
 
 (defn- iframe-on-load-handler
   [branch]
@@ -79,11 +77,12 @@
 ;;
 
 (defn live-preview
-  [{:as   opts
-    :keys [static? error-catcher?]
-    :or   {error-catcher? true}}]
-  (let [{:as branch ::branch/keys [files]} (<sub [::vcs.subs/branch])
-        files (cond-> files error-catcher? err-catcher-files)]
+  [{:as                     opts
+    {::branch/keys [files]} :branch
+    :keys                   [branch static? error-catcher?]
+    :or                     {error-catcher? true}}]
+  {:pre [branch]}
+  (let [files (cond-> files error-catcher? err-catcher-files)]
     (reagent/create-class
      (merge
       (when-not static?

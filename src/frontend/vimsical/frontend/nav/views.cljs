@@ -8,7 +8,7 @@
    [vimsical.frontend.views.icons :as icons]
    [vimsical.frontend.util.re-frame :refer [<sub] :refer-macros [with-subs]]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
-   [vimsical.common.util.core :refer [=by] :as util]
+   [vimsical.common.util.core :refer [=by] :as util :include-macros true]
    [vimsical.frontend.app.handlers :as app]
    [vimsical.frontend.user.views :as user.views]
    [vimsical.frontend.vims-list.views :as vims-list.views]
@@ -89,7 +89,7 @@
 (defn nav []
   (let
    [show-popup?     (reagent/atom false)
-    show-vims-list? (reagent/atom true)
+    show-vims-list? (reagent/atom false)
     {::user/keys [first-name last-name vimsae] :as user}
     (<sub [:q [:app/user
                [:db/uid

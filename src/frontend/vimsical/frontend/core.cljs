@@ -23,6 +23,6 @@
   (code-editor.core/require-monaco
    #(do
       (re-frame/dispatch-sync [::db/init])
+      (re-frame/dispatch-sync [::vcs.handlers/init-vimsae])
       (re-frame/dispatch-sync [::ui.handlers/init])
-      (re-frame/dispatch-sync [::vcs.handlers/init-vims])
       (mount-root))))

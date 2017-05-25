@@ -64,7 +64,7 @@
    (let [files    [(new-file (uuid title :file-html) :text :html)
                    (new-file (uuid title :file-css) :text :css)
                    (new-file (uuid title :file-js) :text :javascript "5" compilers)]
-         branches [(new-branch (uuid :master) (uuid :user) "master" files (:javascript js-libs))]]
+         branches [(new-branch (uuid title :master) (uuid :user) "master" files (:javascript js-libs))]]
      {:db/uid         (uuid title)
       ::vims/owner    owner-ref
       ::vims/title    title
