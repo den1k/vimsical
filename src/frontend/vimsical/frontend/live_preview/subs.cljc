@@ -7,7 +7,7 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.frontend.util.re-frame :refer [<sub]]
    #?(:cljs [reagent.dom.server :as reagent.dom.server])
-   [vimsical.common.util.core :as util]
+   [vimsical.common.util.core :as util :include-macros true]
    [re-frame.interop :as interop]))
 
 (defn- file-node [{:keys [db/uid] ::file/keys [sub-type] :as file} string]

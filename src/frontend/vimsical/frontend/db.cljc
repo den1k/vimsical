@@ -5,7 +5,7 @@
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
    [vimsical.common.test :refer [uuid]]
-   [vimsical.common.util.core :as util]
+   [vimsical.common.util.core :as util :include-macros true]
    [vimsical.remotes.backend.status.queries :as status.queries]
    [vimsical.frontend.quick-search.commands :as quick-search.commands]
    [vimsical.frontend.util.mapgraph :as util.mg]
@@ -64,7 +64,7 @@
    (let [files    [(new-file (uuid title :file-html) :text :html)
                    (new-file (uuid title :file-css) :text :css)
                    (new-file (uuid title :file-js) :text :javascript "5" compilers)]
-         branches [(new-branch (uuid :master) (uuid :user) "master" files (:javascript js-libs))]]
+         branches [(new-branch (uuid title :master) (uuid :user) "master" files (:javascript js-libs))]]
      {:db/uid         (uuid title)
       ::vims/owner    owner-ref
       ::vims/title    title

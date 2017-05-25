@@ -6,7 +6,7 @@
             [re-com.validate :refer [string-or-hiccup? number-or-string? html-attr? css-style?] :refer-macros [validate-args-macro]]
             [re-com.splits :as splits]
             [reagent.core :as reagent]
-            [vimsical.common.util.core :as util]
+            [vimsical.common.util.core :as util :include-macros true]
             [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]))
 
 (def n-v-split-args-desc

@@ -13,7 +13,7 @@
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.vcs.file :as file]
    [vimsical.vcs.core :as vcs]
-   [vimsical.common.util.core :as util]
+   [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.code-editor.util :as code-editor.util]))
 
 ;;

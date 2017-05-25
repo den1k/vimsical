@@ -2,7 +2,7 @@
   (:require [re-frame.core :as re-frame]
             [com.stuartsierra.mapgraph :as mg]
             [vimsical.frontend.app.handlers :as app.handlers]
-            [vimsical.common.util.core :as util]))
+            [vimsical.common.util.core :as util :include-macros true]))
 
 (defn move-filters [quick-search filters dir]
   (let [{:quick-search/keys [filter-idx]} quick-search

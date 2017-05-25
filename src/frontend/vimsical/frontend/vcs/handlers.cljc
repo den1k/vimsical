@@ -1,6 +1,7 @@
 (ns vimsical.frontend.vcs.handlers
   (:require
    [vimsical.vims :as vims]
+   [vimsical.user :as user]
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
    [vimsical.common.uuid :refer [uuid]]
@@ -12,27 +13,30 @@
    [vimsical.frontend.vcs.subs :as subs]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.core :as vcs]
-   [vimsical.vcs.editor :as editor]))
+   [vimsical.vcs.editor :as editor]
+   [vimsical.frontend.util.mapgraph :as util.mg]))
 
 ;;
 ;; * VCS Vims init
 ;;
 
-(defn init-vims
-  [db [_]]
-  (let [{:as         vims
-         :keys       [db/uid]
-         ::vims/keys [branches]} (util.mg/pull* db [:app/vims queries/vims])
-        master                   (branch/master branches)
-        vcs-state                (vcs/empty-vcs branches)
-        vcs-frontend-state       {:db/uid             (uuid)
-                                  ::vcs.db/branch-uid (:db/uid master)
-                                  ::vcs.db/delta-uid  nil}
-        vcs-entity               (merge vcs-state vcs-frontend-state)
-        vims'                    (assoc vims ::vims/vcs vcs-entity)]
-    (mg/add db vims')))
+(defn init-vimsae
+  [db _]
+  (let [vimsae  (-> (util.mg/pull* db [:app/user [{::user/vimsae queries/vims}]])
+                    ::user/vimsae)
+        vimsae' (for [{:as         vims
+                       :keys       [db/uid]
+                       ::vims/keys [branches]} vimsae]
+                  (let [master             (branch/master branches)
+                        vcs-state          (vcs/empty-vcs branches)
+                        vcs-frontend-state {:db/uid             (uuid)
+                                            ::vcs.db/branch-uid (:db/uid master)
+                                            ::vcs.db/delta-uid  nil}
+                        vcs-entity         (merge vcs-state vcs-frontend-state)]
+                    (assoc vims ::vims/vcs vcs-entity)))]
+    (util.mg/add db vimsae')))
 
-(re-frame/reg-event-db ::init-vims init-vims)
+(re-frame/reg-event-db ::init-vimsae init-vimsae)
 
 ;;
 ;; * Cofxs
@@ -77,10 +81,10 @@
   [{:keys [uuid-fn timestamp elapsed] :as context} _]
   {:pre [uuid-fn timestamp elapsed]}
   (assoc context ::editor/effects
-         ;; NOTE all these fns take the edit-event
-         {::editor/uuid-fn      (fn [& _] (uuid-fn))
-          ::editor/timestamp-fn (fn [& _] timestamp)
-          ::editor/pad-fn       (new-pad-fn elapsed)}))
+                 ;; NOTE all these fns take the edit-event
+                 {::editor/uuid-fn      (fn [& _] (uuid-fn))
+                  ::editor/timestamp-fn (fn [& _] timestamp)
+                  ::editor/pad-fn       (new-pad-fn elapsed)}))
 
 (re-frame/reg-cofx :editor editor-cofx)
 

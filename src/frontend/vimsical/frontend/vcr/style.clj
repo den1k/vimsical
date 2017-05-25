@@ -1,6 +1,5 @@
 (ns vimsical.frontend.vcr.style
-  (:require [vimsical.frontend.live-preview.style :refer [live-preview]]
-            [vimsical.frontend.timeline.style :refer [timeline]]
+  (:require [vimsical.frontend.timeline.style :refer [timeline]]
             [vimsical.frontend.code-editor.style :refer [code-editor]]
             [vimsical.frontend.styles.color :as color :refer [colors]]))
 
@@ -109,7 +108,6 @@
 (def live-preview-and-editors
   [:.live-preview-and-editors
    {:border-top "solid 2px #eceff3"}
-   live-preview
    [:.rc-n-h-split-splitter
     {:display         :flex
      :flex            "1"

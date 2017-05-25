@@ -1,4 +1,5 @@
-(ns vimsical.frontend.live-preview.style)
+(ns vimsical.frontend.live-preview.style
+  "Used in VCR, Player and VimsList")
 
 (def live-preview
   [:.live-preview

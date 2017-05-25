@@ -2,7 +2,8 @@
   (:require [re-com.core :as re-com]
             [reagent.core :as reagent]
             [vimsical.frontend.util.dom :as util.dom]
-            [vimsical.frontend.util.dom :refer-macros [e> e-> e->>]]))
+            [vimsical.frontend.util.dom :refer-macros [e> e-> e->>]]
+            [vimsical.frontend.views.popovers :as popovers]))
 
 (defn login []
   [:div.auth.login
@@ -50,38 +51,11 @@
       "here"]
      " to join our waitlist."]]])
 
-
-(defn auth-popover [{:keys [showing? body] :as opts}]
-  [re-com/popover-content-wrapper
-   :arrow-gap 2
-   :arrow-width 20
-   :on-cancel (fn [])                   ; needed render background overlay
-   :arrow-length 10
-   :body body
-   :showing-injected? showing?
-   :position-injected (reagent/atom :below-center)])
-
-(defn login-popover-anchor [{:keys [showing? anchor style] :as opts}]
-  {:pre [anchor]}
-  [re-com/popover-anchor-wrapper
-   :showing? showing?
-   :anchor anchor
-   :position :below-left
-   :style style
-   :popover [auth-popover
-             {:showing? showing?
-              :body     [login]}]])
-
 (defn logout []
   [:div.auth.logout "Logout"])
 
-(defn logout-popover-anchor [{:keys [showing? anchor style] :as opts}]
-  {:pre [anchor]}
-  [re-com/popover-anchor-wrapper
-   :showing? showing?
-   :anchor anchor
-   :position :below-left
-   :style style
-   :popover [auth-popover
-             {:showing? showing?
-              :body     [logout]}]])
+(defn login-popover [opts]
+  [popovers/popover (assoc opts :child [login])])
+
+(defn logout-popover [opts]
+  [popovers/popover (assoc opts :child [logout])])

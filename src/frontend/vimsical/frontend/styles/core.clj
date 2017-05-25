@@ -10,7 +10,8 @@
             [vimsical.frontend.styles.text :refer [text]]
             [vimsical.frontend.quick-search.style :refer [quick-search]]
             [vimsical.frontend.landing.style :refer [landing]]
-            [vimsical.frontend.user.style :refer [user]]))
+            [vimsical.frontend.user.style :refer [user]]
+            [vimsical.frontend.live-preview.style :refer [live-preview]]))
 
 (def styles
   "Read by garden. See config in project.clj"
@@ -18,6 +19,7 @@
    nav
    landing
    vcr
+   live-preview
 
    quick-search
 

@@ -1,6 +1,6 @@
 (ns vimsical.frontend.util.dom
   (:require [goog.dom :as gdom]
-            [vimsical.common.util.core :as util]
+            [vimsical.common.util.core :as util :include-macros true]
             [reagent.core :as reagent]
             [clojure.string :as str])
   (:refer-clojure :exclude [contains?]))

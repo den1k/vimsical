@@ -8,10 +8,10 @@
             [vimsical.frontend.live-preview.ui-db :as ui-db]
             [vimsical.vcs.lib :as lib]
             [vimsical.frontend.live-preview.subs :as subs]
-            [vimsical.common.util.core :as util]
+            [vimsical.common.util.core :as util :include-macros true]
             [vimsical.frontend.util.preprocess.core :as preprocess]
-            #?@(:cljs [[reagent.dom.server]
-                       [vimsical.frontend.util.dom :as util.dom]])))
+   #?@(:cljs [[reagent.dom.server]
+              [vimsical.frontend.util.dom :as util.dom]])))
 
 (defn iframe-ready-state [iframe]
   (.. iframe -contentDocument -readyState))
@@ -55,30 +55,43 @@
  ::register-and-init-iframe
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ iframe branch]]
-   {:ui-db    (ui-db/set-iframe ui-db iframe)
+   {:ui-db    (ui-db/set-iframe ui-db branch iframe)
     :dispatch [::update-iframe-src branch]}))
 
+;; TODO
+;; this could be grately simplified
+;; update-iframe-src should always take either the branch or the markup directly
+;; error-catcher complicates this by dispatching here without providing a branch
+;; we could have something like code-analysis/results that track linters and
+;; error-catcher's results and then dispatch here with a branch on success
 (re-frame/reg-event-fx
  ::update-iframe-src
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub
-   (fn [_]
-     [::subs/branch-preprocessed-preview-markup]))]
- (fn [{:keys [db ui-db] ::subs/keys [branch-preprocessed-preview-markup]}
-      [_ {::branch/keys [files libs]}]]
+   (fn [[_ branch]]
+     (if branch
+       [::subs/preprocessed-preview-markup branch]
+       [::subs/branch-preprocessed-preview-markup])))
+  (util.re-frame/inject-sub [::vcs.subs/branch])]
+ (fn [{:keys       [db ui-db]
+       ::subs/keys [preprocessed-preview-markup branch-preprocessed-preview-markup]
+       cur-branch  ::vcs.subs/branch}
+      [_ {:as branch ::branch/keys [files libs]}]]
    #?(:cljs
-      (let [iframe        (ui-db/get-iframe ui-db)
-            prev-blob-url (ui-db/get-src-blob-url ui-db)
-            blob-url      (util.dom/blob-url branch-preprocessed-preview-markup "text/html")]
+      (let [branch        (or branch cur-branch)
+            markup        (or preprocessed-preview-markup branch-preprocessed-preview-markup)
+            iframe        (ui-db/get-iframe ui-db branch)
+            prev-blob-url (ui-db/get-src-blob-url ui-db branch)
+            blob-url      (util.dom/blob-url markup "text/html")]
         (some-> prev-blob-url util.dom/revoke-blob-url)
         (aset iframe "src" blob-url)
-        {:ui-db (ui-db/set-src-blob-url ui-db blob-url)}))))
+        {:ui-db (ui-db/set-src-blob-url ui-db branch blob-url)}))))
 
 (re-frame/reg-event-fx
  ::dispose-iframe
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_]]
-   {:ui-db (ui-db/remove-iframe ui-db)}))
+ (fn [{:keys [ui-db]} [_ branch]]
+   {:ui-db (ui-db/remove-iframe ui-db branch)}))
 
 (re-frame/reg-event-fx
  ::update-live-preview
@@ -100,14 +113,14 @@
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [db ui-db] :as cofx}
       [_ branch {::file/keys [sub-type] :as file} string]]
-   (let [iframe (ui-db/get-iframe ui-db)]
+   (let [iframe (ui-db/get-iframe ui-db branch)]
      (do (update-node! iframe file string) nil))))
 
 (re-frame/reg-event-fx
  ::move-script-nodes
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [db ui-db]} [_ {::branch/keys [files]}]]
-   (let [iframe       (ui-db/get-iframe ui-db)
+ (fn [{:keys [db ui-db]} [_ {:as branch ::branch/keys [files]}]]
+   (let [iframe       (ui-db/get-iframe ui-db branch)
          doc          (.-contentDocument iframe)
          head         (.-head doc)
          js-files     (filter file/javascript? files)

@@ -2,7 +2,7 @@
   (:require
    [re-frame.core :as re-frame]
    [reagent.core :as r]
-   [vimsical.common.util.core :as util]
+   [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.code-editor.handlers :as handlers]
    [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.vcs.handlers :as vcs.handlers]
