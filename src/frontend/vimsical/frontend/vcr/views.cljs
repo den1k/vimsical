@@ -14,6 +14,7 @@
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.frontend.views.shapes :as shapes]
    [vimsical.frontend.views.splits :as splits]
+   [vimsical.frontend.app.subs :as app.subs]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]))
 
@@ -138,7 +139,9 @@
      [[playback]
       [splits/n-h-split
        :class "live-preview-and-editors"
-       :panels [[live-preview {:branch branch}]
+       :panels [[live-preview {:branch         branch
+                               :vims           (<sub [::app.subs/vims])
+                               :error-catcher? false}]
                 [splits/n-v-split
                  :height "100%"
                  :splitter-size "31px"

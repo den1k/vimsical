@@ -3,6 +3,7 @@
    [vimsical.vims :as vims]
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.util.lint.core :as lint]
    [vimsical.frontend.util.preprocess.core :as preprocess]
@@ -10,7 +11,8 @@
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]
-   [vimsical.vcs.core :as vcs]))
+   [vimsical.vcs.core :as vcs]
+   [re-frame.interop :as interop]))
 
 ;;
 ;; * VCS
@@ -31,7 +33,7 @@
 ;; * Branch
 ;;
 
-(re-frame/reg-sub ::branches  :<- [::vcs] (fn [{::vcs/keys [branches]}] branches))
+(re-frame/reg-sub ::branches :<- [::vcs] (fn [{::vcs/keys [branches]}] branches))
 (re-frame/reg-sub ::branch-uid :<- [::vcs] (fn [{::db/keys [branch-uid]}] branch-uid))
 
 (re-frame/reg-sub
@@ -40,6 +42,14 @@
  :<- [::branches]
  (fn [[branch-uid branches] _]
    (util/ffilter (partial util/=by identity :db/uid branch-uid) branches)))
+
+(re-frame/reg-sub-raw
+ ::vims-branch
+ (fn [_ [_ vims]]
+   {:pre [vims]}
+   (interop/make-reaction
+    #(let [{::db/keys [branch-uid] ::vcs/keys [branches]} (<sub [::vcs vims])]
+       (util/ffilter (partial util/=by identity :db/uid branch-uid) branches)))))
 
 ;;
 ;; * Heads (timeline entries)

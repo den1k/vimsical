@@ -52,11 +52,10 @@
       (swap-head-node! iframe sub-type attrs string))))
 
 (re-frame/reg-event-fx
- ::register-and-init-iframe
+ ::register-iframe
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ iframe branch]]
-   {:ui-db    (ui-db/set-iframe ui-db branch iframe)
-    :dispatch [::update-iframe-src branch]}))
+ (fn [{:keys [ui-db]} [_ iframe vims]]
+   {:ui-db (ui-db/set-iframe ui-db vims iframe)}))
 
 ;; TODO
 ;; this could be grately simplified
@@ -68,30 +67,29 @@
  ::update-iframe-src
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub
-   (fn [[_ branch]]
-     (if branch
-       [::subs/preprocessed-preview-markup branch]
+   (fn [[_ vims]]
+     (if vims
+       [::subs/vims-preprocessed-preview-markup vims]
        [::subs/branch-preprocessed-preview-markup])))
   (util.re-frame/inject-sub [::vcs.subs/branch])]
  (fn [{:keys       [db ui-db]
-       ::subs/keys [preprocessed-preview-markup branch-preprocessed-preview-markup]
+       ::subs/keys [vims-preprocessed-preview-markup branch-preprocessed-preview-markup]
        cur-branch  ::vcs.subs/branch}
-      [_ {:as branch ::branch/keys [files libs]}]]
+      [_ vims]]
    #?(:cljs
-      (let [branch        (or branch cur-branch)
-            markup        (or preprocessed-preview-markup branch-preprocessed-preview-markup)
-            iframe        (ui-db/get-iframe ui-db branch)
-            prev-blob-url (ui-db/get-src-blob-url ui-db branch)
+      (let [markup        (or vims-preprocessed-preview-markup branch-preprocessed-preview-markup)
+            iframe        (ui-db/get-iframe ui-db vims)
+            prev-blob-url (ui-db/get-src-blob-url ui-db vims)
             blob-url      (util.dom/blob-url markup "text/html")]
         (some-> prev-blob-url util.dom/revoke-blob-url)
         (aset iframe "src" blob-url)
-        {:ui-db (ui-db/set-src-blob-url ui-db branch blob-url)}))))
+        {:ui-db (ui-db/set-src-blob-url ui-db vims blob-url)}))))
 
 (re-frame/reg-event-fx
  ::dispose-iframe
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ branch]]
-   {:ui-db (ui-db/remove-iframe ui-db branch)}))
+ (fn [{:keys [ui-db]} [_ vims]]
+   {:ui-db (ui-db/remove-iframe ui-db vims)}))
 
 (re-frame/reg-event-fx
  ::update-live-preview
@@ -101,26 +99,29 @@
  (fn [{:keys       [db ui-db]
        ::subs/keys [file-lint-or-preprocessing-errors]
        :as         cofx}
-      [_ branch {::file/keys [sub-type] :as file} file-string]]
+      [_ vims {::file/keys [sub-type] :as file} file-string]]
    (if (file/javascript? file)
      (when (nil? file-lint-or-preprocessing-errors)
        {:debounce {:ms       500
-                   :dispatch [::update-iframe-src branch]}})
-     {:dispatch [::update-preview-node branch file file-string]})))
+                   :dispatch [::update-iframe-src vims]}})
+     {:dispatch [::update-preview-node vims file file-string]})))
 
 (re-frame/reg-event-fx
  ::update-preview-node
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [db ui-db] :as cofx}
-      [_ branch {::file/keys [sub-type] :as file} string]]
-   (let [iframe (ui-db/get-iframe ui-db branch)]
+      [_ vims {::file/keys [sub-type] :as file} string]]
+   (let [iframe (ui-db/get-iframe ui-db vims)]
      (do (update-node! iframe file string) nil))))
 
 (re-frame/reg-event-fx
  ::move-script-nodes
- [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [db ui-db]} [_ {:as branch ::branch/keys [files]}]]
-   (let [iframe       (ui-db/get-iframe ui-db branch)
+ [(re-frame/inject-cofx :ui-db)
+  (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/vims-branch vims]))]
+ (fn [{:keys                  [db ui-db]
+       {files ::branch/files} ::vcs.subs/vims-branch}
+      [_ vims]]
+   (let [iframe       (ui-db/get-iframe ui-db vims)
          doc          (.-contentDocument iframe)
          head         (.-head doc)
          js-files     (filter file/javascript? files)
@@ -130,16 +131,44 @@
        (.appendChild head node)))))
 
 (re-frame/reg-event-fx
- ::track-start
- (fn [_ [_ branch file]]
+ ::track-vims
+ (fn [_ [_ vims]]
+   {:pre [vims]}
    {:track
     {:action       :register
-     :id           [:iframe file]
-     :subscription [::vcs.subs/file-string file]
-     :val->event   (fn [string] [::update-live-preview branch file string])}}))
+     :id           [::vims vims]
+     :subscription [::vcs.subs/vims-branch vims]
+     :val->event   (fn [branch]
+                     {:pre [branch]}
+                     [::track-branch vims branch])}}))
 
 (re-frame/reg-event-fx
- ::track-stop
- (fn [_ [_ branch file]]
+ ::track-branch
+ (fn [_ [_ vims {:as branch files ::branch/files}]]
+   {:pre [branch files]}
    {:track
-    {:action :dispose :id [:iframe file]}}))
+    (for [file files]
+      {:action       :register
+       :id           [::file file]
+       :subscription [::vcs.subs/file-string file]
+       :val->event   (fn [string]
+                       ;; ?? this is called on dispose with string being nil
+                       (when string
+                         [::update-live-preview vims file string]))})}))
+
+
+(re-frame/reg-event-fx
+ ::stop-track-vims
+ (fn [_ [_ vims]]
+   {:pre [vims]}
+   {:track    {:action :dispose :id [::vims vims]}
+    :dispatch [::stop-track-branch vims]}))
+
+(re-frame/reg-event-fx
+ ::stop-track-branch
+ [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/vims-branch vims]))]
+ (fn [{branch ::vcs.subs/vims-branch} [_ vims]]
+   {:pre [branch]}
+   {:track
+    (for [file (::branch/files branch)]
+      {:action :dispose :id [::file file]})}))

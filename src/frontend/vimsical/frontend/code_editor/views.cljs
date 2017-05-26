@@ -1,7 +1,7 @@
 (ns vimsical.frontend.code-editor.views
   (:require
    [re-frame.core :as re-frame]
-   [reagent.core :as r]
+   [reagent.core :as reagent]
    [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.code-editor.handlers :as handlers]
    [vimsical.frontend.util.re-frame :refer [<sub]]
@@ -110,15 +110,27 @@
   [file editor]
   {:pre [file editor]}
   {:model->content-change-handler
-   (fn model->content-change-handler [model]
-     (fn [e]
-       (handle-content-change model file e)))
+                          (fn model->content-change-handler [model]
+                            (fn [e]
+                              (handle-content-change model file e)))
    :model->cursor-change-handler
-   (fn model->cursor-change-handler [model]
-     (fn [e]
-       (handle-cursor-change model file e)))
+                          (fn model->cursor-change-handler [model]
+                            (fn [e]
+                              (handle-cursor-change model file e)))
    :editor->focus-handler (partial editor-focus-handler file)
    :editor->blur-handler  (partial editor-blur-handler file)})
+
+(defn register [c {:keys [file] :as opts}]
+  (let [editor    (new-editor (reagent/dom-node c) (editor-opts opts))
+        listeners (new-listeners file editor)]
+    (re-frame/dispatch [::handlers/register file editor listeners])))
+
+(defn dispose [{:keys [file] :as opts}]
+  (re-frame/dispatch [::handlers/dispose file]))
+
+(defn recycle [c old-opts new-opts]
+  (dispose old-opts)
+  (register c new-opts))
 
 ;;
 ;; * Component
@@ -127,15 +139,13 @@
 (defn code-editor
   [{:keys [file] :as opts}]
   {:pre [file]}
-  (r/create-class
+  (reagent/create-class
    {:component-did-mount
-    (fn [c]
-      (let [editor    (new-editor (r/dom-node c) (editor-opts opts))
-            listeners (new-listeners file editor)]
-        (re-frame/dispatch [::handlers/register file editor listeners])))
+    (fn [c] (register c opts))
     :component-will-unmount
-    (fn [_]
-      (re-frame/dispatch [::handlers/dispose file]))
+    (fn [c] (dispose (reagent/props c)))
+    :component-will-receive-props
+    (fn [c [_ new-opts]] (recycle c (reagent/props c) new-opts))
     :render
     (fn [_]
       (when-let [errors

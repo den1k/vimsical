@@ -65,16 +65,19 @@
    (file-node-markup file string)))
 
 (re-frame/reg-sub-raw
- ::preprocessed-preview-markup
- (fn [_ [_ branch]]
-   (interop/make-reaction #(preview-markup branch))))
+ ::vims-preprocessed-preview-markup
+ (fn [_ [_ vims]]
+   {:pre [vims]}
+   (interop/make-reaction
+    #(let [branch (<sub [::vcs.subs/vims-branch vims])]
+       (preview-markup branch)))))
 
 (re-frame/reg-sub-raw
  ::branch-preprocessed-preview-markup
  (fn [_ _]
    (interop/make-reaction
     #(let [branch (<sub [::vcs.subs/branch])]
-       (<sub [::preprocessed-preview-markup branch])))))
+       (<sub [::vims-preprocessed-preview-markup branch])))))
 
 (re-frame/reg-sub
  ::error-catcher-branch-libs
