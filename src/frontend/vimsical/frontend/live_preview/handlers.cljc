@@ -153,8 +153,11 @@
                  :subscription [::vcs.subs/file-string file]
                  :val->event   (fn [string]
                                  ;; ?? this is called on dispose with string being nil
-                                 (when string
-                                   [::update-live-preview vims file string]))})
+                                 (if string
+                                   [::update-live-preview vims file string]
+                                   #?(:cljs (do
+                                              (prn "no string" file)
+                                              #_(js/console.log :vi vims :br branch)))))})
     :dispatch [::stop-track-branch vims]}))
 
 
