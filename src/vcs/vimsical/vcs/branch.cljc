@@ -11,6 +11,12 @@
 ;; * Spec
 ;;
 
+;; NOTE entity needs be defined before the ::parent spec or this fails to
+;; compile in ClojureScript
+
+(s/def ::branch
+  (s/keys :req [:db/uid] :opt [::start-delta-uid ::branch-off-delta-uid ::parent ::files ::name]))
+
 (s/def ::uid uuid?)
 (s/def :db/uid ::uid)
 (s/def ::name string?)
@@ -22,9 +28,6 @@
 (s/def ::parent (s/nilable ::branch))
 (s/def ::files (s/coll-of ::file/file))
 (s/def ::libs (s/coll-of ::lib/lib))
-
-(s/def ::branch
-  (s/keys :req [:db/uid] :opt [::start-delta-uid ::branch-off-delta-uid ::parent ::files ::name]))
 
 ;;
 ;; * Constructor

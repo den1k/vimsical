@@ -1,9 +1,9 @@
 (ns vimsical.frontend.remotes.backend
   (:require
    [clojure.spec :as s]
-   [vimsical.frontend.util.xhr :as xhr]
    [vimsical.common.util.transit :as transit]
-   [vimsical.frontend.remotes.remote :as remote])
+   [vimsical.frontend.remotes.remote :as remote]
+   [vimsical.frontend.util.xhr :as xhr])
   (:require-macros
    [vimsical.common.env-cljs :as env]))
 
@@ -25,12 +25,10 @@
   {"Content-Type" "application/transit+json"
    "Accept"       "application/transit+json"})
 
-(defn- response-result
-  [resp]
+(defn- response-result [_ resp]
   (some-> resp (xhr/response-text) (transit/read-transit)))
 
-(defn- post-data
-  [event]
+(defn- request-data [event]
   (transit/write-transit event))
 
 ;;
@@ -46,11 +44,11 @@
    :path     (env/required :backend-path ::env/string)})
 
 (defmethod remote/send! :backend
-  [remote config event result-cb error-cb]
-  (letfn [(xhr-success-cb [resp] (result-cb (response-result resp)))
-          (xhr-error-cb   [resp] (error-cb (response-result resp)))]
+  [{:keys [event] :as fx} state result-cb error-cb]
+  (letfn [(xhr-success-cb [resp] (result-cb (response-result fx resp)))
+          (xhr-error-cb   [resp] (error-cb (response-result fx resp)))]
     (xhr/new-post-request
-     (xhr/new-uri config)
-     (post-data event)
+     (xhr/new-uri state)
+     (request-data event)
      transit-headers
      xhr-success-cb xhr-error-cb)))

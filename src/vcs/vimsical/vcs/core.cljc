@@ -303,7 +303,7 @@
 
 (s/fdef vims-snapshots
         :args (s/cat :vcs ::vcs :user-uid uuid? :vims-uid uuid?)
-        :ret  (s/every ::snapshot/snapshot))
+        :ret (s/every ::snapshot/snapshot))
 
 (defn vims-snapshots
   [{::keys [branches] :as vcs} user-uid vims-uid]

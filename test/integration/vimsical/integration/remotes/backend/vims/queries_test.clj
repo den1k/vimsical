@@ -1,5 +1,6 @@
-(ns vimsical.integration.remotes.backend.vims.commands-test
+(ns vimsical.integration.remotes.backend.vims.queries-test
   (:require
+   [clojure.spec :as s]
    [clojure.test :refer [deftest is use-fixtures]]
    [com.stuartsierra.mapgraph :as mg]
    [day8.re-frame.test :as re-frame.test]
@@ -11,8 +12,9 @@
    [vimsical.frontend.db :as db]
    [vimsical.frontend.remotes.fx :as frontend.remotes.fx]
    [vimsical.frontend.vims.handlers :as frontend.vims.handlers]
-   [vimsical.queries.user :as queries.user]
-   [vimsical.user :as user]))
+   [vimsical.queries.vims :as queries.vims]
+   [vimsical.vcs.core :as vcs]
+   [vimsical.vims :as vims]))
 
 (st/instrument)
 
@@ -20,8 +22,7 @@
 ;; * Re-frame
 ;;
 
-(def test-db
-  (db/new-db {:app/user data/user}))
+(def test-db (db/new-db {}))
 
 (defn re-frame-fixture
   [f]
@@ -39,36 +40,46 @@
   system.fixture/system
   (system.fixture/with-user data/user)
   system.fixture/session
+  system.fixture/vims+deltas
   re-frame-fixture)
 
 ;;
 ;; * Helpers
 ;;
 
-(defn get-app-user
+(defn get-vims
   [db-sub]
-  (:app/user
-   (mg/pull
-    @db-sub
-    [{[:app/user '_] queries.user/pull-query}])))
+  (mg/pull @db-sub queries.vims/frontend-pull-query [:db/uid (uuid ::data/vims)]))
 
 ;;
 ;; * Vims
 ;;
 
-(deftest new-vims-test
-  (let [owner         {:db/uid (uuid ::data/user)}
-        status-key    (uuid)
-        handler-event [::frontend.vims.handlers/new owner status-key]
+(deftest vims-test
+  (let [status-key    (uuid)
+        handler-event [::frontend.vims.handlers/vims (uuid ::data/vims) status-key]
         status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub        (re-frame/subscribe [::db/db])]
     (re-frame/dispatch handler-event)
     (is (= ::frontend.remotes.fx/success @status-sub))
-    (is (= 2 (-> db-sub get-app-user ::user/vimsae count)))))
+    (is (s/valid? ::vims/vims (-> db-sub get-vims)))))
 
 ;;
-;; * TODO Title
+;; * Deltas
 ;;
+
+(deftest deltas-test
+  (vims-test)
+  (let [status-key    (uuid)
+        handler-event [::frontend.vims.handlers/deltas (uuid ::data/vims) status-key]
+        status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
+        db-sub        (re-frame/subscribe [::db/db])]
+    (re-frame/dispatch handler-event)
+    (is (= ::frontend.remotes.fx/success @status-sub))
+    (is (s/valid? ::vcs/vcs (-> db-sub get-vims ::vims/vcs)))
+    (let [last-delta-uid (-> data/deltas last :uid)
+          vcs-deltas     (-> db-sub get-vims ::vims/vcs (vcs/deltas last-delta-uid))]
+      (is (= (count data/deltas) (count vcs-deltas))))))
 
 ;;
 ;; * TODO Snapshots

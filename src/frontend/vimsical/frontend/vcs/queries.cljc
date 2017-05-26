@@ -1,4 +1,5 @@
 (ns vimsical.frontend.vcs.queries
+  ;; TODO remove these and user vimsical.queries/...
   (:require
    [vimsical.vims :as vims]
    [vimsical.vcs.branch :as branch]
@@ -12,6 +13,7 @@
   ['*
    {::branch/files file}
    {::branch/libs ['*]}
+   {::branch/owner [:db/uid]}
    ;; XXX need recursive queries implemented in mapgraph
    {::branch/parent ['*
                      {::branch/files file}

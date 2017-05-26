@@ -92,17 +92,27 @@
 ;; * Event status dispatches
 ;;
 
+(defn- dispatch-maybe
+  [dispatch {[event-id :as event] :event} result-or-error]
+  (cond
+    (true? dispatch)
+    (re-frame/dispatch [event-id result-or-error])
+
+    (keyword? dispatch)
+    (re-frame/dispatch [dispatch result-or-error])
+
+    (ifn? dispatch)
+    (re-frame/dispatch (dispatch event result-or-error))
+
+    :else nil))
+
 (defn dispatch-success!
-  [{:keys [event dispatch-success]} result]
-  (when-not (false? dispatch-success)
-    (let [[event-id] event
-          dispatch-id (or dispatch-success event-id)]
-      (re-frame/dispatch [dispatch-id result]))))
+  [{:keys [dispatch-success] :as fx} result]
+  (dispatch-maybe dispatch-success fx result))
 
 (defn dispatch-error!
-  [{:keys [dispatch-error]} error]
-  (when dispatch-error
-    (re-frame/dispatch [dispatch-error error])))
+  [{:keys [dispatch-error] :as fx} result]
+  (dispatch-maybe dispatch-error fx result))
 
 ;;
 ;; * Fx
@@ -111,6 +121,33 @@
 (s/fdef remote-fx :args (s/cat :fx ::fx))
 
 (defn- remote-fx
+  "Fx interpreter for a remote command or query.
+
+  `id` is a valid dispatch value for
+  `vimsical.frontend.remotes.backend/remote-init!` and
+  `vimsical.frontend.remotes.backend/remote-send!`
+
+  `event` is the event passed to `remote-send!`
+
+  `status-key` if provided is any value that can be used when subscribing to
+  `::status` to retrieve the state of the query. The status can be:
+
+  - `nil` no request found for that key
+  - `::pending` awaiting a response
+  - `::success` completed successfully
+  - any other value is an error, which is a map with `:msg`, `:data`,
+    `:reason` as returned by the backend
+
+  `dispatch-success` and `dispatch-error` control what events get dispatched in
+  each case.
+
+  - `true?` will dispatch    `[<event-id> <result-or-error>]``
+  - `keyword?` will dispatch `[<keyword> <result-or-error>]`
+  - `ifn?` will be invoked with `event` and `result` or `error`, should return
+    an event vector to dispatch.
+
+  `dispatch-success` defaults to true.
+  "
   [{:keys [id event status-key] :as fx}]
   (let [remote (get-remote fx)]
     (letfn [(result-cb [result]
@@ -124,7 +161,12 @@
           ;; doesn't return nil. This might not be a good fit, since it may be
           ;; more natural to want to keep track of a per-event state, like a
           ;; connection?
-          (when-some [remote (p/send! id remote event result-cb error-cb)]
+          (when-some [remote (p/send! fx remote result-cb error-cb)]
             (swap! remotes-registry assoc id remote))))))
 
-(re-frame/reg-fx :remote remote-fx)
+(defn- remote-fx-or-fxs
+  [fx-or-fxs]
+  (doseq [fx (if (sequential? fx-or-fxs) fx-or-fxs [fx-or-fxs])]
+    (remote-fx fx)))
+
+(re-frame/reg-fx :remote remote-fx-or-fxs)

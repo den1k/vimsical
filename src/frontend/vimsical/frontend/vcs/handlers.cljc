@@ -6,7 +6,6 @@
    [re-frame.core :as re-frame]
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
-   [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as vcs.db]
    [vimsical.frontend.vcs.queries :as queries]
@@ -20,23 +19,39 @@
 ;; * VCS Vims init
 ;;
 
-(defn init-vimsae
-  [db _]
-  (let [vimsae  (-> (util.mg/pull* db [:app/user [{::user/vimsae queries/vims}]])
-                    ::user/vimsae)
-        vimsae' (for [{:as         vims
-                       :keys       [db/uid]
-                       ::vims/keys [branches]} vimsae]
-                  (let [master             (branch/master branches)
-                        vcs-state          (vcs/empty-vcs branches)
-                        vcs-frontend-state {:db/uid             (uuid)
-                                            ::vcs.db/branch-uid (:db/uid master)
-                                            ::vcs.db/delta-uid  nil}
-                        vcs-entity         (merge vcs-state vcs-frontend-state)]
-                    (assoc vims ::vims/vcs vcs-entity)))]
-    (util.mg/add db vimsae')))
+(defmulti init
+  (fn [db [_ vims _]]
+    (cond
+      (map? vims)       :vims
+      (mg/ref? db vims) :ref
+      (uuid? vims)      :uid)))
 
-(re-frame/reg-event-db ::init-vimsae init-vimsae)
+(defmethod init :uid
+  [db [event-id uid deltas :as event]]
+  (let [ref [:db/uid uid]]
+    (init db [event-id ref deltas])))
+
+(defmethod init :ref
+  [db [event-id ref deltas :as event]]
+  (let [vims (mg/pull db queries/vims ref)]
+    (init db [event-id vims deltas])))
+
+(defmethod init :vims
+  [db [_ {:as vims :keys [db/uid] ::vims/keys [branches]} deltas]]
+  (let [master             (branch/master branches)
+        empty-vcs          (vcs/empty-vcs branches)
+        vcs-state          (reduce
+                            (fn [vcs delta]
+                              (vcs/add-delta vcs uuid delta))
+                            empty-vcs deltas)
+        vcs-frontend-state {:db/uid             (uuid)
+                            ::vcs.db/branch-uid (:db/uid master)
+                            ::vcs.db/delta-uid  nil}
+        vcs-entity         (merge vcs-state vcs-frontend-state)
+        vims'              (assoc vims ::vims/vcs vcs-entity)]
+    (mg/add db vims')))
+
+(re-frame/reg-event-db ::init init)
 
 ;;
 ;; * Cofxs
@@ -81,10 +96,10 @@
   [{:keys [uuid-fn timestamp elapsed] :as context} _]
   {:pre [uuid-fn timestamp elapsed]}
   (assoc context ::editor/effects
-                 ;; NOTE all these fns take the edit-event
-                 {::editor/uuid-fn      (fn [& _] (uuid-fn))
-                  ::editor/timestamp-fn (fn [& _] timestamp)
-                  ::editor/pad-fn       (new-pad-fn elapsed)}))
+         ;; NOTE all these fns take the edit-event
+         {::editor/uuid-fn      (fn [& _] (uuid-fn))
+          ::editor/timestamp-fn (fn [& _] timestamp)
+          ::editor/pad-fn       (new-pad-fn elapsed)}))
 
 (re-frame/reg-cofx :editor editor-cofx)
 

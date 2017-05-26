@@ -1,14 +1,17 @@
 (ns vimsical.backend.data
   (:require
-   [vimsical.vims :as vims]
-   [vimsical.user :as user]
-   [vimsical.common.test :refer [uuid]]
+   [clojure.spec :as s]
+   [vimsical.common.test :as uuid :refer [uuid]]
    [vimsical.common.util.core :as util]
+   [vimsical.user :as user]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.compiler :as compiler]
+   [vimsical.vcs.core :as vcs]
+   [vimsical.vcs.data.gen.diff :as diff]
+   [vimsical.vcs.editor :as editor]
    [vimsical.vcs.file :as file]
    [vimsical.vcs.lib :as lib]
-   [clojure.spec :as s]))
+   [vimsical.vims :as vims]))
 
 ;;
 ;; * Helpers
@@ -65,7 +68,7 @@
 
 (def vims
   {:db/uid         (uuid ::vims)
-   ::vims/owner   {:db/uid (uuid ::user)}
+   ::vims/owner    {:db/uid (uuid ::user)}
    ::vims/title    "Title"
    ::vims/branches branches})
 
@@ -79,3 +82,40 @@
    ::user/vimsae     [vims]})
 
 (s/assert ::user/user user)
+
+;;
+;; * VCS data
+;;
+
+(def html-file (first files))
+(def html-file-string "abcdef")
+
+;;
+;; ** Edit events
+;;
+
+(def edit-events (diff/diffs->edit-events "" [html-file-string]))
+
+;;
+;; ** Effects
+;;
+
+(def deltas-uuid-gen  (uuid/uuid-gen))
+(def deltas-uuid-fn   (:f deltas-uuid-gen))
+(def deltas-uuid-seq  (:seq deltas-uuid-gen))
+
+(def effects
+  {::editor/pad-fn       (constantly 1)
+   ::editor/timestamp-fn (constantly 2)
+   ::editor/uuid-fn      deltas-uuid-fn})
+
+;;
+;; * Deltas
+;;
+
+(def deltas
+  (let [{html-uid :db/uid}     html-file
+        vcs                    (vcs/empty-vcs branches)
+        [vcs deltas delta-uid] (diff/diffs->vcs vcs effects html-uid (uuid ::master) nil "" [html-file-string])
+        deltas                 (vcs/deltas vcs delta-uid)]
+    deltas))

@@ -3,7 +3,8 @@
    [clojure.spec.test :as st]
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
-   [vimsical.frontend.remotes.fx] ;; side-effects
+   [vimsical.common.test :refer [uuid]]
+   [vimsical.frontend.remotes.fx]      ;; side-effects
    [vimsical.frontend.remotes.backend] ;; side-effects
    [vimsical.frontend.app.views :refer [app]]
    [vimsical.frontend.code-editor.core :as code-editor.core]
@@ -23,6 +24,6 @@
   (code-editor.core/require-monaco
    #(do
       (re-frame/dispatch-sync [::db/init])
-      (re-frame/dispatch-sync [::vcs.handlers/init-vimsae])
+      (re-frame/dispatch-sync [::vcs.handlers/init (uuid "NLP Chatbot running on React Fiber")])
       (re-frame/dispatch-sync [::ui.handlers/init])
       (mount-root))))

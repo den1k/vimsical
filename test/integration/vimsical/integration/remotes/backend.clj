@@ -1,11 +1,11 @@
 (ns vimsical.integration.remotes.backend
   (:require
-   [vimsical.backend.components.server.test :as server.test]
    [clojure.spec :as s]
-   [vimsical.common.util.transit :as transit]
-   [vimsical.frontend.remotes.remote :as remote]
+   [vimsical.backend.components.server.test :as server.test]
+   [vimsical.backend.util.log :as log]
    [vimsical.common.env :as env]
-   [vimsical.backend.util.log :as log]))
+   [vimsical.common.util.transit :as transit]
+   [vimsical.frontend.remotes.remote :as remote]))
 
 ;;
 ;; * Spec
@@ -26,11 +26,12 @@
    "Accept"       "application/transit+json"})
 
 (defn- response-result
-  [{:keys [body]}]
+  [_ {:keys [body]}]
   (try
-    ;; Missing util to properly decode responses
+    ;; Missing util to properly decode responses depending on the content-type
     (transit/read-transit body)
     (catch Throwable t
+      (log/error t)
       body)))
 
 (defn- post-data
@@ -50,13 +51,13 @@
     :path     (env/required :backend-path ::env/string)}))
 
 (defmethod remote/send! :backend
-  [remote config event result-cb error-cb]
+  [{:keys [event] :as fx} state result-cb error-cb]
   (letfn [(xhr-success-cb [resp]
             (log/debug "RAW" resp)
-            (result-cb (response-result resp)))
+            (result-cb (response-result fx resp)))
           (xhr-error-cb [resp]
             (log/error "ERROR" resp)
-            (error-cb (response-result resp)))
+            (error-cb (response-result fx resp)))
           (ok? [{:keys [status] :as response}] (< 199 status 300))]
     (let [response (server.test/response-for event)]
       (log/debug response)

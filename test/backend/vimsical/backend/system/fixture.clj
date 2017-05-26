@@ -1,20 +1,20 @@
 (ns vimsical.backend.system.fixture
-  "NOTE:
-  - We're not clearing the session state after running the fixture"
   (:require
+   [clojure.core.async :as async]
+   [clojure.spec :as s]
    [com.stuartsierra.component :as cp]
    [io.pedestal.http :as http]
    [vimsical.backend.adapters.cassandra :as cassandra]
-   [vimsical.backend.adapters.redis :as redis]
    [vimsical.backend.adapters.cassandra.fixture :as cassandra.fixture]
+   [vimsical.backend.adapters.redis :as redis]
    [vimsical.backend.components.datomic :as datomic]
    [vimsical.backend.components.datomic.fixture :as datomic.fixture]
+   [vimsical.backend.components.delta-store.protocol :as delta-store.protocol]
    [vimsical.backend.components.session-store :as session-store]
    [vimsical.backend.data :as data]
    [vimsical.backend.system :as system]
    [vimsical.common.env :as env]
-   [vimsical.user :as user]
-   [clojure.spec :as s]))
+   [vimsical.user :as user]))
 
 ;;
 ;; * State
@@ -49,17 +49,36 @@
 (def ^:dynamic *session-key* nil)
 
 (defn session
-  [f]
-  (if-some [session-store (-> *system* :session-store)]
-    (if (nil? *user-uid*)
-      (throw (ex-info "`session` fixture should be nested inside the `user` fixture." {}))
-      (let [session {::user/uid *user-uid*}]
-        (binding [*session-key* (session-store/write-session* session-store nil session)]
-          (f))))
-    (throw (ex-info "`session` fixture should be nested inside the `system` fixture" {}))))
+  ([] (session #()))
+  ([f]
+   (if-some [session-store (-> *system* :session-store)]
+     (if (nil? *user-uid*)
+       (throw (ex-info "`session` fixture should be nested inside the `user` fixture." {}))
+       (let [session {::user/uid *user-uid*}]
+         (binding [*session-key* (session-store/write-session* session-store nil session)]
+           (f))))
+     (throw (ex-info "`session` fixture should be nested inside the `system` fixture" {})))))
 
 ;;
-;; * Fixtures
+;; * Vims
+;;
+
+(defn vims+deltas
+  ([] (vims+deltas #()))
+  ([f]
+   (if (some? *system*)
+     (if (nil? *user-uid*)
+       (throw (ex-info "`vims` fixture should be nested inside the `user` fixture." {}))
+       (let [{:keys [delta-store datomic]} *system*]
+         (datomic/transact datomic data/vims)
+         (async/<!!
+          (delta-store.protocol/insert-deltas-chan
+           delta-store (-> data/vims :db/uid) data/deltas))
+         (f)))
+     (throw (ex-info "`vims` fixture should be nested inside the `system` fixture" {})))))
+
+;;
+;; * System
 ;;
 
 (defn system

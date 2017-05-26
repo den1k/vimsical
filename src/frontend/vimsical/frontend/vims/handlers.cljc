@@ -3,11 +3,13 @@
    [re-frame.core :as re-frame]
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.frontend.vcs.handlers :as vcs.handlers]
    [vimsical.remotes.backend.vims.commands :as vims.commands]
+   [vimsical.remotes.backend.vims.queries :as vims.queries]
    [vimsical.user :as user]
+   [vimsical.vcs.core :as vcs.core]
    [vimsical.vcs.file :as vcs.file]
-   [vimsical.vims :as vims]
-   [vimsical.vcs.core :as vcs.core]))
+   [vimsical.vims :as vims]))
 
 ;;
 ;; * New vims
@@ -70,3 +72,55 @@
       :event [::vims.commands/update-snapshots snapshots]}}))
 
 (re-frame/reg-event-fx ::update-snapshots update-snapshots-handler)
+
+;;
+;; * Remote queries
+;;
+
+;;
+;; ** Vims
+;;
+
+(defn vims-handler
+  [{:keys [db]} [_ vims-uid status-key]]
+  {:remote
+   {:id               :backend
+    :status-key       status-key
+    :event            [::vims.queries/vims vims-uid]
+    :dispatch-success true}})
+
+(defn vims-success-handler
+  [{:keys [db]} [_ vims]]
+  (println "SUCCESS" vims)
+  {:db (util.mg/add db vims)})
+
+(re-frame/reg-event-fx ::vims              vims-handler)
+(re-frame/reg-event-fx ::vims.queries/vims vims-success-handler)
+
+;;
+;; ** Deltas
+;;
+
+(defn deltas-handler
+  [{:keys [db]} [_ vims-uid status-key]]
+  {:remote
+   {:id               :backend
+    :status-key       status-key
+    :event            [::vims.queries/deltas vims-uid]
+    ;; Close over vims-uid so that the vcs handler can retrieve the vims
+    :dispatch-success (fn [_ deltas]
+                        [::vcs.handlers/init vims-uid deltas])}})
+
+(re-frame/reg-event-fx ::deltas deltas-handler)
+
+;;
+;; ** Vims + deltas
+;;
+
+(defn vims+deltas-handler
+  [{:keys [db]} [_ vims-uid vims-status-key deltas-status-key]]
+  {:dispatch-n
+   [[::vims   vims-uid vims-status-key]
+    [::deltas vims-uid deltas-status-key]]})
+
+(re-frame/reg-event-fx ::vims+deltas vims+deltas-handler)
