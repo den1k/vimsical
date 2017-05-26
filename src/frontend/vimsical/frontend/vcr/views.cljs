@@ -121,12 +121,14 @@
   {::file/sub-type sub-type
    :editor-header  ^{:key sub-type} [editor-header file]
    :editor         ^{:key sub-type} [code-editor
-                                     {:file           file
+                                     {:vims           (<sub [::app.subs/vims])
+                                      :file           file
                                       :editor-reg-key :vcr/editors}]})
 
 (defn vcr []
-  (let [branch                 (<sub [::vcs.subs/branch])
-        files                  (<sub [::vcs.subs/files])
+  (let [vims                   (<sub [::app.subs/vims])
+        branch                 (<sub [::vcs.subs/branch vims])
+        files                  (<sub [::vcs.subs/files vims])
         editor-comps           (->> files (map editor-components) editor-components-by-file-type)
         visible-files          (visible-files files)
         visi-components        (views-for-files visible-files editor-comps)
@@ -139,8 +141,7 @@
      [[playback]
       [splits/n-h-split
        :class "live-preview-and-editors"
-       :panels [[live-preview {:branch         branch
-                               :vims           (<sub [::app.subs/vims])
+       :panels [[live-preview {:vims           vims
                                :error-catcher? false}]
                 [splits/n-v-split
                  :height "100%"

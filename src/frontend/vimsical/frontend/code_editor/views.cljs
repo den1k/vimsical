@@ -92,41 +92,41 @@
 ;;
 
 ;; XXX use interceptors to parse events?
-(defn handle-content-change [model file e]
-  (re-frame/dispatch [::handlers/content-change file e]))
+(defn handle-content-change [vims model file e]
+  (re-frame/dispatch [::handlers/content-change vims file e]))
 
-(defn handle-cursor-change [model file e]
-  (re-frame/dispatch [::handlers/cursor-change file e]))
+(defn handle-cursor-change [vims model file e]
+  (re-frame/dispatch [::handlers/cursor-change vims file e]))
 
-(defn editor-focus-handler [file editor]
+(defn editor-focus-handler [vims file editor]
   (fn [_]
-    (re-frame/dispatch [::handlers/focus file editor])))
+    (re-frame/dispatch [::handlers/focus vims file editor])))
 
-(defn editor-blur-handler [file editor]
+(defn editor-blur-handler [vims file editor]
   (fn [_]
-    (re-frame/dispatch [::handlers/blur file editor])))
+    (re-frame/dispatch [::handlers/blur vims file editor])))
 
 (defn new-listeners
-  [file editor]
+  [vims file editor]
   {:pre [file editor]}
   {:model->content-change-handler
                           (fn model->content-change-handler [model]
                             (fn [e]
-                              (handle-content-change model file e)))
+                              (handle-content-change vims model file e)))
    :model->cursor-change-handler
                           (fn model->cursor-change-handler [model]
                             (fn [e]
-                              (handle-cursor-change model file e)))
-   :editor->focus-handler (partial editor-focus-handler file)
-   :editor->blur-handler  (partial editor-blur-handler file)})
+                              (handle-cursor-change vims model file e)))
+   :editor->focus-handler (partial editor-focus-handler vims file)
+   :editor->blur-handler  (partial editor-blur-handler vims file)})
 
-(defn register [c {:keys [file] :as opts}]
+(defn register [c {:keys [vims file] :as opts}]
   (let [editor    (new-editor (reagent/dom-node c) (editor-opts opts))
-        listeners (new-listeners file editor)]
-    (re-frame/dispatch [::handlers/register file editor listeners])))
+        listeners (new-listeners vims file editor)]
+    (re-frame/dispatch [::handlers/register vims file editor listeners])))
 
-(defn dispose [{:keys [file] :as opts}]
-  (re-frame/dispatch [::handlers/dispose file]))
+(defn dispose [{:keys [file vims] :as opts}]
+  (re-frame/dispatch [::handlers/dispose vims file]))
 
 (defn recycle [c old-opts new-opts]
   (dispose old-opts)
