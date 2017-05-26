@@ -1,6 +1,7 @@
 (ns vimsical.backend.components.service
   (:require
    [io.pedestal.http :as http]
+   [io.pedestal.http.immutant :as immutant]
    [io.pedestal.http.route :as route]
    [vimsical.backend.components.server.interceptors.event :as interceptors.event]
    [vimsical.backend.components.server.interceptors.event-auth :as interceptors.event-auth]
@@ -39,7 +40,8 @@
    ::http/type                 :immutant
    ::http/routes               routes
    ::http/join?                false
-   ::http/allowed-origins      {:creds           true
-                                :allowed-origins (constantly true)}
+   ::http/allowed-origins      {:creds true :allowed-origins (constantly true)}
    ::http/resource-path        "/public"
-   ::http/default-interceptors default-interceptors})
+   ::http/default-interceptors default-interceptors
+   ::http/start-fn             immutant/start
+   ::http/stop-fn              immutant/stop})

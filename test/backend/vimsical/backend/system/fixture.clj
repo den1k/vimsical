@@ -81,6 +81,12 @@
 ;; * System
 ;;
 
+(defn new-system []
+  (-> (system/new-system)
+      ;; Don't run the web-server, we rely on the pedestal service-fn in tests
+      (assoc-in [:service ::http/start-fn] (fn []))
+      (assoc-in [:service ::http/stop-fn]  (fn []))))
+
 (defn system
   [f]
   ;; 1. Force the :test env, will make datomic run in-memory
@@ -90,7 +96,7 @@
     {:env                :test
      :cassandra-keyspace (cassandra.fixture/keyspace-uuid)
      :datomic-name       (datomic.fixture/name-uuid (env/required :datomic-name ::env/string))}
-    (binding [*system* (cp/start (system/new-system))]
+    (binding [*system* (cp/start (new-system))]
       (binding [*service-fn* (get-in *system* [:server :service ::http/service-fn])]
         (try
           (f)

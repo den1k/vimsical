@@ -56,7 +56,8 @@
 ;;
 
 (defn ->server
-  [{::keys [service-map]}]
-  (->Server service-map nil))
+  ([] (->server nil))
+  ([{::keys [service-map]}]
+   (->Server service-map nil)))
 
 (s/def ::server (fn [x] (and x (instance? Server x))))
