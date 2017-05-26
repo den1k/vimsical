@@ -27,7 +27,7 @@
 
 (s/def ::vims-snapshots
   (s/and
-   (s/every ::snapshot/snaphot)
+   (s/every ::snapshot/snapshot)
    (fn [snapshots]
      (apply = (map ::snapshot/vims-uid snapshots)))))
 (defmethod event/event-spec  ::update-snapshots [_] (s/cat :id any? :snapshots ::vims-snapshots))

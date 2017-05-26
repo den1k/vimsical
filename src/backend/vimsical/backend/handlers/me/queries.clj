@@ -19,7 +19,7 @@
 ;;
 
 (s/fdef user-join-snapshots
-        :args (s/cat :user ::user/user :snapshots (s/every ::snapshot/snaphot))
+        :args (s/cat :user ::user/user :snapshots (s/every ::snapshot/snapshot))
         :ret  ::user/user)
 
 (defn- user-join-snapshots
