@@ -337,3 +337,12 @@
 
 (re-frame/reg-fx :debounce (new-async-fx (atom {}) util/debounce))
 (re-frame/reg-fx :throttle (new-async-fx (atom {}) util/throttle))
+
+(def prev-event
+  (let [prev-events (atom {})]
+    (fn [{:as coeffects [id :as event] :event}]
+      (let [prev-event (get @prev-events id)]
+        (swap! prev-events assoc id event)
+        (assoc coeffects :event [prev-event event])))))
+
+(re-frame/reg-cofx :prev-event prev-event)

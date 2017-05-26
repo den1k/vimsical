@@ -55,7 +55,10 @@
 ;; * Heads (timeline entries)
 ;;
 
-(re-frame/reg-sub ::skimhead-entry :<- [::vcs] (fn [vcs _] (some-> vcs db/get-skimhead-entry)))
+(re-frame/reg-sub
+ ::skimhead-entry
+ (fn [_ [_ vims]] (re-frame/subscribe [::vcs vims]))
+ (fn [vcs _] (some-> vcs db/get-skimhead-entry)))
 (re-frame/reg-sub ::playhead-entry :<- [::vcs] (fn [vcs _] (some-> vcs db/get-playhead-entry)))
 (re-frame/reg-sub ::timeline-first-entry :<- [::vcs] (fn [vcs _] (some-> vcs vcs/timeline-first-entry)))
 

@@ -144,31 +144,31 @@
 
 (re-frame/reg-event-fx
  ::track-branch
- (fn [_ [_ vims {:as branch files ::branch/files}]]
+ [(re-frame/inject-cofx :prev-event)]
+ (fn [_ [[_ _ prev-branch] [_ vims {:as branch files ::branch/files}] :as events]]
    {:pre [branch files]}
-   {:track
-    (for [file files]
-      {:action       :register
-       :id           [::file file]
-       :subscription [::vcs.subs/file-string file]
-       :val->event   (fn [string]
-                       ;; ?? this is called on dispose with string being nil
-                       (when string
-                         [::update-live-preview vims file string]))})}))
+   {:track    (for [file files]
+                {:action       :register
+                 :id           [::file file]
+                 :subscription [::vcs.subs/file-string file]
+                 :val->event   (fn [string]
+                                 ;; ?? this is called on dispose with string being nil
+                                 (when string
+                                   [::update-live-preview vims file string]))})
+    :dispatch [::stop-track-branch vims]}))
 
 
 (re-frame/reg-event-fx
  ::stop-track-vims
- (fn [_ [_ vims]]
+ [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/vims-branch vims]))]
+ (fn [{branch ::vcs.subs/vims-branch} [_ vims]]
    {:pre [vims]}
    {:track    {:action :dispose :id [::vims vims]}
-    :dispatch [::stop-track-branch vims]}))
+    :dispatch [::stop-track-branch branch]}))
 
 (re-frame/reg-event-fx
  ::stop-track-branch
- [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/vims-branch vims]))]
- (fn [{branch ::vcs.subs/vims-branch} [_ vims]]
-   {:pre [branch]}
+ (fn [_ [_ branch]]
    {:track
     (for [file (::branch/files branch)]
       {:action :dispose :id [::file file]})}))
