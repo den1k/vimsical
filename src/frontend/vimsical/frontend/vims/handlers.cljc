@@ -91,7 +91,6 @@
 
 (defn vims-success-handler
   [{:keys [db]} [_ vims]]
-  (println "SUCCESS" vims)
   {:db (util.mg/add db vims)})
 
 (re-frame/reg-event-fx ::vims              vims-handler)
@@ -102,25 +101,13 @@
 ;;
 
 (defn deltas-handler
-  [{:keys [db]} [_ vims-uid status-key]]
+  [{:keys [db]} [_ uuid-fn vims-uid status-key]]
   {:remote
    {:id               :backend
     :status-key       status-key
     :event            [::vims.queries/deltas vims-uid]
     ;; Close over vims-uid so that the vcs handler can retrieve the vims
     :dispatch-success (fn [_ deltas]
-                        [::vcs.handlers/init vims-uid deltas])}})
+                        [::vcs.handlers/init uuid-fn vims-uid deltas])}})
 
 (re-frame/reg-event-fx ::deltas deltas-handler)
-
-;;
-;; ** Vims + deltas
-;;
-
-(defn vims+deltas-handler
-  [{:keys [db]} [_ vims-uid vims-status-key deltas-status-key]]
-  {:dispatch-n
-   [[::vims   vims-uid vims-status-key]
-    [::deltas vims-uid deltas-status-key]]})
-
-(re-frame/reg-event-fx ::vims+deltas vims+deltas-handler)

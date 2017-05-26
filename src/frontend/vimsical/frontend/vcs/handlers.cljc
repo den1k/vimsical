@@ -19,36 +19,41 @@
 ;; * VCS Vims init
 ;;
 
+(defn init-vims-vcs
+  [uuid-fn {:as vims :keys [db/uid] ::vims/keys [branches]} deltas]
+  {:pre [uid (seq branches)]}
+  (let [master             (branch/master branches)
+        empty-vcs          (vcs/empty-vcs branches)
+        vcs-state          (reduce
+                            (fn [vcs delta]
+                              (vcs/add-delta vcs uuid-fn delta))
+                            empty-vcs deltas)
+        vcs-frontend-state {:db/uid             (uuid-fn)
+                            ::vcs.db/branch-uid (:db/uid master)
+                            ::vcs.db/delta-uid  nil}
+        vcs-entity         (merge vcs-state vcs-frontend-state)]
+    (assoc vims ::vims/vcs vcs-entity)))
+
 (defmulti init
-  (fn [db [_ vims _]]
+  (fn [db [_ _ vims _]]
     (cond
       (map? vims)       :vims
       (mg/ref? db vims) :ref
       (uuid? vims)      :uid)))
 
 (defmethod init :uid
-  [db [event-id uid deltas :as event]]
+  [db [event-id uuid-fn uid deltas :as event]]
   (let [ref [:db/uid uid]]
-    (init db [event-id ref deltas])))
+    (init db [event-id uuid-fn ref deltas])))
 
 (defmethod init :ref
-  [db [event-id ref deltas :as event]]
+  [db [event-id uuid-fn ref deltas :as event]]
   (let [vims (mg/pull db queries/vims ref)]
-    (init db [event-id vims deltas])))
+    (init db [event-id uuid-fn vims deltas])))
 
 (defmethod init :vims
-  [db [_ {:as vims :keys [db/uid] ::vims/keys [branches]} deltas]]
-  (let [master             (branch/master branches)
-        empty-vcs          (vcs/empty-vcs branches)
-        vcs-state          (reduce
-                            (fn [vcs delta]
-                              (vcs/add-delta vcs uuid delta))
-                            empty-vcs deltas)
-        vcs-frontend-state {:db/uid             (uuid)
-                            ::vcs.db/branch-uid (:db/uid master)
-                            ::vcs.db/delta-uid  nil}
-        vcs-entity         (merge vcs-state vcs-frontend-state)
-        vims'              (assoc vims ::vims/vcs vcs-entity)]
+  [db [_ uuid-fn vims deltas]]
+  (let [vims' (init-vims-vcs uuid-fn vims deltas)]
     (mg/add db vims')))
 
 (re-frame/reg-event-db ::init init)
