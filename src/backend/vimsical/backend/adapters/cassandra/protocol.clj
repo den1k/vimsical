@@ -1,6 +1,4 @@
-(ns vimsical.backend.adapters.cassandra.protocol
-  (:require
-   [clojure.core.async :as async]))
+(ns vimsical.backend.adapters.cassandra.protocol)
 
 (defprotocol ICassandra
   (create-schema! [_ schema])
@@ -23,15 +21,3 @@
     [this commands]
     [this commands batch-type]
     [this commands batch-type {:keys [channel] :as opts}]))
-
-(defn exception?
-  [x]
-  (and x (instance? clojure.lang.ExceptionInfo x)))
-
-(defmacro <? [chan]
-  `(when-some [x# (async/<! ~chan)]
-     (if (exception? x#) (throw x#) x#)))
-
-(defn <?? [chan]
-  (when-some [x (async/<!! chan)]
-    (if (exception? x) (throw x) x)))

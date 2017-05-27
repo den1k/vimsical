@@ -46,15 +46,13 @@
 (defmacro alts?
   ([ports] (alts? ports true))
   ([ports close-all-on-error?]
-   `(letfn [(cleanup! []
-              (doseq [p# ~ports] (a/close! p#)))]
-      (when-some [[x#] (a/alts! ~ports)]
-        (if (throwable? x#)
-          (do
-            (when ~close-all-on-error?
-              (cleanup!))
-            (throw x#))
-          x#)))))
+   `(when-some [[x#] (a/alts! ~ports)]
+      (if (throwable? x#)
+        (do
+          (when ~close-all-on-error?
+            (doseq [p# ~ports] (a/close! p#)))
+          (throw x#))
+        x#))))
 
 (defn alts??
   ([ports] (alts?? ports true))

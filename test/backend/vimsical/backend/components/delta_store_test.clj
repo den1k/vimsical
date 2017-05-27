@@ -1,12 +1,12 @@
 (ns vimsical.backend.components.delta-store-test
   (:require
    [clojure.core.async :as a]
-   [vimsical.common.test :refer [uuid]]
-   [clojure.test :refer [deftest testing is are use-fixtures]]
+   [clojure.test :refer [deftest is testing use-fixtures]]
    [orchestra.spec.test :as st]
    [vimsical.backend.components.delta-store.fixture :as fixture :refer [*delta-store*]]
    [vimsical.backend.components.delta-store.protocol :as p]
-   [vimsical.backend.adapters.cassandra.protocol :refer [<? <??]]))
+   [vimsical.backend.util.async :refer [<??]]
+   [vimsical.common.test :refer [uuid]]))
 
 (st/instrument)
 

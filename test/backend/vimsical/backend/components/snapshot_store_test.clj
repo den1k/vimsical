@@ -3,9 +3,9 @@
    [clojure.core.async :as a]
    [clojure.test :refer [deftest is testing use-fixtures]]
    [orchestra.spec.test :as st]
-   [vimsical.backend.adapters.cassandra.protocol :refer [<??]]
    [vimsical.backend.components.snapshot-store.fixture :as fixture :refer [*snapshot-store*]]
    [vimsical.backend.components.snapshot-store.protocol :as p]
+   [vimsical.backend.util.async :refer [<??]]
    [vimsical.common.test :refer [uuid]]
    [vimsical.vcs.snapshot :as snapshot]))
 

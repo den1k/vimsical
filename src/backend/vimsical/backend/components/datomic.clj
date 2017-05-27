@@ -4,7 +4,8 @@
    [clojure.java.io :as io]
    [com.stuartsierra.component :as cp]
    [datomic.api :as d]
-   [vimsical.common.env :as env])
+   [vimsical.common.env :as env]
+   [vimsical.backend.util.async :as async])
   (:import
    (datomic Util)
    (datomic.peer Connection LocalConnection)))
@@ -57,9 +58,29 @@
   (-pull [_ query eid])
   (-q [_ query inputs]))
 
-(defn transact [component  entity-or-txs] (-transact component entity-or-txs))
+;;
+;; * API
+;;
+
+(defn transact [component entity-or-txs] (-transact component entity-or-txs))
 (defn pull [component query eid] (-pull component query eid))
 (defn q [component query & inputs] (-q component query inputs))
+
+;;
+;; * Async API
+;;
+
+(defn transact-chan [component entity-or-txs]
+  (async/thread-try
+   (do (deref (-transact component entity-or-txs)) nil)))
+
+(defn pull-chan [component query eid]
+  (async/thread-try
+   (-pull component query eid)))
+
+(defn q-chan [component query & inputs]
+  (async/thread-try
+   (-q component query inputs)))
 
 ;;
 ;; * Component

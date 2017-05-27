@@ -2,7 +2,9 @@
   (:require
    [clojure.spec :as s]
    [io.pedestal.interceptor.chain :as interceptor.chain]
-   [vimsical.remotes.event :as event]))
+   [vimsical.remotes.event :as event]
+   [vimsical.backend.util.async :as async]
+   [clojure.core.async :as a]))
 
 ;;
 ;; * Context spec
@@ -113,3 +115,15 @@
              (assoc response
                     :status status
                     :body (or body ""))))))
+
+;;
+;; * Async context
+;;
+
+(defmacro async
+  [context & body]
+  `(a/go
+     (try
+       (do ~@body)
+       (catch Throwable t#
+         (set-error ~context t#)))))

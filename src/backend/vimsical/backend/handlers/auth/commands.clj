@@ -4,6 +4,7 @@
    [vimsical.backend.components.datomic :as datomic]
    [vimsical.backend.components.session-store :as session-store]
    [vimsical.backend.handlers.multi :as multi]
+   [vimsical.backend.util.async :as async]
    [vimsical.backend.util.auth :as util.auth]
    [vimsical.queries.user :as queries.user]
    [vimsical.remotes.backend.auth.commands :as commands]
@@ -36,9 +37,9 @@
     [?e ::user/email ?email]
     [?e ::user/password ?password]])
 
-(defn pull-user
+(defn user-chan
   [{:keys [datomic]} user-uid]
-  (datomic/pull datomic queries.user/datomic-pull-query [:db/uid user-uid]))
+  (datomic/pull-chan datomic queries.user/datomic-pull-query [:db/uid user-uid]))
 
 ;;
 ;; * Registration
@@ -49,15 +50,17 @@
   [{:keys [datomic] :as context} [_ {:keys [db/uid] :as register-user}]]
   (letfn [(hash-user-password [user]
             (update user ::user/password util.auth/hash-password))
-          (transact-user! [user]
-            (let [tx (hash-user-password user)]
-              (deref (datomic/transact datomic [tx]))))]
-    ;; XXX Go async?
-    (let [_    (transact-user! register-user)
-          user (pull-user context uid)]
-      (-> context
-          (create-user-session uid)
-          (multi/set-response user)))))
+          (user-tx-chan [user]
+            (async/thread-try
+             (let [tx (hash-user-password user)]
+               (deref (datomic/transact datomic [tx])))))]
+    (multi/async
+     context
+     (let [_    (async/<? (user-tx-chan register-user))
+           user (async/<? (user-chan context uid))]
+       (-> context
+           (create-user-session uid)
+           (multi/set-response user))))))
 
 ;;
 ;; * Login
@@ -71,10 +74,12 @@
               (and (util.auth/check-password password password-hash) uid)))]
     ;; XXX Go async?
     (if-let [uid (authenticate-user datomic login-user)]
-      (let [user (pull-user context uid)]
-        (-> context
-            (create-user-session uid)
-            (multi/set-response user)))
+      (multi/async
+       context
+       (let [user (async/<? (user-chan context uid))]
+         (-> context
+             (create-user-session uid)
+             (multi/set-response user))))
       (multi/delete-session context))))
 
 (defmethod multi/handle-event ::commands/logout
