@@ -59,3 +59,6 @@
 (s/def ::data any?)
 (s/def ::cause string?)
 (s/def ::error (s/keys :opt [::msg ::data ::cause]))
+
+(defn throwable->error [t]
+  (-> t Throwable->map (select-keys [:msg])))

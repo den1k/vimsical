@@ -1,12 +1,4 @@
 (ns vimsical.frontend.remotes.fx
-  "Usage:
-  (re-frame/reg-event-fx ::example
-    (fn [db _]
-      ...
-      {:db ...
-       :remote
-        {:id    :backend
-         :event [::auth.commands/login {::user/email \"foo@bar.com\" ::user/password \"123\"}]}}"
   (:require
    [clojure.spec :as s]
    [re-frame.core :as re-frame]
@@ -22,7 +14,7 @@
 (s/def ::event ::event/event)
 (s/def ::disptach-success (s/or :disabled false? :handler-id keyword?))
 (s/def ::disptach-error keyword?)
-(s/def ::status-key some?)
+(s/def ::status-key any?)
 (s/def ::fx (s/keys :req-un [::id ::event/event]
                     :opt-un [::status-key ::dispatch-success ::disptach-error]))
 
@@ -49,13 +41,11 @@
 ;; ** Spec
 ;;
 
-(s/def ::error map?)
-
 (s/def ::status
   (s/nilable
    (s/or :pending #{::pending}
          :success #{::success}
-         :error     ::error)))
+         :error     ::event/error)))
 
 (s/fdef get-status
         :args (s/cat :registry map?
@@ -69,7 +59,7 @@
 (s/fdef set-status
         :args (s/cat :registry map?
                      :remote-id ::id
-                     :status-key (s/nilable ::status-key)
+                     :status-key ::status-key
                      :status ::status)
         :ret map?)
 
@@ -84,6 +74,7 @@
 (re-frame/reg-sub-raw
  ::status
  (fn [_ [_ remote-id status-key]]
+   {:pre [remote-id]}
    (interop/make-reaction
     (fn []
       (get-status @status-registry remote-id status-key)))))

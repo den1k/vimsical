@@ -71,7 +71,7 @@
 (deftest deltas-test
   (vims-test)
   (let [status-key    (uuid)
-        handler-event [::frontend.vims.handlers/deltas (uuid ::data/vims) status-key]
+        handler-event [::frontend.vims.handlers/deltas uuid (uuid ::data/vims) status-key]
         status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub        (re-frame/subscribe [::db/db])]
     (re-frame/dispatch handler-event)
@@ -82,5 +82,18 @@
       (is (= (count data/deltas) (count vcs-deltas))))))
 
 ;;
-;; * TODO Snapshots
+;; * Snapshots
 ;;
+
+(deftest snapshots-test
+  (vims-test)
+  (let [status-key    (uuid)
+        handler-event [::frontend.vims.handlers/deltas uuid (uuid ::data/vims) status-key]
+        status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
+        db-sub        (re-frame/subscribe [::db/db])]
+    (re-frame/dispatch handler-event)
+    (is (= ::frontend.remotes.fx/success @status-sub))
+    (is (s/valid? ::vcs/vcs (-> db-sub get-vims ::vims/vcs)))
+    (let [last-delta-uid (-> data/deltas last :uid)
+          vcs-deltas     (-> db-sub get-vims ::vims/vcs (vcs/deltas last-delta-uid))]
+      (is (= (count data/deltas) (count vcs-deltas))))))

@@ -15,7 +15,8 @@
 
 (def routes
   #{["/events"
-     :post [interceptors.event-auth/event-auth interceptors.event/event]
+     :post [interceptors.event-auth/event-auth
+            interceptors.event/handle-event]
      :route-name :events]})
 
 (def url-for

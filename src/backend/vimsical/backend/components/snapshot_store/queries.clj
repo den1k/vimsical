@@ -9,15 +9,8 @@
 ;;
 
 (defn snapshot->insert-values
-  ([user-uid vims-uid]
-   (fn [snapshpot]
-     (snapshot->insert-values user-uid vims-uid snapshot->insert-values)))
-  ([user-uid vims-uid snapshot]
-   (merge
-    (-> snapshot
-        (common.util/unqualify-keys)
-        (util/hyphens->underscores))
-    {:user_uid user-uid :vims_uid vims-uid})))
+  [snapshot]
+  (-> snapshot (common.util/unqualify-keys) (util/hyphens->underscores)))
 
 ;;
 ;; * Queries

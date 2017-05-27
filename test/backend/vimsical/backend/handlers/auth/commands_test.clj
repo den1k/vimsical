@@ -24,8 +24,15 @@
 
 (deftest login-test
   (do (register-test)
-      (let [login-user {::user/email    "foo@bar.com"
+      (let [login-user {:db/uid         (uuid)
+                        ::user/email    "foo@bar.com"
                         ::user/password "foobar"}
             actual     (server.test/response-for [::auth.commands/login login-user])]
         (is (server.test/status-ok? actual))
         (is (server.test/active-session? actual)))))
+
+(deftest logout-test
+  (do (register-test)
+      (let [actual (server.test/response-for [::auth.commands/logout])]
+        (is (server.test/status-ok? actual))
+        (is (not (server.test/active-session? actual))))))

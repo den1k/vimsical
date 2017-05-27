@@ -30,9 +30,7 @@
   (try
     ;; Missing util to properly decode responses depending on the content-type
     (transit/read-transit body)
-    (catch Throwable t
-      (log/error t)
-      body)))
+    (catch Throwable _)))
 
 (defn- post-data
   [event]

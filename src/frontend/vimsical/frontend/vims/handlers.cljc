@@ -4,6 +4,7 @@
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.frontend.vcs.handlers :as vcs.handlers]
+   [vimsical.queries.snapshot :as snapshot]
    [vimsical.remotes.backend.vims.commands :as vims.commands]
    [vimsical.remotes.backend.vims.queries :as vims.queries]
    [vimsical.user :as user]
@@ -45,13 +46,15 @@
 ;;
 
 (defn title-handler
-  [{:keys [db]} [_ vims title]]
-  (let [vims' (assoc vims ::vims/title title)
-        db'   (util.mg/add db vims')]
+  [{:keys [db]} [_ vims title status-key]]
+  (let [vims'  (assoc vims ::vims/title title)
+        remote (select-keys vims' [:db/uid ::vims/title])
+        db'    (util.mg/add db vims')]
     {:db db'
      :remote
-     {:id    :backend
-      :event [::vims.commands/title vims']}}))
+     {:id         :backend
+      :event      [::vims.commands/title remote]
+      :status-key status-key}}))
 
 (re-frame/reg-event-fx ::title title-handler)
 
@@ -59,17 +62,30 @@
 ;; * Snapshots
 ;;
 
+(defn new-snapshots
+  [{:as                 vims
+    vcs                 ::vims/vcs
+    {owner-uid :db/uid} ::vims/owner
+    vims-uid            :db/uid}]
+  {:pre [vcs owner-uid vims-uid]}
+  (mapv
+   ;; NOTE we currently doesn't use a uid for the snapshots but mapgraph
+   ;; requires some non-compound id key, so we generate a random one here, but
+   ;; we may want to just add it to the schema instead?
+   (fn [snapshot] (assoc snapshot :db/uid (uuid)))
+   (vcs.core/vims-snapshots vcs owner-uid vims-uid)))
+
 (defn update-snapshots-handler
-  [{:keys [db]} [_ {::vims/keys [vcs] :as vims}]]
-  (let [owner-uid (-> vims ::vims/owner :db/uid)
-        vims-uid  (-> vims :db/uid)
-        snapshots (vcs.core/vims-snapshots vcs owner-uid vims-uid)
-        vims'     (assoc vims ::vims/snapshots snapshots)
-        db'       (util.mg/add db vims')]
+  [{:keys [db]} [_ {::vims/keys [vcs] :as vims} status-key]]
+  (let [snapshots        (new-snapshots vims)
+        remote-snapshots (mapv #(select-keys % snapshot/pull-query) snapshots)
+        vims'            (assoc vims ::vims/snapshots snapshots)
+        db'              (util.mg/add db vims')]
     {:db db'
      :remote
-     {:id    :backend
-      :event [::vims.commands/update-snapshots snapshots]}}))
+     {:id         :backend
+      :event      [::vims.commands/update-snapshots remote-snapshots]
+      :status-key status-key}}))
 
 (re-frame/reg-event-fx ::update-snapshots update-snapshots-handler)
 

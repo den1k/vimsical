@@ -12,7 +12,6 @@
    [vimsical.frontend.db :as db]
    [vimsical.frontend.remotes.fx :as frontend.remotes.fx]
    [vimsical.queries.user :as queries.user]
-   [vimsical.remotes.backend.auth.commands :as auth.commands]
    [vimsical.user :as user]))
 
 (st/instrument)
@@ -28,7 +27,9 @@
      (re-frame/dispatch [::db/init])
      (f))))
 
-(use-fixtures :each system.fixture/system re-frame-fixture)
+(use-fixtures :each
+  system.fixture/system
+  re-frame-fixture)
 
 ;;
 ;; * Tests
@@ -43,15 +44,15 @@
     [{[:app/user '_] queries.user/pull-query}])))
 
 (deftest register-test
-  (let [register-user {:db/uid           (uuid :register-user)
+  (let [status-key    (uuid)
+        register-user {:db/uid           (uuid :register-user)
                        ::user/first-name "foo"
                        ::user/last-name  "bar"
                        ::user/email      "foo@bar.com"
                        ::user/password   "foobar"}
-        remote-event  [::auth.commands/register register-user]
-        status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend  remote-event])
+        status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub        (re-frame/subscribe [::db/db])]
-    (re-frame/dispatch [::frontend.auth.handlers/register register-user])
+    (re-frame/dispatch [::frontend.auth.handlers/register register-user status-key])
     (is (= ::frontend.remotes.fx/success @status-sub))
     (let [app-user (get-app-user db-sub)]
       (is (s/valid? ::user/user app-user))
@@ -61,11 +62,11 @@
 (deftest login-test
   (register-test)
   (re-frame/dispatch [::db/init])
-  (let [login-user   {:db/uid (uuid :temp-user) ::user/email "foo@bar.com" ::user/password "foobar"}
-        remote-event [::auth.commands/login login-user]
-        status-sub   (re-frame/subscribe [::frontend.remotes.fx/status :backend  remote-event])
+  (let [status-key   (uuid)
+        login-user   {:db/uid (uuid :temp-user) ::user/email "foo@bar.com" ::user/password "foobar"}
+        status-sub   (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub       (re-frame/subscribe [::db/db])]
-    (re-frame/dispatch [::frontend.auth.handlers/login login-user])
+    (re-frame/dispatch [::frontend.auth.handlers/login login-user status-key])
     (is (= ::frontend.remotes.fx/success @status-sub))
     (let [app-user (get-app-user db-sub)]
       (is (s/valid? ::user/user app-user))

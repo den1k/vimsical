@@ -2,6 +2,7 @@
   (:require
    [clojure.core.async :as a]
    [clojure.spec :as s]
+   [vimsical.backend.adapters.cassandra.protocol :refer [<?]]
    [vimsical.backend.components.datomic :as datomic]
    [vimsical.backend.components.snapshot-store :as snapshot-store]
    [vimsical.remotes.backend.user.queries :as user.queries]
@@ -47,19 +48,26 @@
 ;; * Event handler
 ;;
 
+(s/def ::context-spec
+  (s/keys :req-un [::datomic/datomic ::snapshot-store/snapshot-store]))
 (defmethod event-auth/require-auth? ::user.queries/me [_] true)
-(defmethod multi/context-spec ::user.queries/me [_] (s/keys :req-un [::datomic/datomic ::snapshot-store/snapshot-store]))
+(defmethod multi/context-spec ::user.queries/me [_] ::context-spec)
 (defmethod multi/handle-event ::user.queries/me
   [{:keys [datomic snapshot-store user/uid] :as context} _]
-  (let [out-chan (a/chan)               ; try a promise-chan ?
-        user     (datomic/pull datomic queries.user/pull-query [:db/uid uid])]
-    (letfn [(success [snapshots]
-              (doto out-chan
-                (a/put! (user-join-snapshots user snapshots))
-                (a/close!)))
-            (error [error]
-              (doto out-chan
-                (a/put! error)
-                (a/close!)))]
-      (snapshot-store.protocol/select-snapshots-async snapshot-store uid nil success error))
-    out-chan))
+  (letfn [(pull-user []
+            (a/thread
+              (try
+                (datomic/pull
+                 datomic queries.user/pull-query [:db/uid uid])
+                (catch Throwable t t))))
+          (pull-snapshots []
+            (snapshot-store.protocol/select-snapshots-chan snapshot-store uid nil))]
+    (a/go
+      (try
+        ;; XXX Would be better if we could run the ops in parallel
+        (let [user           (<? (pull-user))
+              snapshots      (<? (pull-snapshots))
+              user+snapshots (user-join-snapshots user snapshots)]
+          (multi/set-response context user+snapshots))
+        (catch Throwable t
+          (multi/set-error context t))))))

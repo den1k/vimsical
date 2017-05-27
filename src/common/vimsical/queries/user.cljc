@@ -13,6 +13,15 @@
    {::user/vimsae vims/pull-query}
    {::user/settings settings/pull-query}])
 
+(def frontend-pull-query
+  [:db/uid
+   ::user/first-name
+   ::user/last-name
+   ::user/email
+   ::user/password
+   {::user/vimsae vims/frontend-pull-query}
+   {::user/settings settings/pull-query}])
+
 (def datomic-pull-query
   [:db/uid
    ::user/first-name

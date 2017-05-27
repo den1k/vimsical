@@ -28,9 +28,9 @@
   [x]
   (and x (instance? clojure.lang.ExceptionInfo x)))
 
-(defn <? [chan]
-  (when-some [x (async/<! chan)]
-    (if (exception? x) (throw x) x)))
+(defmacro <? [chan]
+  `(when-some [x# (async/<! ~chan)]
+     (if (exception? x#) (throw x#) x#)))
 
 (defn <?? [chan]
   (when-some [x (async/<!! chan)]

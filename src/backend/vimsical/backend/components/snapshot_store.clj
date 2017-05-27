@@ -1,14 +1,14 @@
 (ns vimsical.backend.components.snapshot-store
   (:require
+   [clojure.spec :as s]
    [com.stuartsierra.component :as cp]
    [vimsical.backend.adapters.cassandra.protocol :as cassandra]
-   [vimsical.backend.components.snapshot-store.protocol :as protocol]
-   [vimsical.backend.components.snapshot-store.schema :as schema]
-   [vimsical.backend.components.snapshot-store.queries :as queries]
-   [vimsical.common.util.core :as util]
-   [vimsical.vcs.snapshot :as snapshot]
    [vimsical.backend.adapters.cassandra.util :as cassandra.util]
-   [clojure.spec :as s]))
+   [vimsical.backend.components.snapshot-store.protocol :as protocol]
+   [vimsical.backend.components.snapshot-store.queries :as queries]
+   [vimsical.backend.components.snapshot-store.schema :as schema]
+   [vimsical.common.util.core :as util]
+   [vimsical.vcs.snapshot :as snapshot]))
 
 ;;
 ;; * Queries
@@ -25,10 +25,10 @@
 (defn- select-snapshots-command [user-uid vims-uid]
   [::select-snapshots [user-uid vims-uid]])
 
-(defn- insert-snapshots-commands [user-uid vims-uid snapshots]
+(defn- insert-snapshots-commands [snapshots]
   (mapv
    (fn [snapshot]
-     [::insert-snapshot (queries/snapshot->insert-values user-uid vims-uid snapshot)])
+     [::insert-snapshot (queries/snapshot->insert-values snapshot)])
    snapshots))
 
 ;;
@@ -64,8 +64,8 @@
   (select-snapshots-async [_ user-uid vims-uid success error]
     (let [command (select-snapshots-command user-uid vims-uid)]
       (cassandra/execute-async cassandra command success error default-options)))
-  (insert-snapshots-async [_ user-uid vims-uid snapshots success error]
-    (let [commands (insert-snapshots-commands user-uid vims-uid snapshots)]
+  (insert-snapshots-async [_ snapshots success error]
+    (let [commands (insert-snapshots-commands snapshots)]
       (cassandra/execute-batch-async cassandra commands :unlogged success error default-options)))
 
   protocol/ISnapshotStoreChan
@@ -76,10 +76,10 @@
           options' (new-options options)]
       (cassandra/execute-chan cassandra command options')))
 
-  (insert-snapshots-chan [this user-uid vims-uid snapshots]
-    (protocol/insert-snapshots-chan this user-uid vims-uid snapshots nil))
-  (insert-snapshots-chan [_ user-uid vims-uid snapshots options]
-    (let [commands (insert-snapshots-commands user-uid vims-uid snapshots)
+  (insert-snapshots-chan [this snapshots]
+    (protocol/insert-snapshots-chan this snapshots nil))
+  (insert-snapshots-chan [_ snapshots options]
+    (let [commands (insert-snapshots-commands snapshots)
           options' (new-options options)]
       (cassandra/execute-batch-chan cassandra commands :unlogged options'))))
 

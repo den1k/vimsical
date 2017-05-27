@@ -1,15 +1,13 @@
 (ns vimsical.backend.handlers.auth.commands
   (:require
-   [vimsical.backend.util.log :as log]
+   [clojure.spec :as s]
    [vimsical.backend.components.datomic :as datomic]
-   [vimsical.backend.components.server.interceptors.session :as session]
    [vimsical.backend.components.session-store :as session-store]
    [vimsical.backend.handlers.multi :as multi]
    [vimsical.backend.util.auth :as util.auth]
-   [vimsical.remotes.backend.auth.commands :as commands]
    [vimsical.queries.user :as queries.user]
-   [vimsical.user :as user]
-   [clojure.spec :as s]))
+   [vimsical.remotes.backend.auth.commands :as commands]
+   [vimsical.user :as user]))
 
 ;;
 ;; * Spec
@@ -22,11 +20,9 @@
 ;; * Session helpers
 ;;
 
-(defn create-user-session [context user-uid]
-  (assoc context :session ^:recreate {::user/uid user-uid}))
-
-(defn clear-session [context]
-  (dissoc context :session))
+(defn create-user-session
+  [context user-uid]
+  (multi/reset-session context {::user/uid user-uid}))
 
 ;;
 ;; * Datomic queries
@@ -45,27 +41,6 @@
   (datomic/pull datomic queries.user/datomic-pull-query [:db/uid user-uid]))
 
 ;;
-;; * Login
-;;
-
-(defmethod multi/context-spec ::commands/login [_] ::context-deps)
-(defmethod multi/handle-event ::commands/login
-  [{:keys [datomic] :as context} [_ login-user]]
-  (letfn [(authenticate-user [{:keys [conn]} {::user/keys [email password]}]
-            (let [[[uid password-hash]] (vec (datomic/q datomic authenticate-user-query email))]
-              (and (util.auth/check-password password password-hash) uid)))]
-    (if-let [uid (authenticate-user datomic login-user)]
-      (let [user (pull-user context uid)]
-        (-> context
-            (create-user-session uid)
-            (assoc-in [:response :body] user)))
-      (clear-session context))))
-
-(defmethod multi/handle-event ::commands/logout
-  [context _]
-  (clear-session context))
-
-;;
 ;; * Registration
 ;;
 
@@ -77,8 +52,32 @@
           (transact-user! [user]
             (let [tx (hash-user-password user)]
               (deref (datomic/transact datomic [tx]))))]
+    ;; XXX Go async?
     (let [_    (transact-user! register-user)
           user (pull-user context uid)]
       (-> context
           (create-user-session uid)
-          (assoc-in [:response :body] user)))))
+          (multi/set-response user)))))
+
+;;
+;; * Login
+;;
+
+(defmethod multi/context-spec ::commands/login [_] ::context-deps)
+(defmethod multi/handle-event ::commands/login
+  [{:keys [datomic] :as context} [_ login-user]]
+  (letfn [(authenticate-user [{:keys [conn]} {::user/keys [email password]}]
+            (let [[[uid password-hash]] (vec (datomic/q datomic authenticate-user-query email))]
+              (and (util.auth/check-password password password-hash) uid)))]
+    ;; XXX Go async?
+    (if-let [uid (authenticate-user datomic login-user)]
+      (let [user (pull-user context uid)]
+        (-> context
+            (create-user-session uid)
+            (multi/set-response user)))
+      (multi/delete-session context))))
+
+(defmethod multi/handle-event ::commands/logout
+  [context _]
+  (multi/delete-session context))
+

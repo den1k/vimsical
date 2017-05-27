@@ -1,6 +1,7 @@
 (ns vimsical.backend.handlers.multi
   (:require
    [clojure.spec :as s]
+   [io.pedestal.interceptor.chain :as interceptor.chain]
    [vimsical.remotes.event :as event]))
 
 ;;
@@ -70,3 +71,45 @@
 
 (s/def ::context-in  (s/and  ::request-context ::context-spec))
 (s/def ::context-out ::response-context)
+
+;;
+;; * Session helpers
+;;
+
+(defn assoc-session
+  [{:keys [session] :as context} k value]
+  (let [session' (assoc session k value)]
+    (assoc-in context [:response :session] session')))
+
+(defn set-session
+  [context session]
+  (assoc-in context [:response :session] session))
+
+(defn reset-session
+  [context session]
+  (set-session context (vary-meta session assoc :recreate true)))
+
+(defn delete-session
+  [context]
+  (assoc-in context [:response :session] nil))
+
+;;
+;; * Error helpers
+;;
+
+(defn set-error
+  [context throwable]
+  (assoc context ::interceptor.chain/error throwable))
+
+;;
+;; * Response helpers
+;;
+
+(defn set-response
+  ([context body] (set-response context 200 body))
+  ([context status body]
+   (update context :response
+           (fn [response]
+             (assoc response
+                    :status status
+                    :body (or body ""))))))

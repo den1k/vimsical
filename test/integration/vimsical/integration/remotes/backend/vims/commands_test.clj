@@ -1,6 +1,7 @@
 (ns vimsical.integration.remotes.backend.vims.commands-test
+  "NOTE these tests are used from the remote queries test to assert that remote"
   (:require
-   [clojure.test :refer [deftest is use-fixtures]]
+   [clojure.test :refer [deftest is testing use-fixtures]]
    [com.stuartsierra.mapgraph :as mg]
    [day8.re-frame.test :as re-frame.test]
    [orchestra.spec.test :as st]
@@ -10,9 +11,12 @@
    [vimsical.common.test :refer [uuid]]
    [vimsical.frontend.db :as db]
    [vimsical.frontend.remotes.fx :as frontend.remotes.fx]
+   [vimsical.frontend.vcs.handlers :as vcs.handlers]
    [vimsical.frontend.vims.handlers :as frontend.vims.handlers]
    [vimsical.queries.user :as queries.user]
-   [vimsical.user :as user]))
+   [vimsical.user :as user]
+   [vimsical.vcs.snapshot :as snapshot]
+   [vimsical.vims :as vims]))
 
 (st/instrument)
 
@@ -47,10 +51,9 @@
 
 (defn get-app-user
   [db-sub]
-  (:app/user
-   (mg/pull
-    @db-sub
-    [{[:app/user '_] queries.user/pull-query}])))
+  (-> @db-sub
+      (mg/pull [{[:app/user '_] queries.user/frontend-pull-query}])
+      :app/user))
 
 ;;
 ;; * Vims
@@ -67,9 +70,34 @@
     (is (= 2 (-> db-sub get-app-user ::user/vimsae count)))))
 
 ;;
-;; * TODO Title
+;; * Title
 ;;
 
+(deftest set-title-test
+  (let [status-key    (uuid)
+        handler-event [::frontend.vims.handlers/title {:db/uid (uuid ::data/vims)} "Updated"
+                       status-key]
+        status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
+        db-sub        (re-frame/subscribe [::db/db])]
+    (re-frame/dispatch handler-event)
+    (is (= ::frontend.remotes.fx/success @status-sub))
+    (is (= "Updated" (-> db-sub get-app-user ::user/vimsae first ::vims/title)))))
+
 ;;
-;; * TODO Snapshots
+;; * Snapshots
 ;;
+
+(deftest update-snapshots-test
+  (let [status-key    (uuid)
+        vims+vcs      (vcs.handlers/init-vims-vcs uuid data/vims data/deltas)
+        handler-event [::frontend.vims.handlers/update-snapshots vims+vcs status-key]
+        status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
+        db-sub        (re-frame/subscribe [::db/db])]
+    (re-frame/dispatch handler-event)
+    (is (= ::frontend.remotes.fx/success @status-sub))
+    (let [snapshots (->> db-sub get-app-user ::user/vimsae first ::vims/snapshots)]
+      (testing "Created snapshots for files that have deltas"
+        (is (= (->> data/deltas (map :file-uid) set count)
+               (->>  snapshots count))))
+      (testing "snapshot text"
+        (is (= "abcdef" (->> snapshots first ::snapshot/text)))))))

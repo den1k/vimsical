@@ -10,9 +10,17 @@
    [vimsical.backend.adapters.cassandra.cql :as cql]
    [vimsical.backend.adapters.cassandra.protocol :as protocol]
    [vimsical.backend.adapters.cassandra.util :as util]
-   [vimsical.backend.util.log :as log]
    [vimsical.common.util.core :as common.util])
-  (:import [com.datastax.driver.core PreparedStatement ResultSetFuture Session Statement]))
+  (:import
+   [com.datastax.driver.core PreparedStatement ResultSetFuture Session Statement]))
+
+;;
+;; * Async helpers
+;;
+
+(defn new-error-chan
+  ([] (new-error-chan 2))
+  ([n] (async/chan n (map identity) identity)))
 
 ;;
 ;; * Driver
@@ -182,7 +190,7 @@
     [this executable]
     (protocol/execute-chan this executable nil))
   (execute-chan
-    [{:as this :keys [session]} executable {:as options :keys [channel] :or {channel (async/chan 1)}}]
+    [{:as this :keys [session]} executable {:as options :keys [channel] :or {channel (new-error-chan)}}]
     {:pre [session]}
     (if-some [statement (command->statement this executable)]
       (let [options' (new-options options)]
@@ -200,7 +208,7 @@
     [this commands batch-type]
     (protocol/execute-batch-chan this commands batch-type nil))
   (execute-batch-chan
-    [{:keys [session] :as this} commands batch-type {:keys [channel] :as options :or {channel (async/chan 1)}}]
+    [{:keys [session] :as this} commands batch-type {:keys [channel] :as options :or {channel (new-error-chan)}}]
     (try
       (if-some [statements (commands->statements this commands)]
         (let [batch    (alia/batch statements batch-type)
@@ -261,25 +269,3 @@
     :replication-factor replication-factor
     :queries            queries}))
 
-;;
-;; * Async helpers
-;;
-
-(defn new-error-chan
-  "Return a chan of size `n`. If the producer puts a `Throwable` and
-  `ex->response-fn` is not nil and returns a non nil value, will put that
-  value on the chan instead.
-
-  This lets us inject the error handling logic in the producer rather than
-  handle it in every consumer context."
-  ([] (new-error-chan nil nil))
-  ([n] (new-error-chan n nil))
-  ([n ex->response-fn]
-   (letfn [(error? [x] (instance? Throwable x))]
-     (let [xf (keep
-               (fn [x]
-                 (cond
-                   (not (error? x))       x
-                   (nil? ex->response-fn) (log/error x)
-                   :else                  (ex->response-fn x))))]
-       (async/chan n xf (fn [e] (log/error "ex->response-fn error" e)))))))

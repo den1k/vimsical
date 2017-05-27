@@ -2,6 +2,7 @@
   (:require
    [clojure.core.async :as a]
    [clojure.spec :as s]
+   [vimsical.backend.adapters.cassandra.protocol :refer [<?]]
    [vimsical.backend.components.delta-store :as delta-store]
    [vimsical.backend.components.delta-store.protocol :as delta-store.protocol]
    [vimsical.backend.components.delta-store.validation :as delta-store.validation]
@@ -22,8 +23,11 @@
 (defmethod multi/handle-event ::queries/deltas-by-branch-uid
   [{:keys [delta-store] :as context} [_ vims-uid :as event]]
   (a/go
-    (let [deltas-by-branch-uid
-          (delta-store.protocol/select-deltas-by-branch-uid-chan delta-store vims-uid)]
-      (-> context
-          (assoc :response deltas-by-branch-uid)
-          (assoc-in [:response :session ::delta-store.validation/deltas-by-branch-uid] deltas-by-branch-uid)))))
+    (try
+      (let [query-chan           (delta-store.protocol/select-deltas-by-branch-uid-chan delta-store vims-uid)
+            deltas-by-branch-uid (<? query-chan)]
+        (-> context
+            (multi/set-response deltas-by-branch-uid)
+            (multi/assoc-session ::delta-store.validation/deltas-by-branch-uid  deltas-by-branch-uid)))
+      (catch Throwable t
+        (multi/set-error context t)))))

@@ -10,22 +10,22 @@
 (defn- context->session-options
   "Return valid options for `middlewares.session/session-response` using the
   context's `:session-store`."
-  [{:keys [session-store] :as context}]
-  {:pre [session-store] :post [(contains? % :store)]}
+  [{:keys [session-store]}]
+  {:pre  [session-store]
+   :post [(contains? % :store)]}
   ((deref #'middlewares.session/session-options) {:store session-store}))
 
-(defn- session-request
-  [context]
-  (let [options (context->session-options context)]
-    (update context :request middlewares.session/session-request options)))
+(defn- enter
+  [{:keys [request] :as context}]
+  (let [options                               (context->session-options context)
+        {:keys [session] :as session-request} (middlewares.session/session-request request options)]
+    (assoc context :request session-request :session session)))
 
-(defn- session-response
-  [{:keys [response request session] :as context}]
-  (let [options         (context->session-options context)
-        session-reponse (middlewares.session/session-response
-                         (assoc response :session session)
-                         request options)]
-    (assoc context :response session-reponse)))
+(defn- leave
+  [{:keys [request response] :as context}]
+  (let [options          (context->session-options context)
+        session-response (middlewares.session/session-response response request options)]
+    (assoc context :response session-response)))
 
 ;;
 ;; * Interceptor
@@ -36,5 +36,5 @@
   from the injected system component."
   (interceptor/interceptor
    {:name  ::session-store
-    :enter session-request
-    :leave session-response}))
+    :enter enter
+    :leave leave}))
