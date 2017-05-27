@@ -170,7 +170,7 @@
     :backend-log-dev]
 
    :integration-test
-   [:integration :backend-log-test]
+   [:integration-dev :backend-log-test]
 
    ;;
    ;; CSS
