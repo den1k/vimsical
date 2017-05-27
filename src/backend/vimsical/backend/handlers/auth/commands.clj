@@ -69,18 +69,18 @@
 (defmethod multi/context-spec ::commands/login [_] ::context-deps)
 (defmethod multi/handle-event ::commands/login
   [{:keys [datomic] :as context} [_ login-user]]
-  (letfn [(authenticate-user [{:keys [conn]} {::user/keys [email password]}]
-            (let [[[uid password-hash]] (vec (datomic/q datomic authenticate-user-query email))]
-              (and (util.auth/check-password password password-hash) uid)))]
-    ;; XXX Go async?
-    (if-let [uid (authenticate-user datomic login-user)]
-      (multi/async
-       context
-       (let [user (async/<? (user-chan context uid))]
-         (-> context
-             (create-user-session uid)
-             (multi/set-response user))))
-      (multi/delete-session context))))
+  (letfn [(user-uid-chan [{:keys [conn]} {::user/keys [email password]}]
+            (async/thread-try
+             (let [[[uid password-hash]] (vec (datomic/q datomic authenticate-user-query email))]
+               (or (and (util.auth/check-password password password-hash) uid)
+                   (throw (ex-info "Wrong credentials" {}))))))]
+    (multi/async
+     context
+     (let [uid  (async/<? (user-uid-chan datomic login-user))
+           user (async/<? (user-chan context uid))]
+       (-> context
+           (create-user-session uid)
+           (multi/set-response user))))))
 
 (defmethod multi/handle-event ::commands/logout
   [context _]
