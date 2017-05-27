@@ -7,7 +7,7 @@
 (s/def ::user-uid uuid?)
 (s/def ::vims-uid uuid?)
 (s/def ::file-uid ::file/uid)
-(s/def ::delta-uid ::delta/uid)
+(s/def ::delta-uid (s/nilable ::delta/uid))
 (s/def ::text string?)
 
 ;; NOTE the delta-uid should be nil for now because we want to keep a single

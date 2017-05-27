@@ -57,8 +57,8 @@
             (datomic/pull-chan
              datomic queries.user/pull-query [:db/uid uid]))
           (snapshots-chan []
-            (snapshot-store.protocol/select-snapshots-chan
-             snapshot-store uid nil))]
+            (snapshot-store.protocol/select-user-snapshots-chan
+             snapshot-store uid))]
     (multi/async
      context
      ;; XXX Would be better if we could run the ops in parallel

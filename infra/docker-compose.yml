@@ -13,7 +13,7 @@ volumes:
 services:
 
   cassandra:
-    image: cassandra:3.7
+    image: cassandra:3.10
     volumes:
       - "cassandra_data:/var/lib/cassandra"
 

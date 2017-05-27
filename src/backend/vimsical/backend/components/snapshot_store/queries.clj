@@ -16,14 +16,26 @@
 ;; * Queries
 ;;
 
-(def select-snapshots
+(def ^:private select-snapshots
   (cql/select
    :snapshot
-   (cql/columns :user_uid :vims_uid :file_uid :delta_uid :text)
+   (cql/columns :user_uid :vims_uid :file_uid :delta_uid :text)))
+
+(def select-vims-snapshots
+  (merge
+   select-snapshots
    (cql/where
     [[= (cql/token :user_uid :vims_uid) (cql/token cql/? cql/?)]])))
 
-(assert (string? (pr-str (cql/->raw select-snapshots))))
+(assert (string? (pr-str (cql/->raw select-vims-snapshots))))
+
+(def select-user-snapshots
+  (merge
+   select-snapshots
+   (cql/where [[= :user_uid cql/?]])
+   (cql/allow-filtering)))
+
+(assert (string? (pr-str (cql/->raw select-user-snapshots))))
 
 (def insert-snapshot
   (cql/insert
