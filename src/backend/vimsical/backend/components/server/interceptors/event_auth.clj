@@ -37,7 +37,7 @@
   [context]
   (some-> context :request :session ::user/uid))
 
-(defn- terminate
+(defn- unauthorized
   [context]
   (let [error-response (response/status {:body "Unauthorized"} 401)]
     (interceptor.chain/terminate
@@ -49,7 +49,7 @@
     context
     (if-some [user-uid (context->user-uid context)]
       (assoc context ::user/uid user-uid)
-      (terminate context))))
+      (unauthorized context))))
 
 ;;
 ;; * Interceptor

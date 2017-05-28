@@ -31,3 +31,23 @@
           (t/is (thrown? clojure.lang.ExceptionInfo (sut/alts?? [a b] false)))
           (t/is (not (ap/closed? a)))
           (t/is (ap/closed? b)))))))
+
+(t/deftest parallel-takes-test
+  (t/is (= [0 1 2 3]
+           (a/<!! (sut/parallel-promises
+                   [(a/go (a/<! (a/timeout 1000)) 0)
+                    (a/go (a/<! (a/timeout 100)) 1)
+                    (a/go (a/<! (a/timeout 10)) 2)
+                    (a/go (a/<! (a/timeout 1)) 3)]))))
+  (let [e (ex-info "FOO" {})]
+    (t/is (= e (a/<!! (sut/parallel-promises?
+                       [(a/go (a/<! (a/timeout 1000)) 0)
+                        (a/go (a/<! (a/timeout 100)) 1)
+                        (a/go (a/<! (a/timeout 10)) 2)
+                        (a/go (a/<! (a/timeout 300)) e)]))))
+    (t/is (thrown? clojure.lang.ExceptionInfo
+                   (sut/<?? (sut/parallel-promises?
+                             [(a/go (a/<! (a/timeout 1000)) 0)
+                              (a/go (a/<! (a/timeout 100)) 1)
+                              (a/go (a/<! (a/timeout 10)) 2)
+                              (a/go (a/<! (a/timeout 300)) e)]))))))

@@ -11,6 +11,7 @@
    [vimsical.backend.components.datomic.fixture :as datomic.fixture]
    [vimsical.backend.components.delta-store.protocol :as delta-store.protocol]
    [vimsical.backend.components.session-store :as session-store]
+   [vimsical.backend.components.snapshot-store.protocol :as snapshot-store.protocol]
    [vimsical.backend.data :as data]
    [vimsical.backend.system :as system]
    [vimsical.common.env :as env]
@@ -63,19 +64,50 @@
 ;; * Vims
 ;;
 
-(defn vims+deltas
-  ([] (vims+deltas #()))
+(defn vims
+  ([] (vims #()))
   ([f]
    (if (some? *system*)
      (if (nil? *user-uid*)
        (throw (ex-info "`vims` fixture should be nested inside the `user` fixture." {}))
-       (let [{:keys [delta-store datomic]} *system*]
+       (let [{:keys [datomic]} *system*]
          (datomic/transact datomic data/vims)
+         (f)))
+     (throw (ex-info "`vims` fixture should be nested inside the `system` fixture" {})))))
+
+;;
+;; * Deltas
+;;
+
+(defn deltas
+  ([] (deltas #()))
+  ([f]
+   (if (some? *system*)
+     (if (nil? *user-uid*)
+       (throw (ex-info "`deltas` fixture should be nested inside the `user` fixture." {}))
+       (let [{:keys [delta-store]} *system*]
          (async/<!!
           (delta-store.protocol/insert-deltas-chan
            delta-store (-> data/vims :db/uid) data/deltas))
          (f)))
-     (throw (ex-info "`vims` fixture should be nested inside the `system` fixture" {})))))
+     (throw (ex-info "`deltas` fixture should be nested inside the `system` fixture" {})))))
+
+;;
+;; * Snapshots
+;;
+
+(defn snapshots
+  ([] (snapshots #()))
+  ([f]
+   (if (some? *system*)
+     (if (nil? *user-uid*)
+       (throw (ex-info "`snapshots` fixture should be nested inside the `user` fixture." {}))
+       (let [{:keys [snapshot-store]} *system*]
+         (async/<!!
+          (snapshot-store.protocol/insert-snapshots-chan
+           snapshot-store data/snapshots))
+         (f)))
+     (throw (ex-info "`snapshots` fixture should be nested inside the `system` fixture" {})))))
 
 ;;
 ;; * System
@@ -101,7 +133,7 @@
         (try
           (f)
           (finally
-            (some-> *system* :datomic datomic/delete-database!)
-            (some-> *system* :cassandra-connection cassandra/drop-keyspace!)
-            (some-> *system* :session-store redis/flushall!)
+            (-> *system* :datomic datomic/delete-database!)
+            (-> *system* :cassandra-connection cassandra/drop-keyspace!)
+            (-> *system* :session-store redis/flushall!)
             (cp/stop *system*)))))))

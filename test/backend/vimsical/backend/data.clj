@@ -11,7 +11,8 @@
    [vimsical.vcs.editor :as editor]
    [vimsical.vcs.file :as file]
    [vimsical.vcs.lib :as lib]
-   [vimsical.vims :as vims]))
+   [vimsical.vims :as vims]
+   [vimsical.vcs.snapshot :as snapshot]))
 
 ;;
 ;; * Helpers
@@ -119,3 +120,17 @@
         [vcs deltas delta-uid] (diff/diffs->vcs vcs effects html-uid (uuid ::master) nil "" [html-file-string])
         deltas                 (vcs/deltas vcs delta-uid)]
     deltas))
+
+;;
+;; * Snapshots
+;;
+
+(def snapshots
+  [{::snapshot/text html-file-string
+    ::snapshot/file-uid (uuid ::html)
+    ::snapshot/user-uid (uuid ::user)
+    ::snapshot/vims-uid (uuid ::vims)
+    ::snapshot/delta-uid nil}])
+
+(def me
+  (update-in user [::user/vimsae 0] assoc ::vims/snapshots snapshots))
