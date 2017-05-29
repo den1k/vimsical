@@ -221,14 +221,14 @@
 
 (re-frame/reg-event-fx
  ::track-start
- (fn [_ [_ vims file]]
+ (fn [_ [_ vims {file-uid :db/uid :as file}]]
    {:track
-    [{:id           [::editor-str file]
+    [{:id           [::editor-str file-uid]
       :action       :register
       :subscription [::subs/string vims file]
       :val->event   (fn [string]
                       [::update-editor-string vims file string])}
-     {:id              [::editor-pos file]
+     {:id              [::editor-pos file-uid]
       :action          :register
       ;; Prevents showing cursors on all editors when reloading
       :dispatch-first? false
@@ -237,10 +237,10 @@
 
 (re-frame/reg-event-fx
  ::track-stop
- (fn [_ [_ vims file]]
+ (fn [_ [_ vims {file-uid :db/uid}]]
    {:track
-    [{:id [::editor-str file] :action :dispose}
-     {:id [::editor-pos file] :action :dispose}]}))
+    [{:id [::editor-str file-uid] :action :dispose}
+     {:id [::editor-pos file-uid] :action :dispose}]}))
 
 (re-frame/reg-event-fx
  ::reset-editor-to-playhead

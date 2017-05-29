@@ -134,7 +134,7 @@
    {:pre [vims]}
    {:track
     {:action       :register
-     :id           [::vims vims]
+     :id           [::vims (:db/uid vims)]
      :subscription [::vcs.subs/branch vims]
      :val->event   (fn [branch]
                      {:pre [branch]}
@@ -147,7 +147,7 @@
    {:pre [branch files vims]}
    {:track    (for [file files]
                 {:action          :register
-                 :id              [::file file]
+                 :id              [::file (:db/uid file)]
                  :subscription    [::vcs.subs/file-string vims file]
                  :dispatch-first? false
                  :val->event      (fn [string] [::update-live-preview vims file string])})
@@ -159,7 +159,7 @@
  [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/branch vims]))]
  (fn [{branch ::vcs.subs/branch} [_ vims]]
    {:pre [vims]}
-   {:track    {:action :dispose :id [::vims vims]}
+   {:track    {:action :dispose :id [::vims (:db/uid vims)]}
     :dispatch [::stop-track-branch branch]}))
 
 (re-frame/reg-event-fx
@@ -167,4 +167,4 @@
  (fn [_ [_ branch]]
    {:track
     (for [file (::branch/files branch)]
-      {:action :dispose :id [::file file]})}))
+      {:action :dispose :id [::file (:db/uid file)]})}))
