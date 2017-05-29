@@ -74,7 +74,8 @@
 
 (re-frame/reg-sub
  ::error-catcher-branch-libs
- :<- [::vcs.subs/branch]
+ (fn [[_ vims]]
+   (re-frame/subscribe [::vcs.subs/branch vims]))
  (fn [branch _]
    (-> branch
        (dissoc ::branch/files)
@@ -82,15 +83,15 @@
 
 (re-frame/reg-sub
  ::error-catcher-js-libs-markup
- :<- [::error-catcher-branch-libs]
- (fn [branch _]
-   ;; FIXME nil vims
-   (preview-markup nil branch)))
+ (fn [[_ vims]]
+   (re-frame/subscribe [::error-catcher-branch-libs vims]))
+ (fn [branch [_ vims]]
+   (preview-markup vims branch)))
 
 (re-frame/reg-sub-raw
  ::error-catcher-js-file-string
- (fn [_ _]
+ (fn [_ [_ vims]]
    (interop/make-reaction
-    #(let [{::branch/keys [files]} (<sub [::vcs.subs/branch])
+    #(let [{::branch/keys [files]} (<sub [::vcs.subs/branch vims])
            js-file (util/ffilter file/javascript? files)]
        (<sub [::vcs.subs/preprocessed-file-string js-file])))))

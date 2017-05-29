@@ -157,11 +157,11 @@
 
 (re-frame/reg-event-fx
  ::track-start
- (fn [_ _]
+ (fn [_ [_ vims]]
    {:track
     [{:action       :register
       :id           ::error-catcher-markup
-      :subscription [::subs/error-catcher-js-libs-markup]
+      :subscription [::subs/error-catcher-js-libs-markup vims]
       :val->event   (fn [markup]
                       [::update-error-catcher-src markup])}
      {:action          :register
@@ -169,7 +169,7 @@
       ;; Would be better to inject js the first time on-load runs
       :dispatch-first? false
       :id              ::error-catcher-files
-      :subscription    [::subs/error-catcher-js-file-string]
+      :subscription    [::subs/error-catcher-js-file-string vims]
       :val->event      (fn [string] [::update-error-catcher-js string])}]}))
 
 (re-frame/reg-event-fx

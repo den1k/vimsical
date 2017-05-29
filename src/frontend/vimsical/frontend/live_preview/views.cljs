@@ -57,7 +57,7 @@
   (when-not static?
     (when error-catcher?
       (re-frame/dispatch [::error-catcher/init])
-      (re-frame/dispatch [::error-catcher/track-start]))
+      (re-frame/dispatch [::error-catcher/track-start vims]))
     (re-frame/dispatch [::handlers/track-vims vims])))
 
 (defn dispose [{:keys [vims static? error-catcher?]}]
