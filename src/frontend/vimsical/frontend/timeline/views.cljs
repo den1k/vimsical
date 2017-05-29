@@ -53,36 +53,46 @@
 ;; * Handlers
 ;;
 
-(defn on-mouse-enter [e]
-  (re-frame/dispatch
-   [::handlers/on-mouse-enter
-    (util.dom/e->mouse-coords e)
-    coords-and-svg-node->timeline-position]))
+(defn on-mouse-enter [vims]
+  (fn [e]
+    (re-frame/dispatch
+     [::handlers/on-mouse-enter
+      vims
+      (util.dom/e->mouse-coords e)
+      coords-and-svg-node->timeline-position])))
 
-(defn on-mouse-wheel [e]
-  (.preventDefault e)                   ; Prevent history navigation
-  (re-frame/dispatch
-   [::handlers/on-mouse-wheel
-    (scroll-event->timeline-offset e)]))
+(defn on-mouse-wheel [vims]
+  (fn [e]
+    (.preventDefault e)                 ; Prevent history navigation
+    (re-frame/dispatch
+     [::handlers/on-mouse-wheel
+      vims
+      (scroll-event->timeline-offset e)])))
 
-(defn on-mouse-move [e]
-  (re-frame/dispatch
-   [::handlers/on-mouse-move
-    (util.dom/e->mouse-coords e)
-    coords-and-svg-node->timeline-position]))
+(defn on-mouse-move [vims]
+  (fn [e]
+    (re-frame/dispatch
+     [::handlers/on-mouse-move
+      vims
+      (util.dom/e->mouse-coords e)
+      coords-and-svg-node->timeline-position])))
 
-(defn on-click [e]
-  (re-frame/dispatch
-   [::handlers/on-click
-    (util.dom/e->mouse-coords e)
-    coords-and-svg-node->timeline-position
-    [::vcr.handlers/step]]))
+(defn on-click [vims]
+  (fn [e]
+    (re-frame/dispatch
+     [::handlers/on-click
+      vims
+      (util.dom/e->mouse-coords e)
+      coords-and-svg-node->timeline-position
+      [::vcr.handlers/step]])))
 
-(defn on-mouse-leave [_]
-  (re-frame/dispatch [::handlers/on-mouse-leave]))
+(defn on-mouse-leave [vims]
+  (fn [_]
+    (re-frame/dispatch [::handlers/on-mouse-leave vims])))
 
-(defn on-touch-move [e]
-  (on-click (util.dom/first-touch->e e)))
+(defn on-touch-move [vims]
+  (fn [e]
+    (on-click (util.dom/first-touch->e e))))
 
 ;;
 ;; * Components
@@ -150,10 +160,9 @@
          right bottom
          left bottom))}]))
 
-(defn- skimhead-line
-  [clip-path-id]
-  (when-some [skimhead (<sub [::subs/skimhead])]
-    (let [playhead     (<sub [::subs/playhead])
+(defn- skimhead-line [{:keys [vims]}]
+  (when-some [skimhead (<sub [::subs/skimhead vims])]
+    (let [playhead     (<sub [::subs/playhead vims])
           at-playhead? (and playhead (= (int skimhead) (int playhead)))]
       [:line.skimhead
        {:x1            skimhead :x2 skimhead
@@ -164,9 +173,8 @@
         :clip-path     (str "url(#" clip-path-id ")")
         :style         {:pointer-events "none"}}])))
 
-(defn- playhead-line
-  [clip-path-id]
-  (when-some [playhead (<sub [::subs/playhead])]
+(defn- playhead-line [{:keys [vims]}]
+  (when-some [playhead (<sub [::subs/playhead vims])]
     [:line.playhead
      {:x1            playhead :x2 playhead
       :y1            0 :y2 "100%" :stroke-width 3
@@ -175,9 +183,9 @@
       :clip-path     (str "url(#" clip-path-id ")")
       :style         {:pointer-events "none"}}]))
 
-(defn chunks []
-  (let [timeline-dur       (<sub [::subs/duration])
-        chunks-by-abs-time (<sub [::subs/chunks-by-absolute-start-time])
+(defn chunks [{:keys [vims]}]
+  (let [timeline-dur       (<sub [::subs/duration vims])
+        chunks-by-abs-time (<sub [::subs/chunks-by-absolute-start-time vims])
         chunks-html
         (doall
          (for [[abs-time {::chunk/keys [uid file-uid] :as c}] chunks-by-abs-time
@@ -193,8 +201,8 @@
     (re-frame/dispatch [::handlers/dispose-svg])
     (re-frame/dispatch [::handlers/register-svg node])))
 
-(defn timeline []
-  (let [duration (<sub [::subs/duration])
+(defn timeline [{:keys [vims]}]
+  (let [duration (<sub [::subs/duration vims])
         left     0
         right    0]
     [:div.timeline
@@ -204,12 +212,12 @@
         :view-box              (util/space-join left right duration timeline-height)
         :preserve-aspect-ratio "none meet"
         :style                 {:width "100%" :height "100%"}
-        :on-mouse-enter        on-mouse-enter
-        :on-wheel              on-mouse-wheel
-        :on-mouse-move         on-mouse-move
-        :on-click              on-click
-        :on-mouse-leave        on-mouse-leave
-        :on-touch-move         on-touch-move}
-       [chunks]
-       [playhead-line clip-path-id]
-       [skimhead-line clip-path-id]]]]))
+        :on-mouse-enter        (on-mouse-enter vims)
+        :on-wheel              (on-mouse-wheel vims)
+        :on-mouse-move         (on-mouse-move vims)
+        :on-click              (on-click vims)
+        :on-mouse-leave        (on-mouse-leave vims)
+        :on-touch-move         (on-touch-move vims)}
+       [chunks {:vims vims}]
+       [playhead-line {:vims vims}]
+       [skimhead-line {:vims vims}]]]]))

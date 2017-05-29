@@ -65,8 +65,8 @@
  (fn [[_ vims]]
    [(re-frame/subscribe [::vcs.subs/skimhead-entry vims])
     (re-frame/subscribe [::vcs.subs/playhead-entry vims])
-    (re-frame/subscribe [::timeline.subs/skimming?])
-    (re-frame/subscribe [::timeline.subs/playing?])])
+    (re-frame/subscribe [::timeline.subs/skimming? vims])
+    (re-frame/subscribe [::timeline.subs/playing? vims])])
  (fn [[skimhead-entry playhead-entry skimming? playing?] _]
    (cond
      skimming? skimhead-entry

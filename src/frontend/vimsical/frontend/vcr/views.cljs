@@ -91,8 +91,8 @@
            [:rect (merge {:x 0} attrs)]
            [:rect (merge {:x 60} attrs)]])])]))
 
-(defn- playback []
-  [:div.playback [playback-control] [timeline] [speed-control]])
+(defn- playback [{:keys [vims]}]
+  [:div.playback [playback-control] [timeline {:vims vims}] [speed-control]])
 
 (defn- editor-tabs [files]
   [:div.editor-tabs
@@ -138,11 +138,10 @@
      :class "vcr"
      :size "100%"
      :children
-     [[playback]
+     [[playback {:vims vims}]
       [splits/n-h-split
        :class "live-preview-and-editors"
-       :panels [[live-preview {:vims           vims
-                               :error-catcher? false}]
+       :panels [[live-preview {:vims vims :error-catcher? false}]
                 [splits/n-v-split
                  :height "100%"
                  :splitter-size "31px"

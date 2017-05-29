@@ -129,7 +129,7 @@
    (let [editor     (ui-db/get-editor ui-db vims file)
          model      (.-model editor)
          edit-event (interop/parse-content-event model e)]
-     {:dispatch [::vcs.handlers/add-edit-event file edit-event]})))
+     {:dispatch [::vcs.handlers/add-edit-event vims file edit-event]})))
 
 (re-frame/reg-event-fx
  ::cursor-change
@@ -138,7 +138,7 @@
    (let [editor     (ui-db/get-editor ui-db vims file)
          model      (.-model editor)
          edit-event (interop/parse-selection-event model e)]
-     {:dispatch [::vcs.handlers/add-edit-event file edit-event]})))
+     {:dispatch [::vcs.handlers/add-edit-event vims file edit-event]})))
 
 (re-frame/reg-event-fx
  ::focus

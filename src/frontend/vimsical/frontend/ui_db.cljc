@@ -8,8 +8,8 @@
 
 (re-frame/reg-sub-raw
  ::ui-db
- (fn [_ _]
-   (interop/make-reaction #(deref ui-db))))
+ (fn [_ [_ k]]
+   (interop/make-reaction #(cond-> (deref ui-db) k (get k)))))
 
 (re-frame/reg-cofx
  :ui-db
