@@ -25,7 +25,7 @@
  ::register
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub
-   (fn [[_ file]] ^:ignore-warnings [::subs/playhead-string file]))]
+   (fn [[_ vims file]] ^:ignore-warnings [::subs/playhead-string vims file]))]
  (fn [{:keys       [ui-db]
        ::subs/keys [playhead-string]} [_ vims file editor-instance listeners]]
    {:ui-db      (-> ui-db
@@ -225,14 +225,14 @@
    {:track
     [{:id           [::editor-str file]
       :action       :register
-      :subscription [::subs/string file]
+      :subscription [::subs/string vims file]
       :val->event   (fn [string]
                       [::update-editor-string vims file string])}
      {:id              [::editor-pos file]
       :action          :register
       ;; Prevents showing cursors on all editors when reloading
       :dispatch-first? false
-      :subscription    [::subs/position file]
+      :subscription    [::subs/position vims file]
       :val->event      (fn [position] [::update-editor-position vims file position])}]}))
 
 (re-frame/reg-event-fx
@@ -245,9 +245,9 @@
 (re-frame/reg-event-fx
  ::reset-editor-to-playhead
  [(util.re-frame/inject-sub
-   (fn [[_ _ file]] ^:ignore-warnings [::subs/playhead-string file]))
+   (fn [[_ vims file]] ^:ignore-warnings [::subs/playhead-string vims file]))
   (util.re-frame/inject-sub
-   (fn [[_ _ file]] ^:ignore-warnings [::subs/playhead-position file]))]
+   (fn [[_ vims file]] ^:ignore-warnings [::subs/playhead-position vims file]))]
  (fn [{::subs/keys [playhead-string playhead-position]} [_ vims file]]
    {:dispatch-n
     [[::clear-disposables vims file]

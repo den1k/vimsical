@@ -7,6 +7,7 @@
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as vcs.db]
+   [vimsical.frontend.app.subs :as app.subs]
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.vcs.core :as vcs]))
 
@@ -67,11 +68,11 @@
        ::vcs.subs/keys [vcs]}
       [_ coords coords-and-svg-node->timeline-position-fn]]
    (let [[t entry] (ui-timeline-entry cofx coords coords-and-svg-node->timeline-position-fn)
-         vcs'      (vcs.db/set-skimhead-entry vcs entry)
-         db'       (mg/add db vcs')
-         ui-db'    (-> ui-db
-                       (timeline.ui-db/set-skimhead t)
-                       (timeline.ui-db/set-skimming true))]
+         vcs'   (vcs.db/set-skimhead-entry vcs entry)
+         db'    (mg/add db vcs')
+         ui-db' (-> ui-db
+                    (timeline.ui-db/set-skimhead t)
+                    (timeline.ui-db/set-skimming true))]
      {:db db' :ui-db ui-db'})))
 
 (re-frame/reg-event-fx
@@ -100,16 +101,17 @@
        ::vcs.subs/keys [vcs]}
       [_ coords coords-and-svg-node->timeline-position-fn]]
    (let [[t entry] (ui-timeline-entry cofx coords coords-and-svg-node->timeline-position-fn)
-         vcs'      (vcs.db/set-skimhead-entry vcs entry)
-         db'       (mg/add db vcs')
-         ui-db'    (timeline.ui-db/set-skimhead ui-db t)]
+         vcs'   (vcs.db/set-skimhead-entry vcs entry)
+         db'    (mg/add db vcs')
+         ui-db' (timeline.ui-db/set-skimhead ui-db t)]
      {:db db' :ui-db ui-db'})))
 
 (re-frame/reg-event-fx
  ::on-mouse-leave
  [(re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub [::vcs.subs/vcs])]
- (fn [{:keys [ui-db db] ::vcs.subs/keys [vcs]} _]
+  (util.re-frame/inject-sub [::vcs.subs/vcs])
+  (util.re-frame/inject-sub [::app.subs/vims])]
+ (fn [{:keys [ui-db db] ::vcs.subs/keys [vcs] vims ::app.subs/vims} _]
    (let [vcs'   (vcs.db/set-skimhead-entry vcs nil)
          db'    (mg/add db vcs')
          ui-db' (-> ui-db
@@ -117,7 +119,7 @@
                     (timeline.ui-db/set-skimming false))]
      {:db       db'
       :ui-db    ui-db'
-      :dispatch [::code-editor.handlers/reset-all-editors-to-playhead]})))
+      :dispatch [::code-editor.handlers/reset-all-editors-to-playhead vims]})))
 
 ;;
 ;; ** Playhead
@@ -149,9 +151,9 @@
        ::vcs.subs/keys [vcs]}
       [_ coords coords-and-svg-node->timeline-position-fn step-event]]
    (let [[ui-time [entry-time :as entry]] (ui-timeline-entry cofx coords coords-and-svg-node->timeline-position-fn)
-         vcs'                             (assoc vcs ::vcs.db/playhead-entry entry)
-         db'                              (mg/add db vcs')
-         ui-db'                           (assoc ui-db ::timeline.ui-db/playhead ui-time)]
+         vcs'   (assoc vcs ::vcs.db/playhead-entry entry)
+         db'    (mg/add db vcs')
+         ui-db' (assoc ui-db ::timeline.ui-db/playhead ui-time)]
      {:db        db'
       :ui-db     ui-db'
       :scheduler [{:action :set-time :t ui-time}
