@@ -71,7 +71,7 @@
      (if vims
        [::subs/vims-preprocessed-preview-markup vims]
        [::subs/branch-preprocessed-preview-markup])))
-  (util.re-frame/inject-sub [::vcs.subs/branch])]
+  (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/branch vims]))]
  (fn [{:keys       [db ui-db]
        ::subs/keys [vims-preprocessed-preview-markup branch-preprocessed-preview-markup]
        cur-branch  ::vcs.subs/branch}
@@ -95,7 +95,7 @@
  ::update-live-preview
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub
-   (fn [[_ _ file]] [::vcs.subs/file-lint-or-preprocessing-errors file]))]
+   (fn [[_ vims file]] [::vcs.subs/file-lint-or-preprocessing-errors vims file]))]
  (fn [{:keys       [db ui-db]
        ::subs/keys [file-lint-or-preprocessing-errors]
        :as         cofx}
@@ -117,9 +117,9 @@
 (re-frame/reg-event-fx
  ::move-script-nodes
  [(re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/vims-branch vims]))]
+  (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/branch vims]))]
  (fn [{:keys                  [db ui-db]
-       {files ::branch/files} ::vcs.subs/vims-branch}
+       {files ::branch/files} ::vcs.subs/branch}
       [_ vims]]
    (let [iframe       (ui-db/get-iframe ui-db vims)
          doc          (.-contentDocument iframe)
@@ -137,7 +137,7 @@
    {:track
     {:action       :register
      :id           [::vims vims]
-     :subscription [::vcs.subs/vims-branch vims]
+     :subscription [::vcs.subs/branch vims]
      :val->event   (fn [branch]
                      {:pre [branch]}
                      [::track-branch vims branch])}}))
@@ -146,25 +146,19 @@
  ::track-branch
  [(re-frame/inject-cofx :prev-event)]
  (fn [_ [[_ _ prev-branch] [_ vims {:as branch files ::branch/files}] :as events]]
-   {:pre [branch files]}
+   {:pre [branch files vims]}
    {:track    (for [file files]
                 {:action       :register
                  :id           [::file file]
-                 :subscription [::vcs.subs/file-string file]
-                 :val->event   (fn [string]
-                                 ;; ?? this is called on dispose with string being nil
-                                 (if string
-                                   [::update-live-preview vims file string]
-                                   #?(:cljs (do
-                                              (prn "no string" file)
-                                              #_(js/console.log :vi vims :br branch)))))})
+                 :subscription [::vcs.subs/file-string vims file]
+                 :val->event   (fn [string] [::update-live-preview vims file string])})
     :dispatch [::stop-track-branch vims]}))
 
 
 (re-frame/reg-event-fx
  ::stop-track-vims
- [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/vims-branch vims]))]
- (fn [{branch ::vcs.subs/vims-branch} [_ vims]]
+ [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/branch vims]))]
+ (fn [{branch ::vcs.subs/branch} [_ vims]]
    {:pre [vims]}
    {:track    {:action :dispose :id [::vims vims]}
     :dispatch [::stop-track-branch branch]}))

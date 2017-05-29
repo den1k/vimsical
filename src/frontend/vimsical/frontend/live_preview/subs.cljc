@@ -69,14 +69,14 @@
  (fn [_ [_ vims]]
    {:pre [vims]}
    (interop/make-reaction
-    #(let [branch (<sub [::vcs.subs/vims-branch vims])]
+    #(let [branch (<sub [::vcs.subs/branch vims])]
        (preview-markup branch)))))
 
 (re-frame/reg-sub-raw
  ::branch-preprocessed-preview-markup
- (fn [_ _]
+ (fn [_ [_ vims]]
    (interop/make-reaction
-    #(let [branch (<sub [::vcs.subs/branch])]
+    #(let [branch (<sub [::vcs.subs/branch vims])]
        (<sub [::vims-preprocessed-preview-markup branch])))))
 
 (re-frame/reg-sub

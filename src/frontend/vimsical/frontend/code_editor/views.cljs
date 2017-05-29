@@ -147,8 +147,4 @@
     :component-will-receive-props
     (fn [c [_ new-opts]] (recycle c (reagent/props c) new-opts))
     :render
-    (fn [_]
-      (when-let [errors
-                 (<sub [::vcs.subs/file-lint-or-preprocessing-errors file])]
-        (js/console.warn ::LINT_OR_PREPROCESSING_ERRORS errors))
-      [:div.code-editor])}))
+    (fn [_] [:div.code-editor])}))

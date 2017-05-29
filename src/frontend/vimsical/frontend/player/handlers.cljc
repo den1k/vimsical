@@ -97,8 +97,8 @@
 (re-frame/reg-event-fx
  ::set-playhead
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ t]]
-   {:ui-db (timeline.ui-db/set-playhead ui-db t)}))
+ (fn [{:keys [ui-db]} [_ vims t]]
+   {:ui-db (timeline.ui-db/set-playhead ui-db vims t)}))
 
 ;; Used when clicking the timeline, we need to set:
 ;; - the playhead in the ui-db
@@ -133,13 +133,13 @@
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub [::vcs.subs/vcs])]
  (fn [{:keys           [db ui-db]
-       ::vcs.subs/keys [vcs]} [_ ui-time]]
+       ::vcs.subs/keys [vcs]} [_ vims ui-time]]
    (let [entry  (vcs/timeline-entry-at-time vcs ui-time)
          vcs'   (vcs.db/set-skimhead-entry vcs entry)
          db'    (mg/add db vcs')
          ui-db' (-> ui-db
-                    (timeline.ui-db/set-skimhead ui-time)
-                    (timeline.ui-db/set-skimming true))]
+                    (timeline.ui-db/set-skimhead vims ui-time)
+                    (timeline.ui-db/set-skimming vims true))]
      {:db db' :ui-db ui-db'})))
 
 (re-frame/reg-event-fx
@@ -147,23 +147,23 @@
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub [::vcs.subs/vcs])]
  (fn [{:keys           [db ui-db]
-       ::vcs.subs/keys [vcs]} [_ ui-time]]
+       ::vcs.subs/keys [vcs]} [_ vims ui-time]]
    (let [entry  (vcs/timeline-entry-at-time vcs ui-time)
          vcs'   (vcs.db/set-skimhead-entry vcs entry)
          db'    (mg/add db vcs')
-         ui-db' (timeline.ui-db/set-skimhead ui-db ui-time)]
+         ui-db' (timeline.ui-db/set-skimhead vims ui-db ui-time)]
      {:db db' :ui-db ui-db'})))
 
 (re-frame/reg-event-fx
  ::on-mouse-leave
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub [::vcs.subs/vcs])]
- (fn [{:keys [ui-db db] ::vcs.subs/keys [vcs]} _]
+ (fn [{:keys [ui-db db] ::vcs.subs/keys [vcs]} [_ vims]]
    (let [vcs'   (vcs.db/set-skimhead-entry vcs nil)
          db'    (mg/add db vcs')
          ui-db' (-> ui-db
-                    (timeline.ui-db/set-skimhead nil)
-                    (timeline.ui-db/set-skimming false))]
+                    (timeline.ui-db/set-skimhead vims nil)
+                    (timeline.ui-db/set-skimming vims false))]
      {:db       db'
       :ui-db    ui-db'
       :dispatch [::code-editor.handlers/reset-all-editors-to-playhead]})))

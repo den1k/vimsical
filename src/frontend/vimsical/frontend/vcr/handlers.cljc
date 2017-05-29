@@ -46,10 +46,9 @@
      ;; Set time and start
      :else
      (let [[t] playhead-entry]
-       {:dispatch [::timeline.handlers/set-playing vims true]
-        :scheduler
-                  [{:action :start :t playhead :tick tick-fn}
-                   {:action :schedule :t t :event [::step vims]}]}))))
+       {:dispatch  [::timeline.handlers/set-playing vims true]
+        :scheduler [{:action :start :t playhead :tick (tick-fn vims)}
+                    {:action :schedule :t t :event [::step vims]}]}))))
 
 (re-frame/reg-event-fx
  ::step

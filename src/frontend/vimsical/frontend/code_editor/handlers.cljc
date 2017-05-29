@@ -258,7 +258,7 @@
 (re-frame/reg-event-fx
  ::reset-all-editors-to-playhead
  [(re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub ^:ignore-warnings (fn [_ [_ vims]] [::vcs.subs/files vims]))]
+  (util.re-frame/inject-sub ^:ignore-warnings (fn [[_ vims]] [::vcs.subs/files vims]))]
  (fn [{:keys           [ui-db]
        ::vcs.subs/keys [files]} [_ vims]]
    {:dispatch-n
