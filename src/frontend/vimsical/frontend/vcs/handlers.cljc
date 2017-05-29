@@ -4,12 +4,12 @@
    [vimsical.user :as user]
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
-   [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as vcs.db]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.frontend.vcs.subs :as subs]
+   [vimsical.remotes.backend.vcs.queries :as backend.vcs.queries]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.editor :as editor]
@@ -167,3 +167,31 @@
      ;; TODO Add new branch to vims
      {:ui-db (timeline.ui-db/set-playhead ui-db vims t)
       :db    (mg/add db vcs')})))
+
+;;
+;; * Remote
+;;
+
+;;
+;; ** Deltas by branch uid
+;;
+
+(re-frame/reg-event-fx
+ ::sync-init
+ (fn [{:keys [db]} [_ vims-uid status-key]]
+   {:remote
+    {:id               :backend
+     :event            [::backend.vcs.queries/deltas-by-branch-uid vims-uid]
+     :status-key       status-key
+     :dispatch-success (fn [deltas]
+                         [::sync-init-success vims-uid deltas])}}))
+
+;; {:app/sync
+;;  {:<vims-uid> {:deltas-branch-branch-uid {:<branch-uid> :<delta>}
+;;                :queue                    [:<delta1> :<delta2>]
+;;                :in-flight                [:<delta-0>]}}}
+
+(re-frame/reg-event-fx
+ ::sync-init-success
+ (fn [{:keys [db]} [_ vims-uid deltas-by-branch-uid]]
+   {:db (assoc-in db [:app/sync vims-uid :deltas-by-branch-uid] deltas-by-branch-uid)}))

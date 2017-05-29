@@ -1,20 +1,19 @@
 (ns vimsical.backend.handlers.me.queries
   (:require
+   [clojure.core.async :as a]
    [clojure.spec :as s]
    [vimsical.backend.components.datomic :as datomic]
    [vimsical.backend.components.server.interceptors.event-auth :as event-auth]
    [vimsical.backend.components.snapshot-store :as snapshot-store]
    [vimsical.backend.components.snapshot-store.protocol :as snapshot-store.protocol]
    [vimsical.backend.handlers.multi :as multi]
-   [vimsical.backend.util.async :refer [<?]]
+   [vimsical.backend.util.async :as async :refer [<?]]
    [vimsical.queries.user :as queries.user]
    [vimsical.remotes.backend.user.queries :as user.queries]
    [vimsical.user :as user]
    [vimsical.vcs.branch :as vcs.branch]
    [vimsical.vcs.snapshot :as snapshot]
-   [vimsical.vims :as vims]
-   [vimsical.backend.util.async :as async]
-   [clojure.core.async :as a]))
+   [vimsical.vims :as vims]))
 
 ;;
 ;; * Cross-stores join helpers
@@ -26,7 +25,6 @@
 
 (defn- user-join-snapshots
   [user snapshots]
-  (println ">>>>>>>>>>" snapshots)
   (let [snapshots-by-vims-uid (group-by ::snapshot/vims-uid snapshots)]
     (letfn [(get-vims-snapshots [{vims-uid :db/uid :as vims}]
               (when-some [snapshots (get snapshots-by-vims-uid vims-uid)]

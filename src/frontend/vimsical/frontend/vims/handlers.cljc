@@ -123,7 +123,7 @@
     :status-key       status-key
     :event            [::vims.queries/deltas vims-uid]
     ;; Close over vims-uid so that the vcs handler can retrieve the vims
-    :dispatch-success (fn [_ deltas]
+    :dispatch-success (fn [deltas]
                         [::vcs.handlers/init uuid-fn vims-uid deltas])}})
 
 (re-frame/reg-event-fx ::deltas deltas-handler)

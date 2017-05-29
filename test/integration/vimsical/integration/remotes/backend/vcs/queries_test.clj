@@ -1,18 +1,15 @@
-(ns vimsical.integration.remotes.backend.user.queries-test
+(ns vimsical.integration.remotes.backend.vcs.queries-test
   (:require
    [clojure.test :refer [deftest is use-fixtures]]
-   [com.stuartsierra.mapgraph :as mg]
    [day8.re-frame.test :as re-frame.test]
    [orchestra.spec.test :as st]
    [re-frame.core :as re-frame]
    [vimsical.backend.data :as data]
-   [vimsical.backend.handlers.me.queries :as me.queries]
    [vimsical.backend.system.fixture :as system.fixture]
    [vimsical.common.test :refer [uuid]]
    [vimsical.frontend.db :as db]
    [vimsical.frontend.remotes.fx :as frontend.remotes.fx]
-   [vimsical.frontend.user.handlers :as user.handlers]
-   [vimsical.queries.user :as queries.user]))
+   [vimsical.frontend.vcs.handlers :as vcs.handlers]))
 
 (st/instrument)
 
@@ -20,7 +17,7 @@
 ;; * Re-frame
 ;;
 
-(def test-db (db/new-db {:app/user nil}))
+(def test-db (db/new-db {}))
 
 (defn re-frame-fixture
   [f]
@@ -39,6 +36,7 @@
   (system.fixture/with-user data/user)
   system.fixture/session
   system.fixture/vims
+  system.fixture/deltas
   system.fixture/snapshots
   re-frame-fixture)
 
@@ -46,24 +44,19 @@
 ;; * Helpers
 ;;
 
-(defn get-app-user
+(defn get-sync
   [db-sub]
-  (-> @db-sub
-      (mg/pull [{[:app/user '_] queries.user/frontend-pull-query}])
-      :app/user))
-
-(deftest snapshots-join-test
-  (is (= data/me (#'me.queries/user-join-snapshots data/user data/snapshots))))
+  (get-in @db-sub [:app/sync (uuid ::data/vims)]))
 
 ;;
-;; * Me
+;; * Deltas by branch-uid
 ;;
 
-(deftest me-test
+(deftest deltas-by-branch-uid-test
   (let [status-key    (uuid)
-        handler-event [::user.handlers/me status-key]
+        handler-event [::vcs.handlers/sync-init (uuid ::data/vims) status-key]
         status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub        (re-frame/subscribe [::db/db])]
     (re-frame/dispatch handler-event)
     (is (= ::frontend.remotes.fx/success @status-sub))
-    (is (= data/me (-> db-sub get-app-user)))))
+    (is (= data/deltas-by-branch-uid (-> db-sub get-sync :deltas-by-branch-uid)))))

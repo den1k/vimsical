@@ -93,7 +93,7 @@
     (re-frame/dispatch [dispatch result-or-error])
 
     (ifn? dispatch)
-    (re-frame/dispatch (dispatch event result-or-error))
+    (re-frame/dispatch (dispatch result-or-error))
 
     :else nil))
 

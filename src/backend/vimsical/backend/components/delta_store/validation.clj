@@ -1,5 +1,7 @@
 (ns vimsical.backend.components.delta-store.validation
   (:require
+   [clojure.core.async :as a]
+   [clojure.core.async.impl.protocols :as ap]
    [clojure.spec :as s]
    [net.cgrand.xforms :as x]
    [vimsical.vcs.branch :as branch]
@@ -64,6 +66,30 @@
 
 (defn group-by-branch-uid-rf []
   (completing (fn [m [k v]] (assoc m k v))))
+
+(defn group-by-branch-uid
+  [deltas]
+  (transduce
+   (group-by-branch-uid-xf)
+   (group-by-branch-uid-rf)
+   {} deltas))
+
+(defn group-by-branch-uid-chan
+  [buf-or-n]
+  (let [in  (a/chan buf-or-n (group-by-branch-uid-xf) identity)
+        out (a/reduce (group-by-branch-uid-rf) {} in)]
+    (reify
+      ap/ReadPort
+      (take! [_ handler]
+        (ap/take! out handler))
+      ap/WritePort
+      (put! [_ value handler]
+        (ap/put! in value handler))
+      ap/Channel
+      (ap/close! [_]
+        (a/close! in))
+      (ap/closed? [_]
+        (ap/closed? in)))))
 
 (s/fdef update-deltas-by-branch-uid
         :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas (s/every ::delta))

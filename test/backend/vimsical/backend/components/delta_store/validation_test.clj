@@ -1,5 +1,6 @@
 (ns vimsical.backend.components.delta-store.validation-test
   (:require
+   [clojure.core.async :as a]
    [clojure.test :as t]
    [vimsical.backend.components.delta-store.validation :as sut]
    [vimsical.common.test :refer [uuid]]
@@ -26,7 +27,7 @@
    [{:uid uid :prev-uid (uuid :oops) :op [:str/ins (uuid :oops) "?"] :pad 100 :file-uid (uuid :file) :branch-uid (uuid :branch) :meta {:timestamp 400 :version 2}}]))
 
 (defn stub-new-branch-deltas []
-  [{:uid (uuid) :prev-uid (uuid 1) :op [:str/ins (uuid 0) "H"] :pad 100 :file-uid (uuid :file) :branch-uid (uuid :new-branch) :meta {:timestamp 100 :version 2}}])
+  [{:uid (uuid :new-branch0) :prev-uid (uuid 1) :op [:str/ins (uuid 0) "H"] :pad 100 :file-uid (uuid :file) :branch-uid (uuid :new-branch) :meta {:timestamp 100 :version 2}}])
 
 (defn ok-new-branch-next-deltas []
   [{:uid (uuid 3) :prev-uid (uuid 2) :op [:str/ins (uuid 1) "i"] :pad 100 :file-uid (uuid :file) :branch-uid (uuid :new-branch) :meta {:timestamp 100 :version 2}}])
@@ -119,3 +120,13 @@
                             (sut/update-deltas-by-branch-uid first-deltas)
                             (sut/update-deltas-by-branch-uid second-deltas))]
       (t/is (= expect actual)))))
+
+(t/deftest grouping-test
+  (let [deltas (concat (stub-deltas) (stub-new-branch-deltas))
+        expect {(uuid :branch) (last (stub-deltas))
+                (uuid :new-branch) (last (stub-new-branch-deltas))}]
+    (t/testing "xf"
+      (t/is (=  expect (sut/group-by-branch-uid deltas))))
+    (t/testing "chan"
+      (t/is (=  expect (a/<!! (doto (sut/group-by-branch-uid-chan 10)
+                                (a/onto-chan deltas))))))))

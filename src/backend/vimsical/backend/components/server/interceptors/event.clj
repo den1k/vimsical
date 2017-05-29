@@ -7,10 +7,11 @@
    ;;
    [vimsical.backend.handlers.auth.commands]
    [vimsical.backend.handlers.me.queries]
+   [vimsical.backend.handlers.status]
    [vimsical.backend.handlers.vcs.commands]
+   [vimsical.backend.handlers.vcs.queries]
    [vimsical.backend.handlers.vims.commands]
-   [vimsical.backend.handlers.vims.queries]
-   [vimsical.backend.handlers.status]))
+   [vimsical.backend.handlers.vims.queries]))
 
 (defn- enter
   "Gets the event from the response body and invoke

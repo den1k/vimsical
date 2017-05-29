@@ -11,8 +11,8 @@
    [vimsical.vcs.editor :as editor]
    [vimsical.vcs.file :as file]
    [vimsical.vcs.lib :as lib]
-   [vimsical.vims :as vims]
-   [vimsical.vcs.snapshot :as snapshot]))
+   [vimsical.vcs.snapshot :as snapshot]
+   [vimsical.vims :as vims]))
 
 ;;
 ;; * Helpers
@@ -134,3 +134,11 @@
 
 (def me
   (update-in user [::user/vimsae 0] assoc ::vims/snapshots snapshots))
+
+;;
+;; * Sync
+;;
+
+(def deltas-by-branch-uid
+  {(uuid ::master)
+   (select-keys (last deltas) [:uid :prev-uid :branch-uid])})

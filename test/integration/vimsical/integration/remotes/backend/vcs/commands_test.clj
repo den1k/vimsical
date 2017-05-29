@@ -1,4 +1,4 @@
-(ns vimsical.integration.remotes.backend.user.queries-test
+(ns vimsical.integration.remotes.backend.vcs.commands-test
   (:require
    [clojure.test :refer [deftest is use-fixtures]]
    [com.stuartsierra.mapgraph :as mg]
@@ -11,8 +11,9 @@
    [vimsical.common.test :refer [uuid]]
    [vimsical.frontend.db :as db]
    [vimsical.frontend.remotes.fx :as frontend.remotes.fx]
-   [vimsical.frontend.user.handlers :as user.handlers]
-   [vimsical.queries.user :as queries.user]))
+   [vimsical.frontend.vcs.handlers :as vcs.handlers]
+   [vimsical.queries.user :as queries.user]
+   [datomic.api :as d]))
 
 (st/instrument)
 
@@ -20,7 +21,7 @@
 ;; * Re-frame
 ;;
 
-(def test-db (db/new-db {:app/user nil}))
+(def test-db (db/new-db {}))
 
 (defn re-frame-fixture
   [f]
@@ -42,28 +43,3 @@
   system.fixture/snapshots
   re-frame-fixture)
 
-;;
-;; * Helpers
-;;
-
-(defn get-app-user
-  [db-sub]
-  (-> @db-sub
-      (mg/pull [{[:app/user '_] queries.user/frontend-pull-query}])
-      :app/user))
-
-(deftest snapshots-join-test
-  (is (= data/me (#'me.queries/user-join-snapshots data/user data/snapshots))))
-
-;;
-;; * Me
-;;
-
-(deftest me-test
-  (let [status-key    (uuid)
-        handler-event [::user.handlers/me status-key]
-        status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
-        db-sub        (re-frame/subscribe [::db/db])]
-    (re-frame/dispatch handler-event)
-    (is (= ::frontend.remotes.fx/success @status-sub))
-    (is (= data/me (-> db-sub get-app-user)))))
