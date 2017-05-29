@@ -1,22 +1,13 @@
 (ns vimsical.frontend.util.re-frame
-  #?@(:clj
-      [
-       (:require
-        [re-frame.core :as re-frame]
-        [re-frame.interop :as interop]
-        [re-frame.loggers :refer [console]]
-        [vimsical.common.uuid :as uuid]
-        [vimsical.common.util.core :as util]
-        [vimsical.frontend.util.scheduler :as scheduler])]
-      :cljs
-      [(:require
-        [re-frame.core :as re-frame]
-        [re-frame.interop :as interop]
-        [re-frame.loggers :refer [console]]
-        [reagent.ratom :as ratom]
-        [vimsical.common.uuid :as uuid]
-        [vimsical.common.util.core :as util :include-macros true]
-        [vimsical.frontend.util.scheduler :as scheduler])]))
+  (:require
+   [re-frame.core :as re-frame]
+   [re-frame.interop :as interop]
+   [re-frame.loggers :refer [console]]
+   [vimsical.common.uuid :as uuid]
+   [vimsical.common.util.core :as util #?@(:cljs [:include-macros true])]
+   [vimsical.frontend.util.scheduler :as scheduler]
+   [clojure.spec :as s]
+   #?@(:cljs [[reagent.ratom :as ratom]])))
 
 #?(:clj
    (defn- sub-deref
@@ -346,3 +337,28 @@
         (assoc coeffects :event [prev-event event])))))
 
 (re-frame/reg-cofx :prev-event prev-event)
+
+(defn args-spec-cofx
+  [{:keys [event] :as coeffects} spec]
+  (s/assert spec (next event))
+  coeffects)
+
+(re-frame/reg-cofx :args-spec args-spec-cofx)
+
+
+
+;(defmulti subscribe-spec first)
+;
+;(defmethod subscribe-spec :default [_] any?)
+;
+;(s/def ::subscribe-args (s/multi-spec subscribe-spec first))
+;
+;(s/fdef re-frame/subscribe :args ::subscribe-args)
+;
+;(defmethod subscribe-spec ::abc
+; [_]
+;  (s/cat :id any? :num integer?))
+;(re-frame/subscribe [::abc])
+
+
+;(s/explain ::subscribe-args [::abc 1])

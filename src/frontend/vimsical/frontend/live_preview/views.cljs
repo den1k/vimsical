@@ -51,7 +51,9 @@
   (remove file/javascript? files))
 
 (defn register [node {:keys [vims static? error-catcher?]}]
-  (re-frame/dispatch [::handlers/register-iframe node vims])
+  {:pre [node vims]}
+  (re-frame/dispatch-sync [::handlers/register-iframe vims node])
+  (re-frame/dispatch [::handlers/update-iframe-src vims])
   (when-not static?
     (when error-catcher?
       (re-frame/dispatch [::error-catcher/init])
@@ -64,7 +66,10 @@
       (re-frame/dispatch [::error-catcher/track-stop])
       (re-frame/dispatch [::error-catcher/dispose]))
     (re-frame/dispatch [::handlers/stop-track-vims vims]))
-  (re-frame/dispatch [::handlers/dispose-iframe vims]))
+  ;; if live-preview is used in other components with the same vims
+  ;; mount/unmount cycle can lead to race conditions which wrongly
+  ;; dispose the iframe of the mounting component.
+  #_(re-frame/dispatch [::handlers/dispose-iframe vims]))
 
 (defn recycle
   [node old-opts new-opts]

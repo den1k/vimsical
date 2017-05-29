@@ -16,7 +16,7 @@
   (let [show-delete-tooltip? (reagent/atom false)]
     [:div.vims-list-item.jsb.ac
      {:on-click (e> (re-frame/dispatch [::app.handlers/open-vims vims]))}
-     #_[live-preview.views/live-preview
+     [live-preview.views/live-preview
       {:static? true
        :vims    vims}]
      ; todo (vims-preview vims)

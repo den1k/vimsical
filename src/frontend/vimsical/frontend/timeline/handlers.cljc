@@ -85,7 +85,7 @@
        ::vcs.subs/keys [vcs]
        ::subs/keys     [skimhead duration]}
       [_ vims dx]]
-   (let [skimhead' (max 0 (min duration (+ skimhead dx)))
+   (let [skimhead' (max 0 (min duration (- skimhead dx)))
          entry     (vcs/timeline-entry-at-time vcs skimhead')
          vcs'      (vcs.db/set-skimhead-entry vcs entry)
          db'       (mg/add db vcs')

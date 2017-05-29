@@ -54,7 +54,7 @@
 (re-frame/reg-event-fx
  ::register-iframe
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ iframe vims]]
+ (fn [{:keys [ui-db]} [_ vims iframe]]
    {:ui-db (ui-db/set-iframe ui-db vims iframe)}))
 
 ;; TODO
@@ -114,10 +114,11 @@
 (re-frame/reg-event-fx
  ::move-script-nodes
  [(re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/branch vims]))]
- (fn [{:keys                  [db ui-db]
-       {files ::branch/files} ::vcs.subs/branch}
+  (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/files vims]))]
+ (fn [{:keys           [db ui-db]
+       ::vcs.subs/keys [files]}
       [_ vims]]
+   {:pre [vims]}
    (let [iframe       (ui-db/get-iframe ui-db vims)
          doc          (.-contentDocument iframe)
          head         (.-head doc)
@@ -145,10 +146,11 @@
  (fn [_ [[_ _ prev-branch] [_ vims {:as branch files ::branch/files}] :as events]]
    {:pre [branch files vims]}
    {:track    (for [file files]
-                {:action       :register
-                 :id           [::file file]
-                 :subscription [::vcs.subs/file-string vims file]
-                 :val->event   (fn [string] [::update-live-preview vims file string])})
+                {:action          :register
+                 :id              [::file file]
+                 :subscription    [::vcs.subs/file-string vims file]
+                 :dispatch-first? false
+                 :val->event      (fn [string] [::update-live-preview vims file string])})
     :dispatch [::stop-track-branch vims]}))
 
 
