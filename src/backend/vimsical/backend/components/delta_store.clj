@@ -1,12 +1,14 @@
 (ns vimsical.backend.components.delta-store
   (:require
+   [clojure.core.async :as a]
+   [clojure.core.async.impl.protocols :as ap]
    [clojure.spec :as s]
    [com.stuartsierra.component :as cp]
    [vimsical.backend.adapters.cassandra.protocol :as cassandra]
    [vimsical.backend.components.delta-store.protocol :as protocol]
    [vimsical.backend.components.delta-store.queries :as queries]
    [vimsical.backend.components.delta-store.schema :as schema]
-   [vimsical.backend.components.delta-store.validation :as validation]))
+   [vimsical.vcs.validation :as validation]))
 
 ;;
 ;; * Queries
@@ -37,7 +39,22 @@
 ;; * Result sets helpers
 ;;
 
-
+(defn group-by-branch-uid-chan
+  [buf-or-n]
+  (let [in  (a/chan buf-or-n (validation/group-by-branch-uid-xf) identity)
+        out (a/reduce (validation/group-by-branch-uid-rf) {} in)]
+    (reify
+      ap/ReadPort
+      (take! [_ handler]
+        (ap/take! out handler))
+      ap/WritePort
+      (put! [_ value handler]
+        (ap/put! in value handler))
+      ap/Channel
+      (ap/close! [_]
+        (a/close! in))
+      (ap/closed? [_]
+        (ap/closed? in)))))
 
 ;;
 ;; * Component
@@ -80,7 +97,7 @@
       (cassandra/execute-batch-chan cassandra commands :unlogged)))
   (select-deltas-by-branch-uid-chan [{{buf :default-fetch-size} :cassandra} vims-uid]
     (let [command (select-deltas-by-branch-uid-command vims-uid)
-          channel (validation/group-by-branch-uid-chan buf)]
+          channel (group-by-branch-uid-chan buf)]
       (cassandra/execute-chan cassandra command {:channel channel}))))
 
 (defn ->delta-store [] (map->DeltaStore {}))

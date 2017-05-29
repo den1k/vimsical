@@ -36,7 +36,8 @@
    {:source-paths ["src/vcs"]
     :dependencies
     [[org.clojure/data.avl "0.0.17"]
-     [diffit               "1.0.0" :exclusions [org.clojure/tools.reader]]]}
+     [diffit               "1.0.0" :exclusions [org.clojure/tools.reader]]
+     [net.cgrand/xforms    "0.9.3" :exclusions [org.clojure/clojurescript]]]}
    ;;
    ;; Common
    ;;
@@ -74,8 +75,7 @@
       ;; HTTP stack
       [io.pedestal/pedestal.service   "0.5.2"]
       [io.pedestal/pedestal.immutant  "0.5.2"    :exclusions [org.jboss.logging/jboss-logging ch.qos.logback/logback-classic]]
-      [buddy/buddy-hashers            "1.2.0"]
-      [net.cgrand/xforms              "0.9.3"    :exclusions [org.clojure/clojurescript]]]
+      [buddy/buddy-hashers            "1.2.0"]]
      :global-vars
      {*assert* true *warn-on-reflection* true *unchecked-math* :warn-on-boxed}}
     :vcs :common]
