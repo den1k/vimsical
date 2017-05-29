@@ -70,14 +70,14 @@
        (triangle-right {:class    "icon speed-triangle increase"
                         :on-click (e> :increase)})])))
 
-(defn- playback-control []
-  (let [playing? (<sub [::timeline.subs/playing?])]
+(defn- playback-control [{:keys [vims]}]
+  (let [playing? (<sub [::timeline.subs/playing? vims])]
     [:div.control.play-pause
      (if-not playing?
        [:svg
         {:class    "icon play"          ;; rename to button
          :view-box "0 0 100 100"
-         :on-click (e> (re-frame/dispatch [::handlers/play]))}
+         :on-click (e> (re-frame/dispatch [::handlers/play vims]))}
         (shapes/triangle {:origin          [50 50]
                           :height          100
                           :stroke-linejoin "round"
@@ -85,14 +85,17 @@
                           :rotate          90})]
        [:svg {:class    "icon pause"    ;; rename to button
               :view-box "0 0 90 100"
-              :on-click (e> (re-frame/dispatch [::handlers/pause]))}
+              :on-click (e> (re-frame/dispatch [::handlers/pause vims]))}
         (let [attrs {:y 0 :width 30 :height 100 :rx 5 :ry 5}]
           [:g
            [:rect (merge {:x 0} attrs)]
            [:rect (merge {:x 60} attrs)]])])]))
 
 (defn- playback [{:keys [vims]}]
-  [:div.playback [playback-control] [timeline {:vims vims}] [speed-control]])
+  [:div.playback
+   [playback-control {:vims vims}]
+   [timeline {:vims vims}]
+   [speed-control]])
 
 (defn- editor-tabs [files]
   [:div.editor-tabs
