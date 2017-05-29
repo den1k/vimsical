@@ -12,14 +12,14 @@
    [vimsical.frontend.ui.subs :as ui.subs]))
 
 (defn app []
-  (fn []
-    (with-subs [route      [::subs/route]
-                on-mobile? [::ui.subs/on-mobile?]]
-      [:div.app
-       {:class (str "route-" (name route))}
-       (when-not on-mobile? [nav])
-       (case route
-         :route/landing [landing]
-         :route/vims [(if on-mobile? player vcr)])
-       [window-listeners]
-       [quick-search]])))
+  (with-subs [route      [::subs/route]
+              on-mobile? [::ui.subs/on-mobile?]
+              vims       [::subs/vims]]
+    [:div.app
+     {:class (str "route-" (name route))}
+     (when-not on-mobile? [nav])
+     (case route
+       :route/landing [landing]
+       :route/vims [(if on-mobile? player vcr) {:vims vims}])
+     [window-listeners]
+     [quick-search]]))

@@ -37,30 +37,31 @@
     (reagent/create-class
      {:render
       (fn [c]
-        (let [{:as vims ::vims/keys [title owner]} (<sub [::app.subs/vims-info])
-              files                 (<sub [::vcs.subs/files])
+        (let [{:keys [vims]} (reagent/props c)
+              {::vims/keys [title owner]} (<sub [::app.subs/vims-info vims])
+              files                 (<sub [::vcs.subs/files vims])
               temp-first-file       (first files)
-              active-file-uid       (or (<sub [::subs/active-file-uid])
+              active-file-uid       (or (<sub [::subs/active-file-uid vims])
                                         (:db/uid temp-first-file))
               uid->file             (util/project :db/uid files)
               active-file           (get uid->file active-file-uid)
               file-uid->code-editor (util/map-vals
                                      (fn [fl]
                                        ^{:key (:db/uid fl)}
-                                       [code-editor {:file     fl
+                                       [code-editor {:vims     vims
+                                                     :file     fl
                                                      :compact? true}])
                                      uid->file)]
           [:div.info-and-editor-panel.dc
-           {:on-mouse-enter (e>
-                             (reset! show-info? true))
-            :on-mouse-out   (e>
-                             (when-not (util.dom/view-contains-related-target? c e)
-                               (reset! show-info? false)))}
+           {:on-mouse-enter
+            (e> (reset! show-info? true))
+            :on-mouse-out
+            (e> (when-not (util.dom/view-contains-related-target? c e)
+                  (reset! show-info? false)))}
            [:div.info
             {:class (when-not @show-info? "pan-out")}
             [:div.header.ac
-             [user.views/avatar
-              {:user owner}]
+             [user.views/avatar {:user owner}]
              [:div.title-and-creator
               [:div.title.truncate title]
               [:div.creator.truncate (user-full-name owner)]]]

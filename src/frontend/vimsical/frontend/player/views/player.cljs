@@ -8,28 +8,29 @@
    [vimsical.frontend.player.views.info-and-editor :refer [info-and-editor-container]]
    [vimsical.frontend.player.views.timeline :refer [timeline-bar]]))
 
-(defn landscape []
+(defn landscape [{:keys [vims]}]
   [splits/n-h-split
    :class "landscape-split"
    :panels
-   [[preview-panel]
-    [info-and-editor-container]]
+   [[preview-panel {:vims vims}]
+    [info-and-editor-container {:vims vims}]]
    :splitter-size "1px"
    :splitter-child [elems/resizer]
    :initial-split 60
    :margin "0"])
 
-(defn portrait []
+(defn portrait [{:keys [vims]}]
   [:div.portrait-split
    [social-bar]
    [preview-container]
    [timeline-bar]
    [info-and-editor-container]])
 
-(defn player []
+(defn player [{:keys [vims]}]
   (let [orientation (<sub [::ui.subs/orientation])]
     [:div.vimsical-frontend-player
      {:class (name orientation)}
-     (case orientation
-       :landscape [landscape]
-       :portrait [portrait])]))
+     [(case orientation
+        :landscape landscape
+        :portrait portrait)
+      {:vims vims}]]))

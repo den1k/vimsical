@@ -46,6 +46,11 @@
 (defn contains? [?parent node]
   (.contains ?parent node))
 
+(defn node-contains-related-target?
+  "Useful for mouse-events to find out if mouse left component."
+  [node e]
+  (contains? node (.-relatedTarget e)))
+
 (defn view-contains? [v node]
   (contains? (reagent/dom-node v) node))
 

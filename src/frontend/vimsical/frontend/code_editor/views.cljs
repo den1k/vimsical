@@ -108,7 +108,7 @@
 
 (defn new-listeners
   [vims file editor]
-  {:pre [file editor]}
+  {:pre [vims file editor]}
   {:model->content-change-handler
                           (fn model->content-change-handler [model]
                             (fn [e]

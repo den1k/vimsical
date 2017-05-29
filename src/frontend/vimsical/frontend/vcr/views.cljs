@@ -120,19 +120,20 @@
     [:div.editor-header {:key sub-type :class sub-type}
      [:div.title title]]))
 
-(defn- editor-components [{::file/keys [sub-type] :as file}]
+(defn- editor-components [vims {::file/keys [sub-type] :as file}]
   {::file/sub-type sub-type
    :editor-header  ^{:key sub-type} [editor-header file]
    :editor         ^{:key sub-type} [code-editor
-                                     {:vims           (<sub [::app.subs/vims])
+                                     {:vims           vims
                                       :file           file
                                       :editor-reg-key :vcr/editors}]})
 
-(defn vcr []
-  (let [vims                   (<sub [::app.subs/vims])
-        branch                 (<sub [::vcs.subs/branch vims])
+(defn vcr [{:keys [vims]}]
+  (let [branch                 (<sub [::vcs.subs/branch vims])
         files                  (<sub [::vcs.subs/files vims])
-        editor-comps           (->> files (map editor-components) editor-components-by-file-type)
+        editor-comps           (->> files
+                                    (map (partial editor-components vims))
+                                    editor-components-by-file-type)
         visible-files          (visible-files files)
         visi-components        (views-for-files visible-files editor-comps)
         visible-editor-headers (mapv :editor-header visi-components)

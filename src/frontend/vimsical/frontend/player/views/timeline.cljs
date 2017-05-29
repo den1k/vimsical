@@ -4,6 +4,7 @@
             [vimsical.frontend.util.re-frame :refer [<sub]]
             [reagent.core :as reagent]
             [re-frame.core :as re-frame]
+            [vimsical.frontend.vcr.handlers :as vcr.handlers]
             [vimsical.frontend.player.handlers :as handlers]
             [vimsical.frontend.player.views.elems :as elems]
             [vimsical.common.util.core :as util]
@@ -20,19 +21,20 @@
        first
        (perc->time dur)))
 
-(defn handlers [c dur]
-  {:on-mouse-enter (e> (re-frame/dispatch [::handlers/on-mouse-enter (e->time c e dur)]))
-   :on-mouse-move  (e> (re-frame/dispatch [::handlers/on-mouse-move (e->time c e dur)]))
-   :on-mouse-leave (e> (re-frame/dispatch [::handlers/on-mouse-leave]))
-   :on-click       (e> (re-frame/dispatch [::handlers/on-click (e->time c e dur)]))
-   :on-touch-move  (e> (re-frame/dispatch [::handlers/on-click (e->time c (util.dom/first-touch->e e) dur)]))})
+(defn handlers [c vims dur]
+  {:on-mouse-enter (e> (re-frame/dispatch [::handlers/on-mouse-enter vims (e->time c e dur)]))
+   :on-mouse-move  (e> (re-frame/dispatch [::handlers/on-mouse-move vims (e->time c e dur)]))
+   :on-mouse-leave (e> (re-frame/dispatch [::handlers/on-mouse-leave vims]))
+   :on-click       (e> (re-frame/dispatch [::handlers/on-click vims (e->time c e dur)]))
+   :on-touch-move  (e> (re-frame/dispatch [::handlers/on-click vims (e->time c (util.dom/first-touch->e e) dur)]))})
 
 
-(defn play-pause []
-  (let [playing? (<sub [::timeline.subs/playing?])]
+(defn play-pause [{:keys [vims]}]
+  (let [playing? (<sub [::timeline.subs/playing? vims])]
     [:svg.play-pause
      {:view-box "0 0 100 100"
-      :on-click (e> (re-frame/dispatch [(if playing? ::handlers/pause ::handlers/play)]))}
+      :on-click (e> (re-frame/dispatch
+                     [(if playing? ::vcr.handlers/pause ::vcr.handlers/play) vims]))}
      (if-not playing?
        [elems/play-symbol
         {:origin       [50 50]
@@ -45,11 +47,11 @@
          :gap-width     60
          :border-radius 10}])]))
 
-(defn time-or-speed-control []
+(defn time-or-speed-control [{:keys [vims]}]
   (let [show-speed? (reagent/atom false)
         speed-range (reagent/atom [1.0 1.5 1.75 2 2.25 2.5])]
-    (fn []
-      (let [time (util/time-ms->fmt-time (<sub [::timeline.subs/time]))]
+    (fn [{:keys [vims]}]
+      (let [time (util/time-ms->fmt-time (<sub [::timeline.subs/time vims]))]
         [:div.time-or-speed-control.ac.jc
          {:on-mouse-enter (e> (reset! show-speed? true))
           :on-mouse-out   (e> (reset! show-speed? false))}
@@ -67,13 +69,14 @@
   (reagent/create-class
    {:render
     (fn [c]
-      (let [dur           (<sub [::timeline.subs/duration])
-            playhead      (<sub [::timeline.subs/playhead])
-            skimhead      (<sub [::timeline.subs/skimhead])
+      (let [{:keys [vims]} (reagent/props c)
+            dur           (<sub [::timeline.subs/duration vims])
+            playhead      (<sub [::timeline.subs/playhead vims])
+            skimhead      (<sub [::timeline.subs/skimhead vims])
             playhead-perc (str (time->pct dur playhead) "%")
             skimhead-perc (when skimhead (str (time->pct dur skimhead) "%"))]
         [:div.timeline.ac.f1
-         (handlers c dur)
+         (handlers c vims dur)
          [:div.time.left]               ; .progress class clashes with bootstrap
          [:div.time.passed
           {:style {:width playhead-perc}}]
@@ -81,12 +84,12 @@
           {:class (if skimhead "skimhead" "playhead")
            :style {:left (or skimhead-perc playhead-perc)}}]]))}))
 
-(defn timeline-bar []
+(defn timeline-bar [{:keys [vims]}]
   [re-com/h-box
    :class "bar timeline-container"
    :justify :center
    :align :center
    :gap "18px"
-   :children [[play-pause]
-              [timeline]
-              [time-or-speed-control]]])
+   :children [[play-pause {:vims vims}]
+              [timeline {:vims vims}]
+              [time-or-speed-control {:vims vims}]]])

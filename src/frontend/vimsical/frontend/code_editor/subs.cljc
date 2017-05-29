@@ -46,19 +46,13 @@
 ;; * Subscriptions
 ;;
 
-#_(re-frame/reg-sub
-   ::active-file
-   :<- [::ui-db/ui-db]
-   (fn [ui-db _]
-     (code-editor.ui-db/get-active-file ui-db)))
-
-#_(re-frame/reg-sub
-   ::editor-instance-for-subtype
-   (fn [[_ sub-type]]
+(re-frame/reg-sub
+ ::editor-instance-for-subtype
+ (fn [[_ vims sub-type]]
      [(re-frame/subscribe [::ui-db/ui-db])
-      (re-frame/subscribe [::vcs.subs/file-for-subtype sub-type])])
-   (fn [[ui-db file] _]
-     (code-editor.ui-db/get-editor ui-db file)))
+      (re-frame/subscribe [::vcs.subs/file-for-subtype vims sub-type])])
+ (fn [[ui-db file] [_ vims]]
+   (code-editor.ui-db/get-editor ui-db vims file)))
 
 (re-frame/reg-sub
  ::timeline-entry

@@ -33,21 +33,21 @@
       [lib-node lib])))
 
 (defn- preview-markup
-  [{::branch/keys [files libs]}]
+  [vims {::branch/keys [files libs]}]
   #?(:cljs
      (reagent.dom.server/render-to-static-markup
       (let [by-subtype  (group-by ::file/sub-type files)
             libs-string (transduce (map lib-node-markup) str libs)
-            head-string (transduce (map #(<sub [::preprocessed-file-markup %]))
+            head-string (transduce (map #(<sub [::preprocessed-file-markup vims %]))
                                    str
                                    libs-string
                                    (:css by-subtype))
             html-file   (-> by-subtype :html first)
             body-string (transduce
-                         (map #(<sub [::preprocessed-file-markup %]))
+                         (map #(<sub [::preprocessed-file-markup vims %]))
                          str
                          (when html-file
-                           (<sub [::preprocessed-file-markup html-file]))
+                           (<sub [::preprocessed-file-markup vims html-file]))
                          (:javascript by-subtype))]
         [:html
          [:head
@@ -59,9 +59,9 @@
 
 (re-frame/reg-sub
  ::preprocessed-file-markup
- (fn [[_ file]]
-   (re-frame/subscribe [::vcs.subs/preprocessed-file-string file]))
- (fn [string [_ {::file/keys [sub-type] :as file}]]
+ (fn [[_ vims file]]
+   (re-frame/subscribe [::vcs.subs/preprocessed-file-string vims file]))
+ (fn [string [_ _ {::file/keys [sub-type] :as file}]]
    (file-node-markup file string)))
 
 (re-frame/reg-sub-raw
@@ -70,14 +70,7 @@
    {:pre [vims]}
    (interop/make-reaction
     #(let [branch (<sub [::vcs.subs/branch vims])]
-       (preview-markup branch)))))
-
-(re-frame/reg-sub-raw
- ::branch-preprocessed-preview-markup
- (fn [_ [_ vims]]
-   (interop/make-reaction
-    #(let [branch (<sub [::vcs.subs/branch vims])]
-       (<sub [::vims-preprocessed-preview-markup branch])))))
+       (preview-markup vims branch)))))
 
 (re-frame/reg-sub
  ::error-catcher-branch-libs
@@ -91,7 +84,8 @@
  ::error-catcher-js-libs-markup
  :<- [::error-catcher-branch-libs]
  (fn [branch _]
-   (preview-markup branch)))
+   ;; FIXME nil vims
+   (preview-markup nil branch)))
 
 (re-frame/reg-sub-raw
  ::error-catcher-js-file-string

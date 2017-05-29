@@ -33,9 +33,9 @@
 
 (re-frame/reg-sub
  ::time
- [(fn [[_ vims]]
-    [(re-frame/subscribe [::playhead vims])
-     (re-frame/subscribe [::skimhead vims])])]
+ (fn [[_ vims]]
+   [(re-frame/subscribe [::playhead vims])
+    (re-frame/subscribe [::skimhead vims])])
  (fn [[skimhead playhead] _]
    (or skimhead playhead)))
 

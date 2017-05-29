@@ -7,9 +7,10 @@
 
 (re-frame/reg-sub
  ::active-file-uid
- :<- [::vcs.subs/skimhead-entry]
- :<- [::vcs.subs/playhead-entry]
- :<- [::vcs.subs/timeline-first-entry]
+ (fn [[_ vims]]
+   [(re-frame/subscribe [::vcs.subs/skimhead-entry vims])
+    (re-frame/subscribe [::vcs.subs/playhead-entry vims])
+    (re-frame/subscribe [::vcs.subs/timeline-first-entry vims])])
  (fn [[skimhead-entry playhead-entry timeline-first-entry] _]
    (some-> (or skimhead-entry
                playhead-entry
@@ -19,8 +20,9 @@
 
 (re-frame/reg-sub
  ::playback-unset?
- :<- [::vcs.subs/playhead-entry]
- :<- [::timeline.subs/playing?]
- :<- [::timeline.subs/skimming?]
+ (fn [[_ vims]]
+   [(re-frame/subscribe [::vcs.subs/playhead-entry vims])
+    (re-frame/subscribe [::timeline.subs/playing? vims])
+    (re-frame/subscribe [::timeline.subs/skimming? vims])])
  (fn [[entry playing? skimming?] _]
    (and (nil? entry) (not (or playing? skimming?)))))

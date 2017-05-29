@@ -71,13 +71,16 @@
       (get (mg/pull db pattern) link))
     (mg/pull db pattern)))
 
-(defn pull-sub* [db pattern]
-  (if (rewrite-pattern? pattern)
-    (let [{:keys [link pattern]} (rewrite-pattern pattern)]
-      (interop/make-reaction
-       (fn []
-         (get @(sg/pull db pattern) link))))
-    (sg/pull db pattern)))
+(defn pull-sub*
+  ([db pattern]
+   (if (rewrite-pattern? pattern)
+     (let [{:keys [link pattern]} (rewrite-pattern pattern)]
+       (interop/make-reaction
+        (fn []
+          (get @(sg/pull db pattern) link))))
+     (sg/pull db pattern)))
+  ([db pattern lookup-ref]
+   (sg/pull db pattern lookup-ref)))
 
 ;;
 ;; * Re-frame x Mapgraph
@@ -85,5 +88,7 @@
 
 (re-frame/reg-sub-raw
  :q
- (fn [db [_ pattern]]
-   (pull-sub* db pattern)))
+ (fn [db [_ pattern ?lookup-ref]]
+   (if ?lookup-ref
+     (pull-sub* db pattern ?lookup-ref)
+     (pull-sub* db pattern))))

@@ -3,7 +3,9 @@
    [re-frame.core :as re-frame]
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.vims :as vims]
-   [vimsical.user :as user]))
+   [vimsical.user :as user]
+   [com.stuartsierra.mapgraph :as mg]
+   [re-frame.interop :as interop]))
 
 (re-frame/reg-sub
  ::route
@@ -32,10 +34,12 @@
 
 (re-frame/reg-sub-raw
  ::vims-info
- (fn [_ _]
-   (re-frame/subscribe
-    [::vims
-     [::vims/title
-      {::vims/owner [::user/first-name
-                     ::user/last-name
-                     ::user/email]}]])))
+ (fn [db [_ ?vims]]
+   (let [db      @db
+         pattern [::vims/title {::vims/owner [::user/first-name ::user/last-name ::user/email]}]]
+     (re-frame/subscribe
+      (if ?vims
+        [:q
+         pattern
+         (mg/ref-to db ?vims)]
+        [::vims pattern])))))

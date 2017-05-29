@@ -68,16 +68,13 @@
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub
    (fn [[_ vims]]
-     (if vims
-       [::subs/vims-preprocessed-preview-markup vims]
-       [::subs/branch-preprocessed-preview-markup])))
-  (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/branch vims]))]
+     {:pre [vims]}
+     [::subs/vims-preprocessed-preview-markup vims]))]
  (fn [{:keys       [db ui-db]
-       ::subs/keys [vims-preprocessed-preview-markup branch-preprocessed-preview-markup]
-       cur-branch  ::vcs.subs/branch}
+       ::subs/keys [vims-preprocessed-preview-markup]}
       [_ vims]]
    #?(:cljs
-      (let [markup        (or vims-preprocessed-preview-markup branch-preprocessed-preview-markup)
+      (let [markup        vims-preprocessed-preview-markup
             iframe        (ui-db/get-iframe ui-db vims)
             prev-blob-url (ui-db/get-src-blob-url ui-db vims)
             blob-url      (util.dom/blob-url markup "text/html")]

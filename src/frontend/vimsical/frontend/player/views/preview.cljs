@@ -16,19 +16,19 @@
             [vimsical.common.util.core :as util :include-macros true]
             [vimsical.frontend.views.icons :as icons]))
 
-(defn central-play-button []
-  (let [unset? (<sub [::subs/playback-unset?])]
+(defn central-play-button [{:keys [vims]}]
+  (let [unset? (<sub [::subs/playback-unset? vims])]
     (when unset?
       [:div.play-button-overlay.jc.ac
-       {:on-click (e> (re-frame/dispatch [::handlers/play]))}
+       {:on-click (e> (re-frame/dispatch [::handlers/play vims]))}
        [elems/play-button]])))
 
-(defn preview-container []
+(defn preview-container [{:keys [vims]}]
   [:div.preview-container.f1
-   [central-play-button]
-   [live-preview {:branch (<sub [::vcs.subs/branch])}]])
+   [central-play-button {:vims vims}]
+   [live-preview {:vims vims}]])
 
-(defn social-bar []
+(defn social-bar [{:keys [vims]}]
   (let [liked (reagent/atom false)]
     (fn []
       [:div.bar.social
@@ -45,8 +45,8 @@
          :landscape [elems/explore]
          :portrait [icons/logo-and-type])])))
 
-(defn preview-panel []
+(defn preview-panel [{:keys [vims]}]
   [:div.preview-panel.jsb.dc
-   [social-bar]
-   [preview-container]
-   [timeline-bar]])
+   [social-bar {:vims vims}]
+   [preview-container {:vims vims}]
+   [timeline-bar {:vims vims}]])

@@ -97,7 +97,7 @@
 (re-frame/reg-sub
  ::file-for-subtype
  (fn [[_ vims]] (re-frame/subscribe [::files vims]))
- (fn [files [_ sub-type]]
+ (fn [files [_ _ sub-type]]
    {:pre [sub-type]}
    (util/ffilter (fn [file] (= (::file/sub-type file) sub-type)) files)))
 
