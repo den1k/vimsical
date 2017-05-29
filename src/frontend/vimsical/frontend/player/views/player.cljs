@@ -21,10 +21,10 @@
 
 (defn portrait [{:keys [vims]}]
   [:div.portrait-split
-   [social-bar]
-   [preview-container]
-   [timeline-bar]
-   [info-and-editor-container]])
+   [social-bar {:vims vims}]
+   [preview-container {:vims vims}]
+   [timeline-bar {:vims vims}]
+   [info-and-editor-container {:vims vims}]])
 
 (defn player [{:keys [vims]}]
   (let [orientation (<sub [::ui.subs/orientation])]
