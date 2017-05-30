@@ -109,11 +109,15 @@
       [:span.type icons/vimsical-type]]
      (when app-vims
        [vims-info])
-     [vims-list.views/vims-list-popover
-      {:showing? show-vims-list?
-       :anchor   [:div.button
-                  {:on-click (e> (swap! show-vims-list? not))}
-                  "My Vims"]}]
+     [:div.new-and-my-vims.button-group
+      [:div.button
+       {:on-click (e> (re-frame/dispatch [::app.handlers/new-vims user {:open? true}]))}
+       "New Vims"]
+      [vims-list.views/vims-list-popover
+       {:showing? show-vims-list?
+        :anchor   [:div.button
+                   {:on-click (e> (swap! show-vims-list? not))}
+                   "My Vims"]}]]
      [:div.auth-or-user
       ; popovers use no-op :on-cancel cb because event bubbles up here
       {:on-click (e> (swap! show-popup? not))}
