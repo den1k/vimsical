@@ -87,12 +87,11 @@
      :cursor          :pointer
      :background      :white
      :border          (str "1px solid " (:lightgrey colors))
-     :height          :36px
      :display         :flex
      :justify-content :center
      :align-items     :center
      :border-radius   :5px
-     :padding         "10px 14px"
+     :padding         "5px 10px"
      :outline         :none
      :white-space     :nowrap}
     [:&:hover

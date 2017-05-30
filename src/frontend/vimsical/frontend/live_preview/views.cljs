@@ -37,7 +37,6 @@
 (def iframe-sandbox-opts
   "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe"
   (util/space-join "allow-forms"
-                   "allow-modals"
                    "allow-pointer-lock"
                    "allow-popups"
                    "allow-same-origin"

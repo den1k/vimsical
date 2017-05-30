@@ -73,11 +73,10 @@
   ([uid owner] (new-vims uid owner nil {}))
   ([uid owner title] (new-vims uid owner title {}))
   ([uid owner title {:keys [js-libs compilers]}]
-   (let [owner-ref [:db/uid (:db/uid owner)]
-         files     [(new-file (uuid) :text :html)
-                    (new-file (uuid) :text :css)
-                    (new-file (uuid) :text :javascript "5" compilers)]
-         branches  [(new-branch (uuid) owner "master" files (:javascript js-libs))]]
+   (let [files    [(new-file (uuid) :text :html)
+                   (new-file (uuid) :text :css)
+                   (new-file (uuid) :text :javascript "5" compilers)]
+         branches [(new-branch (uuid) owner "master" files (:javascript js-libs))]]
 
      {:db/uid    uid
       ::owner    owner

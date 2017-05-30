@@ -20,8 +20,8 @@
 (re-frame/reg-event-fx
  ::new-vims
  (fn [{:keys [db]} [_ owner {:keys [open?]}]]
-   (let [vims  (-> (vims/new-vims (uuid) owner)
-                   (vimsical.vcs/init-vims))
-         owner (update owner ::user/vimsae conj vims)]
-     (cond-> {:db (mg/add db owner)}
+   (let [vims   (-> (vims/new-vims (uuid) (mg/ref-to db owner))
+                    (vimsical.vcs/init-vims))
+         owner' (update owner ::user/vimsae conj vims)]
+     (cond-> {:db (mg/add db vims owner')}
        open? (assoc :dispatch [::open-vims vims])))))

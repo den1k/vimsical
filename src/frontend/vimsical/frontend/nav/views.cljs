@@ -30,10 +30,7 @@
         title-placeholder "Untitled Vims"
         keydown-handler   (fn [e]
                             (let [limit? (limit-title-length? e)]
-                              ;; todo update limit
-                              (swap! state assoc
-                                     :title-too-long? limit?
-                                     )
+                              (swap! state assoc :title-too-long? limit?)
                               (if limit?
                                 (.preventDefault e)
                                 (util.dom/handle-key e
@@ -64,7 +61,8 @@
         title-html
                         [:div.title
                          (when editable-title?
-                           {:content-editable                  true
+                           {:class                             (when (nil? title) "untitled")
+                            :content-editable                  true
                             :suppress-content-editable-warning true
                             :on-mouse-enter                    #(swap! state assoc :hovering? true)
                             :on-mouse-leave                    #(swap! state assoc :hovering? false)

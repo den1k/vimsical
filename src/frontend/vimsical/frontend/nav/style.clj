@@ -32,6 +32,17 @@
        {:white-space :pre-wrap
         :overflow    :visible}]
       [:&.untitled {:color (:grey colors)}]]]
+    [:.button-group {:display       :flex
+                     :border-radius :5px
+                     :border        (str "1px solid " (:lightgrey colors))
+                     :align-items   :center}
+     [:.button {;;; divider btw button groups
+                :border                     :none
+                :border-top-right-radius    0
+                :border-bottom-right-radius 0
+                :border-right               (str "1px solid " (:lightgrey colors))}
+      [:&:last-child {:border-right  :none
+                      :border-radius :5px}]]]
     [:.user
      [:.avatar
       {:width  :30px
