@@ -59,10 +59,12 @@
 ;; * Entities
 ;;
 
+(def html-file (new-file (uuid ::html) :text :html))
+(def css-file (new-file (uuid ::css) :text :css))
+(def javascript-file (new-file (uuid ::js) :text :javascript "5" compilers))
+
 (def files
-  [(new-file (uuid ::html) :text :html)
-   (new-file (uuid ::css) :text :css)
-   (new-file (uuid ::js) :text :javascript "5" compilers)])
+  [html-file css-file javascript-file])
 
 (def branches
   [(new-branch (uuid ::master) (uuid ::user) "master" files (:javascript js-libs))])

@@ -16,7 +16,8 @@
   `{Wait   {:start                        Init}
     Init   {:delta-by-branch-uid-success  Sync
             :delta-by-branch-uid-error    InitError}
-    Sync   {:sync-success                 Ready
+    Sync   {:sync                         Sync ; ??
+            :sync-success                 Ready
             :sync-error                   SyncError}
     Ready  {:add-deltas                   Deltas
             :add-branch                   Branch}
@@ -34,7 +35,6 @@
 (s/def ::branch (s/every ::branch/branch))
 (s/def ::delta (s/keys :req-un [::delta/uid ::delta/prev-uid ::delta/branch-uid]))
 (s/def ::deltas-by-branch-uid (s/every-kv ::branch/uid ::delta))
-
 (s/def ::sync (s/keys :req [::state ::deltas ::branch ::deltas-by-branch-uid]))
 
 ;;
@@ -54,11 +54,11 @@
 
 (defn fsm-next-state-transition
   [{:keys [coeffects] :as context}]
-  (let [{[event-id vims-uid] :event :keys [db]} coeffects
-        {::keys [state]}                        (get-in db (path vims-uid))
-        next-state                              (get-in fsm [state (kw-name event-id)])
-        db'                                     (assoc-in db (path vims-uid ::state) next-state)]
-    (assoc-in context [:coeffects :db] db')))
+  (let [{[event-id vims-uid :as event] :event :keys [db]} coeffects
+        {::keys [state]}                                  (get-in db (path vims-uid))
+        next-state                                        (get-in fsm [state (kw-name event-id)])
+        db'                                               (assoc-in db (path vims-uid ::state) next-state)]
+    (assoc-in context [:effects :db] db')))
 
 (def fsm-interceptor
   (interceptor/->interceptor

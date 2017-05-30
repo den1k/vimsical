@@ -18,14 +18,14 @@
 ;; * Re-frame
 ;;
 
-(def test-db (db/new-db {}))
+(def test-db (db/new-db {:app/user data/user}))
 
 (defn re-frame-fixture
   [f]
   (re-frame.test/with-temp-re-frame-state
-    (re-frame.test/run-test-sync
+    (re-frame.test/run-test-async
      (re-frame/reg-event-db ::test-db-init (constantly test-db))
-     (re-frame/dispatch [::test-db-init])
+     (re-frame/dispatch-sync [::test-db-init])
      (f))))
 
 ;;
@@ -38,7 +38,6 @@
   system.fixture/session
   system.fixture/vims
   system.fixture/deltas
-  system.fixture/snapshots
   re-frame-fixture)
 
 ;;
@@ -59,5 +58,8 @@
         status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub        (re-frame/subscribe [::db/db])]
     (re-frame/dispatch handler-event)
-    (is (= ::frontend.remotes.fx/success @status-sub))
-    (is (= data/deltas-by-branch-uid (-> db-sub get-sync ::vcs.sync.db/delta-by-branch-uid)))))
+    (re-frame.test/wait-for
+     [#{::vcs.sync.handlers/delta-by-branch-uid-success}
+      #{::vcs.sync.handlers/delta-by-branch-uid-error}]
+     (do (is (= ::frontend.remotes.fx/success @status-sub))
+         (is (= data/deltas-by-branch-uid (-> db-sub get-sync ::vcs.sync.db/delta-by-branch-uid)))))))

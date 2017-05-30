@@ -11,14 +11,15 @@
 ;; * Helpers
 ;;
 
-(defn reload-logback! []
-  (let [context      ^LoggerContext (LoggerFactory/getILoggerFactory)
-        configurator (JoranConfigurator.)
-        config       (io/resource "logback.xml")]
-    (assert config)
-    (.reset context)
-    (.setContext configurator context)
-    (.doConfigure configurator config)))
+(defn reload-logback!
+  ([] (reload-logback! (io/resource "logback.xml")))
+  ([config]
+   (let [context      ^LoggerContext (LoggerFactory/getILoggerFactory)
+         configurator (JoranConfigurator.)]
+     (assert config)
+     (.reset context)
+     (.setContext configurator context)
+     (.doConfigure configurator config))))
 
 ;;
 ;; * API
@@ -29,3 +30,8 @@
 (defmacro warn  [& args] `(log/logp :warn ~@args))
 (defmacro error [& args] `(log/logp :error ~@args))
 (defmacro fatal [& args] `(log/logp :fatal ~@args))
+
+(comment
+  (reload-logback!)
+  (reload-logback!
+   (io/file "/Users/julien/projects/vimsical/resources/backend/logback/test/logback.xml")))

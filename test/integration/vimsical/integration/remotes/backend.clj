@@ -51,14 +51,14 @@
 (defmethod remote/send! :backend
   [{:keys [event] :as fx} state result-cb error-cb]
   (letfn [(xhr-success-cb [resp]
-            (log/debug "RAW" resp)
+            (log/info "RAW" resp)
             (result-cb (response-result fx resp)))
           (xhr-error-cb [resp]
             (log/error "ERROR" resp)
             (error-cb (response-result fx resp)))
           (ok? [{:keys [status] :as response}] (< 199 status 300))]
     (let [response (server.test/response-for event)]
-      (log/debug response)
+      (log/info response)
       (if (ok? response)
         (xhr-success-cb response)
         (xhr-error-cb response)))))

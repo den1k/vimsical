@@ -166,7 +166,7 @@
      (let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)
            playhead'             (vcs->playhead vcs')
            db'                   (mg/add db vcs')
-           ui-db'                (timeline.ui-db/set-playhead ui-db playhead')]
+           ui-db'                (timeline.ui-db/set-playhead ui-db vims playhead')]
        (cond-> {:db         db'
                 :ui-db      ui-db'
                 :dispatch-n [[::sync.handlers/add-deltas uid deltas]]}
