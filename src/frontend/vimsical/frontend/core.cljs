@@ -14,8 +14,7 @@
 
 (defn mount-root []
   (re-frame/clear-subscription-cache!)
-  (reagent/render [app]
-                  (.getElementById js/document "app")))
+  (reagent/render [app] (.getElementById js/document "app")))
 
 (defn ^:export init
   "Called from index.html"
@@ -24,6 +23,5 @@
   (code-editor.core/require-monaco
    #(do
       (re-frame/dispatch-sync [::db/init])
-      (re-frame/dispatch-sync [::vcs.handlers/init (uuid "NLP Chatbot running on React Fiber")])
       (re-frame/dispatch-sync [::ui.handlers/init])
       (mount-root))))

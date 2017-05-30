@@ -21,3 +21,7 @@
                 ::password
                 ::vimsae
                 ::settings]))
+
+(defn anon? [{::keys [email]}] (nil? email))
+
+(def logged-in? (complement anon?))

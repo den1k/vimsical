@@ -16,5 +16,5 @@
   []
   (code-editor.core/require-monaco
    #(do
-      ;(re-frame/dispatch-sync [::db/init])
+      ;; (re-frame/dispatch-sync [::db/init])
       (mount-root))))

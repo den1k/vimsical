@@ -92,7 +92,7 @@
   (remove-ref db (mg/ref-to db entity)))
 
 (defn remove-links [db & keywords]
-  (reduce remove-ref db (map keywords db)))
+  (reduce remove-ref db (map (partial get db) keywords)))
 
 ;;
 ;; ** Shorthand link syntax

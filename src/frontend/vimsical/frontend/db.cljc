@@ -74,14 +74,8 @@
 ;;
 
 (def default-state
-  {:app/user         {:db/uid           (uuid :user)
-                      ::user/first-name "Jane"
-                      ::user/last-name  "Applecrust"
-                      ::user/email      "kalavox@gmail.com"
-                      ::user/vimsae
-                      [(new-vims [:db/uid (uuid :user)] "NLP Chatbot running on React Fiber")
-                       (new-vims [:db/uid (uuid :user)] "CatPhotoApp" {:js-libs sub-type->libs})]}
-   :app/vims         [:db/uid (uuid "CatPhotoApp")]
+  {:app/user         {:db/uid (uuid :user)}
+   :app/vims         nil
    :app/quick-search {:db/uid                           (uuid :quick-search)
                       :quick-search/show?               false
                       :quick-search/result-idx          0
@@ -92,7 +86,7 @@
                       :quick-search/filter-category-idx nil}
    :app/libs         js-libs
    :app/compilers    compilers
-   :app/route        :route/vims})
+   :app/route        :route/landing})
 
 ;;
 ;; * Mapgraph db

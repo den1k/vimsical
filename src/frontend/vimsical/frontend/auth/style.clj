@@ -24,7 +24,8 @@
      [:.stmt
       {:margin-top  :10px
        :line-height :22px}]]]
-   [:&.logout]
+   [:&.logout
+    {:cursor :pointer}]
    [:&.signup
     {:align-self :center
      :position   :relative

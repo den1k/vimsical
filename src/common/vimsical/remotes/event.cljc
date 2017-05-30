@@ -61,4 +61,4 @@
 (s/def ::error (s/keys :opt [::msg ::data ::cause]))
 
 (defn throwable->error [t]
-  (-> t Throwable->map (select-keys [:msg])))
+  #?(:clj (-> t Throwable->map (select-keys [:msg])) :cljs (assert false "Not implemented")))
