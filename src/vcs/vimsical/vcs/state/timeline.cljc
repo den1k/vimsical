@@ -7,7 +7,7 @@
 
   1. As deltas get added, we build chunks grouped by their branch
 
-     The only partitioning that needs to happen in this step is a file partitioning.
+      The only partitioning that needs to happen in this step is a file partitioning.
 
      {:<branch-uid>
        {:chunks [{:start-delta-uid nil
@@ -379,6 +379,13 @@
   ;; The next delta might be in the next chunk, but we look to the left first
   (or (some-> timeline (nearest-chunk-entry < t)  (nearest-delta-entry > t))
       (some-> timeline (nearest-chunk-entry >= t) (nearest-delta-entry > t))))
+
+(s/fdef last-entry :args (s/cat :timeline ::timeline) :ret ::entry)
+
+(defn last-entry
+  [{::keys [chunks-by-absolute-start-time]}]
+  (let [[_ chunk] (last chunks-by-absolute-start-time)]
+    (chunk/last-entry chunk)))
 
 (defn delta-at-absolute-time
   [timeline expect-abs-time]

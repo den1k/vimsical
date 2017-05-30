@@ -172,6 +172,12 @@
   [{::keys [deltas-by-relative-time]}]
   (first deltas-by-relative-time))
 
+(s/fdef last-entry :args (s/cat :chunk ::chunk) :ret ::entry)
+
+(defn last-entry
+  [{::keys [deltas-by-relative-time]}]
+  (peek deltas-by-relative-time))
+
 (s/fdef entry-at-relative-time
         :args (s/cat :chunk ::chunk :test ifn? :t ::relative-time)
         :ret  (s/nilable ::entry))

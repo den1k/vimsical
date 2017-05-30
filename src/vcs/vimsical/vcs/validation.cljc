@@ -73,8 +73,8 @@
    {} deltas))
 
 (s/fdef update-delta-by-branch-uid
-        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas (s/every ::delta))
-        :ret  ::deltas-by-branch-uid)
+        :args (s/cat :deltas-by-branch-uid ::delta-by-branch-uid :deltas (s/every ::delta))
+        :ret  ::delta-by-branch-uid)
 
 (defn update-delta-by-branch-uid
   [delta-by-branch-uid deltas]

@@ -5,11 +5,12 @@
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
+   [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as vcs.db]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.frontend.vcs.subs :as subs]
-   [vimsical.remotes.backend.vcs.queries :as backend.vcs.queries]
+   [vimsical.frontend.vcs.sync.handlers :as sync.handlers]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.editor :as editor]
@@ -148,8 +149,8 @@
   "Update the vcs with the edit event and move the playhead-entry to the newly created timeline entry"
   [{:as vcs ::vcs.db/keys [branch-uid playhead-entry]} effects file-uid edit-event]
   ;; Use editor effects to create a branch id that we can reference in the deltas
-  (let [[_ _ _ branch-maybe :as result] (add-edit-event* vcs effects file-uid edit-event)]
-    [(update-pointers result) branch-maybe]))
+  (let [[_ deltas _ ?branch :as result] (add-edit-event* vcs effects file-uid edit-event)]
+    [(update-pointers result) deltas ?branch]))
 
 (re-frame/reg-event-fx
  ::add-edit-event
@@ -160,38 +161,16 @@
  (fn [{:keys         [db ui-db]
        ::subs/keys   [vcs]
        ::editor/keys [effects]}
-      [_ vims {file-uid :db/uid} edit-event]]
-   ;; Get the time from the update timeline entry and update the timeline ui.
-   (let [[{[t] ::vcs.db/playhead-entry :as vcs'}
-          branch-maybe] (add-edit-event vcs effects file-uid edit-event)]
-     ;; TODO Add new branch to vims
-     {:ui-db (timeline.ui-db/set-playhead ui-db vims t)
-      :db    (mg/add db vcs')})))
-
-;;
-;; * Remote
-;;
-
-;;
-;; ** Deltas by branch uid
-;;
-
-(re-frame/reg-event-fx
- ::sync-init
- (fn [{:keys [db]} [_ vims-uid status-key]]
-   {:remote
-    {:id               :backend
-     :event            [::backend.vcs.queries/deltas-by-branch-uid vims-uid]
-     :status-key       status-key
-     :dispatch-success (fn [deltas]
-                         [::sync-init-success vims-uid deltas])}}))
-
-;; {:app/sync
-;;  {:<vims-uid> {:deltas-branch-branch-uid {:<branch-uid> :<delta>}
-;;                :queue                    [:<delta1> :<delta2>]
-;;                :in-flight                [:<delta-0>]}}}
-
-(re-frame/reg-event-fx
- ::sync-init-success
- (fn [{:keys [db]} [_ vims-uid deltas-by-branch-uid]]
-   {:db (assoc-in db [:app/sync vims-uid :deltas-by-branch-uid] deltas-by-branch-uid)}))
+      [_ {:keys [db/uid] :as vims} {file-uid :db/uid} edit-event]]
+   (letfn [(vcs->playhead [vcs] (-> vcs ::vcs.db/playhead-entry first))]
+     (let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)
+           playhead'             (vcs->playhead vcs')
+           db'                   (mg/add db vcs')
+           ui-db'                (timeline.ui-db/set-playhead ui-db playhead')]
+       (cond-> {:db         db'
+                :ui-db      ui-db'
+                :dispatch-n [[::sync.handlers/add-deltas uid deltas]]}
+         (some? ?branch)
+         ;; NOTE branch is already in ::vcs/branches, don't need to mg/add it
+         (-> (update :db util.mg/add-join* :app/vims ::vims/branches ?branch)
+             (update :dispatch-n conj [::sync.handlers/add-branch ?branch])))))))
