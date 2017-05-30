@@ -5,22 +5,25 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]))
 
+(declare path)
+
 ;;
 ;; * Fsm
 ;;
 
+;; NOTE ignoring ns due to circular dependency
 (def fsm
-  `{Wait   {::start                        Init}
-    Init   {::deltas-by-branch-uid-success Sync
-            ::deltas-by-branch-uid-error   InitError}
-    Sync   {::sync-success                 Ready
-            ::sync-error                   SyncError}
-    Ready  {::add-deltas                   Deltas
-            ::add-branch                   Branch}
-    Deltas {::add-deltas-success           Ready
-            ::add-deltas-error             Sync}
-    Branch {::add-branch-success           Ready
-            ::add-branch-error             BranchError}})
+  `{Wait   {:start                        Init}
+    Init   {:delta-by-branch-uid-success  Sync
+            :delta-by-branch-uid-error    InitError}
+    Sync   {:sync-success                 Ready
+            :sync-error                   SyncError}
+    Ready  {:add-deltas                   Deltas
+            :add-branch                   Branch}
+    Deltas {:add-deltas-success           Ready
+            :add-deltas-error             Sync}
+    Branch {:add-branch-success           Ready
+            :add-branch-error             BranchError}})
 
 ;;
 ;; * Spec
@@ -38,19 +41,24 @@
 ;; * FSM interceptor
 ;;
 
+(def kw-name (comp keyword name))
+
 (defn fsm-check-allowed-transition
-  [{[event-id vims-uid :as event] :event :keys [db] :as context}]
-  (let [{::keys [state]} (get-in db [:app/sync vims-uid])
-        allowed-transitions (get fsm state)]
-    (if-not (contains? allowed-transitions event-id)
+  [{:keys [coeffects] :as context}]
+  (let [{[event-id vims-uid :as event] :event :keys [db]} coeffects
+        {::keys [state]}                                  (get-in db (path vims-uid))
+        allowed-transitions                               (get fsm state)]
+    (if-not (contains? allowed-transitions (kw-name event-id))
       (throw (ex-info "Transition" {:allowed allowed-transitions :event event}))
       context)))
 
 (defn fsm-next-state-transition
-  [{[event-id vims-uid] :event :keys [db]}]
-  (let [{::keys [state]} (get-in db [:app/sync vims-uid])
-        next-state          (get-in fsm [state event-id])]
-    {:db (assoc-in [:app/sync vims-uid ::state] next-state)}))
+  [{:keys [coeffects] :as context}]
+  (let [{[event-id vims-uid] :event :keys [db]} coeffects
+        {::keys [state]}                        (get-in db (path vims-uid))
+        next-state                              (get-in fsm [state (kw-name event-id)])
+        db'                                     (assoc-in db (path vims-uid ::state) next-state)]
+    (assoc-in context [:coeffects :db] db')))
 
 (def fsm-interceptor
   (interceptor/->interceptor

@@ -42,7 +42,7 @@
 
 (assert (string? (pr-str (cql/->raw select-deltas))))
 
-(def select-deltas-by-branch-uid
+(def select-delta-by-branch-uid
   (cql/select
    :delta
    (cql/columns :branch_uid :uid :prev_uid)

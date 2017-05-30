@@ -9,7 +9,8 @@
    [vimsical.common.test :refer [uuid]]
    [vimsical.frontend.db :as db]
    [vimsical.frontend.remotes.fx :as frontend.remotes.fx]
-   [vimsical.frontend.vcs.handlers :as vcs.handlers]))
+   [vimsical.frontend.vcs.sync.db :as vcs.sync.db]
+   [vimsical.frontend.vcs.sync.handlers :as vcs.sync.handlers]))
 
 (st/instrument)
 
@@ -54,9 +55,9 @@
 
 (deftest deltas-by-branch-uid-test
   (let [status-key    (uuid)
-        handler-event [::vcs.handlers/sync-init (uuid ::data/vims) status-key]
+        handler-event [::vcs.sync.handlers/start (uuid ::data/vims) status-key]
         status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub        (re-frame/subscribe [::db/db])]
     (re-frame/dispatch handler-event)
     (is (= ::frontend.remotes.fx/success @status-sub))
-    (is (= data/deltas-by-branch-uid (-> db-sub get-sync :deltas-by-branch-uid)))))
+    (is (= data/deltas-by-branch-uid (-> db-sub get-sync ::vcs.sync.db/delta-by-branch-uid)))))

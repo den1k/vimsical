@@ -15,9 +15,9 @@
 ;;
 
 (def ^:private queries
-  {::select-deltas               queries/select-deltas
-   ::insert-delta                queries/insert-delta
-   ::select-deltas-by-branch-uid queries/select-deltas-by-branch-uid})
+  {::select-deltas              queries/select-deltas
+   ::insert-delta               queries/insert-delta
+   ::select-delta-by-branch-uid queries/select-delta-by-branch-uid})
 
 ;;
 ;; * Commands
@@ -32,8 +32,8 @@
      [::insert-delta (queries/delta->insert-values vims-uid delta)])
    deltas))
 
-(defn- select-deltas-by-branch-uid-command [vims-uid]
-  [::select-deltas-by-branch-uid [vims-uid]])
+(defn- select-delta-by-branch-uid-command [vims-uid]
+  [::select-delta-by-branch-uid [vims-uid]])
 
 ;;
 ;; * Result sets helpers
@@ -78,8 +78,8 @@
   (insert-deltas-async [_ vims-uid deltas success error]
     (let [commands (insert-deltas-commands vims-uid deltas)]
       (cassandra/execute-batch-async cassandra commands :unlogged success error)))
-  (select-deltas-by-branch-uid-async [_ vims-uid success error]
-    (let [command  (select-deltas-by-branch-uid-command vims-uid)
+  (select-delta-by-branch-uid-async [_ vims-uid success error]
+    (let [command  (select-delta-by-branch-uid-command vims-uid)
           group    (fn [deltas]
                      (transduce
                       (validation/group-by-branch-uid-xf)
@@ -95,8 +95,8 @@
   (insert-deltas-chan [_ vims-uid deltas]
     (let [commands (insert-deltas-commands vims-uid deltas)]
       (cassandra/execute-batch-chan cassandra commands :unlogged)))
-  (select-deltas-by-branch-uid-chan [{{buf :default-fetch-size} :cassandra} vims-uid]
-    (let [command (select-deltas-by-branch-uid-command vims-uid)
+  (select-delta-by-branch-uid-chan [{{buf :default-fetch-size} :cassandra} vims-uid]
+    (let [command (select-delta-by-branch-uid-command vims-uid)
           channel (group-by-branch-uid-chan buf)]
       (cassandra/execute-chan cassandra command {:channel channel}))))
 

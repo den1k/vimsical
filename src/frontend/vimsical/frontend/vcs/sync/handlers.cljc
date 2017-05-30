@@ -17,19 +17,18 @@
   (fn [response]
     [event-id vims-uid response]))
 
-
 ;;
 ;; * Entry point
 ;;
 
 (re-frame/reg-event-fx
  ::start
- [db/fsm-interceptor]
- (fn [{:keys [db]} [_ vims-uid]]
-   {:db (assoc db (db/path vims-uid) (db/new-sync vims-uid))
+ (fn [{:keys [db]} [_ vims-uid status-key]]
+   {:db (assoc-in db (db/path vims-uid) (db/new-sync vims-uid))
     :remote
     {:id               :backend
      :event            [::queries/delta-by-branch-uid vims-uid]
+     :status-key       status-key
      :dispatch-success (->dispatch ::delta-by-branch-uid-success vims-uid)
      :dispatch-error   (->dispatch ::delta-by-branch-uid-error vims-uid)}}))
 
