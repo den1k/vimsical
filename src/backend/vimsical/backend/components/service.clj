@@ -44,5 +44,5 @@
    ::http/allowed-origins      {:creds true :allowed-origins (constantly true)}
    ::http/resource-path        "/public"
    ::http/default-interceptors default-interceptors
-   ::http/start-fn             immutant/start
-   ::http/stop-fn              immutant/stop})
+   ::http/start-fn             http/start
+   ::http/stop-fn              http/stop})

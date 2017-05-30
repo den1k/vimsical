@@ -116,8 +116,8 @@
 (defn new-system []
   (-> (system/new-system)
       ;; Don't run the web-server, we rely on the pedestal service-fn in tests
-      (assoc-in [:service ::http/start-fn] (fn []))
-      (assoc-in [:service ::http/stop-fn]  (fn []))))
+      (assoc-in [:service-map ::http/start-fn] identity)
+      (assoc-in [:service-map ::http/stop-fn] identity)))
 
 (defn system
   [f]
