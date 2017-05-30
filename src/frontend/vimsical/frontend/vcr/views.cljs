@@ -14,6 +14,7 @@
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.frontend.views.shapes :as shapes]
    [vimsical.frontend.views.splits :as splits]
+   [vimsical.frontend.app.subs :as app.subs]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]))
 
@@ -69,14 +70,14 @@
        (triangle-right {:class    "icon speed-triangle increase"
                         :on-click (e> :increase)})])))
 
-(defn- playback-control []
-  (let [playing? (<sub [::timeline.subs/playing?])]
+(defn- playback-control [{:keys [vims]}]
+  (let [playing? (<sub [::timeline.subs/playing? vims])]
     [:div.control.play-pause
      (if-not playing?
        [:svg
         {:class    "icon play"          ;; rename to button
          :view-box "0 0 100 100"
-         :on-click (e> (re-frame/dispatch [::handlers/play]))}
+         :on-click (e> (re-frame/dispatch [::handlers/play vims]))}
         (shapes/triangle {:origin          [50 50]
                           :height          100
                           :stroke-linejoin "round"
@@ -84,14 +85,17 @@
                           :rotate          90})]
        [:svg {:class    "icon pause"    ;; rename to button
               :view-box "0 0 90 100"
-              :on-click (e> (re-frame/dispatch [::handlers/pause]))}
+              :on-click (e> (re-frame/dispatch [::handlers/pause vims]))}
         (let [attrs {:y 0 :width 30 :height 100 :rx 5 :ry 5}]
           [:g
            [:rect (merge {:x 0} attrs)]
            [:rect (merge {:x 60} attrs)]])])]))
 
-(defn- playback []
-  [:div.playback [playback-control] [timeline] [speed-control]])
+(defn- playback [{:keys [vims]}]
+  [:div.playback
+   [playback-control {:vims vims}]
+   [timeline {:vims vims}]
+   [speed-control]])
 
 (defn- editor-tabs [files]
   [:div.editor-tabs
@@ -116,17 +120,20 @@
     [:div.editor-header {:key sub-type :class sub-type}
      [:div.title title]]))
 
-(defn- editor-components [{::file/keys [sub-type] :as file}]
+(defn- editor-components [vims {::file/keys [sub-type] :as file}]
   {::file/sub-type sub-type
    :editor-header  ^{:key sub-type} [editor-header file]
    :editor         ^{:key sub-type} [code-editor
-                                     {:file           file
+                                     {:vims           vims
+                                      :file           file
                                       :editor-reg-key :vcr/editors}]})
 
-(defn vcr []
-  (let [branch                 (<sub [::vcs.subs/branch])
-        files                  (<sub [::vcs.subs/files])
-        editor-comps           (->> files (map editor-components) editor-components-by-file-type)
+(defn vcr [{:keys [vims]}]
+  (let [branch                 (<sub [::vcs.subs/branch vims])
+        files                  (<sub [::vcs.subs/files vims])
+        editor-comps           (->> files
+                                    (map (partial editor-components vims))
+                                    editor-components-by-file-type)
         visible-files          (visible-files files)
         visi-components        (views-for-files visible-files editor-comps)
         visible-editor-headers (mapv :editor-header visi-components)
@@ -135,10 +142,10 @@
      :class "vcr"
      :size "100%"
      :children
-     [[playback]
+     [[playback {:vims vims}]
       [splits/n-h-split
        :class "live-preview-and-editors"
-       :panels [[live-preview {:branch branch}]
+       :panels [[live-preview {:vims vims :error-catcher? false}]
                 [splits/n-v-split
                  :height "100%"
                  :splitter-size "31px"

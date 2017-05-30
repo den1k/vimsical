@@ -135,15 +135,15 @@
  ::add-edit-event
  [editor-cofxs
   (re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub [::subs/vcs])
-  (util.re-frame/inject-sub [::subs/playhead-entry])]
+  (util.re-frame/inject-sub (fn [[_ vims]] [::subs/vcs vims]))
+  (util.re-frame/inject-sub (fn [[_ vims]] [::subs/playhead-entry vims]))]
  (fn [{:keys         [db ui-db]
        ::subs/keys   [vcs]
        ::editor/keys [effects]}
-      [_ {file-uid :db/uid} edit-event]]
+      [_ vims {file-uid :db/uid} edit-event]]
    ;; Get the time from the update timeline entry and update the timeline ui.
    (let [[{[t] ::vcs.db/playhead-entry :as vcs'}
           branch-maybe] (add-edit-event vcs effects file-uid edit-event)]
      ;; TODO Add new branch to vims
-     {:ui-db (timeline.ui-db/set-playhead ui-db t)
+     {:ui-db (timeline.ui-db/set-playhead ui-db vims t)
       :db    (mg/add db vcs')})))

@@ -24,21 +24,21 @@
 ;;
 
 (defn string-handler
-  [[vcs timeline-entry] [_ {file-uid :db/uid}]]
+  [[vcs timeline-entry] [_ _ {file-uid :db/uid}]]
   {:pre [file-uid]}
   (when-not (= ::sentinel timeline-entry)
     (let [[_ {delta-uid :uid}] timeline-entry]
       (or (vcs/file-string vcs file-uid delta-uid) ""))))
 
 (defn cursor-handler
-  [[vcs timeline-entry] [_ {file-uid :db/uid}]]
+  [[vcs timeline-entry] [_ _ {file-uid :db/uid}]]
   {:pre [file-uid]}
   (when-not (= ::sentinel timeline-entry)
     (let [[_ {delta-uid :uid}] timeline-entry]
       (or (vcs/file-cursor vcs file-uid delta-uid) 0))))
 
 (defn position-handler
-  [[cursor string] [_ {file-uid :db/uid}]]
+  [[cursor string] [_ _ {file-uid :db/uid}]]
   (when (and cursor string)
     (interop/idx->pos cursor string)))
 
@@ -47,46 +47,64 @@
 ;;
 
 (re-frame/reg-sub
- ::active-file
- :<- [::ui-db/ui-db]
- (fn [ui-db _]
-   (code-editor.ui-db/get-active-file ui-db)))
-
-(re-frame/reg-sub
  ::editor-instance-for-subtype
- (fn [[_ sub-type]]
-   [(re-frame/subscribe [::ui-db/ui-db])
-    (re-frame/subscribe [::vcs.subs/file-for-subtype sub-type])])
- (fn [[ui-db file] _]
-   (code-editor.ui-db/get-editor ui-db file)))
+ (fn [[_ vims sub-type]]
+     [(re-frame/subscribe [::ui-db/ui-db])
+      (re-frame/subscribe [::vcs.subs/file-for-subtype vims sub-type])])
+ (fn [[ui-db file] [_ vims]]
+   (code-editor.ui-db/get-editor ui-db vims file)))
 
 (re-frame/reg-sub
  ::timeline-entry
- :<- [::vcs.subs/skimhead-entry]
- :<- [::vcs.subs/playhead-entry]
- :<- [::timeline.subs/skimming?]
- :<- [::timeline.subs/playing?]
+ (fn [[_ vims]]
+   [(re-frame/subscribe [::vcs.subs/skimhead-entry vims])
+    (re-frame/subscribe [::vcs.subs/playhead-entry vims])
+    (re-frame/subscribe [::timeline.subs/skimming? vims])
+    (re-frame/subscribe [::timeline.subs/playing? vims])])
  (fn [[skimhead-entry playhead-entry skimming? playing?] _]
    (cond
      skimming? skimhead-entry
-     playing?  playhead-entry
-     :else     ::sentinel)))
+     playing? playhead-entry
+     :else ::sentinel)))
 
-(re-frame/reg-sub ::string          :<- [::vcs.subs/vcs] :<- [::timeline-entry] string-handler)
-(re-frame/reg-sub ::cursor          :<- [::vcs.subs/vcs] :<- [::timeline-entry] cursor-handler)
-(re-frame/reg-sub ::playhead-string :<- [::vcs.subs/vcs] :<- [::vcs.subs/playhead-entry] string-handler)
-(re-frame/reg-sub ::playhead-cursor :<- [::vcs.subs/vcs] :<- [::vcs.subs/playhead-entry] cursor-handler)
+(defn- timeline-entry-subs [[_ vims _]]
+  [(re-frame/subscribe [::vcs.subs/vcs vims])
+   (re-frame/subscribe [::timeline-entry vims])])
+
+(re-frame/reg-sub
+ ::string
+ timeline-entry-subs
+ string-handler)
+
+(re-frame/reg-sub
+ ::cursor
+ timeline-entry-subs
+ cursor-handler)
+
+(defn- playhead-entry-subs [[_ vims _]]
+  [(re-frame/subscribe [::vcs.subs/vcs vims])
+   (re-frame/subscribe [::vcs.subs/playhead-entry vims])])
+
+(re-frame/reg-sub
+ ::playhead-string
+ playhead-entry-subs
+ string-handler)
+
+(re-frame/reg-sub
+ ::playhead-cursor
+ playhead-entry-subs
+ cursor-handler)
 
 (re-frame/reg-sub
  ::position
- (fn [[_ file]]
-   [(re-frame/subscribe [::cursor file])
-    (re-frame/subscribe [::string file])])
+ (fn [[_ vims file]]
+   [(re-frame/subscribe [::cursor vims file])
+    (re-frame/subscribe [::string vims file])])
  position-handler)
 
 (re-frame/reg-sub
  ::playhead-position
- (fn [[_ file]]
-   [(re-frame/subscribe [::playhead-cursor file])
-    (re-frame/subscribe [::playhead-string file])])
+ (fn [[_ vims file]]
+   [(re-frame/subscribe [::playhead-cursor vims file])
+    (re-frame/subscribe [::playhead-string vims file])])
  position-handler)

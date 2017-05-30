@@ -43,64 +43,67 @@
                    "allow-same-origin"
                    "allow-scripts"))
 
-(defn- iframe-ref-handler
-  [branch]
-  (fn [node]
-    (if node
-      (do
-        (re-frame/dispatch [::error-catcher/init])
-        (re-frame/dispatch [::handlers/register-and-init-iframe node branch]))
-      (do
-        (re-frame/dispatch [::error-catcher/dispose])
-        (re-frame/dispatch [::handlers/dispose-iframe branch])))))
-
-(defn- iframe-on-load-handler
-  [branch]
-  (fn []
-    (re-frame/dispatch [::handlers/move-script-nodes branch])))
-
-(defn- iframe-attrs
-  [{:keys [branch static?] :as opts}]
-  (cond-> {:key     ::iframe            ; ref only works when key is present
-           :sandbox iframe-sandbox-opts
-           :ref     (iframe-ref-handler branch)}
-    (not static?) (assoc :on-load (iframe-on-load-handler branch))))
-
+;; TODO move this into handlers
 (defn- err-catcher-files
   "Error Catcher tracks the js files already. So if it is on, we remove them
   from Live Preview's tracking"
   [files]
   (remove file/javascript? files))
 
+(defn register [node {:keys [vims static? error-catcher?]}]
+  {:pre [node vims]}
+  (re-frame/dispatch-sync [::handlers/register-iframe vims node])
+  (re-frame/dispatch [::handlers/update-iframe-src vims])
+  (when-not static?
+    (when error-catcher?
+      (re-frame/dispatch [::error-catcher/init])
+      (re-frame/dispatch [::error-catcher/track-start vims]))
+    (re-frame/dispatch [::handlers/track-vims vims])))
+
+(defn dispose [{:keys [vims static? error-catcher?]}]
+  (when-not static?
+    (when error-catcher?
+      (re-frame/dispatch [::error-catcher/track-stop])
+      (re-frame/dispatch [::error-catcher/dispose]))
+    (re-frame/dispatch [::handlers/stop-track-vims vims]))
+  ;; if live-preview is used in other components with the same vims
+  ;; mount/unmount cycle can lead to race conditions which wrongly
+  ;; dispose the iframe of the mounting component.
+  #_(re-frame/dispatch [::handlers/dispose-iframe vims]))
+
+(defn recycle
+  [node old-opts new-opts]
+  {:pre [node old-opts new-opts]}
+  (dispose old-opts)
+  (register node new-opts))
+
 ;;
 ;; * Components
 ;;
 
-(defn live-preview
-  [{:as                     opts
-    {::branch/keys [files]} :branch
-    :keys                   [branch static? error-catcher?]
-    :or                     {error-catcher? true}}]
-  {:pre [branch]}
-  (let [files (cond-> files error-catcher? err-catcher-files)]
-    (reagent/create-class
-     (merge
-      (when-not static?
-        {:component-did-mount
-         (fn [_]
-           (when error-catcher?
-             (re-frame/dispatch [::error-catcher/track-start]))
-           (doseq [file files]
-             (re-frame/dispatch [::handlers/track-start branch file])))
+(defn iframe-preview [opts]
+  (reagent/create-class
+   {:component-did-mount
+    (fn [c]
+      (let [node (reagent/dom-node c)]
+        (register node opts)))
 
-         :component-will-unmount
-         (fn [_]
-           (when error-catcher?
-             (re-frame/dispatch [::error-catcher/track-stop]))
-           (doseq [file files]
-             (re-frame/dispatch [::handlers/track-stop branch file])))})
-      {:render
-       (fn [_]
-         [:div.live-preview
-          ;; NOTE: iframe is initialized through :ref cb in iframe-attrs
-          [:iframe.iframe (iframe-attrs opts)]])}))))
+    :component-will-unmount
+    (fn [c]
+      (dispose (reagent/props c)))
+
+    :component-will-receive-props
+    (fn [c [_ new-opts]]
+      (recycle (reagent/dom-node c) (reagent/props c) new-opts))
+
+    :reagent-render
+    (fn [{:keys [vims static?]}]
+      [:iframe.iframe
+       (merge
+        {:sandbox iframe-sandbox-opts}
+        (when-not static?
+          {:on-load #(re-frame/dispatch [::handlers/move-script-nodes vims])}))])}))
+
+(defn live-preview [opts]
+  [:div.live-preview
+   [iframe-preview opts]])

@@ -38,12 +38,12 @@
 ;;
 
 (defmethod remote/init! :backend [_]
-  (s/assert
-   ::config
-   {:protocol (env/optional :backend-protocol ::env/string)
-    :host     (env/optional :backend-host ::env/string)
-    :port     (env/optional :backend-port ::env/string)
-    :path     (env/required :backend-path ::env/string)}))
+  ;(s/assert)
+  ;::config
+  {:protocol (env/optional :backend-protocol ::env/string)
+   :host     (env/optional :backend-host ::env/string)
+   :port     (env/optional :backend-port ::env/string)
+   :path     (env/required :backend-path ::env/string)})
 
 (defmethod remote/send! :backend
   [remote config event result-cb error-cb]

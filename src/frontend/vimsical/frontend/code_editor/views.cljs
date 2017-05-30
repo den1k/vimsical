@@ -1,7 +1,7 @@
 (ns vimsical.frontend.code-editor.views
   (:require
    [re-frame.core :as re-frame]
-   [reagent.core :as r]
+   [reagent.core :as reagent]
    [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.code-editor.handlers :as handlers]
    [vimsical.frontend.util.re-frame :refer [<sub]]
@@ -92,33 +92,45 @@
 ;;
 
 ;; XXX use interceptors to parse events?
-(defn handle-content-change [model file e]
-  (re-frame/dispatch [::handlers/content-change file e]))
+(defn handle-content-change [vims model file e]
+  (re-frame/dispatch [::handlers/content-change vims file e]))
 
-(defn handle-cursor-change [model file e]
-  (re-frame/dispatch [::handlers/cursor-change file e]))
+(defn handle-cursor-change [vims model file e]
+  (re-frame/dispatch [::handlers/cursor-change vims file e]))
 
-(defn editor-focus-handler [file editor]
+(defn editor-focus-handler [vims file editor]
   (fn [_]
-    (re-frame/dispatch [::handlers/focus file editor])))
+    (re-frame/dispatch [::handlers/focus vims file editor])))
 
-(defn editor-blur-handler [file editor]
+(defn editor-blur-handler [vims file editor]
   (fn [_]
-    (re-frame/dispatch [::handlers/blur file editor])))
+    (re-frame/dispatch [::handlers/blur vims file editor])))
 
 (defn new-listeners
-  [file editor]
-  {:pre [file editor]}
+  [vims file editor]
+  {:pre [vims file editor]}
   {:model->content-change-handler
-   (fn model->content-change-handler [model]
-     (fn [e]
-       (handle-content-change model file e)))
+                          (fn model->content-change-handler [model]
+                            (fn [e]
+                              (handle-content-change vims model file e)))
    :model->cursor-change-handler
-   (fn model->cursor-change-handler [model]
-     (fn [e]
-       (handle-cursor-change model file e)))
-   :editor->focus-handler (partial editor-focus-handler file)
-   :editor->blur-handler  (partial editor-blur-handler file)})
+                          (fn model->cursor-change-handler [model]
+                            (fn [e]
+                              (handle-cursor-change vims model file e)))
+   :editor->focus-handler (partial editor-focus-handler vims file)
+   :editor->blur-handler  (partial editor-blur-handler vims file)})
+
+(defn register [c {:keys [vims file] :as opts}]
+  (let [editor    (new-editor (reagent/dom-node c) (editor-opts opts))
+        listeners (new-listeners vims file editor)]
+    (re-frame/dispatch [::handlers/register vims file editor listeners])))
+
+(defn dispose [{:keys [file vims] :as opts}]
+  (re-frame/dispatch [::handlers/dispose vims file]))
+
+(defn recycle [c old-opts new-opts]
+  (dispose old-opts)
+  (register c new-opts))
 
 ;;
 ;; * Component
@@ -127,18 +139,12 @@
 (defn code-editor
   [{:keys [file] :as opts}]
   {:pre [file]}
-  (r/create-class
+  (reagent/create-class
    {:component-did-mount
-    (fn [c]
-      (let [editor    (new-editor (r/dom-node c) (editor-opts opts))
-            listeners (new-listeners file editor)]
-        (re-frame/dispatch [::handlers/register file editor listeners])))
+    (fn [c] (register c opts))
     :component-will-unmount
-    (fn [_]
-      (re-frame/dispatch [::handlers/dispose file]))
+    (fn [c] (dispose (reagent/props c)))
+    :component-will-receive-props
+    (fn [c [_ new-opts]] (recycle c (reagent/props c) new-opts))
     :render
-    (fn [_]
-      (when-let [errors
-                 (<sub [::vcs.subs/file-lint-or-preprocessing-errors file])]
-        (js/console.warn ::LINT_OR_PREPROCESSING_ERRORS errors))
-      [:div.code-editor])}))
+    (fn [_] [:div.code-editor])}))

@@ -1,5 +1,6 @@
 (ns vimsical.frontend.vims-list.views
   (:require
+   [re-frame.core :as re-frame]
    [re-com.core :as re-com]
    [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.util.dom :refer-macros [e> e-> e->>]]
@@ -8,15 +9,16 @@
    [vimsical.vims :as vims]
    [vimsical.frontend.views.popovers :as popovers]
    [reagent.core :as reagent]
-   [vimsical.frontend.live-preview.views :as live-preview.views]))
+   [vimsical.frontend.live-preview.views :as live-preview.views]
+   [vimsical.frontend.app.handlers :as app.handlers]))
 
 (defn vims-list-item [{:as vims :keys [db/uid] ::vims/keys [title]}]
   (let [show-delete-tooltip? (reagent/atom false)]
     [:div.vims-list-item.jsb.ac
-     {:on-click (e> (prn "open vims"))}
+     {:on-click (e> (re-frame/dispatch [::app.handlers/open-vims vims]))}
      [live-preview.views/live-preview
       {:static? true
-       :branch  (<sub [::subs/vims-preview-branch vims])}]
+       :vims    vims}]
      ; todo (vims-preview vims)
      (if false                          ; todo delete-warning?
        [:div.delete-warning.dc
