@@ -9,7 +9,8 @@
    [vimsical.frontend.window-listeners.views :refer [window-listeners]]
    [vimsical.frontend.util.re-frame :refer-macros [with-subs]]
    [vimsical.frontend.app.subs :as subs]
-   [vimsical.frontend.ui.subs :as ui.subs]))
+   [vimsical.frontend.ui.subs :as ui.subs]
+   [vimsical.frontend.auth.views :as auth.views]))
 
 (defn app []
   (with-subs [route      [::subs/route]
@@ -19,6 +20,7 @@
      {:class (str "route-" (name route))}
      (when-not on-mobile? [nav])
      (case route
+       :route/signup [auth.views/signup]
        :route/landing [landing]
        :route/vims [(if on-mobile? player vcr) {:vims vims}])
      [window-listeners]

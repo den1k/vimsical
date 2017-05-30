@@ -1,6 +1,5 @@
 (ns vimsical.frontend.nav.style
   (:require [vimsical.frontend.styles.color :refer [colors]]
-            [vimsical.frontend.auth.style :refer [auth]]
             [vimsical.frontend.vims-list.style :refer [vims-list]]))
 
 (def nav
@@ -8,7 +7,7 @@
     [:.main-nav
      {:border :none}]]
    ;; bootstrap clear-fix breaks styles for .nav class
-   [:.main-nav auth vims-list
+   [:.main-nav vims-list
     {:border-bottom "solid 2px #eceff3"
      :background    :white
      :padding       "8px 25px"}

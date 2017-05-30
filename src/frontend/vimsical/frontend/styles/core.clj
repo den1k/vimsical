@@ -5,6 +5,7 @@
   (:require [vimsical.frontend.app.style :as app]
             [vimsical.frontend.vcr.style :refer [vcr]]
             [vimsical.frontend.nav.style :refer [nav]]
+            [vimsical.frontend.auth.style :refer [auth]]
             [vimsical.frontend.player.style :refer [player]]
             [vimsical.frontend.views.style :refer [views]]
             [vimsical.frontend.styles.text :refer [text]]
@@ -16,6 +17,7 @@
 (def styles
   "Read by garden. See config in project.clj"
   [app/defaults
+   auth
    nav
    landing
    vcr

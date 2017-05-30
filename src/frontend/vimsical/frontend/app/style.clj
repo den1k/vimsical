@@ -73,11 +73,11 @@
      ;:border-width  0
      :border-style   :none
      :border-image   :none
-     :border         (str "1.5px solid " (:grey colors))
+     :border         (str "1px solid " (:grey colors))
      :font-weight    :300
      :letter-spacing :0.5px
      :font-size      :18px
-     :padding        "13px 20px"}]
+     :padding        "11px 15px"}]
 
    [:.popover
     {:font-family (str app-font-family " !important")}]
