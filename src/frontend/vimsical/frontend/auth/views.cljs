@@ -9,18 +9,18 @@
 (defn signup []
   (let [status    nil
         state     (reagent/atom {})
-        on-change (fn [k] (e> (swap! state assoc k target)))]
+        on-change (fn [k] (e> (swap! state assoc k value)))]
     (fn []
       (let [{:keys [first-name last-name email password]} @state]
-        [:div.signup
-         [:.beta-signup
+        [:div.auth.signup.dc.ac
+         [:div.beta-signup
           "Private Beta Signup"]
-         [:form.form
+         [:form.form.jsb.dc
           {:on-submit (fn [e]
                         (.preventDefault e)
-                        (when (.. e -target .checkValidity)
-                          (prn :SIGNUP-ME-UP)))}
-          [:.first-last
+                        (when (.. e -target checkValidity)
+                          (prn :SIGNUP-ME-UP @state)))}
+          [:div.first-last.jsb
            [:input.first
             {:class         "first"
              :type          "text"
@@ -46,9 +46,8 @@
             :placeholder   "Password"
             :auto-complete "new-password"
             :min-length    8
-            :title         "Please use at least 8 characters"
             :on-change     (on-change :password)}]
-          [:input.input-button.signup-button
+          [:input.input-button.signup-button.asc
            {:type  "submit"
             :value (case status
                      :status/pending "Signing you up..."

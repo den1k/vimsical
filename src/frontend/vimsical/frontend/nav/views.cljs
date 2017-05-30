@@ -5,6 +5,7 @@
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
    [re-com.core :as re-com]
+   [vimsical.frontend.app.handlers :as app.handlers]
    [vimsical.frontend.views.icons :as icons]
    [vimsical.frontend.util.re-frame :refer [<sub] :refer-macros [with-subs]]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
@@ -103,6 +104,7 @@
                                                    ::vims/title]]])]
     [:div.main-nav.ac.jsb
      [:div.logo-and-type
+      {:on-double-click (e> (re-frame/dispatch [::app.handlers/route :route/signup]))}
       [:span.logo icons/vimsical-logo]
       [:span.type icons/vimsical-type]]
      (when app-vims

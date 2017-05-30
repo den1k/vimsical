@@ -23,6 +23,27 @@
        :letter-spacing :0.7px}]
      [:.stmt
       {:margin-top  :10px
-       :line-height :22px}]]
-    ]
-   [:&.logout]])
+       :line-height :22px}]]]
+   [:&.logout]
+   [:&.signup
+    {:align-self :center
+     :position   :relative
+     :margin-top :100px}
+    [:.beta-signup
+     {:font-size   :60px
+      :font-weight :600}]
+    #_[:.oauth
+       {:display         :flex
+        :justify-content :space-between
+        :align-self      :stretch}]
+    [:.form
+     {:width      :350px
+      :margin-top :60px
+      :min-height :270px}
+     [:.first-last
+      [:.first :.last
+       {:width :48%}]]
+     [:.signup-button
+      {:height     :50px
+       :width      :130px
+       :margin-top :10px}]]]])
