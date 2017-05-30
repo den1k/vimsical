@@ -15,7 +15,7 @@
         [vimsical.vcs.core :as vcs]
         [vimsical.vcs.sync :as sut])]))
 
-(st/instrument)
+#?(:clj (st/instrument))
 
 ;;
 ;; * Data

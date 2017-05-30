@@ -67,7 +67,7 @@
         db-sub        (re-frame/subscribe [::db/db])]
     (re-frame/dispatch handler-event)
     (is (= ::frontend.remotes.fx/success @status-sub))
-    (is (= 2 (-> db-sub get-app-user ::user/vimsae count)))))
+    (is (= 1 (-> db-sub get-app-user ::user/vimsae count)))))
 
 ;;
 ;; * Title

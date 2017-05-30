@@ -25,7 +25,9 @@
    [vimsical.vcs.state.branches-test]
    [vimsical.vcs.state.chunks-test]
    [vimsical.vcs.state.files-test]
-   [vimsical.vcs.state.timeline-test]))
+   [vimsical.vcs.state.timeline-test]
+   [vimsical.vcs.sync-test]
+   [vimsical.vcs.validation-test]))
 
 ;;
 ;; Filter namespaces that start with "vimsical" and end with "-test"

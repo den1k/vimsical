@@ -297,10 +297,10 @@
 (defn timeline-next-entry [{::keys [timeline]} entry] (state.timeline/next-entry timeline entry))
 
 (s/fdef timeline-last-entry
-        :args (s/cat :vcs ::vcs :entry (s/nilable ::state.timeline/entry))
+        :args (s/cat :vcs ::vcs)
         :ret  (s/nilable ::state.timeline/entry))
 
-(defn timeline-last-entry [{::keys [timeline]} entry] (state.timeline/last-entry timeline entry))
+(defn timeline-last-entry [{::keys [timeline]}] (state.timeline/last-entry timeline))
 
 ;;
 ;; * Vims snapshot

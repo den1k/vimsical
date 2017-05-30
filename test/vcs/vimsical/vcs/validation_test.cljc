@@ -1,12 +1,10 @@
 (ns vimsical.vcs.validation-test
   (:require
-   [vimsical.vcs.validation :as sut]
-   #?(:clj [clojure.test :as t]
+   #?(:clj  [clojure.test :as t]
       :cljs [cljs.test :as t :include-macros true])
-   [clojure.core.async :as a]
-   [clojure.test :as t]
    [vimsical.common.test :refer [uuid]]
-   [vimsical.vcs.alg.topo :as topo]))
+   [vimsical.vcs.alg.topo :as topo]
+   [vimsical.vcs.validation :as sut]))
 
 ;;
 ;; * Mock data
@@ -61,15 +59,15 @@
 (t/deftest simple-validation-test
   (t/testing "Throws"
     (t/is (thrown?
-           clojure.lang.ExceptionInfo
+           #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
            (sut/update-delta-by-branch-uid {} (ok-next-deltas)))
           "rejects when deltas don't start at begining")
     (t/is (thrown?
-           clojure.lang.ExceptionInfo
+           #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
            (sut/update-delta-by-branch-uid ldbb (bad-next-deltas)))
           "reject discontinuity from ldbb")
     (t/is (thrown?
-           clojure.lang.ExceptionInfo
+           #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
            (sut/update-delta-by-branch-uid ldbb (into (ok-next-deltas) (bad-next-deltas))))
           "rejects any discontinuity"))
   (t/testing "Proceeds"
@@ -95,13 +93,13 @@
       (t/testing "Rejects whole batch if one partition is invalid"
         (t/is
          (thrown?
-          clojure.lang.ExceptionInfo
+          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
           (sut/update-delta-by-branch-uid
            ldbb
            (into (stub-new-branch-deltas) (bad-next-deltas)))))
         (t/is
          (thrown?
-          clojure.lang.ExceptionInfo
+          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
           (sut/update-delta-by-branch-uid
            ldbb
            (into (stub-new-branch-deltas) (bad-new-branch-next-deltas)))))))))
