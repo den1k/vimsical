@@ -136,7 +136,7 @@
   (stop [this]
     (-> this
         (update :session #(future (alia/shutdown %)))
-        (dissoc :prepared)))
+        (dissoc :prepared :session :cluster :default-fetch-size :keyspace)))
 
   ICassandraInternal
   (create-keyspace! [_]

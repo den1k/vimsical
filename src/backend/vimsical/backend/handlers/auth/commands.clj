@@ -4,8 +4,10 @@
    [vimsical.backend.components.datomic :as datomic]
    [vimsical.backend.components.session-store :as session-store]
    [vimsical.backend.handlers.multi :as multi]
+   [vimsical.backend.handlers.user.queries :as user.queries]
    [vimsical.backend.util.async :as async]
    [vimsical.backend.util.auth :as util.auth]
+   [vimsical.common.uuid :refer [uuid]]
    [vimsical.queries.user :as queries.user]
    [vimsical.remotes.backend.auth.commands :as commands]
    [vimsical.user :as user]))
@@ -45,19 +47,19 @@
 ;; * Registration
 ;;
 
-(defmethod multi/context-spec ::commands/register [_] ::context-deps)
-(defmethod multi/handle-event ::commands/register
-  [{:keys [datomic] :as context} [_ {:keys [db/uid] :as register-user}]]
+(defmethod multi/context-spec ::commands/signup [_] ::context-deps)
+(defmethod multi/handle-event ::commands/signup
+  [{:keys [datomic] :as context} [_ {:keys [db/uid] :as signup-user :or {uid (uuid)}}]]
+  (assert uid)
   (letfn [(hash-user-password [user]
             (update user ::user/password util.auth/hash-password))
           (user-tx-chan [user]
             (async/thread-try
-             (let [tx (hash-user-password user)]
-               (deref (datomic/transact datomic [tx])))))]
+             (deref (datomic/transact datomic (hash-user-password user)))))]
     (multi/async
      context
-     (let [_    (async/<? (user-tx-chan register-user))
-           user (async/<? (user-chan context uid))]
+     (let [_    (async/<? (user-tx-chan signup-user))
+           user (async/<? (user.queries/user+snapshots-chan context uid))]
        (-> context
            (create-user-session uid)
            (multi/set-response user))))))
@@ -77,7 +79,7 @@
     (multi/async
      context
      (let [uid  (async/<? (user-uid-chan datomic login-user))
-           user (async/<? (user-chan context uid))]
+           user (async/<? (user.queries/user+snapshots-chan context uid))]
        (-> context
            (create-user-session uid)
            (multi/set-response user))))))

@@ -5,13 +5,13 @@
    [vimsical.user :as user]))
 
 ;;
-;; * Register
+;; * Signup
 ;;
 
-(s/def ::register-user (s/keys :req [:db/uid ::user/first-name ::user/last-name ::user/email ::user/password]))
+(s/def ::signup-user (s/keys :req [:db/uid ::user/first-name ::user/last-name ::user/email ::user/password]))
 
-(defmethod event/event-spec  ::register [_] (s/cat :id any? :user ::register-user))
-(defmethod event/result-spec ::register [_] (s/cat :id any? :user ::user/user))
+(defmethod event/event-spec  ::signup [_] (s/cat :id any? :user ::signup-user))
+(defmethod event/result-spec ::signup [_] (s/cat :id any? :user ::user/user))
 
 ;;
 ;; * Login

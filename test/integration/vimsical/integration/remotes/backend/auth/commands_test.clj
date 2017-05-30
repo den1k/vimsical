@@ -43,24 +43,24 @@
     @db-sub
     [{[:app/user '_] queries.user/pull-query}])))
 
-(deftest register-test
+(deftest signup-test
   (let [status-key    (uuid)
-        register-user {:db/uid           (uuid :register-user)
-                       ::user/first-name "foo"
-                       ::user/last-name  "bar"
-                       ::user/email      "foo@bar.com"
-                       ::user/password   "foobar"}
+        signup-user {:db/uid           (uuid :signup-user)
+                     ::user/first-name "foo"
+                     ::user/last-name  "bar"
+                     ::user/email      "foo@bar.com"
+                     ::user/password   "foobar"}
         status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub        (re-frame/subscribe [::db/db])]
-    (re-frame/dispatch [::frontend.auth.handlers/register register-user status-key])
+    (re-frame/dispatch [::frontend.auth.handlers/signup signup-user status-key])
     (is (= ::frontend.remotes.fx/success @status-sub))
     (let [app-user (get-app-user db-sub)]
       (is (s/valid? ::user/user app-user))
       (is (= "foo" (::user/first-name app-user)))
-      (is (= (uuid :register-user) (:db/uid app-user))))))
+      (is (= (uuid :signup-user) (:db/uid app-user))))))
 
 (deftest login-test
-  (register-test)
+  (signup-test)
   (re-frame/dispatch [::db/init])
   (let [status-key   (uuid)
         login-user   {:db/uid (uuid :temp-user) ::user/email "foo@bar.com" ::user/password "foobar"}
@@ -71,4 +71,4 @@
     (let [app-user (get-app-user db-sub)]
       (is (s/valid? ::user/user app-user))
       (is (= "foo" (::user/first-name app-user)))
-      (is (= (uuid :register-user) (:db/uid app-user))))))
+      (is (= (uuid :signup-user) (:db/uid app-user))))))

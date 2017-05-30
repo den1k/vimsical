@@ -5,24 +5,24 @@
    [vimsical.remotes.backend.auth.commands :as auth.commands]))
 
 ;;
-;; * Register
+;; * Signup
 ;;
 
-(defn register-handler
-  [{:keys [db]} [_ register-user status-key]]
+(defn signup-handler
+  [{:keys [db]} [_ signup-user status-key]]
   {:remote
    {:id               :backend
-    :event            [::auth.commands/register register-user]
-    :dispatch-success ::register-success
+    :event            [::auth.commands/signup signup-user]
+    :dispatch-success ::signup-success
     :status-key       status-key}})
 
 
-(defn register-result-handler
+(defn signup-result-handler
   [{:keys [db]} [_ result]]
   {:db (util.mg/add-linked-entities db {:app/user result})})
 
-(re-frame/reg-event-fx ::register        register-handler)
-(re-frame/reg-event-fx ::register-success register-result-handler)
+(re-frame/reg-event-fx ::signup        signup-handler)
+(re-frame/reg-event-fx ::signup-success signup-result-handler)
 
 ;;
 ;; * Login

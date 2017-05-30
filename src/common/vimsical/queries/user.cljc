@@ -27,6 +27,5 @@
    ::user/first-name
    ::user/last-name
    ::user/email
-   ::user/password
    {::user/vimsae vims/datomic-pull-query}
    {::user/settings settings/datomic-pull-query}])

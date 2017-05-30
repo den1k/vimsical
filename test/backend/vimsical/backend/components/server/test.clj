@@ -18,12 +18,18 @@
              (str "ring-session=" session-key))
            (req-headers [session-key]
              (cond-> {"Content-Type" "application/transit+json"}
-               (some? session-key) (assoc "cookie" (session-cookie session-key))))]
-     (pedestal.test/response-for
-      service-fn
-      :post (service/url-for :events)
-      :headers (req-headers session-key)
-      :body (transit/write-transit event)))))
+               (some? session-key) (assoc "cookie" (session-cookie session-key))))
+           (parse-resp [resp]
+             (try
+               (update resp :body transit/read-transit)
+               (catch Throwable t
+                 resp)))]
+     (-> service-fn
+         (pedestal.test/response-for
+          :post (service/url-for :events)
+          :headers (req-headers session-key)
+          :body (transit/write-transit event))
+         (parse-resp)))))
 
 (defn status-ok? [{:keys [status]}] (and (number? status) (<= 200 status 299)))
 
