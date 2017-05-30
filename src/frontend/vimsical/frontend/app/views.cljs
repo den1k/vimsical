@@ -22,6 +22,6 @@
      (case route
        :route/signup [auth.views/signup]
        :route/landing [landing]
-       :route/vims [(if on-mobile? player vcr)])
+       :route/vims [(if on-mobile? player vcr) {:vims vims}])
      [window-listeners]
      [quick-search]]))
