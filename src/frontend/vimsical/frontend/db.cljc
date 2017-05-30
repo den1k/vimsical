@@ -11,8 +11,6 @@
    [vimsical.frontend.util.mapgraph :as util.mg])
   (:refer-clojure :exclude [uuid]))
 
-(re-frame.loggers/console :log :vims (vims/new-vims (uuid "NLP Chatbot running on React Fiber") {:db/uid (uuid :user)} "NLP Chatbot running on React Fiber"))
-
 (def state
   {:app/user         {:db/uid           (uuid :user)
                       ::user/first-name "Jane"

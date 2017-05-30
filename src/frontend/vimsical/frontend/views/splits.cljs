@@ -108,7 +108,7 @@
 
         make-split-panel-attrs (fn [idx perc]
                                  {:key   (str "split-panel-" idx)
-                                  :class "display-flex"
+                                  :class "display-flex split-panel"
                                   :style (merge
                                           (flex-flow-style "column nowrap")
                                           (flex-child-style "auto")

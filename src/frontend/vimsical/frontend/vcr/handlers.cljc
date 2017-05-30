@@ -7,7 +7,8 @@
    [vimsical.frontend.vcs.db :as vcs.db]
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.frontend.timeline.subs :as timeline.subs]
-   [vimsical.vcs.core :as vcs]))
+   [vimsical.vcs.core :as vcs]
+   [vimsical.frontend.vcr.ui-db :as ui-db]))
 
 (defn tick-fn [vims]
   (fn [t]
@@ -82,3 +83,9 @@
      {:dispatch  [::timeline.handlers/set-playing vims false]
       :db        db'
       :scheduler {:action :stop}})))
+
+(re-frame/reg-event-fx
+ ::toggle-file-visibility
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db]} [_ file]]
+   {:ui-db (ui-db/toggle-file-visibility ui-db file)}))

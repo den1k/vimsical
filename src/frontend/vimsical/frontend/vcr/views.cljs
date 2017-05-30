@@ -15,18 +15,9 @@
    [vimsical.frontend.views.shapes :as shapes]
    [vimsical.frontend.views.splits :as splits]
    [vimsical.frontend.app.subs :as app.subs]
+   [vimsical.frontend.vcr.subs :as subs]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]))
-
-(defn visible-files [files]
-  (remove ::file/hidden? files))
-
-(defn views-for-files [files editor-components-by-type]
-  (->> (map ::file/sub-type files)
-       (map editor-components-by-type)))
-
-(defn editor-components-by-file-type [editor-components]
-  (util/project ::file/sub-type editor-components))
 
 ;;
 ;; * Temp
@@ -99,45 +90,39 @@
 
 (defn- editor-tabs [files]
   [:div.editor-tabs
-   ;; TODO move hidden state to ui db
-   (for [{::file/keys [sub-type hidden?]} files]
-     [:div.editor-tab
-      {:class (when hidden? "disabled")
-       :key   sub-type}
-      [:div.tab-checkbox
-       {:class (name sub-type)
-        :style (cond-> {:cursor :pointer}
-                 hidden? (assoc :color :grey))
-        ;; :on-click (e>
-        ;;            (swap! files
-        ;;                   util/update-when
-        ;;                   (fn [file] (= (::file/sub-type file) sub-type))
-        ;;                   update ::file/hidden? not))
-        }]])])
+   (doall
+    (for [{:as file ::file/keys [sub-type]} files
+          :let [hidden? (<sub [::subs/file-hidden? file])]]
+      [:div.editor-tab
+       {:class    (when hidden? "disabled")
+        :key      sub-type
+        :on-click (e> (re-frame/dispatch [::handlers/toggle-file-visibility file]))}
+       [:div.tab-checkbox
+        {:class (name sub-type)
+         :style (when hidden? {:color :grey})}]]))])
 
 (defn- editor-header [{::file/keys [sub-type] :as file}]
   (let [title (get {:html "HTML" :css "CSS" :javascript "JS"} sub-type)]
     [:div.editor-header {:key sub-type :class sub-type}
      [:div.title title]]))
 
-(defn- editor-components [vims {::file/keys [sub-type] :as file}]
-  {::file/sub-type sub-type
-   :editor-header  ^{:key sub-type} [editor-header file]
-   :editor         ^{:key sub-type} [code-editor
-                                     {:vims           vims
-                                      :file           file
-                                      :editor-reg-key :vcr/editors}]})
+(defn editor-headers [files]
+  (mapv (fn [{:as file sub-type ::file/sub-type}]
+          ^{:key sub-type} [editor-header file]) files))
+
+(defn editors [vims files]
+  (mapv (fn [{:as file sub-type ::file/sub-type}]
+          ^{:key sub-type} [code-editor
+                            {:vims vims
+                             :file file}])
+        files))
 
 (defn vcr [{:keys [vims]}]
-  (let [branch                 (<sub [::vcs.subs/branch vims])
-        files                  (<sub [::vcs.subs/files vims])
-        editor-comps           (->> files
-                                    (map (partial editor-components vims))
-                                    editor-components-by-file-type)
-        visible-files          (visible-files files)
-        visi-components        (views-for-files visible-files editor-comps)
-        visible-editor-headers (mapv :editor-header visi-components)
-        visible-editors        (mapv :editor visi-components)]
+  (let [branch         (<sub [::vcs.subs/branch vims])
+        all-files      (<sub [::vcs.subs/files vims])
+        visi-files     (<sub [::subs/visible-files vims])
+        editor-headers (editor-headers visi-files)
+        editors        (editors vims visi-files)]
     [re-com/v-box
      :class "vcr"
      :size "100%"
@@ -149,10 +134,10 @@
                 [splits/n-v-split
                  :height "100%"
                  :splitter-size "31px"
-                 :panels visible-editors
-                 :splitter-children visible-editor-headers
+                 :panels editors
+                 :splitter-children editor-headers
                  :margin "0"]]
-       :splitter-child [editor-tabs files]
+       :splitter-child [editor-tabs all-files]
        :splitter-size "34px"
        :initial-split 60
        :margin "0"]]]))
