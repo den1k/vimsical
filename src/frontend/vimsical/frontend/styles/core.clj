@@ -5,6 +5,7 @@
   (:require [vimsical.frontend.app.style :as app]
             [vimsical.frontend.vcr.style :refer [vcr]]
             [vimsical.frontend.nav.style :refer [nav]]
+            [vimsical.frontend.modal.style :refer [modal]]
             [vimsical.frontend.auth.style :refer [auth]]
             [vimsical.frontend.player.style :refer [player]]
             [vimsical.frontend.views.style :refer [views]]
@@ -19,6 +20,7 @@
   [app/defaults
    auth
    nav
+   modal
    landing
    vcr
    live-preview

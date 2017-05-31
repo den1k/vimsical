@@ -98,16 +98,20 @@
                                   :.title
                                   :color
                                   (second %))
-         color/type->colors-editors)
-   [:&.css :&.javascript
-    {:z-index    :1
-     :position   :relative
-     :border-top "solid 2px #eceff3"
-     :box-shadow "0 -4px 6px 0 rgba(143, 144, 150, 0.2)"}]])
+         color/type->colors-editors)])
 
 (def live-preview-and-editors
   [:.live-preview-and-editors
    {:border-top "solid 2px #eceff3"}
+   [:.rc-n-v-split
+    [:.split-panel
+     [:&:first-child
+      {:z-index    :inherit
+       :border     :none
+       :box-shadow :none}]
+     {:z-index    :1
+      :border-top "solid 2px #eceff3"
+      :box-shadow "0 -4px 6px 0 rgba(143, 144, 150, 0.2)"}]]
    [:.rc-n-h-split-splitter
     {:display         :flex
      :flex            "1"
@@ -128,7 +132,6 @@
 
 (def vcr
   [:.route-vims
-   {:height :100vh}
    [:.vcr
     ;; Styles to prevent code-editor from overflowing beyond VCR's boundaries
     ;; Set here instead of on code-editor to allow widget overflow

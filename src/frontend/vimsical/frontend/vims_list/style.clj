@@ -22,11 +22,13 @@
 
 (def vims-list-item
   [:.vims-list-item
-   {:padding-top :10px
-    :cursor      :pointer}
-   [:&:first-child {:padding-top 0}]
+   {:padding :10px
+    :cursor  :pointer}
+   ;[:&:first-child {:padding-top 0}]
    vims-preview
    [:&:hover
+    {:background    (:lightgrey colors)
+     :border-radius :5px}
     [:.live-preview
      {:transform "scale(1)"}]]
    [:.vims-title-and-delete
@@ -60,9 +62,7 @@
 
 (def vims-list
   [:.vims-list
-   {:width      :500px
-    :max-height :600px
-    :overflow-y :auto}
+   {:margin "50px 0"}
    [:.title
     {:margin-left :15px}]
    [:.list-box

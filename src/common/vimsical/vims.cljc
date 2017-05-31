@@ -1,9 +1,9 @@
 (ns vimsical.vims
   (:require
    [clojure.spec :as s]
+   [vimsical.vcs.branch :as vcs.branch]
    [vimsical.common.util.core :as util]
    [vimsical.common.uuid :refer [uuid]]
-   [vimsical.vcs.branch :as vcs.branch]
    [vimsical.vcs.file :as vcs.file]))
 
 ;;

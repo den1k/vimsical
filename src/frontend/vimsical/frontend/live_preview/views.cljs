@@ -25,10 +25,9 @@
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
    [vimsical.common.util.core :as util :include-macros true]
+   [vimsical.frontend.live-preview.error-catcher :as error-catcher]
    [vimsical.frontend.live-preview.handlers :as handlers]
-   [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.file :as file]
-   [vimsical.frontend.live-preview.error-catcher :as error-catcher]))
+   [vimsical.vcs.file :as file]))
 
 ;;
 ;; * iFrame helpers
@@ -37,7 +36,6 @@
 (def iframe-sandbox-opts
   "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe"
   (util/space-join "allow-forms"
-                   "allow-modals"
                    "allow-pointer-lock"
                    "allow-popups"
                    "allow-same-origin"
