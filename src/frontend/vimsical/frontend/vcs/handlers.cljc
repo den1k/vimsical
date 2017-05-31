@@ -1,7 +1,5 @@
 (ns vimsical.frontend.vcs.handlers
   (:require
-   [vimsical.vims :as vims]
-   [vimsical.user :as user]
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
@@ -14,7 +12,7 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.editor :as editor]
-   [vimsical.frontend.util.mapgraph :as util.mg]))
+   [vimsical.vims :as vims]))
 
 ;;
 ;; * VCS Vims init
@@ -36,7 +34,8 @@
     (assoc vims ::vims/vcs vcs-entity)))
 
 (defmulti init
-  (fn [db [_ _ vims _]]
+  (fn [db [_ uid-fn vims _]]
+    {:pre [(ifn? uid-fn) (some? vims)]}
     (cond
       (map? vims)       :vims
       (mg/ref? db vims) :ref
