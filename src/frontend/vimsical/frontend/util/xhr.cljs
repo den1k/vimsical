@@ -8,7 +8,7 @@
    [goog.events :as gevents]
    [goog.net.EventType :as EventType])
   (:require-macros
-   [vimsical.common.env-cljs :as env]))
+   [vimsical.common.env-cljs :as env :refer [optional]]))
 
 ;;
 ;; * HTTP Helpers

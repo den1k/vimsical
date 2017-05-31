@@ -6,7 +6,7 @@
    [vimsical.frontend.util.xhr :as xhr]
    [vimsical.remotes.event :as event])
   (:require-macros
-   [vimsical.common.env-cljs :as env]))
+   [vimsical.common.env-cljs :as env :refer [optional required]]))
 
 ;;
 ;; * Spec
