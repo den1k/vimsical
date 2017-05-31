@@ -5,14 +5,15 @@
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
    [re-com.core :as re-com]
+   [vimsical.frontend.app.subs :as app.subs]
    [vimsical.frontend.app.handlers :as app.handlers]
+   [vimsical.frontend.nav.handlers :as handlers]
    [vimsical.frontend.views.icons :as icons]
    [vimsical.frontend.util.re-frame :refer [<sub] :refer-macros [with-subs]]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
    [vimsical.common.util.core :refer [=by] :as util :include-macros true]
    [vimsical.frontend.app.handlers :as app]
    [vimsical.frontend.user.views :as user.views]
-   [vimsical.frontend.vims-list.views :as vims-list.views]
    [vimsical.frontend.auth.views :as auth.views]))
 
 (defn limit-title-length? [e]
@@ -28,19 +29,19 @@
                                          :title-too-long? false
                                          :hovering?       false})
         title-placeholder "Untitled Vims"
-        keydown-handler   (fn [e]
-                            (let [limit? (limit-title-length? e)]
-                              ;; todo update limit
-                              (swap! state assoc
-                                     :title-too-long? limit?
-                                     )
-                              (if limit?
-                                (.preventDefault e)
-                                (util.dom/handle-key e
-                                                     {:enter
-                                                      (fn []
-                                                        (.preventDefault e)
-                                                        (util.dom/blur))}))))
+        keydown-handler   (e>
+                           (let [limit? (limit-title-length? e)]
+                             (swap! state assoc :title-too-long? limit?)
+                             (if limit?
+                               (.preventDefault e)
+                               (util.dom/handle-key
+                                e
+                                {:enter
+                                 (fn []
+                                   (.preventDefault e)
+                                   (aset target "innerHTML"
+                                         (util/norm-str inner-html))
+                                   (util.dom/blur))}))))
 
         show-tooltip?     (reagent.ratom/make-reaction
                            #(let [{:keys [editing?
@@ -55,16 +56,17 @@
 
         {::vims/keys [title owner] :as vims}
         (<sub [:q [:app/vims
-                   [::vims/title
+                   [:db/uid
+                    ::vims/title
                     {::vims/owner [:db/uid]}]]])
 
         {:keys [editing? title-too-long?]} @state
 
         editable-title? (=by :db/uid user owner)
-        title-html
-                        [:div.title
+        title-html      [:div.title
                          (when editable-title?
-                           {:content-editable                  true
+                           {:class                             (when (nil? title) "untitled")
+                            :content-editable                  true
                             :suppress-content-editable-warning true
                             :on-mouse-enter                    #(swap! state assoc :hovering? true)
                             :on-mouse-leave                    #(swap! state assoc :hovering? false)
@@ -73,11 +75,14 @@
                             :on-blur                           (e>
                                                                 (swap! state assoc :editing? false)
                                                                 (re-frame/dispatch
-                                                                 [::vims/set-title (util/norm-str inner-html)]))})
+                                                                 [::handlers/set-vims-title
+                                                                  vims
+                                                                  (util/norm-str inner-html)]))})
                          (or title
                              (if editing?
                                ""
                                title-placeholder))]]
+
         [:div.vims-info.jc.ac
          (if-not editable-title?
            title-html
@@ -89,8 +94,9 @@
 
 (defn nav []
   (let
-   [show-popup?     (reagent/atom false)
-    show-vims-list? (reagent/atom false)
+   [show-popup? (reagent/atom false)
+    route       (<sub [::app.subs/route])
+    modal       (<sub [::app.subs/modal])
     {::user/keys [first-name last-name vimsae] :as user}
     (<sub [:q [:app/user
                [:db/uid
@@ -103,17 +109,23 @@
                                                   [:db/uid
                                                    ::vims/title]]])]
     [:div.main-nav.ac.jsb
+     {:class (when modal "no-border")}
      [:div.logo-and-type
       {:on-double-click (e> (re-frame/dispatch [::app.handlers/route :route/signup]))}
       [:span.logo icons/vimsical-logo]
       [:span.type icons/vimsical-type]]
      (when app-vims
        [vims-info])
-     [vims-list.views/vims-list-popover
-      {:showing? show-vims-list?
-       :anchor   [:div.button
-                  {:on-click (e> (swap! show-vims-list? not))}
-                  "My Vims"]}]
+     [:div.new-and-my-vims.button-group
+      [:div.button
+       {:on-click (e> (re-frame/dispatch
+                       [::app.handlers/new-vims user {:open? true}]))}
+       "New Vims"]
+      [:div.button
+       {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view
+                      (re-frame/dispatch
+                       [::app.handlers/toggle-modal :modal/vims-list]))}
+       "My Vims"]]
      [:div.auth-or-user
       ; popovers use no-op :on-cancel cb because event bubbles up here
       {:on-click (e> (swap! show-popup? not))}

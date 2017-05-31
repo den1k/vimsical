@@ -12,6 +12,11 @@
  (fn [db _]
    (:app/route db)))
 
+(re-frame/reg-sub
+ ::modal
+ (fn [db _]
+    (:app/modal db)))
+
 (re-frame/reg-sub-raw
  ::user
  (fn [db [_ ?pattern]]

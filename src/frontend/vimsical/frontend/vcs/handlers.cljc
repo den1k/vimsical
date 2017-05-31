@@ -4,17 +4,16 @@
    [vimsical.user :as user]
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
-   [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as vcs.db]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.frontend.vcs.subs :as subs]
-   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.editor :as editor]
-   [vimsical.frontend.util.mapgraph :as util.mg]))
+   [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.vcs]))
 
 ;;
 ;; * VCS Vims init
@@ -24,16 +23,7 @@
   [db _]
   (let [vimsae  (-> (util.mg/pull* db [:app/user [{::user/vimsae queries/vims}]])
                     ::user/vimsae)
-        vimsae' (for [{:as         vims
-                       :keys       [db/uid]
-                       ::vims/keys [branches]} vimsae]
-                  (let [master             (branch/master branches)
-                        vcs-state          (vcs/empty-vcs branches)
-                        vcs-frontend-state {:db/uid             (uuid)
-                                            ::vcs.db/branch-uid (:db/uid master)
-                                            ::vcs.db/delta-uid  nil}
-                        vcs-entity         (merge vcs-state vcs-frontend-state)]
-                    (assoc vims ::vims/vcs vcs-entity)))]
+        vimsae' (mapv vimsical.vcs/init-vims vimsae)]
     (util.mg/add db vimsae')))
 
 (re-frame/reg-event-db ::init-vimsae init-vimsae)

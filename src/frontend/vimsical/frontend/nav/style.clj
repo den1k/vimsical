@@ -1,16 +1,18 @@
 (ns vimsical.frontend.nav.style
-  (:require [vimsical.frontend.styles.color :refer [colors]]
-            [vimsical.frontend.vims-list.style :refer [vims-list]]))
+  (:require [vimsical.frontend.styles.color :refer [colors]]))
 
 (def nav
-  [[:.route-landing
+  [[:.route-landing :route-signup
     [:.main-nav
      {:border :none}]]
    ;; bootstrap clear-fix breaks styles for .nav class
-   [:.main-nav vims-list
+   [:.main-nav
     {:border-bottom "solid 2px #eceff3"
      :background    :white
-     :padding       "8px 25px"}
+     :padding       "8px 25px"
+     :z-index       15}
+    [:&.no-border
+     {:border :none}]
     [:.vims-info
      [:* {:white-space :nowrap}]
 
@@ -32,6 +34,17 @@
        {:white-space :pre-wrap
         :overflow    :visible}]
       [:&.untitled {:color (:grey colors)}]]]
+    [:.button-group {:display       :flex
+                     :border-radius :5px
+                     :border        (str "1px solid " (:lightgrey colors))
+                     :align-items   :center}
+     [:.button {;;; divider btw button groups
+                :border                     :none
+                :border-top-right-radius    0
+                :border-bottom-right-radius 0
+                :border-right               (str "1px solid " (:lightgrey colors))}
+      [:&:last-child {:border-right  :none
+                      :border-radius :5px}]]]
     [:.user
      [:.avatar
       {:width  :30px

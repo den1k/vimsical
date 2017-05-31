@@ -35,7 +35,7 @@
              {:title    "Cancel"
               :on-click #(om/transact! this `[(vims/toggle-delete-warning ~vims)])}))]]
        [:div.vims-title-and-delete.jsb.ac
-        [:div.vims-title title]
+        [:div.vims-title (or title "Untitled")]
         [:div.delete-button
          {:on-mouse-enter (e> (reset! show-delete-tooltip? true))
           :on-mouse-leave (e> (reset! show-delete-tooltip? false))}
@@ -45,16 +45,9 @@
            :anchor   [:div.delete-x "+"]}]]])]))
 
 (defn vims-list []
-  (let [vimsae (<sub [::subs/vimsae])]
-    [:div.vims-list
+  (let [vimsae (reverse (<sub [::subs/vimsae]))]
+    [:div.vims-list.dc.ac
      [:div.list-box
       [:div.list
        (for [{:as vims key :db/uid} vimsae]
          ^{:key key} [vims-list-item vims])]]]))
-
-(defn vims-list-popover [{:keys [showing? anchor]}]
-  [popovers/popover
-   {:anchor          anchor
-    :showing?        showing?
-    :position-offset 70
-    :child           [vims-list]}])
