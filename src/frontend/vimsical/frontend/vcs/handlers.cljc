@@ -98,7 +98,7 @@
 ;;
 
 (defn editor-cofx
-  [{:keys [uuid-fn timestamp elapsed] :as context} _]
+  [{:keys [uuid-fn timestamp elapsed] :as context}]
   {:pre [uuid-fn timestamp elapsed]}
   (assoc context ::editor/effects
          ;; NOTE all these fns take the edit-event

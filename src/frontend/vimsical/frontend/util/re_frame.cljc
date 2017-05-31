@@ -259,7 +259,7 @@
 ;;
 
 (defn uuid-fn-cofx
-  [coeffects _]
+  [coeffects]
   (assoc coeffects :uuid-fn uuid/uuid))
 
 (re-frame/reg-cofx :uuid-fn uuid-fn-cofx)
@@ -269,7 +269,7 @@
 ;;
 
 (defn timestamp-cofx
-  [coeffects _]
+  [coeffects]
   (assoc coeffects :timestamp (util/now)))
 
 (re-frame/reg-cofx :timestamp timestamp-cofx)
@@ -281,7 +281,7 @@
 (defonce elapsed-register (atom {}))
 
 (defn elapsed-cofx
-  [coeffects [id :as event]]
+  [{[id :as event] :event :as coeffects}]
   (let [now  (util/now)
         prev (get @elapsed-register id -1)]
     (swap! elapsed-register assoc id now)
@@ -344,21 +344,3 @@
   coeffects)
 
 (re-frame/reg-cofx :args-spec args-spec-cofx)
-
-
-
-                                        ;(defmulti subscribe-spec first)
-                                        ;
-                                        ;(defmethod subscribe-spec :default [_] any?)
-                                        ;
-                                        ;(s/def ::subscribe-args (s/multi-spec subscribe-spec first))
-                                        ;
-                                        ;(s/fdef re-frame/subscribe :args ::subscribe-args)
-                                        ;
-                                        ;(defmethod subscribe-spec ::abc
-                                        ; [_]
-                                        ;  (s/cat :id any? :num integer?))
-                                        ;(re-frame/subscribe [::abc])
-
-
-                                        ;(s/explain ::subscribe-args [::abc 1])

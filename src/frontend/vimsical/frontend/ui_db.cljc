@@ -13,7 +13,7 @@
 
 (re-frame/reg-cofx
  :ui-db
- (fn [cofx _]
+ (fn [cofx]
    (assoc cofx :ui-db @ui-db)))
 
 ;; runs after
