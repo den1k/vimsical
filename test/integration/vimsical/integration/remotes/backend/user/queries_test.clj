@@ -6,7 +6,7 @@
    [orchestra.spec.test :as st]
    [re-frame.core :as re-frame]
    [vimsical.backend.data :as data]
-   [vimsical.backend.handlers.me.queries :as me.queries]
+   [vimsical.backend.handlers.user.queries :as user.queries]
    [vimsical.backend.system.fixture :as system.fixture]
    [vimsical.common.test :refer [uuid]]
    [vimsical.frontend.db :as db]
@@ -53,7 +53,7 @@
       :app/user))
 
 (deftest snapshots-join-test
-  (is (= data/me (#'me.queries/user-join-snapshots data/user data/snapshots))))
+  (is (= data/me (#'user.queries/user-join-snapshots data/user data/snapshots))))
 
 ;;
 ;; * Me

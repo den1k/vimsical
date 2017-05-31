@@ -294,7 +294,7 @@
         :args (s/cat :vcs ::vcs :entry (s/nilable ::state.timeline/entry))
         :ret  (s/nilable ::state.timeline/entry))
 
-(defn timeline-next-entry [{::keys [timeline]} entry] (state.timeline/next-entry timeline entry))
+(defn timeline-next-entry [{::keys [timeline]} entry] (some->> entry (state.timeline/next-entry timeline)))
 
 (s/fdef timeline-last-entry
         :args (s/cat :vcs ::vcs)

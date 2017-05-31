@@ -35,19 +35,20 @@
 (s/def ::created-at ::vcs.branch/created-at)
 (s/def ::new-vims-opts (s/keys :opt-un [::uid ::branch-uid ::created-at]))
 
-(s/fdef new-vims
-        :args (s/cat :owner ::owner
-                     :title (s/nilable ::title)
-                     :files ::vcs.branch/files
-                     :opts (s/? (s/nilable ::new-vims-opts)))
-        :ret ::vims)
-
 (defn default-files
   ([] (default-files (uuid) (uuid) (uuid)))
   ([html-uid css-uid javascript-uid]
    [(vcs.file/new-file html-uid       :text :html)
     (vcs.file/new-file css-uid        :text :css)
     (vcs.file/new-file javascript-uid :text :javascript)]))
+
+(s/fdef new-vims
+        :args (s/cat :owner ::owner
+                     :opts  (s/? (s/cat :title (s/nilable ::title)
+                                        :files ::vcs.branch/files
+                                        :opts (s/nilable ::new-vims-opts))))
+        :ret ::vims)
+
 
 (defn new-vims
   ([owner] (new-vims owner nil (default-files) nil))

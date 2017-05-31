@@ -56,7 +56,7 @@
            {::keys [state]}              (get-in db (path vims-uid))
            allowed-transitions           (get fsm state)]
        (if-not (contains? allowed-transitions (kw-name event-id))
-         (throw (ex-info "Transition" {:allowed allowed-transitions :event event}))
+         (throw (ex-info "Transition" {:current state :event event :allowed allowed-transitions}))
          context)))))
 
 (def fsm-enrich-next-state-transition

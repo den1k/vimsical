@@ -30,7 +30,8 @@
      :event            [::queries/delta-by-branch-uid vims-uid]
      :dispatch-success (->dispatch ::delta-by-branch-uid-success vims-uid)
      :dispatch-error   (->dispatch ::delta-by-branch-uid-error vims-uid)
-     :status-key       status-key}}))
+     :status-key       status-key}
+    }))
 
 ;;
 ;; * Init
@@ -97,7 +98,7 @@
  (fn [{:keys [db]} [_ vims-uid deltas]]
    {:remote
     {:id               :backend
-     :event            [::commands/add-deltas deltas]
+     :event            [::commands/add-deltas vims-uid deltas]
      :dispatch-success (->dispatch ::add-deltas-success vims-uid deltas)
      :dispatch-error   (->dispatch ::add-deltas-error vims-uid deltas)}}))
 

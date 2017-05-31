@@ -112,15 +112,16 @@
     [[lein-cljsbuild "1.1.5"
       :exclusions [org.apache.commons/commons-compress]]]
     :dependencies
-    [[org.clojure/clojurescript "1.9.518" :exclusions [org.clojure/tools.reader]]
+    [[org.clojure/clojurescript   "1.9.518" :exclusions [org.clojure/tools.reader]]
      ;; Our mapgraph fork. Must be be symlinked in checkouts.
-     [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
-     [reagent                   "0.6.1" :exclusions [org.clojure/clojurescript]]
-     [re-frame                  "0.9.2" :exclusions [org.clojure/clojurescript]]
-     [re-com                    "2.0.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
+     [com.stuartsierra/mapgraph   "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
+     [reagent                     "0.6.1" :exclusions [org.clojure/clojurescript]]
+     [re-frame                    "0.9.2" :exclusions [org.clojure/clojurescript]]
+     [day8.re-frame/async-flow-fx "0.0.7-SNAPSHOT"]
+     [re-com                      "2.0.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
      ;; this package does not have externs
-     [cljsjs/babel-standalone   "6.18.1-2"]
-     [thi.ng/color              "1.2.0"]]}
+     [cljsjs/babel-standalone     "6.18.1-2"]
+     [thi.ng/color                "1.2.0"]]}
 
    :-frontend-dev-config
    {:source-paths ["dev/frontend"]

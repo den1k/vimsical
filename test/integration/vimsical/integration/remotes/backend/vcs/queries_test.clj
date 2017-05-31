@@ -60,8 +60,5 @@
         status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub        (re-frame/subscribe [::db/db])]
     (re-frame/dispatch handler-event)
-    ;; re-frame.test/wait-for
-    ;; [#{::vcs.sync.handlers/delta-by-branch-uid-success}
-    ;;  #{::vcs.sync.handlers/delta-by-branch-uid-error}]
     (do (is (= ::frontend.remotes.fx/success @status-sub))
         (is (= data/deltas-by-branch-uid (-> db-sub get-sync ::vcs.sync.db/delta-by-branch-uid))))))

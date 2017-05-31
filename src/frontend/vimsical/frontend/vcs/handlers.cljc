@@ -7,6 +7,7 @@
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as vcs.db]
    [vimsical.frontend.vcs.queries :as queries]
+   [vimsical.frontend.app.subs :as app.subs]
    [vimsical.frontend.vcs.subs :as subs]
    [vimsical.frontend.vcs.sync.handlers :as sync.handlers]
    [vimsical.vcs.branch :as branch]
@@ -39,7 +40,8 @@
     (cond
       (map? vims)       :vims
       (mg/ref? db vims) :ref
-      (uuid? vims)      :uid)))
+      (uuid? vims)      :uid
+      :else (throw (ex-info "Unexpected vims value" {:vims vims :uid-fn uid-fn})))))
 
 (defmethod init :uid
   [db [event-id uuid-fn uid deltas :as event]]
@@ -157,10 +159,11 @@
   (re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub (fn [[_ vims]] [::subs/vcs vims]))
   (util.re-frame/inject-sub (fn [[_ vims]] [::subs/playhead-entry vims]))]
- (fn [{:keys         [db ui-db]
-       ::subs/keys   [vcs]
-       ::editor/keys [effects]}
-      [_ {:keys [db/uid] :as vims} {file-uid :db/uid} edit-event]]
+ (fn [{:keys           [db ui-db]
+       ::app.subs/keys [user]
+       ::subs/keys     [vcs]
+       ::editor/keys   [effects]}
+      [_ {vims-uid :db/uid :as vims} {file-uid :db/uid} edit-event]]
    (letfn [(vcs->playhead [vcs] (-> vcs ::vcs.db/playhead-entry first))]
      (let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)
            playhead'             (vcs->playhead vcs')
@@ -168,8 +171,7 @@
            ui-db'                (timeline.ui-db/set-playhead ui-db vims playhead')]
        (cond-> {:db         db'
                 :ui-db      ui-db'
-                :dispatch-n [[::sync.handlers/add-deltas uid deltas]]}
-         (some? ?branch)
+                :dispatch-n [[::sync.handlers/add-deltas vims-uid deltas]]}
          ;; NOTE branch is already in ::vcs/branches, don't need to mg/add it
-         (-> (update :db util.mg/add-join* :app/vims ::vims/branches ?branch)
-             (update :dispatch-n conj [::sync.handlers/add-branch ?branch])))))))
+         (some? ?branch) (-> (update :db util.mg/add-join* :app/vims ::vims/branches ?branch)
+                             (update :dispatch-n conj [::sync.handlers/add-branch ?branch])))))))

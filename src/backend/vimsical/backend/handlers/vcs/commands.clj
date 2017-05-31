@@ -7,7 +7,8 @@
    [vimsical.vcs.validation :as vcs.validation]
    [vimsical.backend.handlers.multi :as multi]
    [vimsical.backend.util.async :refer [<?]]
-   [vimsical.remotes.backend.vcs.commands :as commands]))
+   [vimsical.remotes.backend.vcs.commands :as commands]
+   [vimsical.user :as user]))
 
 ;;
 ;; * Context specs
@@ -31,10 +32,12 @@
 ;;
 
 (defmethod multi/handle-event ::commands/add-deltas
-  [{:keys [delta-store session] :as context} [_ deltas :as event]]
+  [{:as      context
+    :keys    [delta-store session]
+    user-uid ::user/uid}
+   [_ vims-uid deltas :as event]]
   (let [deltas-by-branch-uid  (get session ::vcs.validation/delta-by-branch-uid)
         deltas-by-branch-uid' (vcs.validation/update-delta-by-branch-uid deltas-by-branch-uid deltas)
-        vims-uid              (-> deltas first :vims-uid)
         insert-chan           (delta-store.protocol/insert-deltas-chan delta-store vims-uid deltas)]
     (multi/async
      context
