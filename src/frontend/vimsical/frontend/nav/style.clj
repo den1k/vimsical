@@ -2,14 +2,15 @@
   (:require [vimsical.frontend.styles.color :refer [colors]]))
 
 (def nav
-  [[:.route-landing
+  [[:.route-landing :route-signup
     [:.main-nav
      {:border :none}]]
    ;; bootstrap clear-fix breaks styles for .nav class
    [:.main-nav
     {:border-bottom "solid 2px #eceff3"
      :background    :white
-     :padding       "8px 25px"}
+     :padding       "8px 25px"
+     :z-index       15}
     [:&.no-border
      {:border :none}]
     [:.vims-info

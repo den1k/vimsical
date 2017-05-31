@@ -109,8 +109,7 @@
                                                   [:db/uid
                                                    ::vims/title]]])]
     [:div.main-nav.ac.jsb
-     {:class (when (or modal (contains? #{:route/landing :route/signup} route))
-               "no-border")}
+     {:class (when modal "no-border")}
      [:div.logo-and-type
       {:on-double-click (e> (re-frame/dispatch [::app.handlers/route :route/signup]))}
       [:span.logo icons/vimsical-logo]

@@ -35,7 +35,7 @@
              {:title    "Cancel"
               :on-click #(om/transact! this `[(vims/toggle-delete-warning ~vims)])}))]]
        [:div.vims-title-and-delete.jsb.ac
-        [:div.vims-title title]
+        [:div.vims-title (or title "Untitled")]
         [:div.delete-button
          {:on-mouse-enter (e> (reset! show-delete-tooltip? true))
           :on-mouse-leave (e> (reset! show-delete-tooltip? false))}

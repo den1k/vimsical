@@ -62,9 +62,7 @@
 
 (def vims-list
   [:.vims-list
-   {:margin-top :100px
-    :height     :80vh
-    :overflow   :hidden}
+   {:margin "50px 0"}
    [:.title
     {:margin-left :15px}]
    [:.list-box
