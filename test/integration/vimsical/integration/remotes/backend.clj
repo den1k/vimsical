@@ -25,12 +25,7 @@
   {"Content-Type" "application/transit+json"
    "Accept"       "application/transit+json"})
 
-(defn- response-result
-  [_ {:keys [body]}]
-  (try
-    ;; Missing util to properly decode responses depending on the content-type
-    (transit/read-transit body)
-    (catch Throwable _)))
+(defn- response-result [_ {:keys [body]}] body)
 
 (defn- post-data
   [event]
@@ -49,7 +44,7 @@
     :path     (env/required :backend-path ::env/string)}))
 
 (defmethod remote/send! :backend
-  [{:keys [event] :as fx} state result-cb error-cb]
+  [{:keys [event] :as fx} _ result-cb error-cb]
   (letfn [(xhr-success-cb [resp]
             (log/info "RAW" resp)
             (result-cb (response-result fx resp)))
@@ -59,6 +54,7 @@
           (ok? [{:keys [status] :as response}] (< 199 status 300))]
     (let [response (server.test/response-for event)]
       (log/info response)
-      (if (ok? response)
-        (xhr-success-cb response)
-        (xhr-error-cb response)))))
+      (do (if (ok? response)
+            (xhr-success-cb response)
+            (xhr-error-cb response))
+          nil))))
