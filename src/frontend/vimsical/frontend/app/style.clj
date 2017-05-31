@@ -1,5 +1,6 @@
 (ns vimsical.frontend.app.style
-  (:require [vimsical.frontend.styles.color :refer [colors]]))
+  (:require [vimsical.frontend.styles.color :refer [colors]]
+            [vimsical.frontend.modal.style :as modal]))
 
 (def app-font-family
   "-apple-system, BlinkMacSystemFont, \".SFNSText-Regular\", \"San Francisco\", \"Roboto\", \"Segoe UI\", \"Helvetica Neue\", \"Lucida Grande\", sans-serif")
@@ -22,6 +23,9 @@
     {:box-sizing  :inherit
      :user-select :inherit}]
 
+   [:body :#app :.app
+    {:height :100%}]
+
    [:input :textarea
     {:user-select :text}]
 
@@ -31,8 +35,16 @@
      :display         :flex
      :flex-direction  :column
      :justify-content :flex-start
+     :align-items     :stretch
      :background      :#fff}]
 
+   [:.main
+    {:position        :relative         ; needed for modal-overlay
+     :display         :flex
+     :flex-direction  :column
+     :justify-content :flex-start
+     :height          :100vh}
+    modal/overlay]
 
    ;; flex-box
 

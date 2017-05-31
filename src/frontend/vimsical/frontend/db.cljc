@@ -29,7 +29,8 @@
                       :quick-search/filter-category-idx nil}
    :app/libs         vims/js-libs
    :app/compilers    vims/compilers
-   :app/route        :route/vims})
+   :app/route        :route/vims
+   :app/modal        nil})
 
 (def default-db
   (-> (mg/new-db)

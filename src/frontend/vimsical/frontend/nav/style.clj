@@ -11,6 +11,8 @@
     {:border-bottom "solid 2px #eceff3"
      :background    :white
      :padding       "8px 25px"}
+    [:&.no-border
+     {:border :none}]
     [:.vims-info
      [:* {:white-space :nowrap}]
 
