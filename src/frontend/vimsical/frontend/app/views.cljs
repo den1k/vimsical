@@ -21,7 +21,6 @@
               vims       [::subs/vims]
               modal      [::subs/modal]
               on-mobile? [::ui.subs/on-mobile?]]
-    (re-frame.loggers/console :log "APPMODAL" modal)
     [:div.app
      {:class    (str "route-" (name route))
       :on-click (e> (re-frame/dispatch [::handlers/close-modal]))}
