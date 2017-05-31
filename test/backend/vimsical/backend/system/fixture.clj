@@ -2,6 +2,7 @@
   (:require
    [clojure.core.async :as async]
    [clojure.spec :as s]
+   [vimsical.common.test :refer [uuid]]
    [com.stuartsierra.component :as cp]
    [io.pedestal.http :as http]
    [vimsical.backend.adapters.cassandra :as cassandra]
@@ -57,7 +58,10 @@
        (throw (ex-info "`session` fixture should be nested inside the `user` fixture." {}))
        (let [session {::user/uid *user-uid*}]
          (binding [*session-key* (session-store/write-session* session-store nil session)]
-           (f))))
+           (try
+             (f)
+             (finally
+               (session-store/delete-session* session-store *session-key*))))))
      (throw (ex-info "`session` fixture should be nested inside the `system` fixture" {})))))
 
 ;;
@@ -87,8 +91,7 @@
        (throw (ex-info "`deltas` fixture should be nested inside the `user` fixture." {}))
        (let [{:keys [delta-store]} *system*]
          (async/<!!
-          (delta-store.protocol/insert-deltas-chan
-           delta-store (-> data/vims :db/uid) data/deltas))
+          (delta-store.protocol/insert-deltas-chan delta-store (uuid ::data/vims) data/deltas))
          (f)))
      (throw (ex-info "`deltas` fixture should be nested inside the `system` fixture" {})))))
 
@@ -133,7 +136,7 @@
         (try
           (f)
           (finally
-            (-> *system* :datomic datomic/delete-database!)
             (-> *system* :cassandra-connection cassandra/drop-keyspace!)
+            (-> *system* :datomic datomic/delete-database!)
             (-> *system* :session-store redis/flushall!)
             (cp/stop *system*)))))))

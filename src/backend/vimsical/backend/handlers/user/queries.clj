@@ -79,4 +79,4 @@
   (s/keys :req-un [::datomic/datomic ::snapshot-store/snapshot-store]))
 (defmethod event-auth/require-auth? ::user.queries/me [_] true)
 (defmethod multi/context-spec ::user.queries/me [_] ::context-spec)
-(defmethod multi/handle-event ::user.queries/me [context _] (context-handler context))
+(defmethod multi/handle-event ::user.queries/me [context event] (context-handler context event))

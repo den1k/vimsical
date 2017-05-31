@@ -2,8 +2,10 @@
   (:require
    [clojure.spec :as s]
    [re-frame.interceptor :as interceptor]
+   [re-frame.std-interceptors :as std-interceptors]
    [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.delta :as delta]))
+   [vimsical.vcs.delta :as delta]
+   [vimsical.vims :as vims]))
 
 (declare path)
 
@@ -34,8 +36,8 @@
 (s/def ::deltas (s/every ::delta/delta))
 (s/def ::branch (s/every ::branch/branch))
 (s/def ::delta (s/keys :req-un [::delta/uid ::delta/prev-uid ::delta/branch-uid]))
-(s/def ::deltas-by-branch-uid (s/every-kv ::branch/uid ::delta))
-(s/def ::sync (s/keys :req [::state ::deltas ::branch ::deltas-by-branch-uid]))
+(s/def ::delta-by-branch-uid (s/every-kv ::branch/uid ::delta))
+(s/def ::sync (s/keys :req [::state ::deltas ::branch ::delta-by-branch-uid]))
 
 ;;
 ;; * FSM interceptor
@@ -43,38 +45,44 @@
 
 (def kw-name (comp keyword name))
 
-(defn fsm-check-allowed-transition
-  [{:keys [coeffects] :as context}]
-  (let [{[event-id vims-uid :as event] :event :keys [db]} coeffects
-        {::keys [state]}                                  (get-in db (path vims-uid))
-        allowed-transitions                               (get fsm state)]
-    (if-not (contains? allowed-transitions (kw-name event-id))
-      (throw (ex-info "Transition" {:allowed allowed-transitions :event event}))
-      context)))
-
-(defn fsm-next-state-transition
-  [{:keys [coeffects] :as context}]
-  (let [{[event-id vims-uid :as event] :event :keys [db]} coeffects
-        {::keys [state]}                                  (get-in db (path vims-uid))
-        next-state                                        (get-in fsm [state (kw-name event-id)])
-        db'                                               (assoc-in db (path vims-uid ::state) next-state)]
-    (assoc-in context [:effects :db] db')))
-
-(def fsm-interceptor
+(def fsm-check-allowed-transition
   (interceptor/->interceptor
    :id     ::fsm
-   :before fsm-check-allowed-transition
-   :after  fsm-next-state-transition))
+   :before
+   (fn fsm-check-allowed-transition-before
+     [context]
+     (let [db                            (interceptor/get-coeffect context :db)
+           [event-id vims-uid :as event] (interceptor/get-coeffect context :event)
+           {::keys [state]}              (get-in db (path vims-uid))
+           allowed-transitions           (get fsm state)]
+       (if-not (contains? allowed-transitions (kw-name event-id))
+         (throw (ex-info "Transition" {:allowed allowed-transitions :event event}))
+         context)))))
+
+(def fsm-enrich-next-state-transition
+  (std-interceptors/enrich
+   (fn fsm-enrich-next-state-transition-after
+     [db [event-id vims-uid :as event]]
+     (let [{::keys [state]} (get-in db (path vims-uid))]
+       (if-some [next-state       (get-in fsm [state (kw-name event-id)])]
+         (assoc-in db (path vims-uid ::state) next-state)
+         (throw (ex-info "State transition not found" {:state state :event event})))))))
+
+(def fsm-interceptor
+  [fsm-check-allowed-transition
+   fsm-enrich-next-state-transition])
 
 ;;
-;; * Constructor
+;; * Constructors
 ;;
 
 (defn new-sync [vims-uid]
-  {::state                `Init
-   ::deltas               []
-   ::branch               []
-   ::deltas-by-branch-uid {}})
+  {::state               `Init
+   ::deltas              []
+   ::branch              []
+   ::delta-by-branch-uid {}})
 
-(defn path [vims-uid & ks]
-  (into [:app/sync vims-uid] ks))
+(s/def ::state-key #{::state ::deltas ::branch ::delta-by-branch-uid})
+
+(s/fdef path :args (s/cat :vims-uid ::vims/uid :?ks (s/? (s/* ::state-key))) )
+(defn   path [vims-uid & ks] (into [:app/sync vims-uid] ks))

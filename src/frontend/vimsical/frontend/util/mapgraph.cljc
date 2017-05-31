@@ -20,6 +20,8 @@
     (entities? db x) (mapv (partial mg/ref-to db) x)
     :else nil))
 
+(defn ref->entity [[k id]] {k id})
+
 ;;
 ;; * Add
 ;;
@@ -73,6 +75,10 @@
   (-> db
       (mg/add join-entity)
       (add-join* entity join-key join-entity)))
+
+(defn add-ref
+  [db key entity]
+  (assoc db key (mg/ref-to db entity)))
 
 ;;
 ;; * Remove

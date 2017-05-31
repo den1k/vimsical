@@ -8,7 +8,8 @@
    [vimsical.backend.components.delta-store.protocol :as p]
    [vimsical.backend.components.delta-store :as sut]
    [vimsical.backend.util.async :refer [<??]]
-   [vimsical.common.test :refer [uuid]]))
+   [vimsical.common.test :refer [uuid]]
+   [vimsical.backend.data :as data]))
 
 (st/instrument)
 
@@ -47,4 +48,10 @@
             _      (a/<!! wc)
             _      (p/select-deltas-async *delta-store* (uuid :async) (partial a/put! rc) (partial a/put! rc))
             actual (a/<!! rc)]
-        (is (= deltas actual))))))
+        (is (= deltas actual))))
+    (testing "delta-by-branch-uid"
+      (is (nil? (<?? (p/insert-deltas-chan *delta-store* (uuid :vims) deltas))))
+      (is (= {(uuid :branch) {:uid        (uuid :uid1) ,
+                              :prev-uid   (uuid :uid0) ,
+                              :branch-uid (uuid :branch)}}
+             (a/<!! (p/select-delta-by-branch-uid-chan *delta-store* (uuid :vims))))))))

@@ -24,7 +24,7 @@
   [{:keys [delta-store] :as context} [_ vims-uid :as event]]
   (multi/async
    context
-   (let [deltas-by-branch-uid (<? (delta-store.protocol/select-delta-by-branch-uid-chan delta-store vims-uid))]
+   (let [delta-by-branch-uid (<? (delta-store.protocol/select-delta-by-branch-uid-chan delta-store vims-uid))]
      (-> context
-         (multi/set-response deltas-by-branch-uid)
-         (multi/assoc-session ::vcs.validation/delta-by-branch-uid deltas-by-branch-uid)))))
+         (multi/set-response delta-by-branch-uid)
+         (multi/assoc-session ::vcs.validation/delta-by-branch-uid delta-by-branch-uid)))))

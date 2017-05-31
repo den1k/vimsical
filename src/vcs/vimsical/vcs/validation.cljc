@@ -73,12 +73,20 @@
    {} deltas))
 
 (s/fdef update-delta-by-branch-uid
-        :args (s/cat :deltas-by-branch-uid ::delta-by-branch-uid :deltas (s/every ::delta))
-        :ret  ::delta-by-branch-uid)
+        :args (s/cat :deltas-by-branch-uid (s/nilable ::delta-by-branch-uid)
+                     :deltas (s/nilable (s/every ::delta)))
+        :ret  (s/nilable ::delta-by-branch-uid))
 
 (defn update-delta-by-branch-uid
   [delta-by-branch-uid deltas]
-  (transduce
-   (group-by-branch-uid-xf validate-contiguous-xf)
-   (group-by-branch-uid-rf)
-   delta-by-branch-uid deltas))
+  (try
+    (transduce
+     (group-by-branch-uid-xf validate-contiguous-xf)
+     (group-by-branch-uid-rf)
+     delta-by-branch-uid deltas)
+    (catch #?(:clj Throwable :cljs :default) t
+        (throw
+         (ex-info "update-delta-by-branch-uid"
+                  {:delta-by-branch-uid delta-by-branch-uid
+                   :detlas              deltas
+                   :ex                  t})))))

@@ -7,6 +7,10 @@
    [vimsical.user :as user]
    [vimsical.vims :as vims]))
 
+;;
+;; * Me
+;;
+
 (re-frame/reg-event-fx
  ::me
  (fn [_ [_ status-key]]

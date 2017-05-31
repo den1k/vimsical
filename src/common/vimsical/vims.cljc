@@ -42,9 +42,15 @@
                      :opts (s/? (s/nilable ::new-vims-opts)))
         :ret ::vims)
 
+(defn default-files
+  ([] (default-files (uuid) (uuid) (uuid)))
+  ([html-uid css-uid javascript-uid]
+   [(vcs.file/new-file html-uid       :text :html)
+    (vcs.file/new-file css-uid        :text :css)
+    (vcs.file/new-file javascript-uid :text :javascript)]))
+
 (defn new-vims
-  ([owner title files]
-   (new-vims owner title files nil))
+  ([owner] (new-vims owner nil (default-files) nil))
   ([owner title files {:keys [uid
                               branch-uid created-at]
                        :or   {uid        (uuid)
@@ -60,10 +66,3 @@
            branches (new-branches owner')]
        (-> {:db/uid uid ::owner owner' ::branches branches}
            (util/assoc-some ::title title))))))
-
-(defn default-files
-  ([] (default-files (uuid) (uuid) (uuid)))
-  ([html-uid css-uid javascript-uid]
-   [(vcs.file/new-file html-uid       :text :html)
-    (vcs.file/new-file css-uid        :text :css)
-    (vcs.file/new-file javascript-uid :text :javascript)]))

@@ -110,7 +110,8 @@
   (t/testing "Update"
     (t/is (= next-ldbb (-> {}
                            (sut/update-delta-by-branch-uid (stub-deltas))
-                           (sut/update-delta-by-branch-uid (ok-next-deltas))))))
+                           (sut/update-delta-by-branch-uid (ok-next-deltas))
+                           (sut/update-delta-by-branch-uid nil)))))
   (t/testing "Update with branches"
     (let [first-deltas  (stub-deltas)
           second-deltas (stub-new-branch-deltas)

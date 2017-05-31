@@ -10,7 +10,8 @@
    [vimsical.frontend.db :as db]
    [vimsical.frontend.remotes.fx :as frontend.remotes.fx]
    [vimsical.frontend.vcs.sync.db :as vcs.sync.db]
-   [vimsical.frontend.vcs.sync.handlers :as vcs.sync.handlers]))
+   [vimsical.frontend.vcs.sync.handlers :as vcs.sync.handlers]
+   [vimsical.frontend.vcs.handlers :as vcs.handlers]))
 
 (st/instrument)
 
@@ -18,14 +19,17 @@
 ;; * Re-frame
 ;;
 
-(def test-db (db/new-db {:app/user data/user}))
+(def test-db (db/new-db
+              {:app/user data/user
+               :app/vims data/vims}))
 
 (defn re-frame-fixture
   [f]
   (re-frame.test/with-temp-re-frame-state
-    (re-frame.test/run-test-async
+    (re-frame.test/run-test-sync
      (re-frame/reg-event-db ::test-db-init (constantly test-db))
      (re-frame/dispatch-sync [::test-db-init])
+     (re-frame/dispatch-sync [::vcs.handlers/init uuid (uuid ::data/vims) data/deltas])
      (f))))
 
 ;;
@@ -44,9 +48,7 @@
 ;; * Helpers
 ;;
 
-(defn get-sync
-  [db-sub]
-  (get-in @db-sub [:app/sync (uuid ::data/vims)]))
+(defn get-sync [db-sub] (get-in @db-sub (vcs.sync.db/path (uuid ::data/vims))))
 
 ;;
 ;; * Deltas by branch-uid
@@ -58,8 +60,8 @@
         status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub        (re-frame/subscribe [::db/db])]
     (re-frame/dispatch handler-event)
-    (re-frame.test/wait-for
-     [#{::vcs.sync.handlers/delta-by-branch-uid-success}
-      #{::vcs.sync.handlers/delta-by-branch-uid-error}]
-     (do (is (= ::frontend.remotes.fx/success @status-sub))
-         (is (= data/deltas-by-branch-uid (-> db-sub get-sync ::vcs.sync.db/delta-by-branch-uid)))))))
+    ;; re-frame.test/wait-for
+    ;; [#{::vcs.sync.handlers/delta-by-branch-uid-success}
+    ;;  #{::vcs.sync.handlers/delta-by-branch-uid-error}]
+    (do (is (= ::frontend.remotes.fx/success @status-sub))
+        (is (= data/deltas-by-branch-uid (-> db-sub get-sync ::vcs.sync.db/delta-by-branch-uid))))))

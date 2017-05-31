@@ -8,7 +8,9 @@
    [vimsical.backend.components.delta-store.protocol :as protocol]
    [vimsical.backend.components.delta-store.queries :as queries]
    [vimsical.backend.components.delta-store.schema :as schema]
-   [vimsical.vcs.validation :as validation]))
+   [vimsical.vcs.validation :as validation]
+   [vimsical.vims :as vims]
+   [vimsical.vcs.delta :as delta]))
 
 ;;
 ;; * Queries
@@ -23,16 +25,19 @@
 ;; * Commands
 ;;
 
-(defn- select-deltas-command [vims-uid]
+(s/fdef select-deltas-command :args (s/cat :vims-uid ::vims/uid))
+(defn-  select-deltas-command [vims-uid]
   [::select-deltas [vims-uid]])
 
-(defn- insert-deltas-commands [vims-uid deltas]
+(s/fdef insert-deltas-command :args (s/cat :vims-uid ::vims/uid :deltas (s/every ::delta/delta)))
+(defn-  insert-deltas-commands [vims-uid deltas]
   (mapv
    (fn [delta]
      [::insert-delta (queries/delta->insert-values vims-uid delta)])
    deltas))
 
-(defn- select-delta-by-branch-uid-command [vims-uid]
+(s/fdef select-delta-by-branch-uid-command :args (s/cat :vims-uid ::vims/uid))
+(defn-  select-delta-by-branch-uid-command [vims-uid]
   [::select-delta-by-branch-uid [vims-uid]])
 
 ;;
