@@ -6,11 +6,7 @@
    [re-frame.interop :as interop]))
 
 ;;
-;; * Mapgraph helpers
-;;
-
-;;
-;; ** Adding entities
+;; * Helpers
 ;;
 
 (defn- entities? [db coll]
@@ -23,6 +19,10 @@
     (mg/entity? db x) (mg/ref-to db x)
     (entities? db x) (mapv (partial mg/ref-to db) x)
     :else nil))
+
+;;
+;; * Add
+;;
 
 (defmulti add
   (fn [db entity-or-entities]
@@ -75,7 +75,7 @@
       (add-join* entity join-key join-entity)))
 
 ;;
-;; ** Removing entities
+;; * Remove
 ;;
 
 (defn- remove-ref [db ref]
@@ -87,7 +87,6 @@
        :else          db))
    (dissoc db ref) (get db ref)))
 
-
 (defn remove-entity [db entity]
   (remove-ref db (mg/ref-to db entity)))
 
@@ -95,7 +94,7 @@
   (reduce remove-ref db (map (partial get db) keywords)))
 
 ;;
-;; ** Shorthand link syntax
+;; * Shorthand link syntax
 ;;
 
 (defn rewrite-pattern? [pattern]

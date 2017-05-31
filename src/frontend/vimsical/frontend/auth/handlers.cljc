@@ -47,7 +47,6 @@
 (re-frame/reg-event-fx ::login         login-handler)
 (re-frame/reg-event-fx ::login-success login-result-handler)
 
-
 ;;
 ;; * Logout
 ;;
