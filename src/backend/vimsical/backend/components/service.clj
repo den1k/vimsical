@@ -1,8 +1,9 @@
 (ns vimsical.backend.components.service
   (:require
    [io.pedestal.http :as http]
-   [io.pedestal.http.immutant :as immutant]
+   [io.pedestal.http.ring-middlewares :as middlewares]
    [io.pedestal.http.route :as route]
+   [vimsical.backend.components.server.interceptors.errors :as interceptors.errors]
    [vimsical.backend.components.server.interceptors.event :as interceptors.event]
    [vimsical.backend.components.server.interceptors.event-auth :as interceptors.event-auth]
    [vimsical.backend.components.server.interceptors.session :as interceptors.session]
@@ -27,10 +28,12 @@
 ;;
 
 (def default-interceptors
-  [interceptors.transit/body
+  [interceptors.errors/debug
+   middlewares/cookies
+   interceptors.transit/body
    interceptors.session/session])
 
-;;
+;;1
 ;; * Service map
 ;;
 

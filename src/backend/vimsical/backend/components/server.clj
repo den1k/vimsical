@@ -23,7 +23,6 @@
   [{::http/keys [default-interceptors] :as service-map}]
   (-> service-map
       (http/default-interceptors)
-      (http/dev-interceptors)
       (interceptors.util/prepend-interceptors default-interceptors)))
 
 ;;
