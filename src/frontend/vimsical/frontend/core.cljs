@@ -10,6 +10,7 @@
    [vimsical.frontend.code-editor.core :as code-editor.core]
    [vimsical.frontend.db :as db]
    [vimsical.frontend.ui.handlers :as ui.handlers]
+   [vimsical.frontend.user.handlers :as user.handlers]
    [vimsical.frontend.vcs.handlers :as vcs.handlers]))
 
 (defn mount-root []
@@ -24,4 +25,5 @@
    #(do
       (re-frame/dispatch-sync [::db/init])
       (re-frame/dispatch-sync [::ui.handlers/init])
+      (re-frame/dispatch [::user.handlers/me])
       (mount-root))))
