@@ -45,16 +45,9 @@
            :anchor   [:div.delete-x "+"]}]]])]))
 
 (defn vims-list []
-  (let [vimsae (<sub [::subs/vimsae])]
-    [:div.vims-list
+  (let [vimsae (reverse (<sub [::subs/vimsae]))]
+    [:div.vims-list.dc.ac
      [:div.list-box
       [:div.list
        (for [{:as vims key :db/uid} vimsae]
          ^{:key key} [vims-list-item vims])]]]))
-
-(defn vims-list-popover [{:keys [showing? anchor]}]
-  [popovers/popover
-   {:anchor          anchor
-    :showing?        showing?
-    :position-offset 70
-    :child           [vims-list]}])

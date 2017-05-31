@@ -12,7 +12,7 @@
    [vimsical.frontend.app.subs :as subs]
    [vimsical.frontend.ui.subs :as ui.subs]
    [vimsical.frontend.auth.views :as auth.views]
-   [vimsical.frontend.modal.views :refer [modal]]
+   [vimsical.frontend.modal.views :as views.modal]
    [vimsical.frontend.app.handlers :as handlers]
    [re-frame.core :as re-frame]))
 
@@ -21,11 +21,12 @@
               vims       [::subs/vims]
               modal      [::subs/modal]
               on-mobile? [::ui.subs/on-mobile?]]
-    [modal]
+    (re-frame.loggers/console :log "APPMODAL" modal)
     [:div.app
      {:class    (str "route-" (name route))
       :on-click (e> (re-frame/dispatch [::handlers/close-modal]))}
      (when-not on-mobile? [nav])
+     [views.modal/modal]
      [:div.main
       {:class (when modal "modal-overlay")}
       (case route

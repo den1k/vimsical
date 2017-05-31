@@ -1,4 +1,5 @@
-(ns vimsical.frontend.modal.style)
+(ns vimsical.frontend.modal.style
+  (:require [vimsical.frontend.vims-list.style :refer [vims-list]]))
 
 (def overlay
   [:&.modal-overlay
@@ -6,7 +7,7 @@
    [:&:after
     {:content    "''"
      :position   :absolute
-     :z-index    :10
+     :z-index    10
      :top        0
      :left       0
      :height     :100%
@@ -15,4 +16,8 @@
 
 (def modal
   [:.modal-container
-   {:margin-top :60px}])
+   vims-list
+   {:position   :absolute
+    :width      :100%
+    :z-index    11
+    :overflow-y :auto}])

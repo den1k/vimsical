@@ -14,7 +14,6 @@
    [vimsical.common.util.core :refer [=by] :as util :include-macros true]
    [vimsical.frontend.app.handlers :as app]
    [vimsical.frontend.user.views :as user.views]
-   [vimsical.frontend.vims-list.views :as vims-list.views]
    [vimsical.frontend.auth.views :as auth.views]))
 
 (defn limit-title-length? [e]
