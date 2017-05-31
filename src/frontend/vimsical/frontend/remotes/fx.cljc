@@ -2,6 +2,7 @@
   (:require
    [clojure.spec :as s]
    [re-frame.core :as re-frame]
+   [re-frame.loggers :as re-frame.loggers]
    [re-frame.interop :as interop]
    [vimsical.frontend.remotes.remote :as p]
    [vimsical.remotes.event :as event]))
@@ -75,9 +76,11 @@
  ::status
  (fn [_ [_ remote-id status-key]]
    {:pre [remote-id]}
-   (interop/make-reaction
-    (fn []
-      (get-status @status-registry remote-id status-key)))))
+   (doto (interop/make-reaction
+          #(get-status @status-registry remote-id status-key))
+     (interop/add-on-dispose!
+      #(do (re-frame.loggers/console :log "Disposing status" status-key)
+           (swap! status-registry dissoc status-key))))))
 
 ;;
 ;; * Event status dispatches
