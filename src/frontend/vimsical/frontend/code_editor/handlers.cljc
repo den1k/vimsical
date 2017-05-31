@@ -17,33 +17,99 @@
    [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.code-editor.util :as code-editor.util]))
 
+(defn- set-model-language [file editor-instance]
+  #?(:cljs
+     (let [model (.-model editor-instance)]
+       (.. js/monaco -editor (setModelLanguage model (interop/file-lang file))))))
+
 ;;
-;; * Instance lifecycle
+;; * Model listeners
+;;
+
+;; XXX use interceptors to parse events?
+(defn handle-content-change [vims model file e]
+  (re-frame/dispatch [::content-change vims file e]))
+
+(defn handle-cursor-change [vims model file e]
+  (re-frame/dispatch [::cursor-change vims file e]))
+
+(defn editor-focus-handler [vims file editor]
+  (fn [_]
+    (re-frame/dispatch [::focus vims file editor])))
+
+(defn editor-blur-handler [vims file editor]
+  (fn [_]
+    (re-frame/dispatch [::blur vims file editor])))
+
+(defn new-listeners
+  [vims file editor]
+  {:pre [vims file editor]}
+  {:model->content-change-handler
+                          (fn model->content-change-handler [model]
+                            (fn [e]
+                              (handle-content-change vims model file e)))
+   :model->cursor-change-handler
+                          (fn model->cursor-change-handler [model]
+                            (fn [e]
+                              (handle-cursor-change vims model file e)))
+   :editor->focus-handler (partial editor-focus-handler vims file)
+   :editor->blur-handler  (partial editor-blur-handler vims file)})
+
+
+;;
+;; * Instance Lifecycle
 ;;
 
 (re-frame/reg-event-fx
  ::register
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db]} [_ {:keys [vims file] :as opts} editor-instance]]
+   {:ui-db (ui-db/set-editor ui-db vims file editor-instance)}))
+
+(re-frame/reg-event-fx
+ ::init
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub
-   (fn [[_ vims file]] ^:ignore-warnings [::subs/playhead-string vims file]))]
+   (fn [[_ {:keys [vims file]}]]
+     ^:ignore-warnings [::subs/playhead-string vims file]))]
  (fn [{:keys       [ui-db]
-       ::subs/keys [playhead-string]} [_ vims file editor-instance listeners]]
-   {:ui-db      (-> ui-db
-                    (ui-db/set-editor vims file editor-instance)
-                    (ui-db/set-listeners vims file listeners))
-    :dispatch-n [[::set-string vims nil file playhead-string]
-                 [::bind-listeners vims file]
-                 [::track-start vims file]]}))
+       ::subs/keys [playhead-string]} [_ {:keys [vims file] :as opts}]]
+   (let [editor    (ui-db/get-editor ui-db vims file)
+         _         (set-model-language file editor)
+         listeners (new-listeners vims file editor)]
+     {:ui-db      (ui-db/set-listeners ui-db vims file listeners)
+      :dispatch-n [[::set-string vims nil file playhead-string]
+                   [::bind-listeners vims file]
+                   [::track-start vims file]]})))
+
+(re-frame/reg-event-fx
+ ::handover
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db]} [_
+                       {old-vims :vims old-file :file :as old-opts}
+                       {new-vims :vims new-file :file :as new-opts}]]
+   (let [editor-instance (ui-db/get-editor ui-db old-vims old-file)]
+     {:ui-db (-> ui-db
+                 (ui-db/set-editor old-vims old-file nil)
+                 (ui-db/set-editor new-vims new-file editor-instance))})))
+
+(re-frame/reg-event-fx
+ ::recycle
+ (fn [_ [_
+         {old-vims :vims old-file :file :as old-opts}
+         {new-vims :vims new-file :file :as new-opts}]]
+   {:dispatch-n [[::clear-disposables old-vims old-file]
+                 [::track-stop old-vims old-file]
+                 [::handover old-opts new-opts]
+                 [::init new-opts]]}))
 
 (re-frame/reg-event-fx
  ::dispose
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db] :as cofx} [_ vims file]]
-   (do
-     ;; XXX fx?
-     (interop/dispose-editor (ui-db/get-editor ui-db vims file))
-     {:ui-db    (ui-db/set-editor ui-db vims file nil)
-      :dispatch [::track-stop vims file]})))
+ (fn [{:keys [ui-db]} [_ {:keys [vims file]}]]
+   (interop/dispose-editor (ui-db/get-editor ui-db vims file))
+   {:dispatch-n [[::clear-disposables vims file]
+                 [::track-stop vims file]]}))
 
 ;;
 ;; * Listeners lifecycle
@@ -226,8 +292,7 @@
     [{:id           [::editor-str file-uid]
       :action       :register
       :subscription [::subs/string vims file]
-      :val->event   (fn [string]
-                      [::update-editor-string vims file string])}
+      :val->event   (fn [string] [::update-editor-string vims file string])}
      {:id              [::editor-pos file-uid]
       :action          :register
       ;; Prevents showing cursors on all editors when reloading

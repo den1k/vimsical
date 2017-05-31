@@ -1,6 +1,10 @@
 (ns vimsical.frontend.code-editor.interop
   (:require
-   [vimsical.vcs.edit-event :as edit-event]))
+   [vimsical.vcs.edit-event :as edit-event]
+   [vimsical.vcs.file :as file]))
+
+(defn file-lang [{::file/keys [sub-type]}]
+  (name sub-type))
 
 ;;
 ;; * Position <> Index
