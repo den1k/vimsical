@@ -160,9 +160,9 @@
 
    :integration-dev
    [{:source-paths ["test/integration"]
-     :test-paths   ["test/integration"]
+     :test-paths   ^{:protect false} ["test/integration"]
      :dependencies
-     [[day8.re-frame/test "0.1.4-SNAPSHOT" :exclusions [re-frame org.clojure/clojurescript]]
+     [[day8.re-frame/test "0.1.5" :exclusions [re-frame org.clojure/clojurescript]]
       ;; Need more exclusions because guava conflicts with datomic
       [org.clojure/clojurescript "1.9.518" :exclusions [com.google.guava/guava org.clojure/tools.reader]]]}
     :-frontend-config

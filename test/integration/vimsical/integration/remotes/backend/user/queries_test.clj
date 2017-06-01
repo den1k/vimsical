@@ -8,11 +8,13 @@
    [vimsical.backend.data :as data]
    [vimsical.backend.handlers.user.queries :as user.queries]
    [vimsical.backend.system.fixture :as system.fixture]
+   [vimsical.common.uuid :as uuid]
    [vimsical.common.test :refer [uuid]]
    [vimsical.frontend.db :as db]
    [vimsical.frontend.remotes.fx :as frontend.remotes.fx]
    [vimsical.frontend.user.handlers :as user.handlers]
-   [vimsical.queries.user :as queries.user]))
+   [vimsical.queries.user :as queries.user]
+   [vimsical.vcs.snapshot :as snapshot]))
 
 (st/instrument)
 
@@ -53,7 +55,7 @@
       :app/user))
 
 (deftest snapshots-join-test
-  (is (= data/me (#'user.queries/user-join-snapshots data/user data/snapshots))))
+  (is (= data/me (#'user.queries/user-join-snapshots data/user data/snapshots (constantly (uuid ::data/html-snapshot))))))
 
 ;;
 ;; * Me
@@ -64,6 +66,8 @@
         handler-event [::user.handlers/me status-key]
         status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub        (re-frame/subscribe [::db/db])]
-    (re-frame/dispatch handler-event)
-    (is (= ::frontend.remotes.fx/success @status-sub))
-    (is (= data/me (-> db-sub get-app-user)))))
+    ;; Can't easily pass the fn down...
+    (with-redefs [uuid/uuid (constantly (uuid ::data/html-snapshot))]
+      (re-frame/dispatch handler-event)
+      (is (= ::frontend.remotes.fx/success @status-sub))
+      (is (= data/me (-> db-sub get-app-user))))))

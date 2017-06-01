@@ -33,6 +33,10 @@
         :ret  (s/nilable ::state.timeline/deltas-by-branch-uid))
 
 (defn diff
+  "Return a map of <branch-uid> to [deltas] of the deltas that appear in `vcs`
+  _after_ the ones in `deltas-by-branch-uid`. Note that this is both exhaustive
+  and fast, per branch we do a constant time lookup and a logarithmic time
+  split."
   [{::vcs/keys [timeline] :as vcs} delta-by-branch-uid]
   (diff-timeline timeline delta-by-branch-uid))
 

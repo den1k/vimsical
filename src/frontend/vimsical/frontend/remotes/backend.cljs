@@ -1,9 +1,11 @@
 (ns vimsical.frontend.remotes.backend
   (:require
+   [clojure.pprint :as pprint]
    [clojure.spec :as s]
    [vimsical.common.util.transit :as transit]
    [vimsical.frontend.remotes.remote :as remote]
    [vimsical.frontend.util.xhr :as xhr]
+   [vimsical.frontend.config :as config]
    [vimsical.remotes.event :as event])
   (:require-macros
    [vimsical.common.env-cljs :as env :refer [optional required]]))
@@ -27,7 +29,12 @@
    "Accept"       "application/transit+json"})
 
 (defn- response-result [_ resp]
-  (some-> resp (xhr/response-text) (transit/read-transit)))
+  (try
+    (some-> resp (xhr/response-text) (transit/read-transit))
+    (catch :default _
+
+      (.error js/console "ERROR Reading transit" (xhr/response-text resp))
+      (xhr/response-text resp))))
 
 (defn- request-data [event]
   (transit/write-transit event))
@@ -36,19 +43,31 @@
 ;; * Remote FX Implementation
 ;;
 
+(defn debug-resp
+  [resp event]
+  (let [logged {:event event :resp resp}]
+    (pprint/pprint logged)
+    resp))
+
 (def backend-config
-  {:protocol (env/optional :backend-protocol ::env/string)
-   :host     (env/optional :backend-host ::env/string)
-   :port     (env/optional :backend-port ::env/string)
-   :path     (env/required :backend-path ::env/string)})
+  {:protocol (optional :backend-protocol ::env/string)
+   :host "localhost" #_(optional :backend-host ::env/string)
+   :port      "8080" #_(optional :backend-port ::env/string)
+   :path     "/events" #_(optional :backend-path ::env/string)})
 
 (defmethod remote/init! :backend [_] backend-config)
 
 (defmethod remote/send! :backend
   [{:keys [event] :as fx} state result-cb error-cb]
   (s/assert ::event/event event)
-  (letfn [(xhr-success-cb [resp] (result-cb (response-result fx resp)))
-          (xhr-error-cb   [resp] (error-cb (response-result fx resp)))]
+  (letfn [(xhr-success-cb [resp]
+            (cond-> (response-result fx resp)
+              ;; config/debug? (debug-resp event)
+              true          (result-cb)))
+          (xhr-error-cb [resp]
+            (cond-> (response-result fx resp)
+              config/debug? (debug-resp event)
+              true          (error-cb)))]
     (do (xhr/new-post-request
          (xhr/new-uri state)
          (request-data event)

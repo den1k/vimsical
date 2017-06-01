@@ -54,7 +54,7 @@
 ;;
 ;; * Deltas by branch-uid
 ;;
-
+#_
 (deftest edits-test
   (let [expect-html      "<body><h1>Hello</h1></body>"
         html-edit-events (diff/diffs->edit-events
@@ -66,10 +66,9 @@
         css-edit-events  (diff/diffs->edit-events
                           ""
                           ["body { color: red; }"]
-                          [expect-css])
-        vims-sub (re-frame/subscribe ::vcs.subs)]
+                          [expect-css])]
     ;; Init
-    (re-frame/dispatch-sync [::vcs.sync.handlers/start (uuid ::data/vims)])
+    (re-frame/dispatch [::vcs.sync.handlers/start (uuid ::data/vims)])
     ;; Dispatch edit events
     (doseq [e html-edit-events]
       (re-frame/dispatch [::vcs.handlers/add-edit-event {:db/uid (uuid ::data/vims)} data/html-file e]))

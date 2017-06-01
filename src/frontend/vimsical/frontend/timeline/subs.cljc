@@ -46,9 +46,9 @@
 (re-frame/reg-sub
  ::chunks-by-absolute-start-time
  (fn [[_ vims]] (re-frame/subscribe [::vcs.subs/vcs vims]))
- (fn [vcs _] (vcs/timeline-chunks-by-absolute-start-time vcs)))
+ (fn [vcs _] (some-> vcs vcs/timeline-chunks-by-absolute-start-time)))
 
 (re-frame/reg-sub
  ::duration
  (fn [[_ vims]] (re-frame/subscribe [::vcs.subs/vcs vims]))
- (fn [vcs _] (or (vcs/timeline-duration vcs) 0)))
+ (fn [vcs _] (or (some-> vcs vcs/timeline-duration) 0)))

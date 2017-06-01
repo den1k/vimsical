@@ -2,11 +2,11 @@
   #?@(:clj
       [(:require
         [clojure.core.async :as a]
-        [clojure.test :refer [deftest is]]
+        [clojure.test :refer [deftest is are]]
         [vimsical.common.util.transit :as sut])]
       :cljs
       [(:require
-        [clojure.test :refer [deftest is]]
+        [clojure.test :refer [deftest is are]]
         [vimsical.common.util.transit :as sut])]))
 
 (deftest io-test
@@ -24,9 +24,11 @@
 
 #?(:clj
    (deftest chan-encoding-test
-     (let [coll        [{:a 1} {:b 2}]
-           chan        (a/to-chan coll)
-           encoded-rch (sut/chan->transit-readable-byte-channel chan)
-           encoded-str (transit-readable-byte-channel->string encoded-rch)
-           decoded     (sut/read-transit encoded-str)]
-       (is (= coll decoded)))))
+     (are [coll] (let [chan        (a/to-chan coll)
+                       encoded-rch (sut/chan->transit-readable-byte-channel chan)
+                       encoded-str (transit-readable-byte-channel->string encoded-rch)
+                       decoded     (sut/read-transit encoded-str)]
+                   (is (= coll decoded)))
+       [{:a 1} {:b 2}]
+       []
+       [{}])))

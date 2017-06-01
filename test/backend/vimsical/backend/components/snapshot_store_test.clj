@@ -15,8 +15,16 @@
 (use-fixtures :each fixture/each)
 
 (def expect
-  [{::snapshot/user-uid (uuid :user) ::snapshot/vims-uid (uuid :vims) ::snapshot/file-uid (uuid :file1) ::snapshot/delta-uid nil ::snapshot/text "file1"}
-   {::snapshot/user-uid (uuid :user) ::snapshot/vims-uid (uuid :vims) ::snapshot/file-uid (uuid :file2) ::snapshot/delta-uid nil ::snapshot/text "file2"}])
+  [{::snapshot/user-uid (uuid :user)
+    ::snapshot/vims-uid (uuid :vims)
+    ::snapshot/file-uid (uuid :file1)
+    ::snapshot/delta-uid nil
+    ::snapshot/text "file1"}
+   {::snapshot/user-uid (uuid :user)
+    ::snapshot/vims-uid (uuid :vims)
+    ::snapshot/file-uid (uuid :file2)
+    ::snapshot/delta-uid nil
+    ::snapshot/text "file2"}])
 
 (deftest vims-test
   (testing "ISnapshotStoreChan"

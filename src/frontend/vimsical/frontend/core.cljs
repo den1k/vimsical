@@ -3,15 +3,13 @@
    [clojure.spec.test :as st]
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
-   [vimsical.common.test :refer [uuid]]
    [vimsical.frontend.remotes.fx]      ;; side-effects
    [vimsical.frontend.remotes.backend] ;; side-effects
    [vimsical.frontend.app.views :refer [app]]
    [vimsical.frontend.code-editor.core :as code-editor.core]
    [vimsical.frontend.db :as db]
    [vimsical.frontend.ui.handlers :as ui.handlers]
-   [vimsical.frontend.user.handlers :as user.handlers]
-   [vimsical.frontend.vcs.handlers :as vcs.handlers]))
+   [vimsical.frontend.user.handlers :as user.handlers]))
 
 (defn mount-root []
   (re-frame/clear-subscription-cache!)

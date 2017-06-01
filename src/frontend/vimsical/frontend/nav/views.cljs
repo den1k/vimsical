@@ -116,16 +116,17 @@
       [:span.type icons/vimsical-type]]
      (when app-vims
        [vims-info])
-     [:div.new-and-my-vims.button-group
-      [:div.button
-       {:on-click (e> (re-frame/dispatch
-                       [::app.handlers/new-vims user {:open? true}]))}
-       "New Vims"]
-      [:div.button
-       {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view
-                      (re-frame/dispatch
-                       [::app.handlers/toggle-modal :modal/vims-list]))}
-       "My Vims"]]
+     (when-not (user/anon? user)
+       [:div.new-and-my-vims.button-group
+        [:div.button
+         {:on-click (e> (re-frame/dispatch
+                         [::app.handlers/new-vims user {:open? true}]))}
+         "New Vims"]
+        [:div.button
+         {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view
+                        (re-frame/dispatch
+                         [::app.handlers/toggle-modal :modal/vims-list]))}
+         "My Vims"]])
      [:div.auth-or-user
       ;; popovers use no-op :on-cancel cb because event bubbles up here
       {:on-click (e> (swap! show-popup? not))}

@@ -16,7 +16,8 @@
    [vimsical.queries.user :as queries.user]
    [vimsical.user :as user]
    [vimsical.vcs.snapshot :as snapshot]
-   [vimsical.vims :as vims]))
+   [vimsical.vims :as vims]
+   [vimsical.frontend.util.mapgraph :as util.mg]))
 
 (st/instrument)
 
@@ -31,7 +32,7 @@
   [f]
   (re-frame.test/with-temp-re-frame-state
     (re-frame.test/run-test-sync
-     (re-frame/reg-event-db ::test-db-init (constantly test-db))
+     (re-frame/reg-event-db ::test-db-init (fn [_ [_ db]] (or db test-db)))
      (re-frame/dispatch [::test-db-init])
      (f))))
 
@@ -87,12 +88,14 @@
 ;; * Snapshots
 ;;
 
+#_
 (deftest update-snapshots-test
   (let [status-key    (uuid)
-        vims+vcs      (vcs.handlers/init-vims-vcs uuid data/vims data/deltas)
-        handler-event [::frontend.vims.handlers/update-snapshots vims+vcs status-key]
+        handler-event [::frontend.vims.handlers/update-snapshots {:db/uid (uuid ::data/vims)} status-key]
         status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub        (re-frame/subscribe [::db/db])]
+    (re-frame/dispatch [::test-db-init (util.mg/add-linked-entities test-db {:app/vims data/vims})])
+    (re-frame/dispatch [::vcs.handlers/init uuid data/vims data/deltas])
     (re-frame/dispatch handler-event)
     (is (= ::frontend.remotes.fx/success @status-sub))
     (let [snapshots (->> db-sub get-app-user ::user/vimsae first ::vims/snapshots)]

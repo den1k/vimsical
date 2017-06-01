@@ -14,10 +14,10 @@
 
 (defn drop!
   ([] (drop! system))
-  ([{:api.system/keys [datomic redis cassandra]}]
+  ([{:keys [datomic session-store cassandra-connection]}]
    (datomic/delete-database! datomic)
-   (redis/flushall! redis)
-   (cassandra/drop-keyspace! cassandra)))
+   (redis/flushall! session-store)
+   (cassandra/drop-keyspace! cassandra-connection)))
 
 ;;
 ;; * Reloaded

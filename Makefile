@@ -81,3 +81,6 @@ infra: infra-start infra-logs
 infra-stop:
 	cd infra \
 	&& docker-compose down -v --remove-orphans
+
+run: infra-start
+	lein with-profile backend-dev run

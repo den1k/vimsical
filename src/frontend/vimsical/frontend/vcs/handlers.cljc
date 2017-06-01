@@ -2,12 +2,12 @@
   (:require
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
+   [vimsical.frontend.app.subs :as app.subs]
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as vcs.db]
    [vimsical.frontend.vcs.queries :as queries]
-   [vimsical.frontend.app.subs :as app.subs]
    [vimsical.frontend.vcs.subs :as subs]
    [vimsical.frontend.vcs.sync.handlers :as sync.handlers]
    [vimsical.vcs.branch :as branch]
@@ -16,49 +16,33 @@
    [vimsical.vims :as vims]))
 
 ;;
-;; * VCS Vims init
+;; * VCS Vims init-event-fx
 ;;
 
-(defn init-vims-vcs
-  [uuid-fn {:as vims :keys [db/uid] ::vims/keys [branches]} deltas]
-  {:pre [uid (seq branches)]}
-  (let [master             (branch/master branches)
-        empty-vcs          (vcs/empty-vcs branches)
-        vcs-state          (reduce
-                            (fn [vcs delta]
-                              (vcs/add-delta vcs uuid-fn delta))
-                            empty-vcs deltas)
-        vcs-frontend-state {:db/uid             (uuid-fn)
-                            ::vcs.db/branch-uid (:db/uid master)
-                            ::vcs.db/delta-uid  nil}
-        vcs-entity         (merge vcs-state vcs-frontend-state)]
-    (assoc vims ::vims/vcs vcs-entity)))
+(defn init-event-fx
+  [{:keys [db]}
+   [_ uuid-fn vims deltas]]
+  (let [vims-ref                 (util.mg/->ref db vims)
+        {:as         vims
+         ::vims/keys [branches]} (mg/pull db queries/vims vims-ref)
+        vcs                      (reduce
+                                  (fn [vcs delta]
+                                    (vcs/add-delta vcs uuid-fn delta))
+                                  (vcs/empty-vcs branches) deltas)
+        {branch-uid :db/uid}     (branch/master branches)
+        [_ {delta-uid :uid}
+         :as playhead-entry]     (vcs/timeline-last-entry vcs)
+        vcs-db                   {::vcs.db/branch-uid     branch-uid
+                                  ::vcs.db/delta-uid      delta-uid
+                                  ::vcs.db/playhead-entry playhead-entry}
+        vcs-entity               (merge {:db/uid (uuid-fn)} vcs vcs-db)]
+    {:db (mg/add db (assoc vims ::vims/vcs vcs-entity))
+     #?@(:cljs
+         [:dispatch
+          ;; Cyclic deps
+          [:vimsical.frontend.timeline.handlers/set-playhead-with-timeline-entry vims playhead-entry]])}))
 
-(defmulti init
-  (fn [db [_ uid-fn vims _]]
-    {:pre [(ifn? uid-fn) (some? vims)]}
-    (cond
-      (map? vims)       :vims
-      (mg/ref? db vims) :ref
-      (uuid? vims)      :uid
-      :else (throw (ex-info "Unexpected vims value" {:vims vims :uid-fn uid-fn})))))
-
-(defmethod init :uid
-  [db [event-id uuid-fn uid deltas :as event]]
-  (let [ref [:db/uid uid]]
-    (init db [event-id uuid-fn ref deltas])))
-
-(defmethod init :ref
-  [db [event-id uuid-fn ref deltas :as event]]
-  (let [vims (mg/pull db queries/vims ref)]
-    (init db [event-id uuid-fn vims deltas])))
-
-(defmethod init :vims
-  [db [_ uuid-fn vims deltas]]
-  (let [vims' (init-vims-vcs uuid-fn vims deltas)]
-    (mg/add db vims')))
-
-(re-frame/reg-event-db ::init init)
+(re-frame/reg-event-fx ::init init-event-fx)
 
 ;;
 ;; * Cofxs
@@ -126,10 +110,12 @@
 
 (defn- update-pointers
   [[{:as vcs ::vcs.db/keys [playhead-entry]} _ delta-uid {branch-uid :db/uid :as branch}]]
-  (let [playhead-entry' (vcs/timeline-next-entry vcs playhead-entry)
-        pointers        (cond-> {::vcs.db/delta-uid      delta-uid
-                                 ::vcs.db/playhead-entry playhead-entry'}
-                          (some? branch) (assoc ::vcs.db/branch-uid branch-uid))]
+  {:post [::vcs.db/playhead-entry]}
+  (let [next-entry     (vcs/timeline-next-entry vcs playhead-entry)
+        playhead-entry (or next-entry (vcs/timeline-first-entry vcs))
+        pointers       (cond-> {::vcs.db/playhead-entry playhead-entry
+                                ::vcs.db/delta-uid delta-uid}
+                         (some? branch) (assoc ::vcs.db/branch-uid branch-uid))]
     (merge vcs pointers)))
 
 (defmulti add-edit-event*
@@ -147,7 +133,7 @@
     (vcs/add-edit-event-branching vcs effects file-uid branch-uid current-delta-uid edit-event)))
 
 (defn add-edit-event
-  "Update the vcs with the edit event and move the playhead-entry to the newly created timeline entry"
+  "Update the vcs with the edit event and move the playhead-entry to the newly created timeline playhead-entry"
   [{:as vcs ::vcs.db/keys [branch-uid playhead-entry]} effects file-uid edit-event]
   ;; Use editor effects to create a branch id that we can reference in the deltas
   (let [[_ deltas _ ?branch :as result] (add-edit-event* vcs effects file-uid edit-event)]
@@ -157,13 +143,13 @@
  ::add-edit-event
  [editor-cofxs
   (re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub (fn [[_ vims]] [::subs/vcs vims]))
-  (util.re-frame/inject-sub (fn [[_ vims]] [::subs/playhead-entry vims]))]
+  (util.re-frame/inject-sub (fn [[_ vims]] [::subs/vcs vims]))]
  (fn [{:keys           [db ui-db]
        ::app.subs/keys [user]
        ::subs/keys     [vcs]
        ::editor/keys   [effects]}
       [_ {vims-uid :db/uid :as vims} {file-uid :db/uid} edit-event]]
+   {:pre [vims-uid effects file-uid]}
    (letfn [(vcs->playhead [vcs] (-> vcs ::vcs.db/playhead-entry first))]
      (let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)
            playhead'             (vcs->playhead vcs')
@@ -173,5 +159,6 @@
                 :ui-db      ui-db'
                 :dispatch-n [[::sync.handlers/add-deltas vims-uid deltas]]}
          ;; NOTE branch is already in ::vcs/branches, don't need to mg/add it
-         (some? ?branch) (-> (update :db util.mg/add-join* :app/vims ::vims/branches ?branch)
-                             (update :dispatch-n conj [::sync.handlers/add-branch ?branch])))))))
+         (some? ?branch)
+         (-> (update :db util.mg/add-join* :app/vims ::vims/branches ?branch)
+             (update :dispatch-n conj [::sync.handlers/add-branch ?branch])))))))

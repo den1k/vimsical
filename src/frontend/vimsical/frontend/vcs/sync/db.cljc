@@ -15,18 +15,19 @@
 
 ;; NOTE ignoring ns due to circular dependency
 (def fsm
-  `{Wait   {:start                        Init}
-    Init   {:delta-by-branch-uid-success  Sync
-            :delta-by-branch-uid-error    InitError}
-    Sync   {:sync                         Sync ; ??
-            :sync-success                 Ready
-            :sync-error                   SyncError}
-    Ready  {:add-deltas                   Deltas
-            :add-branch                   Branch}
-    Deltas {:add-deltas-success           Ready
-            :add-deltas-error             Sync}
-    Branch {:add-branch-success           Ready
-            :add-branch-error             BranchError}})
+  `{Wait  {:start              Init
+           :start-new          Ready}
+    Init  {:init-success       Ready
+           :init-error         InitError}
+    Ready {:sync               Ready
+           :sync-success       Ready
+           :sync-error         SyncError
+           :add-deltas         Ready
+           :add-branch         Ready
+           :add-deltas-success Ready
+           :add-deltas-error   Sync
+           :add-branch-success Ready
+           :add-branch-error   BranchError}})
 
 ;;
 ;; * Spec
@@ -55,7 +56,7 @@
            [event-id vims-uid :as event] (interceptor/get-coeffect context :event)
            {::keys [state]}              (get-in db (path vims-uid))
            allowed-transitions           (get fsm state)]
-       (if-not (contains? allowed-transitions (kw-name event-id))
+       (if-not (and allowed-transitions (contains? allowed-transitions (kw-name event-id)))
          (throw (ex-info "Transition" {:current state :event event :allowed allowed-transitions}))
          context)))))
 
@@ -63,10 +64,11 @@
   (std-interceptors/enrich
    (fn fsm-enrich-next-state-transition-after
      [db [event-id vims-uid :as event]]
-     (let [{::keys [state]} (get-in db (path vims-uid))]
-       (if-some [next-state       (get-in fsm [state (kw-name event-id)])]
+     (if-some [{::keys [state]} (get-in db (path vims-uid))]
+       (if-some [next-state (get-in fsm [state (kw-name event-id)])]
          (assoc-in db (path vims-uid ::state) next-state)
-         (throw (ex-info "State transition not found" {:state state :event event})))))))
+         (throw (ex-info "State transition not found" {:state state :event event})))
+       db))))
 
 (def fsm-interceptor
   [fsm-check-allowed-transition

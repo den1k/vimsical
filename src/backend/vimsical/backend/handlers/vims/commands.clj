@@ -24,12 +24,14 @@
 (defmethod event-auth/require-auth? ::commands/new [_] true)
 (defmethod multi/context-spec ::commands/new [_] ::datomic-context)
 (defmethod multi/handle-event ::commands/new
-  [{:keys [datomic] :as context} [_ vims]]
-  (multi/async
-   context
-   (multi/set-response
-    context
-    (<? (datomic/transact-chan datomic vims)))))
+  [{::user/keys [uid]
+    :keys       [datomic] :as context} [_ vims]]
+  (let [tx {:db/uid uid ::user/vimsae [vims]}]
+    (multi/async
+     context
+     (multi/set-response
+      context
+      (<? (datomic/transact-chan datomic tx))))))
 
 ;;
 ;; * Title

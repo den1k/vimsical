@@ -5,6 +5,7 @@
    [vimsical.backend.components.datomic :as datomic]
    [vimsical.backend.components.server.interceptors.event-auth :as event-auth]
    [vimsical.backend.components.snapshot-store :as snapshot-store]
+   [vimsical.common.uuid :refer [uuid]]
    [vimsical.backend.components.snapshot-store.protocol :as snapshot-store.protocol]
    [vimsical.backend.handlers.multi :as multi]
    [vimsical.backend.util.async :as async :refer [<?]]
@@ -13,35 +14,37 @@
    [vimsical.user :as user]
    [vimsical.vcs.branch :as vcs.branch]
    [vimsical.vcs.snapshot :as snapshot]
-   [vimsical.vims :as vims]))
+   [vimsical.vims :as vims]
+   [vimsical.vcs.file :as file]))
 
 ;;
 ;; * Cross-stores join helpers
 ;;
 
 (s/fdef user-join-snapshots
-        :args (s/cat :user ::user/user :snapshots (s/every ::snapshot/snapshot))
+        :args (s/cat :user ::user/user :snapshots (s/every ::snapshot/snapshot) :uuid-fn (s/? ifn?))
         :ret  ::user/user)
 
 (defn- user-join-snapshots
-  [{::user/keys [vimsae] :as user} snapshots]
-  (let [snapshots-by-vims-uid (group-by ::snapshot/vims-uid snapshots)]
-    (letfn [(get-vims-snapshots [{vims-uid :db/uid :as vims}]
-              (when-some [snapshots (get snapshots-by-vims-uid vims-uid)]
-                (let [snapshots-by-file-uid    (group-by ::snapshot/file-uid snapshots)
-                      vims-master-branch-files (-> vims vims/master-branch ::vcs.branch/files)]
-                  (letfn [(file->snapshot [{file-uid :db/uid :as file}]
-                            (first (get snapshots-by-file-uid file-uid)))]
-                    (into [] (keep file->snapshot)
-                          vims-master-branch-files)))))
-            (vims-join-snapshots [vims]
-              (if-some [snapshots (get-vims-snapshots vims)]
-                (assoc vims ::vims/snapshots snapshots)
-                vims))
-            (vimsae-join-snapshots [vimsae]
-              (mapv vims-join-snapshots vimsae))]
-      (cond-> user
-        (seq vimsae) (update ::user/vimsae vimsae-join-snapshots)))))
+  ([user snapshots] (user-join-snapshots user snapshots uuid))
+  ([{::user/keys [vimsae] :as user} snapshots uuid-fn]
+   (let [snapshots-by-vims-uid (group-by ::snapshot/vims-uid snapshots)]
+     (letfn [(get-vims-snapshots [{vims-uid :db/uid :as vims}]
+               (when-some [snapshots (get snapshots-by-vims-uid vims-uid)]
+                 (let [snapshots-by-file-uid    (group-by ::snapshot/file-uid snapshots)
+                       vims-master-branch-files (-> vims vims/master-branch ::vcs.branch/files)]
+                   (letfn [(file->frontend-snapshot [{file-uid :db/uid :as file}]
+                             (when-some [[raw-snapshot] (get snapshots-by-file-uid file-uid)]
+                               (snapshot/->frontend-snapshot (uuid-fn) raw-snapshot file)))]
+                     (into [] (keep file->frontend-snapshot) vims-master-branch-files)))))
+             (vims-join-snapshots [vims]
+               (if-some [snapshots (get-vims-snapshots vims)]
+                 (assoc vims ::vims/snapshots snapshots)
+                 vims))
+             (vimsae-join-snapshots [vimsae]
+               (mapv vims-join-snapshots vimsae))]
+       (cond-> user
+         (seq vimsae) (update ::user/vimsae vimsae-join-snapshots))))))
 
 ;;
 ;; * Query helpers

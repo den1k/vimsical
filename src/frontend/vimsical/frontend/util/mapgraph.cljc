@@ -22,6 +22,29 @@
 
 (defn ref->entity [[k id]] {k id})
 
+(defn ->entity
+  ([db x] (->entity db :db/uid x))
+  ([db id-key x]
+   (cond
+     (map? x)       x
+     (mg/ref? db x) (apply hash-map x)
+     (uuid? x)      {id-key x})))
+
+(defn ->ref
+  ([db x] (->ref db :db/uid x))
+  ([db id-key x]
+   (cond
+     (mg/ref? db x) x
+     (map? x)       (mg/ref-to db x)
+     (uuid? x)      [id-key x])))
+
+(defn ->uid
+  ([db x] (->uid db :db/uid x))
+  ([db id-key x]
+   (cond
+     (uuid? x)      x
+     (mg/ref? db x) (second x)
+     (map? x)       (get x id-key))))
 ;;
 ;; * Add
 ;;
@@ -58,20 +81,17 @@
    target-ref-or-link-or-entity
    key
    join-ref-or-entity]
-  (let [entity-ref (cond
-                     (mg/ref? db target-ref-or-link-or-entity) target-ref-or-link-or-entity
-                     (map? target-ref-or-link-or-entity)       (mg/ref-to db target-ref-or-link-or-entity)
-                     (keyword? target-ref-or-link-or-entity)   (get db target-ref-or-link-or-entity))
-        join-ref   (cond
-                     (mg/ref? db join-ref-or-entity) join-ref-or-entity
-                     (map? join-ref-or-entity)       (mg/ref-to db join-ref-or-entity))
-        join-path  (conj entity-ref key)]
-    (update-in db join-path (fnil conj []) join-ref)))
+  (let [path     (if (keyword? target-ref-or-link-or-entity)
+                   [target-ref-or-link-or-entity key]
+                   [(->ref db target-ref-or-link-or-entity) key])
+        join-ref (->ref db join-ref-or-entity)]
+    (update-in db path (fnil conj []) join-ref)))
 
 (defn add-join
   "Add `join-entity` to the `db` and conj its ref onto the `join-key` on
   `entity`. Will default to a vector if the join doesn't exist."
   [db entity join-key join-entity]
+
   (-> db
       (mg/add join-entity)
       (add-join* entity join-key join-entity)))

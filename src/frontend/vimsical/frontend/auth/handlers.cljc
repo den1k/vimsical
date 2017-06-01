@@ -2,7 +2,8 @@
   (:require
    [re-frame.core :as re-frame]
    [vimsical.frontend.util.mapgraph :as util.mg]
-   [vimsical.remotes.backend.auth.commands :as auth.commands]))
+   [vimsical.remotes.backend.auth.commands :as auth.commands]
+   [vimsical.frontend.app.handlers :as app.handlers]))
 
 ;;
 ;; * Signup
@@ -19,10 +20,9 @@
 
 (defn signup-success-handler
   [{:keys [db]} [_ user]]
-  {:db
-   (-> db
-       (assoc :app/route :route/signup-success)
-       (util.mg/add-linked-entities {:app/user user}))})
+  {:db (util.mg/add-linked-entities db {:app/user user})
+   :dispatch
+   [::app.handlers/route :route/landing]})
 
 (re-frame/reg-event-fx ::signup         signup-handler)
 (re-frame/reg-event-fx ::signup-success signup-success-handler)
@@ -31,21 +31,27 @@
 ;; * Login
 ;;
 
-(defn login-handler
+(defn login-event-fx
   [{:keys [db]} [_ login-user status-key]]
   {:db (util.mg/add db login-user)
    :remote
    {:id               :backend
     :event            [::auth.commands/login login-user]
     :dispatch-success ::login-success
+    :dispatch-error   ::login-error
     :status-key       status-key}})
 
-(defn login-result-handler
+(defn login-success-event-fx
   [{:keys [db]} [_ user]]
   {:db (util.mg/add-linked-entities db {:app/user user})})
 
-(re-frame/reg-event-fx ::login         login-handler)
-(re-frame/reg-event-fx ::login-success login-result-handler)
+(defn login-error-event-fx
+  [{:keys [db]} [_ error]]
+  (println "Login error" error))
+
+(re-frame/reg-event-fx ::login         login-event-fx)
+(re-frame/reg-event-fx ::login-success login-success-event-fx)
+(re-frame/reg-event-fx ::login-error   login-error-event-fx)
 
 ;;
 ;; * Logout
@@ -53,6 +59,10 @@
 
 (defn logout-handler
   [{:keys [db]} _]
-  {:db (util.mg/remove-links db :app/user)})
+  {:db (util.mg/remove-links db :app/user)
+   :remote
+   {:id               :backend
+    :event            [::auth.commands/logout]
+    :dispatch-success false}})
 
 (re-frame/reg-event-fx ::logout logout-handler)

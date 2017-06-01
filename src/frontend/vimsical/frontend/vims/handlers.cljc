@@ -3,14 +3,22 @@
    [re-frame.core :as re-frame]
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.frontend.vcs.handlers :as vcs.handlers]
-   [vimsical.queries.snapshot :as snapshot]
+   [vimsical.vcs.snapshot :as vcs.snapshot]
    [vimsical.remotes.backend.vims.commands :as vims.commands]
    [vimsical.remotes.backend.vims.queries :as vims.queries]
    [vimsical.user :as user]
    [vimsical.vcs.core :as vcs.core]
+   [vimsical.vcs.core :as vcs.core]
+   [vimsical.queries.snapshot :as queries.snapshot]
    [vimsical.vcs.file :as vcs.file]
-   [vimsical.vims :as vims]))
+   [vimsical.frontend.vcs.queries :as vcs.queries]
+   [vimsical.vims :as vims]
+   [com.stuartsierra.mapgraph :as mg]
+   [vimsical.frontend.util.re-frame :as util.re-frame]
+   [vimsical.common.util.core :as util]
+   [vimsical.vcs.file :as file]))
 
 ;;
 ;; * New vims
@@ -25,16 +33,16 @@
     (vcs.file/new-file css-uid        :text :css)
     (vcs.file/new-file javascript-uid :text :javascript)]))
 
-(defn new-handler
-  [{:keys [db]} [_ owner status-key]]
-  (let [owner    (or owner (-> db :app/user util.mg/ref->entity))
-        new-vims (vims/new-vims owner)
+(defn new-event-fx
+  [{:keys [db]} [_ owner status-key opts]]
+  (let [new-files (vims/default-files)
+        owner'    (select-keys owner [:db/uid])
+        new-vims  (vims/new-vims owner' nil new-files opts)
         ;; This is a bit low-level, we could just conj the vims onto the owner
         ;; and add that, but we'd have to make sure we're passed the full
         ;; app/user, not sure if that'd be inconvenient.
-        db'      (util.mg/add-join db owner ::user/vimsae new-vims)]
-    {:db       db'
-     :dispatch [::open new-vims]
+        db'       (util.mg/add db new-vims)]
+    {:db db'
      :remote
      {:id               :backend
       :event            [::vims.commands/new new-vims]
@@ -42,26 +50,15 @@
       :dispatch-error   (fn [error] [::new-error new-vims error])
       :status-key       status-key}}))
 
-(re-frame/reg-event-fx ::new new-handler)
+(re-frame/reg-event-fx ::new new-event-fx)
 (re-frame/reg-event-fx ::new-success (fn [_ _] (println "New vims success")))
-
-;;
-;; * Open
-;;
-
-(defn open-handler
-  [{:keys [db]} [_ vims]]
-  {:db (-> db
-           (util.mg/add-ref :app/vims vims)
-           (assoc :app/route :route/vims))})
-
-(re-frame/reg-event-fx ::open open-handler)
+(re-frame/reg-event-fx ::new-error (fn [_ e] (println "Vims error" e)))
 
 ;;
 ;; * Title
 ;;
 
-(defn title-handler
+(defn title-event-fx
   [{:keys [db]} [_ vims title status-key]]
   (let [vims'  (assoc vims ::vims/title title)
         remote (select-keys vims' [:db/uid ::vims/title])
@@ -74,39 +71,60 @@
       :dispatch-error   (fn [error] [::title-error vims error])
       :status-key       status-key}}))
 
-(re-frame/reg-event-fx ::title title-handler)
+(re-frame/reg-event-fx ::title title-event-fx)
 (re-frame/reg-event-fx ::title-success (fn [_ _] (println "title success")))
 
 ;;
 ;; * Snapshots
 ;;
 
-(defn new-snapshots
-  [{:as                 vims
-    vcs                 ::vims/vcs
-    {owner-uid :db/uid} ::vims/owner
-    vims-uid            :db/uid}]
-  {:pre [vcs owner-uid vims-uid]}
-  (mapv
-   ;; NOTE we currently doesn't use a uid for the snapshots but mapgraph
-   ;; requires some non-compound id key, so we generate a random one here, but
-   ;; we may want to just add it to the schema instead?
-   (fn [snapshot] (assoc snapshot :db/uid (uuid)))
-   (vcs.core/vims-snapshots vcs owner-uid vims-uid)))
+(re-frame/reg-event-fx
+ ::update-snapshots
+ [(util.re-frame/inject-sub
+   (fn [[_ vims]] [::vcs.subs/files vims]))]
+ (fn [{:keys           [db]
+       ::vcs.subs/keys [files]}
+      [_ vims status-key]]
+   ;; XXX passed vims doesn't have an owner
+   (let [vims' (mg/pull db [:db/uid {::vims/owner [:db/uid]}] (util.mg/->ref db vims))]
+     ;; Dispatch an event per file to update their state, then upload
+     {:dispatch-n
+      (conj
+       (mapv (fn [file] [::update-snapshot vims' file]) files)
+       [::update-snapshots-remote vims' status-key])})))
 
-(defn update-snapshots-handler
-  [{:keys [db]} [_ {::vims/keys [vcs] :as vims} status-key]]
-  (let [snapshots        (new-snapshots vims)
-        remote-snapshots (mapv #(select-keys % snapshot/pull-query) snapshots)
-        vims'            (assoc vims ::vims/snapshots snapshots)
-        db'              (util.mg/add db vims')]
-    {:db db'
-     :remote
-     {:id         :backend
-      :event      [::vims.commands/update-snapshots remote-snapshots]
-      :status-key status-key}}))
+(re-frame/reg-event-fx
+ ::update-snapshot
+ [(util.re-frame/inject-sub
+   (fn [[_ vims file]]
+     [::vcs.subs/preprocessed-file-string vims file]))]
+ (fn [{:keys           [db]
+       ::vcs.subs/keys [preprocessed-file-string]}
+      [_ {:as                vims
+          vims-uid           :db/uid
+          {user-uid :db/uid} ::vims/owner}
+       file]]
+   (when preprocessed-file-string
+     (let [snapshot (vcs.snapshot/new-frontend-snapshot (uuid) user-uid vims-uid file preprocessed-file-string)
+           _ (assert (nil? (::file/type snapshot)))
+           vims'    (update vims ::vims/snapshots util/replace-by-or-conj ::vcs.snapshot/file-uid snapshot)]
+       {:db (util.mg/add db vims')}))))
 
-(re-frame/reg-event-fx ::update-snapshots update-snapshots-handler)
+(re-frame/reg-event-fx
+ ::update-snapshots-remote
+ (fn upload-snapshots-event-fx
+   [{:keys [db]} [_ vims status-key]]
+   ;; Pull the vims again since we know it is now stale
+   (let [vims-ref                  (util.mg/->ref db vims)
+         {::vims/keys [snapshots]} (mg/pull db [{::vims/snapshots ['*]}] vims-ref)
+         remote-snapshots          (mapv vcs.snapshot/->remote-snapshot snapshots)]
+     (when (seq remote-snapshots)
+       {:remote
+        {:id               :backend
+         :event            [::vims.commands/update-snapshots remote-snapshots]
+         :dispatch-success (fn [resp] (println "SNAPSHOTS success"))
+         :dispatch-error   (fn [e] (println "SNAPSHOTS error" e))
+         :status-key       status-key}}))))
 
 ;;
 ;; * Remote queries
@@ -124,12 +142,12 @@
     :event            [::vims.queries/vims vims-uid]
     :dispatch-success true}})
 
-(defn vims-success-handler
+(defn vims-success-event-fx
   [{:keys [db]} [_ vims]]
   {:db (util.mg/add db vims)})
 
 (re-frame/reg-event-fx ::vims              vims-handler)
-(re-frame/reg-event-fx ::vims.queries/vims vims-success-handler)
+(re-frame/reg-event-fx ::vims.queries/vims vims-success-event-fx)
 
 ;;
 ;; ** Deltas

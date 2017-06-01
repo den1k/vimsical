@@ -9,8 +9,6 @@
             [vimsical.vcs.lib :as lib]
             [vimsical.vcs.compiler :as compiler]))
 
-;; todo ::app/route subs
-
 (re-frame/reg-sub
  ::quick-search
  (fn [db [_ ?pattern]]

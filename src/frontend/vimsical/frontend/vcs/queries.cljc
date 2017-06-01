@@ -20,7 +20,9 @@
                      {::branch/libs ['*]}]}])
 
 (def vims
-  [:db/uid {::vims/branches branch}])
+  [:db/uid
+   {::vims/owner [:db/uid]}
+   {::vims/branches branch}])
 
 (def vcs
   ['* {::vcs/branches branch}])

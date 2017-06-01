@@ -195,17 +195,22 @@
         (a/go
           (try
             (loop [started? false]
-              (when-some [x (a/<! chan)]
+              (if-some [x (a/<! chan)]
+                (do (a/<!
+                     (a/thread
+                       ;; Precede the first value by "[" and remaining values by ","
+                       (if started?
+                         (.write output-stream separator-bytes)
+                         (.write output-stream open-bracket-bytes))
+                       (transit/write transit-writer x)))
+                    (recur true))
+                ;; Make sure to only close the vector if we started, or write an
+                ;; empty vector if the channel closed
                 (a/<!
                  (a/thread
-                   ;; Precede the first value by "[" and remaining values by ","
-                   (if started?
-                     (.write output-stream separator-bytes)
-                     (.write output-stream open-bracket-bytes))
-                   (transit/write transit-writer x)))
-                (recur true)))
-            ;; Make sure we close the vector
-            (a/<! (a/thread (.write output-stream close-bracket-bytes)))
+                   (when-not started?
+                     (.write output-stream open-bracket-bytes)  )
+                   (.write output-stream close-bracket-bytes)))))
             (finally
               (.close output-stream))))
         ;; Make sure we return the byte-chan

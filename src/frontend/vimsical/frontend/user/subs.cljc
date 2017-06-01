@@ -1,13 +1,12 @@
 (ns vimsical.frontend.user.subs
-  (:require [re-frame.core :as re-frame]
-            [vimsical.user :as user]
-            [vimsical.frontend.app.subs :as app.subs]
-            [re-frame.interop :as interop]
-            [vimsical.frontend.util.re-frame :refer [<sub]]))
+  (:require
+   [re-frame.core :as re-frame]
+   [vimsical.frontend.app.subs :as app.subs]
+   [vimsical.user :as user]))
 
-(re-frame/reg-sub-raw
+(re-frame/reg-sub
  ::vimsae
- (fn [db [_ ?pattern]]
-   (interop/make-reaction
-    #(-> (<sub [::app.subs/user [{::user/vimsae (or ?pattern '[*])}]])
-         ::user/vimsae))))
+ (fn [[_ ?pattern]]
+   (re-frame/subscribe
+    [::app.subs/user [{::user/vimsae (or ?pattern '[*])}]]))
+ ::user/vimsae)

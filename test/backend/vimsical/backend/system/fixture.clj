@@ -6,6 +6,7 @@
    [com.stuartsierra.component :as cp]
    [io.pedestal.http :as http]
    [vimsical.backend.adapters.cassandra :as cassandra]
+   [vimsical.backend.util.async :as util.async]
    [vimsical.backend.adapters.cassandra.fixture :as cassandra.fixture]
    [vimsical.backend.adapters.redis :as redis]
    [vimsical.backend.components.datomic :as datomic]
@@ -16,7 +17,8 @@
    [vimsical.backend.data :as data]
    [vimsical.backend.system :as system]
    [vimsical.common.env :as env]
-   [vimsical.user :as user]))
+   [vimsical.user :as user]
+   [vimsical.vcs.snapshot :as snapshot]))
 
 ;;
 ;; * State
@@ -102,15 +104,18 @@
 (defn snapshots
   ([] (snapshots #()))
   ([f]
-   (if (some? *system*)
-     (if (nil? *user-uid*)
-       (throw (ex-info "`snapshots` fixture should be nested inside the `user` fixture." {}))
-       (let [{:keys [snapshot-store]} *system*]
-         (async/<!!
-          (snapshot-store.protocol/insert-snapshots-chan
-           snapshot-store data/snapshots))
-         (f)))
-     (throw (ex-info "`snapshots` fixture should be nested inside the `system` fixture" {})))))
+   (letfn [(insert-snapshots! [store]
+             (->> data/snapshots
+                  (mapv snapshot/->remote-snapshot)
+                  (snapshot-store.protocol/insert-snapshots-chan store)
+                  (util.async/<??)))]
+     (if (some? *system*)
+       (if (nil? *user-uid*)
+         (throw (ex-info "`snapshots` fixture should be nested inside the `user` fixture." {}))
+         (let [{:keys [snapshot-store]} *system*]
+           (insert-snapshots! snapshot-store)
+           (f)))
+       (throw (ex-info "`snapshots` fixture should be nested inside the `system` fixture" {}))))))
 
 ;;
 ;; * System

@@ -5,6 +5,7 @@
    [vimsical.vcs.file :as file]
    [vimsical.vcs.lib :as lib]
    [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.snapshot :as snapshot]
    [vimsical.frontend.util.re-frame :refer [<sub]]
    #?(:cljs [reagent.dom.server :as reagent.dom.server])
    [vimsical.common.util.core :as util :include-macros true]
@@ -16,6 +17,12 @@
      {:id                      uid
       :dangerouslySetInnerHTML {:__html string}}]))
 
+(defn- snapshot-node [{:keys [db/uid] ::snapshot/keys [sub-type text] :as snapshot}]
+  (let [tag (case sub-type :html :body :css :style :javascript :script)]
+    [tag
+     {:id                      uid
+      :dangerouslySetInnerHTML {:__html text}}]))
+
 (defn- lib-node [{:keys [db/uid] ::lib/keys [src sub-type] :as lib}]
   (let [tag (case sub-type :html :body :css :style :javascript :script)]
     [tag
@@ -26,6 +33,11 @@
   #?(:cljs
      (reagent.dom.server/render-to-static-markup
       [file-node file string])))
+
+(defn- snapshot-node-markup [snapshot]
+  #?(:cljs
+     (reagent.dom.server/render-to-static-markup
+      [snapshot-node snapshot])))
 
 (defn- lib-node-markup [lib]
   #?(:cljs
@@ -57,6 +69,26 @@
           {:id                      (:db/uid html-file)
            :dangerouslySetInnerHTML {:__html body-string}}]]))))
 
+(defn snapshots-markup
+  [snapshots libs]
+  #?(:cljs
+     (reagent.dom.server/render-to-static-markup
+      (let [{:keys
+             [html
+              css
+              javascript]} (group-by ::snapshot/sub-type snapshots)
+            libs-string    (transduce (map lib-node-markup) str libs)
+            head-string    (transduce (map snapshot-node-markup) str libs-string css)
+            body-string    (transduce (map snapshot-node-markup) str (concat html javascript))
+            body-id        (-> html first ::snapshot/file-uid)]
+        [:html
+         [:head
+          {:dangerouslySetInnerHTML
+           {:__html head-string}}]
+         [:body
+          {:id                      body-id
+           :dangerouslySetInnerHTML {:__html body-string}}]]))))
+
 (re-frame/reg-sub
  ::preprocessed-file-markup
  (fn [[_ vims file]]
@@ -64,13 +96,20 @@
  (fn [string [_ _ {::file/keys [sub-type] :as file}]]
    (file-node-markup file string)))
 
-(re-frame/reg-sub-raw
+(re-frame/reg-sub
  ::vims-preprocessed-preview-markup
- (fn [_ [_ vims]]
-   {:pre [vims]}
-   (interop/make-reaction
-    #(let [branch (<sub [::vcs.subs/branch vims])]
-       (preview-markup vims branch)))))
+ (fn [[_ vims]]
+   (re-frame/subscribe [::vcs.subs/branch vims]))
+ (fn [branch [_ vims]]
+   (preview-markup vims branch)))
+
+(re-frame/reg-sub
+ ::file-string+file-lint-or-preprocessing-errors
+ (fn [[_ vims file]]
+   [(re-frame/subscribe [::vcs.subs/file-string vims file])
+    (re-frame/subscribe [::vcs.subs/file-lint-or-preprocessing-errors vims file])])
+ (fn [file-string+file-lint-or-preprocessing-errors _]
+   file-string+file-lint-or-preprocessing-errors))
 
 (re-frame/reg-sub
  ::error-catcher-branch-libs

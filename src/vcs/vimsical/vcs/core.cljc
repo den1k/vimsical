@@ -29,7 +29,6 @@
    [vimsical.vcs.edit-event :as edit-event]
    [vimsical.vcs.editor :as editor]
    [vimsical.vcs.file :as file]
-   [vimsical.vcs.snapshot :as snapshot]
    [vimsical.vcs.state.deltas :as state.deltas]
    [vimsical.vcs.state.files :as state.files]
    [vimsical.vcs.state.timeline :as state.timeline]
@@ -302,25 +301,3 @@
 
 (defn timeline-last-entry [{::keys [timeline]}] (state.timeline/last-entry timeline))
 
-;;
-;; * Vims snapshot
-;;
-
-
-(s/fdef vims-snapshots
-        :args (s/cat :vcs ::vcs :user-uid uuid? :vims-uid uuid?)
-        :ret  (s/every ::snapshot/snapshot))
-
-(defn vims-snapshots
-  [{::keys [branches] :as vcs} user-uid vims-uid]
-  ;; XXX move `::state.timeline/deltas-by-branch-uid` into this ns?
-  (let [{master-uid :db/uid}  (branch/master branches)
-        master-deltas         (get-in vcs [::timeline ::state.timeline/deltas-by-branch-uid master-uid])
-        {last-delta-uid :uid} (peek master-deltas)]
-    (reduce-kv
-     (fn [coll file-uid {::state.files/keys [string]}]
-       (conj coll {::snapshot/user-uid user-uid
-                   ::snapshot/vims-uid vims-uid
-                   ::snapshot/file-uid file-uid
-                   ::snapshot/text     string}))
-     [] (delta-uid->state-by-file-uid vcs last-delta-uid))))

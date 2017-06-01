@@ -113,8 +113,7 @@
         files))
 
 (defn vcr [{:keys [vims]}]
-  (let [branch         (<sub [::vcs.subs/branch vims])
-        all-files      (<sub [::vcs.subs/files vims])
+  (let [all-files      (<sub [::vcs.subs/files vims])
         visi-files     (<sub [::subs/visible-files vims])
         editor-headers (editor-headers visi-files)
         editors        (editors vims visi-files)]

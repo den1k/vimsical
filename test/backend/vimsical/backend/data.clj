@@ -128,10 +128,13 @@
 ;;
 
 (def snapshots
-  [{::snapshot/text html-file-string
-    ::snapshot/file-uid (uuid ::html)
-    ::snapshot/user-uid (uuid ::user)
-    ::snapshot/vims-uid (uuid ::vims)
+  [{:db/uid              (uuid ::html-snapshot)
+    ::snapshot/text      html-file-string
+    ::snapshot/file-uid  (uuid ::html)
+    ::snapshot/user-uid  (uuid ::user)
+    ::snapshot/vims-uid  (uuid ::vims)
+    ::snapshot/type      :text
+    ::snapshot/sub-type  :html
     ::snapshot/delta-uid nil}])
 
 (def me

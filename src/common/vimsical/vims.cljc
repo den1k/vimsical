@@ -2,6 +2,7 @@
   (:require
    [clojure.spec :as s]
    [vimsical.vcs.branch :as vcs.branch]
+   [vimsical.vcs.snapshot :as vcs.snapshot]
    [vimsical.common.util.core :as util]
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.vcs.file :as vcs.file]))
@@ -19,7 +20,8 @@
 (s/def ::vcs.branch/owner ::owner)
 (s/def ::branch (s/merge ::vcs.branch/branch (s/keys :req [::vcs.branch/owner])))
 (s/def ::branches (s/every ::branch))
-(s/def ::vims (s/keys :req [:db/uid ::owner ::branches] :opt [::title ::cast]))
+(s/def ::snapshots (s/every ::vcs.snapshot/frontend-snapshot))
+(s/def ::vims (s/keys :req [:db/uid ::owner ::branches] :opt [::title ::cast ::snapshots]))
 
 ;;
 ;; * Helpers
@@ -46,24 +48,23 @@
         :args (s/cat :owner ::owner
                      :opts  (s/? (s/cat :title (s/nilable ::title)
                                         :files ::vcs.branch/files
-                                        :opts (s/nilable ::new-vims-opts))))
-        :ret ::vims)
+                                        :opts (s/nilable ::new-vims-opts)))))
 
 
 (defn new-vims
   ([owner] (new-vims owner nil (default-files) nil))
-  ([owner title files {:keys [uid
-                              branch-uid created-at]
+  ([owner title files {:keys [uid branch-uid created-at]
                        :or   {uid        (uuid)
                               branch-uid (uuid)
                               created-at (util/now)}}]
    ;; NOTE the vcs doesn't know of ::branch/owner, so we manually add it here,
    ;; might want to move that concern down there?
-   (letfn [(new-branches [vims-owner]
+   (letfn [(new-branches [owner]
              (-> (vcs.branch/new-branch branch-uid created-at files)
                  (assoc ::vcs.branch/owner owner)
                  (vector)))]
-     (let [owner'   (select-keys owner [:db/uid])
-           branches (new-branches owner')]
-       (-> {:db/uid uid ::owner owner' ::branches branches}
+     (let [branches (new-branches owner)]
+       (-> {:db/uid    uid
+            ::owner    owner
+            ::branches branches}
            (util/assoc-some ::title title))))))
