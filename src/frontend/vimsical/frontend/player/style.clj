@@ -229,9 +229,10 @@
 (def player
   [:.vimsical-frontend-player
    [:&.landscape
-    {:min-width :700px                  ; max embed width on medium
+    {:display   :flex
+     :min-width :700px
      :max-width :1200px
-     :height    "100vh"}
+     :height    :100vh}
     landscape-split
     [:.explore
      {:margin-left :18px}]]

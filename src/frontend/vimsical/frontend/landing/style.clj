@@ -4,8 +4,7 @@
 (def landing
   [:.landing
    {:min-width :960px
-    :max-width (str (* 1.5 960) "px")
-    :width     :100vw}
+    :max-width (str (* 1.5 960) "px")}
    [:.container
     ["> div"
      {:margin-top :200px}]

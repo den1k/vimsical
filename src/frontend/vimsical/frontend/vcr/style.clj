@@ -132,6 +132,7 @@
 
 (def vcr
   [:.route-vims
+   {:min-width :600px}
    [:.vcr
     ;; Styles to prevent code-editor from overflowing beyond VCR's boundaries
     ;; Set here instead of on code-editor to allow widget overflow
