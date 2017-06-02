@@ -41,19 +41,23 @@
   (fn [_]
     (re-frame/dispatch [::blur vims file editor])))
 
+(defn editor-mouse-down-handler [vims]
+  (fn [_]
+    ;; fully qualified ns to avoid circular dep with vcr.handlers
+    (re-frame/dispatch [:vimsical.frontend.vcr.handlers/pause vims])))
+
 (defn new-listeners
   [vims file editor]
   {:pre [vims file editor]}
-  {:model->content-change-handler
-                          (fn model->content-change-handler [model]
-                            (fn [e]
-                              (handle-content-change vims model file e)))
-   :model->cursor-change-handler
-                          (fn model->cursor-change-handler [model]
-                            (fn [e]
-                              (handle-cursor-change vims model file e)))
-   :editor->focus-handler (partial editor-focus-handler vims file)
-   :editor->blur-handler  (partial editor-blur-handler vims file)})
+  {:model->content-change-handler (fn model->content-change-handler [model]
+                                    (fn [e]
+                                      (handle-content-change vims model file e)))
+   :model->cursor-change-handler  (fn model->cursor-change-handler [model]
+                                    (fn [e]
+                                      (handle-cursor-change vims model file e)))
+   :editor->focus-handler         (partial editor-focus-handler vims file)
+   :editor->blur-handler          (partial editor-blur-handler vims file)
+   :editor->mouse-down-handler    (editor-mouse-down-handler vims)})
 
 
 ;;
@@ -277,9 +281,11 @@
 
 (re-frame/reg-event-fx
  ::update-editor-position
+ [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/timeline-entry vims]))]
  (fn update-editor
-   [_ [_ vims {file-uid :db/uid :as file} position]]
-   (when (some? position)
+   [{::vcs.subs/keys [timeline-entry]}
+    [_ vims {file-uid :db/uid :as file} position]]
+   (when (and (some? position) (= file-uid (:file-uid (second timeline-entry))))
      {:dispatch-n
       [[::clear-disposables vims file]
        [::set-position vims file position]
@@ -313,20 +319,23 @@
    (fn [[_ vims file]] ^:ignore-warnings [::subs/playhead-string vims file]))
   (util.re-frame/inject-sub
    (fn [[_ vims file]] ^:ignore-warnings [::subs/playhead-position vims file]))]
- (fn [{::subs/keys [playhead-string playhead-position]} [_ vims file]]
+ (fn [{::subs/keys [playhead-string playhead-position]} [_ vims file set-position?]]
    {:dispatch-n
-    [[::clear-disposables vims file]
-     [::set-string vims nil file playhead-string]
-     [::set-position vims file playhead-position]
-     [::bind-listeners vims file]]}))
+    (cond-> [[::clear-disposables vims file]
+             [::set-string vims nil file playhead-string]]
+      set-position? (conj [::set-position vims file playhead-position])
+      true (conj [::bind-listeners vims file]))}))
 
 (re-frame/reg-event-fx
  ::reset-all-editors-to-playhead
  [(re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub ^:ignore-warnings (fn [[_ vims]] [::vcs.subs/files vims]))]
+  (util.re-frame/inject-sub ^:ignore-warnings (fn [[_ vims]] [::vcs.subs/files vims]))
+  (util.re-frame/inject-sub ^:ignore-warnings (fn [[_ vims]] [::vcs.subs/playhead-entry vims]))]
  (fn [{:keys           [ui-db]
-       ::vcs.subs/keys [files]} [_ vims]]
-   {:dispatch-n
-    (for [file files
-          :when (ui-db/get-editor ui-db vims file)]
-      [::reset-editor-to-playhead vims file])}))
+       ::vcs.subs/keys [files playhead-entry]} [_ vims]]
+   (let [[_ {:keys [file-uid]}] playhead-entry]
+     {:dispatch-n
+      (for [file files
+            :when (ui-db/get-editor ui-db vims file)
+            :let [set-pos? (= (:db/uid file) file-uid)]]
+        [::reset-editor-to-playhead vims file set-pos?])})))
