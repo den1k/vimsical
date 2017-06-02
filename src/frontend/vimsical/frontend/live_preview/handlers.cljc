@@ -143,7 +143,6 @@
  (fn [{:keys           [db ui-db]
        ::vcs.subs/keys [files]}
       [_ vims]]
-   {:pre [vims]}
    (when-some [iframe (ui-db/get-iframe ui-db vims)]
      (let [doc          (.-contentDocument iframe)
            head         (.-head doc)
@@ -163,32 +162,26 @@
    {:track
     {:action       :register
      :id           [::vims uid]
-     :subscription [::vcs.subs/branch vims]
-     :val->event   (fn [branch]
-                     ;; Can be nil when switching vims
-                     (when branch
-                       [::track-branch vims branch]))}}))
+     :subscription [::vcs.subs/files vims]
+     :val->event   (fn [files]
+                     [::track-files vims files])}}))
 
 (re-frame/reg-event-fx
- ::track-branch
- [(re-frame/inject-cofx :prev-event)]
- (fn [_ [[_ _ prev-branch]
-         [_ vims {:as branch ::branch/keys [files]}]]]
+ ::track-files
+ (fn [_ [_ vims files]]
    {:track
-    (for [{file-uid :db/uid :as file} files]
+    (for [{:keys [db/uid] :as file} files]
       {:action          :register
-       :id              [::file file-uid]
+       :id              [::file uid]
        :subscription    [::subs/file-string+file-lint-or-preprocessing-errors vims file]
        :dispatch-first? false
        :val->event      (fn [[file-string file-lint-or-preprocessing-errors]]
-                          [::update-live-preview vims file file-string file-lint-or-preprocessing-errors])})
-    :dispatch [::stop-track-branch vims]}))
-
+                          [::update-live-preview vims file file-string file-lint-or-preprocessing-errors])})}))
 
 (re-frame/reg-event-fx
  ::stop-track-vims
  [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/branch vims]))]
- (fn [{branch ::vcs.subs/branch} [_ {:keys [db/uid]}]]
+ (fn [{::vcs.subs/keys [branch]} [_ {:keys [db/uid]}]]
    {:track    {:action :dispose :id [::vims uid]}
     :dispatch [::stop-track-branch branch]}))
 

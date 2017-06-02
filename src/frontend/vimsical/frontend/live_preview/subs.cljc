@@ -109,7 +109,7 @@
    [(re-frame/subscribe [::vcs.subs/file-string vims file])
     (re-frame/subscribe [::vcs.subs/file-lint-or-preprocessing-errors vims file])])
  (fn [file-string+file-lint-or-preprocessing-errors _]
-   file-string+file-lint-or-preprocessing-errors))
+   (vec file-string+file-lint-or-preprocessing-errors)))
 
 (re-frame/reg-sub
  ::error-catcher-branch-libs

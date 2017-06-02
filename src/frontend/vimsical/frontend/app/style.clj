@@ -1,6 +1,7 @@
 (ns vimsical.frontend.app.style
   (:require [vimsical.frontend.styles.color :refer [colors]]
-            [vimsical.frontend.modal.style :as modal]))
+            [vimsical.frontend.modal.style :as modal]
+            [vimsical.frontend.styles.media :as media]))
 
 (def app-font-family
   "-apple-system, BlinkMacSystemFont, \".SFNSText-Regular\", \"San Francisco\", \"Roboto\", \"Segoe UI\", \"Helvetica Neue\", \"Lucida Grande\", sans-serif")
@@ -14,10 +15,15 @@
     {:margin  0
      :padding 0}]
 
-   ;; https://www.paulirish.com/2012/box-sizing-border-box-ftw/
    [:html
+    ;; https://www.paulirish.com/2012/box-sizing-border-box-ftw/
     {:box-sizing  :border-box
      :user-select :none}]
+
+   (media/on-phone
+    ; see index.html for scaling factor
+    [:html
+     {:font-size :20px}])
 
    [:* :*:before :*:after
     {:box-sizing  :inherit

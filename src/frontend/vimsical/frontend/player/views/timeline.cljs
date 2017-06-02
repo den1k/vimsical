@@ -21,12 +21,25 @@
        first
        (perc->time dur)))
 
-(defn handlers [c vims dur]
-  {:on-mouse-enter (e> (re-frame/dispatch [::handlers/on-mouse-enter vims (e->time c e dur)]))
-   :on-mouse-move  (e> (re-frame/dispatch [::handlers/on-mouse-move vims (e->time c e dur)]))
-   :on-mouse-leave (e> (re-frame/dispatch [::handlers/on-mouse-leave vims]))
-   :on-click       (e> (re-frame/dispatch [::handlers/on-click vims (e->time c e dur)]))
-   :on-touch-move  (e> (re-frame/dispatch [::handlers/on-click vims (e->time c (util.dom/first-touch->e e) dur)]))})
+(def handlers
+  (let [last-touch-time (atom 0)]
+    (fn [c vims dur]
+      {:on-mouse-enter
+       (e> (re-frame/dispatch [::handlers/on-mouse-enter vims (e->time c e dur)]))
+       :on-mouse-move
+       (e> (re-frame/dispatch [::handlers/on-mouse-move vims (e->time c e dur)]))
+       :on-mouse-leave
+       (e> (re-frame/dispatch [::handlers/on-mouse-leave vims]))
+       :on-click
+       (e> (re-frame/dispatch [::handlers/on-click vims (e->time c e dur)]))
+       :on-touch-move
+       (e> (let [time (e->time c (util.dom/first-touch->e e) dur)]
+             (reset! last-touch-time time)
+             (re-frame/dispatch [::handlers/on-mouse-move vims time])))
+       :on-touch-end
+       (e> (re-frame/dispatch
+            [::handlers/on-click vims (perc->time dur @last-touch-time)])
+           (re-frame/dispatch [::handlers/on-mouse-leave vims]))})))
 
 
 (defn play-pause [{:keys [vims]}]
@@ -70,19 +83,25 @@
    {:render
     (fn [c]
       (let [{:keys [vims]} (reagent/props c)
-            dur           (<sub [::timeline.subs/duration vims])
-            playhead      (<sub [::timeline.subs/playhead vims])
-            skimhead      (<sub [::timeline.subs/skimhead vims])
-            playhead-perc (str (time->pct dur playhead) "%")
-            skimhead-perc (when skimhead (str (time->pct dur skimhead) "%"))]
+            dur            (<sub [::timeline.subs/duration vims])
+            playhead       (<sub [::timeline.subs/playhead vims])
+            skimhead       (<sub [::timeline.subs/skimhead vims])
+            playhead-perc  (str (time->pct dur playhead) "%")
+            skimhead-perc  (when skimhead (str (time->pct dur skimhead) "%"))
+            ;; Urgh Flexbox behaves differently in Safari and Chrome inside
+            ;; absolutely positioned elements
+            ios-or-safari? (or (= :safari util.dom/browser) (= :os util.dom/browser))]
         [:div.timeline.ac.f1
-         (handlers c vims dur)
-         [:div.time.left]               ; .progress class clashes with bootstrap
+         (cond-> (handlers c vims dur)
+           ios-or-safari? (assoc :class "dc jc"))
+         [:div.time.left
+          {:style (when ios-or-safari? {:margin-top -2})}] ; .progress class clashes with bootstrap
          [:div.time.passed
-          {:style {:width playhead-perc}}]
+          {:style (cond-> {:width playhead-perc} ios-or-safari? (assoc :margin-top -2))}]
          [:div.head
           {:class (if skimhead "skimhead" "playhead")
-           :style {:left (or skimhead-perc playhead-perc)}}]]))}))
+           :style {:left       (or skimhead-perc playhead-perc)
+                   :margin-top (when ios-or-safari? (if skimhead -9 -8))}}]]))}))
 
 (defn timeline-bar [{:keys [vims]}]
   [re-com/h-box

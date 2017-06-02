@@ -51,9 +51,9 @@
 
 (def backend-config
   {:protocol (optional :backend-protocol ::env/string)
-   :host "localhost" #_(optional :backend-host ::env/string)
-   :port      "8080" #_(optional :backend-port ::env/string)
-   :path     "/events" #_(optional :backend-path ::env/string)})
+   :host     (optional :backend-host ::env/string)
+   :port     (optional :backend-port ::env/string)
+   :path     (optional :backend-path ::env/string)})
 
 (defmethod remote/init! :backend [_] backend-config)
 
