@@ -58,13 +58,13 @@
                                       @info-hover?
                                       (not (<sub [::timeline.subs/playing? vims])))]
           [:div.info-and-editor-panel.dc
-           {:on-mouse-enter
-            (e> (reset! info-hover? true))
+           {:class (when show-info? "show-info")
+            :on-mouse-enter
+                   (e> (reset! info-hover? true))
             :on-mouse-out
-            (e> (when-not (util.dom/view-contains-related-target? c e)
-                  (reset! info-hover? false)))}
+                   (e> (when-not (util.dom/view-contains-related-target? c e)
+                         (reset! info-hover? false)))}
            [:div.info
-            {:class (when-not show-info? "pan-out")}
             [:div.header.ac
              [user.views/avatar {:user owner}]
              [:div.title-and-creator

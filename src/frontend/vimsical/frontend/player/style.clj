@@ -38,21 +38,23 @@
       :border-radius 0}]]])
 
 (def timeline-container
-  [:.timeline-container
-   {:padding "0 18px"
-    :width   "100%"}                    ; less pad than top bar
-   [:.play-pause
-    {:height :20px
-     :cursor :pointer}]
-   timeline
-   [:.time-or-speed-control
-    {:cursor      :pointer
-     ;; monospaced to accurately measure width
-     :font-family "Droid Sans Mono"
-     ;; hardcode width of 4 characters to avoid shifting timeline
-     ;; time default, e.g. `3:42`
-     :font-size   :18px
-     :width       :33px}]])
+  [[:.timeline-container
+    {:padding "0 18px"
+     :width   "100%"}                   ; less pad than top bar
+    [:.play-pause
+     {:height :20px
+      :cursor :pointer}]
+    timeline
+    [:.time-or-speed-control
+     {:cursor      :pointer
+      ;; monospaced to accurately measure width
+      :font-family "Droid Sans Mono"
+      ;; hardcode width of 4 characters to avoid shifting timeline
+      ;; time default, e.g. `3:42`
+      :width       :33px}]]
+   (media/on-mobile
+    [:.time-or-speed-control
+     {:font-size :18px}])])
 
 (def preview-panel
   [:.preview-panel
@@ -108,12 +110,19 @@
    [:.info-and-editor-panel
     {:position :relative
      :overflow :hidden}
+    [:&.show-info
+     [:.info
+      {:max-height  :60%
+       :overflow-y  :scroll
+       :padding-top :5px}]
+     [:.code-editor
+      {:margin-top :15px}]]
     [:.info
-     {:transition    "all 0.5s ease"
-      :max-height    :60%
-      :overflow-y    :scroll
-      :padding       "5px 22px 0px 22px"
-      :margin-bottom :15px}
+     {:padding       "0px 22px 0px 22px"
+      :max-height    0
+      :margin-bottom 0}
+     {:transition          "all 0.3s ease"
+      :transition-property "max-height, padding-top"}
      ; light scrollbar to match code-editor
      ["&::-webkit-scrollbar"
       {:background :white
@@ -122,10 +131,6 @@
       {:background :white
        :border     "1px solid lightgrey"
        :right      :5px}]
-     [:&.pan-out
-      {:padding-top   0
-       :max-height    0
-       :margin-bottom 0}]
      [:.header
       [:.avatar
        {:height :50px
@@ -140,10 +145,9 @@
         {:font-size :16px
          :color     :grey}]]]
      [:.desc
-      {:margin-top    :12px
-       :font-size     :1rem
-       :line-height   :1.45
-       :text-overflow :ellipsis}]]
+      {:margin-top  :12px
+       :font-size   :1rem
+       :line-height :1.45}]]
     [:.code-editor
      {:flex          1
       ;; height of .bar
