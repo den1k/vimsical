@@ -125,10 +125,12 @@
     [model->content-change-handler
      model->cursor-change-handler
      editor->focus-handler
-     editor->blur-handler]}]
+     editor->blur-handler
+     editor->mouse-down-handler]}]
   (when (and editor listeners)
     (let [model (.-model editor)]
       {:model->content-change-handler (.onDidChangeModelContent editor (model->content-change-handler model))
        :model->cursor-change-handler  (.onDidChangeCursorSelection editor (model->cursor-change-handler model))
        :editor->focus-handler         (.onDidFocusEditor editor (editor->focus-handler editor))
-       :editor->blur-handler          (.onDidBlurEditor editor (editor->blur-handler editor))})))
+       :editor->blur-handler          (.onDidBlurEditor editor (editor->blur-handler editor))
+       :editor->mouse-down-handler    (.onMouseDown editor editor->mouse-down-handler)})))

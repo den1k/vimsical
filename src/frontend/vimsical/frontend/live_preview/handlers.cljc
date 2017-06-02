@@ -135,23 +135,21 @@
    {:track
     {:action       :register
      :id           [::vims (:db/uid vims)]
-     :subscription [::vcs.subs/branch vims]
-     :val->event   (fn [branch]
-                     {:pre [branch]}
-                     [::track-branch vims branch])}}))
+     :subscription [::vcs.subs/files vims]
+     :val->event   (fn [files]
+                     {:pre [files]}
+                     [::track-files vims files])}}))
 
 (re-frame/reg-event-fx
- ::track-branch
- [(re-frame/inject-cofx :prev-event)]
- (fn [_ [[_ _ prev-branch] [_ vims {:as branch files ::branch/files}] :as events]]
-   {:pre [branch files vims]}
-   {:track    (for [file files]
-                {:action          :register
-                 :id              [::file (:db/uid file)]
-                 :subscription    [::vcs.subs/file-string vims file]
-                 :dispatch-first? false
-                 :val->event      (fn [string] [::update-live-preview vims file string])})
-    :dispatch [::stop-track-branch vims]}))
+ ::track-files
+ (fn [_ [_ vims files]]
+   {:pre [files vims]}
+   {:track (for [file files]
+             {:action          :register
+              :id              [::file (:db/uid file)]
+              :subscription    [::vcs.subs/file-string vims file]
+              :dispatch-first? false
+              :val->event      (fn [string] [::update-live-preview vims file string])})}))
 
 
 (re-frame/reg-event-fx

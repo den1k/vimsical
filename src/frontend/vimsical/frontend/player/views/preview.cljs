@@ -13,6 +13,7 @@
             [vimsical.frontend.ui.subs :as ui.subs]
             [vimsical.frontend.player.views.timeline :refer [timeline-bar]]
             [vimsical.frontend.player.handlers :as handlers]
+            [vimsical.frontend.vcr.handlers :as vcr.handlers]
             [vimsical.common.util.core :as util :include-macros true]
             [vimsical.frontend.views.icons :as icons]))
 
@@ -20,7 +21,7 @@
   (let [unset? (<sub [::subs/playback-unset? vims])]
     (when unset?
       [:div.play-button-overlay.jc.ac
-       {:on-click (e> (re-frame/dispatch [::handlers/play vims]))}
+       {:on-click (e> (re-frame/dispatch [::vcr.handlers/play vims]))}
        [elems/play-button]])))
 
 (defn preview-container [{:keys [vims]}]

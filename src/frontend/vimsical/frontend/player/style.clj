@@ -4,7 +4,8 @@
             [vimsical.frontend.code-editor.style :refer [code-editor]]
             [vimsical.frontend.user.style :refer [user]]
             [vimsical.frontend.views.style :as views]
-            [vimsical.frontend.styles.color :as color]))
+            [vimsical.frontend.styles.color :as color]
+            [vimsical.frontend.styles.media :as media]))
 
 (def timeline
   [:.timeline
@@ -20,7 +21,6 @@
      {:background :lightgrey}]
     [:&.passed
      {:background :black}]]
-
    [:.head
     {:background          :black
      :position            :absolute
@@ -38,20 +38,23 @@
       :border-radius 0}]]])
 
 (def timeline-container
-  [:.timeline-container
-   {:padding "0 18px"
-    :width   "100%"}                    ; less pad than top bar
-   [:.play-pause
-    {:height :20px
-     :cursor :pointer}]
-   timeline
-   [:.time-or-speed-control
-    {:cursor      :pointer
-     ;; monospaced to accurately measure width
-     :font-family "Droid Sans Mono"
-     ;; hardcode width of 4 characters to avoid shifting timeline
-     ;; time default, e.g. `3:42`
-     :width       :33px}]])
+  [[:.timeline-container
+    {:padding "0 18px"
+     :width   "100%"}                   ; less pad than top bar
+    [:.play-pause
+     {:height :20px
+      :cursor :pointer}]
+    timeline
+    [:.time-or-speed-control
+     {:cursor      :pointer
+      ;; monospaced to accurately measure width
+      :font-family "Droid Sans Mono"
+      ;; hardcode width of 4 characters to avoid shifting timeline
+      ;; time default, e.g. `3:42`
+      :width       :33px}]]
+   (media/on-mobile
+    [:.time-or-speed-control
+     {:font-size :18px}])])
 
 (def preview-panel
   [:.preview-panel
@@ -99,77 +102,83 @@
    explore])
 
 (def editor-panel
-  [:.info-and-editor-panel
-   {:position :relative
-    :overflow :hidden}
-   [:.info
-    {:transition    "all 0.5s ease"
-     :max-height    :60%
-     :overflow-y    :scroll
-     :padding       "5px 22px 0px 22px"
-     :margin-bottom :15px}
-    ; sutle scrollbar to match code-editor
-    ["&::-webkit-scrollbar"
-     {:background :white
-      :width      :7px
-      :outline    "1px solid slategrey"}]
-    ["&::-webkit-scrollbar-thumb"
-     {:background :white
-      :border     "1px solid lightgrey"
-      :right      :5px}]
-    [:&.pan-out
-     {:padding-top   0
+  [(media/on-mobile
+    [:.info-and-editor-panel
+     [:.info
+      ["&::-webkit-scrollbar"           ; wider on mobile
+       {:width "9px !important"}]]])
+   [:.info-and-editor-panel
+    {:position :relative
+     :overflow :hidden}
+    [:&.show-info
+     [:.info
+      {:max-height  :60%
+       :overflow-y  :scroll
+       :padding-top :5px}]
+     [:.code-editor
+      {:margin-top :15px}]]
+    [:.info
+     {:padding       "0px 22px 0px 22px"
       :max-height    0
-      :margin-bottom 0}]
-    [:.header
-     [:.avatar
-      {:height :50px
-       :width  :50px}]
-     [:div.title-and-creator
-      {:margin-left :10px
-       :line-height 1.2}
-      [:.title
-       {:font-size   :20px
-        :font-weight :bold}]
-      [:.creator
-       {:font-size :16px
-        :color     :grey}]]]
-    [:.desc
-     {:margin-top    :12px
-      :font-size     :1rem
-      :line-height   :1.45
-      :text-overflow :ellipsis}]]
-   [:.code-editor
-    {:flex          1
-     ;; height of .bar
-     :margin-bottom :50px}]
-   code-editor
-   [:.code-editor
-    [:.slider
-     {:background :white
-      :border     "1px solid lightgray"}]]
-   [:.logo-and-file-type.bar
-    {:padding    "0 18px"
-     :position   :absolute
-     :width      :100%
-     :bottom     0
-     :background :white}
-    [:.logo-and-type
-     {:width :60%}]
-    [:.active-file-type
-     {:padding       "1px 13px"
-      :border        "1px solid"
-      :border-radius :15px}
-     ;; todo dry
-     [:&.html
-      {:color        (:html color/type->colors-editors)
-       :border-color (:html color/type->colors-editors)}]
-     [:&.css
-      {:color        (:css color/type->colors-editors)
-       :border-color (:css color/type->colors-editors)}]
-     [:&.js
-      {:color        (:javascript color/type->colors-editors)
-       :border-color (:javascript color/type->colors-editors)}]]]])
+      :margin-bottom 0}
+     {:transition          "all 0.3s ease"
+      :transition-property "max-height, padding-top"}
+     ; light scrollbar to match code-editor
+     ["&::-webkit-scrollbar"
+      {:background :white
+       :width      :7px}]
+     ["&::-webkit-scrollbar-thumb"
+      {:background :white
+       :border     "1px solid lightgrey"
+       :right      :5px}]
+     [:.header
+      [:.avatar
+       {:height :50px
+        :width  :50px}]
+      [:div.title-and-creator
+       {:margin-left :10px
+        :line-height 1.2}
+       [:.title
+        {:font-size   :20px
+         :font-weight :bold}]
+       [:.creator
+        {:font-size :16px
+         :color     :grey}]]]
+     [:.desc
+      {:margin-top  :12px
+       :font-size   :1rem
+       :line-height :1.45}]]
+    [:.code-editor
+     {:flex          1
+      ;; height of .bar
+      :margin-bottom :50px}]
+    code-editor
+    [:.code-editor
+     [:.slider
+      {:background :white
+       :border     "1px solid lightgray"}]]
+    [:.logo-and-file-type.bar
+     {:padding    "0 18px"
+      :position   :absolute
+      :width      :100%
+      :bottom     0
+      :background :white}
+     [:.logo-and-type
+      {:width :60%}]
+     [:.active-file-type
+      {:padding       "1px 13px"
+       :border        "1px solid"
+       :border-radius :15px}
+      ;; todo dry
+      [:&.html
+       {:color        (:html color/type->colors-editors)
+        :border-color (:html color/type->colors-editors)}]
+      [:&.css
+       {:color        (:css color/type->colors-editors)
+        :border-color (:css color/type->colors-editors)}]
+      [:&.js
+       {:color        (:javascript color/type->colors-editors)
+        :border-color (:javascript color/type->colors-editors)}]]]]])
 
 (def landscape-split
   [:.landscape-split

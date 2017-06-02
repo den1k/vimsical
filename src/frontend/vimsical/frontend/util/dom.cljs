@@ -182,5 +182,10 @@
         rxp        #"android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini"]
     (boolean (re-find rxp user-agent))))
 
+(def browser
+  (let [user-agent (str/lower-case (.. js/window -navigator -userAgent))
+        rxp        #"chrome|safari|firefox"]
+    (or (some-> (re-find rxp user-agent) keyword) :os)))
+
 (defn first-touch->e [e]
   (get (.-targetTouches e) 0))
