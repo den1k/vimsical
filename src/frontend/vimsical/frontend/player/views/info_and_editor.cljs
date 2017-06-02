@@ -14,6 +14,7 @@
             [vimsical.frontend.vcs.subs :as vcs.subs]
             [vimsical.frontend.player.subs :as subs]
             [vimsical.frontend.player.handlers :as handlers]
+            [vimsical.frontend.timeline.subs :as timeline.subs]
             [vimsical.vcs.branch :as branch]
             [vimsical.vcs.file :as file]
             [clojure.string :as string]
@@ -32,8 +33,8 @@
   (util/space-join first-name last-name))
 
 (defn info-and-editor-container []
-  (let [show-info? (reagent/atom true)
-        desc       (util.content/lorem-ipsum 2)]
+  (let [info-hover? (reagent/atom true)
+        desc        (util.content/lorem-ipsum 2)]
     (reagent/create-class
      {:render
       (fn [c]
@@ -51,15 +52,19 @@
                                        [code-editor {:vims     vims
                                                      :file     fl
                                                      :compact? true}])
-                                     uid->file)]
+                                     uid->file)
+              on-mobile?            (<sub [::ui.subs/on-mobile?])
+              show-info?            (if-not on-mobile?
+                                      @info-hover?
+                                      (not (<sub [::timeline.subs/playing? vims])))]
           [:div.info-and-editor-panel.dc
            {:on-mouse-enter
-            (e> (reset! show-info? true))
+            (e> (reset! info-hover? true))
             :on-mouse-out
             (e> (when-not (util.dom/view-contains-related-target? c e)
-                  (reset! show-info? false)))}
+                  (reset! info-hover? false)))}
            [:div.info
-            {:class (when-not @show-info? "pan-out")}
+            {:class (when-not show-info? "pan-out")}
             [:div.header.ac
              [user.views/avatar {:user owner}]
              [:div.title-and-creator
