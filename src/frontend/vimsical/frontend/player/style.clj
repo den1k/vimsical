@@ -112,9 +112,12 @@
      :overflow :hidden}
     [:&.show-info
      [:.info
-      {:max-height  :60%
-       :overflow-y  :scroll
-       :padding-top :5px}]
+      {:max-height                 :60%
+       :overflow-y                 :scroll
+       :padding-top                :5px
+       ;; momentum scrolling for iOS
+       ;; https://css-tricks.com/snippets/css/momentum-scrolling-on-ios-overflow-elements/
+       :-webkit-overflow-scrolling :touch}]
      [:.code-editor
       {:margin-top :15px}]]
     [:.info
@@ -232,7 +235,7 @@
     {:display   :flex
      :min-width :700px
      :max-width :1200px
-     :height    :100vh}
+     :height    :100%}
     landscape-split
     [:.explore
      {:margin-left :18px}]]
@@ -240,7 +243,7 @@
     {:display        :flex
      :flex-direction :column
      :width          :100vw
-     :height         :100vh}
+     :height         :100%}
     portrait-split
     portrait-info-and-editor-panel]
    bar

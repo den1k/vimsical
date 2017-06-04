@@ -49,8 +49,13 @@
      :display         :flex
      :flex-direction  :column
      :justify-content :flex-start
-     :height          :100vh}
+     :height          :100%}
     modal/overlay]
+
+   ;; on mobile height is set by ui.handlers
+   (media/on-mobile
+    [:.app
+     {:transition "height 0.5s ease"}])
 
    ;; flex-box
 

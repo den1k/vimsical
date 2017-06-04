@@ -1,7 +1,8 @@
 (ns vimsical.frontend.vcr.style
   (:require [vimsical.frontend.timeline.style :refer [timeline]]
             [vimsical.frontend.code-editor.style :refer [code-editor]]
-            [vimsical.frontend.styles.color :as color :refer [colors]]))
+            [vimsical.frontend.styles.color :as color :refer [colors]]
+            [vimsical.frontend.styles.media :as media]))
 
 (def play-pause
   [:&.play-pause
@@ -131,12 +132,13 @@
    code-editor])
 
 (def vcr
-  [:.route-vims
-   {:min-width :600px}
+  (media/not-on-mobile
+   [:.route-vims
+    {:min-width :600px}]
    [:.vcr
     ;; Styles to prevent code-editor from overflowing beyond VCR's boundaries
     ;; Set here instead of on code-editor to allow widget overflow
     {:position :relative
      :overflow "hidden"}
     playback
-    live-preview-and-editors]])
+    live-preview-and-editors]))
