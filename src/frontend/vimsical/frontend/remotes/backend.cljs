@@ -8,7 +8,7 @@
    [vimsical.frontend.config :as config]
    [vimsical.remotes.event :as event])
   (:require-macros
-   [vimsical.common.env-cljs :as env :refer [optional required]]))
+   [vimsical.common.env-cljs :as env]))
 
 ;;
 ;; * Spec
@@ -50,10 +50,10 @@
     resp))
 
 (def backend-config
-  {:protocol (optional :backend-protocol ::env/string)
-   :host     (optional :backend-host ::env/string)
-   :port     (optional :backend-port ::env/string)
-   :path     (optional :backend-path ::env/string)})
+  {:protocol (env/optional :backend-protocol ::env/string)
+   :host     (env/optional :backend-host ::env/string)
+   :port     (env/optional :backend-port ::env/string)
+   :path     (env/required :backend-path ::env/string)})
 
 (defmethod remote/init! :backend [_] backend-config)
 
