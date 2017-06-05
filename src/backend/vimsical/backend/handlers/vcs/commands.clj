@@ -4,6 +4,7 @@
    [vimsical.backend.components.datomic :as datomic]
    [vimsical.backend.components.delta-store :as delta-store]
    [vimsical.backend.components.delta-store.protocol :as delta-store.protocol]
+   [vimsical.backend.components.session-store.spec :as session-store.spec]
    [vimsical.vcs.validation :as vcs.validation]
    [vimsical.backend.handlers.multi :as multi]
    [vimsical.backend.util.async :refer [<?]]
@@ -36,11 +37,11 @@
     :keys    [delta-store session]
     user-uid ::user/uid}
    [_ vims-uid deltas :as event]]
-  (let [deltas-by-branch-uid  (get session ::vcs.validation/delta-by-branch-uid)
+  (let [deltas-by-branch-uid  (get-in session [::session-store.spec/sync-state vims-uid] )
         deltas-by-branch-uid' (vcs.validation/update-delta-by-branch-uid deltas-by-branch-uid deltas)
         insert-chan           (delta-store.protocol/insert-deltas-chan delta-store vims-uid deltas)]
     (multi/async
      context
      (-> context
          (multi/set-response (<? insert-chan))
-         (multi/assoc-session ::vcs.validation/delta-by-branch-uid deltas-by-branch-uid')))))
+         (multi/assoc-in-session [::session-store.spec/sync-state vims-uid] deltas-by-branch-uid')))))

@@ -106,7 +106,6 @@
        file]]
    (when preprocessed-file-string
      (let [snapshot (vcs.snapshot/new-frontend-snapshot (uuid) user-uid vims-uid file preprocessed-file-string)
-           _ (assert (nil? (::file/type snapshot)))
            vims'    (update vims ::vims/snapshots util/replace-by-or-conj ::vcs.snapshot/file-uid snapshot)]
        {:db (util.mg/add db vims')}))))
 

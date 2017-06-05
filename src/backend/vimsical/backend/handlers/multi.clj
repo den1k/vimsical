@@ -83,6 +83,11 @@
   (let [session' (assoc session k value)]
     (assoc-in context [:response :session] session')))
 
+(defn assoc-in-session
+  [{:keys [session] :as context} ks value]
+  (let [session' (assoc-in session ks value)]
+    (assoc-in context [:response :session] session')))
+
 (defn set-session
   [context session]
   (assoc-in context [:response :session] session))

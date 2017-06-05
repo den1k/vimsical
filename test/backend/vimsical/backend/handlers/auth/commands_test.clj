@@ -22,7 +22,7 @@
         {actual :body :as resp} (server.test/response-for [::auth.commands/signup signup-user])]
     (is (= expect actual))
     (is (server.test/status-ok? resp))
-    (is (server.test/active-session? resp))))
+    (is (server.test/auth-session? resp))))
 
 (deftest login-test
   (do (signup-test)
@@ -31,10 +31,10 @@
                         ::user/password "foobar"}
             actual     (server.test/response-for [::auth.commands/login login-user])]
         (is (server.test/status-ok? actual))
-        (is (server.test/active-session? actual)))))
+        (is (server.test/auth-session? actual)))))
 
 (deftest logout-test
   (do (signup-test)
       (let [actual (server.test/response-for [::auth.commands/logout])]
         (is (server.test/status-ok? actual))
-        (is (not (server.test/active-session? actual))))))
+        (is (not (server.test/auth-session? actual))))))

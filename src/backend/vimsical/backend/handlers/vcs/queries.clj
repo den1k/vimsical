@@ -5,6 +5,8 @@
    [vimsical.backend.components.delta-store.protocol :as delta-store.protocol]
    [vimsical.vcs.validation :as vcs.validation]
    [vimsical.backend.components.session-store :as session-store]
+   [vimsical.backend.components.session-store.spec :as session-store.spec]
+
    [vimsical.backend.handlers.multi :as multi]
    [vimsical.backend.util.async :refer [<?]]
    [vimsical.remotes.backend.vcs.queries :as queries]))
@@ -27,4 +29,4 @@
    (let [delta-by-branch-uid (<? (delta-store.protocol/select-delta-by-branch-uid-chan delta-store vims-uid))]
      (-> context
          (multi/set-response delta-by-branch-uid)
-         (multi/assoc-session ::vcs.validation/delta-by-branch-uid delta-by-branch-uid)))))
+         (multi/assoc-in-session [::session-store.spec/sync-state vims-uid] delta-by-branch-uid)))))

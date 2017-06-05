@@ -36,9 +36,9 @@
 (defn response->session-key [{{:strs [Set-Cookie]} :headers}]
   (some->> Set-Cookie first (re-find #"ring-session=(.+);Path=.+") second))
 
-(defn active-session? [response]
+(defn auth-session? [response]
   (if-some [session-store (:session-store *system*)]
     (let [session-key (response->session-key response)
           session     (session-store/read-session* session-store session-key)]
-      (s/valid? ::session-store.spec/active-session session))
+      (s/valid? ::session-store.spec/auth-session session))
     (assert false "Session store not found, was the system fixture started?")))
