@@ -38,7 +38,14 @@
    {:track {:action       :register
             :id           :orientation-track
             :subscription [::subs/orientation]
-            :event        [::resize-app]}}))
+            :event        [::resize-app-delay]}}))
+
+(re-frame/reg-event-fx
+ ::resize-app-delay
+ (fn [_ _]
+   ;; window.innerHeight takes awhile to update after an orienation change
+   {:dispatch-later [{:ms       10
+                      :dispatch [::resize-app]}]}))
 
 (re-frame/reg-event-fx
  ::untrack-orientation
@@ -51,9 +58,13 @@
   (util.re-frame/inject-sub [::subs/orientation])]
  (fn [{:keys [ui-db] ::subs/keys [orientation]} _]
    #?(:cljs
-      {:ui-db (assoc ui-db
-                :height
-                (case orientation
-                  :portrait nil
-                  :landscape (do (js/window.scrollTo 0 0)
-                                 (.-innerHeight js/window))))})))
+      (let [ios-chrome?  (and (= :ios util.dom/operating-system)
+                              (= :chrome util.dom/browser))
+            inner-height (.-innerHeight js/window)
+            height       (if ios-chrome?
+                           (- inner-height 25) ; don't ask
+                           (if (= :portrait orientation)
+                             nil
+                             inner-height))]
+        (js/window.scrollTo 0 0)
+        {:ui-db (assoc ui-db :height height)}))))

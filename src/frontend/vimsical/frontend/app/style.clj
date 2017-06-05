@@ -29,7 +29,7 @@
     {:box-sizing  :inherit
      :user-select :inherit}]
 
-   [:body :#app :.app
+   [:body :#app :.app :.main
     {:height :100%}]
 
    [:input :textarea
@@ -48,8 +48,7 @@
     {:position        :relative         ; needed for modal-overlay
      :display         :flex
      :flex-direction  :column
-     :justify-content :flex-start
-     :height          :100%}
+     :justify-content :flex-start}
     modal/overlay]
 
    ;; on mobile height is set by ui.handlers
