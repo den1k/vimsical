@@ -7,10 +7,12 @@
 (def pull-query
   [:db/uid
    ::branch/name
-   ::branch/owner [:db/uid]
    ::branch/start-delta-uid
    ::branch/branch-off-delta-uid
    ::branch/created-at
+   {::branch/owner [:db/uid]}
    {::branch/parent '...}
    {::branch/files file/pull-query}
    {::branch/libs lib/pull-query}])
+
+(def datomic-pull-query pull-query)

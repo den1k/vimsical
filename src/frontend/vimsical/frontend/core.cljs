@@ -3,18 +3,17 @@
    [clojure.spec.test :as st]
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
-   [vimsical.frontend.remotes.fx] ;; side-effects
+   [vimsical.frontend.remotes.fx]      ;; side-effects
    [vimsical.frontend.remotes.backend] ;; side-effects
    [vimsical.frontend.app.views :refer [app]]
    [vimsical.frontend.code-editor.core :as code-editor.core]
    [vimsical.frontend.db :as db]
    [vimsical.frontend.ui.handlers :as ui.handlers]
-   [vimsical.frontend.vcs.handlers :as vcs.handlers]))
+   [vimsical.frontend.user.handlers :as user.handlers]))
 
 (defn mount-root []
   (re-frame/clear-subscription-cache!)
-  (reagent/render [app]
-                  (.getElementById js/document "app")))
+  (reagent/render [app] (.getElementById js/document "app")))
 
 (defn ^:export init
   "Called from index.html"
@@ -23,6 +22,6 @@
   (code-editor.core/require-monaco
    #(do
       (re-frame/dispatch-sync [::db/init])
-      (re-frame/dispatch-sync [::vcs.handlers/init-vimsae])
       (re-frame/dispatch-sync [::ui.handlers/init])
+      (re-frame/dispatch [::user.handlers/me])
       (mount-root))))

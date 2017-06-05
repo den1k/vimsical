@@ -30,14 +30,18 @@
 ;;
 
 (defn- start-service
-  [service-map component]
+  [{::http/keys [start-fn] :as service-map} component]
   (let [context-dependencies-interceptor (interceptors.deps/new-context-dependencies-injector component)
         new-interceptors                 [context-dependencies-interceptor]]
     (-> service-map
         (add-default-interceptors)
         (interceptors.util/prepend-interceptors new-interceptors)
         (http/create-server)
-        (http/start))))
+        (start-fn))))
+
+(defn stop-service
+  [service {::http/keys [stop-fn] :as service-map}]
+  (when stop-fn (stop-fn service)))
 
 ;;
 ;; * Component
@@ -49,14 +53,15 @@
     (cond-> this
       (nil? service) (assoc :service (start-service service-map this))))
   (stop [this]
-    (update this :service #(some-> % http/stop))))
+    (update this :service stop-service service-map)))
 
 ;;
 ;; * Api
 ;;
 
 (defn ->server
-  [{::keys [service-map]}]
-  (->Server service-map nil))
+  ([] (->server nil))
+  ([{::keys [service-map]}]
+   (->Server service-map nil)))
 
 (s/def ::server (fn [x] (and x (instance? Server x))))

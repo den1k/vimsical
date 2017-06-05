@@ -1,21 +1,20 @@
 (ns vimsical.frontend.code-editor.handlers
   (:require
-   [vimsical.vims :as vims]
    [re-frame.core :as re-frame]
-   [vimsical.vcs.edit-event :as edit-event]
-   [vimsical.frontend.vcs.handlers :as vcs.handlers]
-   [vimsical.frontend.util.re-frame :refer [<sub]]
    [re-frame.loggers :refer [console]]
-   [vimsical.frontend.code-editor.ui-db :as ui-db]
-   [vimsical.frontend.code-editor.subs :as subs]
-   [vimsical.frontend.code-editor.interop :as interop]
-   [vimsical.frontend.util.re-frame :as util.re-frame]
-   [vimsical.frontend.timeline.subs :as timeline.subs]
-   [vimsical.frontend.vcs.subs :as vcs.subs]
-   [vimsical.vcs.file :as file]
-   [vimsical.vcs.core :as vcs]
    [vimsical.common.util.core :as util :include-macros true]
-   [vimsical.frontend.code-editor.util :as code-editor.util]))
+   [vimsical.frontend.code-editor.interop :as interop]
+   [vimsical.frontend.code-editor.subs :as subs]
+   [vimsical.frontend.code-editor.ui-db :as ui-db]
+   [vimsical.frontend.code-editor.util :as code-editor.util]
+   [vimsical.frontend.timeline.subs :as timeline.subs]
+   [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
+   [vimsical.frontend.vcs.handlers :as vcs.handlers]
+   [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.vcs.core :as vcs]
+   [vimsical.vcs.edit-event :as edit-event]
+   [vimsical.vcs.file :as file]
+   [vimsical.vims :as vims]))
 
 (defn- set-model-language [file editor-instance]
   #?(:cljs

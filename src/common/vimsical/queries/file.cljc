@@ -9,7 +9,14 @@
    ::file/name
    ::file/type
    ::file/sub-type
-   ::file/compiler
    ::file/lang-version
    {::file/compiler compiler/pull-query}
    {::file/snapshot snapshot/pull-query}])
+
+(def datomic-pull-query
+  [:db/uid
+   ::file/name
+   ::file/type
+   ::file/sub-type
+   ::file/lang-version
+   {::file/compiler compiler/datomic-pull-query}])

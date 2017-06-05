@@ -34,13 +34,13 @@
         :ret ::spec/session)
 
 (defn read-session*
-  [redis k]
+  [redis session-key]
   (try
-    (let [session (car/wcar redis (car/get k))]
-      (log/debug "read-session..." k session)
+    (let [session (car/wcar redis (car/get session-key))]
+      (log/debug "read-session..." session-key session)
       session)
     (catch Throwable t
-      (println "Error getting session" {:key k :ex t})
+      (log/error "Error getting session" {:key session-key :ex t})
       (throw t))))
 
 (s/fdef write-session*
@@ -48,33 +48,33 @@
         :ret  ::read-key)
 
 (defn write-session*
-  [redis k val]
+  [redis session-key session]
   (try
-    (log/debug "write-session..." k val)
-    (let [k' (or k (random-key))]
+    (log/debug "write-session..." session-key session)
+    (let [session-key' (or session-key (random-key))]
       (do
         (car/wcar
          redis
-         (car/set k' val))
-        k'))
+         (car/set session-key' session))
+        session-key'))
     (catch Throwable t
-      (println "Error writing session" {:key k :val val :ex t})
+      (log/error "Error writing session" {:key session-key :val session :ex t})
       (throw t))))
 
 (s/fdef delete-session*
         :args (s/cat :redis ::redis/redis :k ::read-key))
 
 (defn delete-session*
-  [redis k]
+  [redis session-key]
   (try
     (do
-      (log/debug "delete-session..." k)
+      (log/debug "delete-session..." session-key)
       (car/wcar
        redis
-       (car/del k))
+       (car/del session-key))
       nil)
     (catch Throwable t
-      (println "Error deleting session" {:key k :ex t})
+      (log/error "Error deleting session" {:key session-key :ex t})
       (throw t))))
 
 ;;
@@ -83,9 +83,9 @@
 
 (extend-protocol store/SessionStore
   Redis
-  (read-session   [redis k]     (read-session* redis k))
-  (write-session  [redis k val] (write-session* redis k val))
-  (delete-session [redis k]     (delete-session* redis k)))
+  (read-session   [redis session-key]       (read-session* redis session-key))
+  (write-session  [redis session-key session] (write-session* redis session-key session))
+  (delete-session [redis session-key]       (delete-session* redis session-key)))
 
 ;;
 ;; * Constructor

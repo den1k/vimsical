@@ -9,8 +9,6 @@
             [vimsical.vcs.lib :as lib]
             [vimsical.vcs.compiler :as compiler]))
 
-;; todo ::app/route subs
-
 (re-frame/reg-sub
  ::quick-search
  (fn [db [_ ?pattern]]
@@ -67,7 +65,7 @@
 
 (defmethod filters->categories :libs
   [[type libs]]
-  (filters->categories* ::lib/sub-type ::lib/title :TODO/toggle-lib libs))
+  (filters->categories* ::lib/sub-type ::lib/name :TODO/toggle-lib libs))
 
 (defmethod filters->categories :compilers
   [[_ compilers]]

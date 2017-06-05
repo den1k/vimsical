@@ -314,3 +314,19 @@
 (defn rotate
   ([coll] (rotate 1 coll))
   ([n coll] (vec (take (count coll) (drop n (cycle coll))))))
+
+(defn replace-by
+  ([coll f x] (replace-by coll f f x))
+  ([coll f g x]
+   (into
+    (empty coll)
+    (map (fn [y] (if (=by f g x y) x y)))
+    coll)))
+
+(defn replace-by-or-conj
+  ([coll f x] (replace-by-or-conj coll f f x))
+  ([coll f g x]
+   (let [coll' (replace-by coll f g x)]
+     (if (= coll' coll)
+       (conj coll x)
+       coll'))))

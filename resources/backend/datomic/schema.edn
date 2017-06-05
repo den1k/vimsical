@@ -5,7 +5,8 @@
 [{:db/id          #db/id [:db.part/db]
   :db/ident       :db/uid
   :db/valueType   :db.type/uuid
-  :db/cardinality :db.cardinality/one}]
+  :db/cardinality :db.cardinality/one
+  :db/unique      :db.unique/identity}]
 
 ;;
 ;; * User
@@ -74,11 +75,53 @@
   :db/isComponent true}]
 
 ;;
+;; * Compilers
+;;
+
+[{:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.compiler/name
+  :db/valueType   :db.type/string
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.compiler/type
+  :db/valueType   :db.type/keyword
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.compile/sub-type
+  :db/valueType   :db.type/keyword
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.compile/to-sub-type
+  :db/valueType   :db.type/keyword
+  :db/cardinality :db.cardinality/one}]
+
+;;
+;; * Libs
+;;
+
+[{:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.lib/src
+  :db/valueType   :db.type/string
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.lib/name
+  :db/valueType   :db.type/string
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.lib/type
+  :db/valueType   :db.type/keyword
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.lib/sub-type
+  :db/valueType   :db.type/keyword
+  :db/cardinality :db.cardinality/one}]
+
+;;
 ;; * Branches
 ;;
 
 [{:db/id          #db/id [:db.part/db]
-  :db/ident       :vimsical.vcs.branch/title
+  :db/ident       :vimsical.vcs.branch/name
   :db/valueType   :db.type/string
   :db/cardinality :db.cardinality/one}
  {:db/id          #db/id [:db.part/db]
@@ -105,6 +148,10 @@
   :db/ident       :vimsical.vcs.branch/files
   :db/valueType   :db.type/ref
   :db/isComponent true
+  :db/cardinality :db.cardinality/many}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.branch/libs
+  :db/valueType   :db.type/ref
   :db/cardinality :db.cardinality/many}]
 
 ;;
@@ -122,4 +169,12 @@
  {:db/id          #db/id [:db.part/db]
   :db/ident       :vimsical.vcs.file/sub-type
   :db/valueType   :db.type/keyword
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.file/lang-version
+  :db/valueType   :db.type/string
+  :db/cardinality :db.cardinality/one}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vcs.file/compiler
+  :db/valueType   :db.type/ref
   :db/cardinality :db.cardinality/one}]

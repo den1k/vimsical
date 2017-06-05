@@ -3,7 +3,6 @@
    [re-com.core :as re-com]
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
-   [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.code-editor.views :refer [code-editor]]
    [vimsical.frontend.live-preview.views :refer [live-preview]]
    [vimsical.frontend.timeline.subs :as timeline.subs]
@@ -11,12 +10,10 @@
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e>]]
    [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
    [vimsical.frontend.vcr.handlers :as handlers]
+   [vimsical.frontend.vcr.subs :as subs]
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.frontend.views.shapes :as shapes]
    [vimsical.frontend.views.splits :as splits]
-   [vimsical.frontend.app.subs :as app.subs]
-   [vimsical.frontend.vcr.subs :as subs]
-   [vimsical.vcs.branch :as branch]
    [vimsical.vcs.file :as file]))
 
 ;;
@@ -116,8 +113,7 @@
         files))
 
 (defn vcr [{:keys [vims]}]
-  (let [branch         (<sub [::vcs.subs/branch vims])
-        all-files      (<sub [::vcs.subs/files vims])
+  (let [all-files      (<sub [::vcs.subs/files vims])
         visi-files     (<sub [::subs/visible-files vims])
         editor-headers (editor-headers visi-files)
         editors        (editors vims visi-files)]

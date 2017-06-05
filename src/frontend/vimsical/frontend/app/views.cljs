@@ -1,20 +1,19 @@
 (ns vimsical.frontend.app.views
   (:require
-   [re-com.core :as re-com]
-   [vimsical.frontend.nav.views :refer [nav]]
-   [vimsical.frontend.vcr.views :refer [vcr]]
+   [re-frame.core :as re-frame]
+   [vimsical.frontend.app.handlers :as handlers]
+   [vimsical.frontend.app.subs :as subs]
+   [vimsical.frontend.auth.views :as auth.views]
    [vimsical.frontend.landing.views :refer [landing]]
+   [vimsical.frontend.modal.views :as views.modal]
+   [vimsical.frontend.nav.views :refer [nav]]
    [vimsical.frontend.player.views.player :refer [player]]
    [vimsical.frontend.quick-search.views :refer [quick-search]]
-   [vimsical.frontend.window-listeners.views :refer [window-listeners]]
-   [vimsical.frontend.util.re-frame :refer-macros [with-subs]]
-   [vimsical.frontend.util.dom :refer-macros [e>]]
-   [vimsical.frontend.app.subs :as subs]
    [vimsical.frontend.ui.subs :as ui.subs]
-   [vimsical.frontend.auth.views :as auth.views]
-   [vimsical.frontend.modal.views :as views.modal]
-   [vimsical.frontend.app.handlers :as handlers]
-   [re-frame.core :as re-frame]))
+   [vimsical.frontend.util.dom :refer-macros [e>]]
+   [vimsical.frontend.util.re-frame :refer-macros [with-subs]]
+   [vimsical.frontend.vcr.views :refer [vcr]]
+   [vimsical.frontend.window-listeners.views :refer [window-listeners]]))
 
 (defn app []
   (with-subs [route      [::subs/route]

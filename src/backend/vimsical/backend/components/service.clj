@@ -1,7 +1,9 @@
 (ns vimsical.backend.components.service
   (:require
    [io.pedestal.http :as http]
+   [io.pedestal.http.ring-middlewares :as middlewares]
    [io.pedestal.http.route :as route]
+   [vimsical.backend.components.server.interceptors.errors :as interceptors.errors]
    [vimsical.backend.components.server.interceptors.event :as interceptors.event]
    [vimsical.backend.components.server.interceptors.event-auth :as interceptors.event-auth]
    [vimsical.backend.components.server.interceptors.session :as interceptors.session]
@@ -14,7 +16,8 @@
 
 (def routes
   #{["/events"
-     :post [interceptors.event-auth/event-auth interceptors.event/event]
+     :post [interceptors.event-auth/event-auth
+            interceptors.event/handle-event]
      :route-name :events]})
 
 (def url-for
@@ -25,10 +28,12 @@
 ;;
 
 (def default-interceptors
-  [interceptors.transit/body
+  [interceptors.errors/debug
+   middlewares/cookies
+   interceptors.transit/body
    interceptors.session/session])
 
-;;
+;;1
 ;; * Service map
 ;;
 
@@ -39,7 +44,8 @@
    ::http/type                 :immutant
    ::http/routes               routes
    ::http/join?                false
-   ::http/allowed-origins      {:creds           true
-                                :allowed-origins (constantly true)}
+   ::http/allowed-origins      {:creds true :allowed-origins (constantly true)}
    ::http/resource-path        "/public"
-   ::http/default-interceptors default-interceptors})
+   ::http/default-interceptors default-interceptors
+   ::http/start-fn             http/start
+   ::http/stop-fn              http/stop})

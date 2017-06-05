@@ -4,11 +4,6 @@
    [reagent.core :as reagent]
    [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.code-editor.handlers :as handlers]
-   [vimsical.frontend.util.re-frame :refer [<sub]]
-   [vimsical.frontend.vcs.handlers :as vcs.handlers]
-   [vimsical.frontend.vcs.subs :as vcs.subs]
-   [vimsical.vcs.file :as file]
-   [vimsical.frontend.config :as config]
    [vimsical.frontend.code-editor.interop :as interop]))
 
 (defn editor-opts
@@ -75,11 +70,11 @@
          :scrollbar                  {:verticalScrollbarSize 7}}]
 
     {:editor
-            (util/deep-merge
-             defaults
-             scrollbar-defaults
-             (when compact? compact-defaults)
-             custom-opts)
+     (util/deep-merge
+      defaults
+      scrollbar-defaults
+      (when compact? compact-defaults)
+      custom-opts)
      ;; https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.itextmodelupdateoptions.html
      :model {:tabSize 2}}))
 

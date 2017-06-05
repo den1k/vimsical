@@ -8,3 +8,5 @@
    ::compiler/sub-type
    ::compiler/to-sub-type
    ::compiler/name])
+
+(def datomic-pull-query pull-query)

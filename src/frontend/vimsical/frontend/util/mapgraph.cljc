@@ -6,11 +6,7 @@
    [re-frame.interop :as interop]))
 
 ;;
-;; * Mapgraph helpers
-;;
-
-;;
-;; ** Adding entities
+;; * Helpers
 ;;
 
 (defn- entities? [db coll]
@@ -23,6 +19,35 @@
     (mg/entity? db x) (mg/ref-to db x)
     (entities? db x) (mapv (partial mg/ref-to db) x)
     :else nil))
+
+(defn ref->entity [[k id]] {k id})
+
+(defn ->entity
+  ([db x] (->entity db :db/uid x))
+  ([db id-key x]
+   (cond
+     (map? x)       x
+     (mg/ref? db x) (apply hash-map x)
+     (uuid? x)      {id-key x})))
+
+(defn ->ref
+  ([db x] (->ref db :db/uid x))
+  ([db id-key x]
+   (cond
+     (mg/ref? db x) x
+     (map? x)       (mg/ref-to db x)
+     (uuid? x)      [id-key x])))
+
+(defn ->uid
+  ([db x] (->uid db :db/uid x))
+  ([db id-key x]
+   (cond
+     (uuid? x)      x
+     (mg/ref? db x) (second x)
+     (map? x)       (get x id-key))))
+;;
+;; * Add
+;;
 
 (defmulti add
   (fn [db entity-or-entities]
@@ -51,8 +76,51 @@
   [db state]
   (reduce-kv add-to db state))
 
+(defn add-join*
+  [db
+   target-ref-or-link-or-entity
+   key
+   join-ref-or-entity]
+  (let [path     (if (keyword? target-ref-or-link-or-entity)
+                   [target-ref-or-link-or-entity key]
+                   [(->ref db target-ref-or-link-or-entity) key])
+        join-ref (->ref db join-ref-or-entity)]
+    (update-in db path (fnil conj []) join-ref)))
+
+(defn add-join
+  "Add `join-entity` to the `db` and conj its ref onto the `join-key` on
+  `entity`. Will default to a vector if the join doesn't exist."
+  [db entity join-key join-entity]
+
+  (-> db
+      (mg/add join-entity)
+      (add-join* entity join-key join-entity)))
+
+(defn add-ref
+  [db key entity]
+  (assoc db key (mg/ref-to db entity)))
+
 ;;
-;; ** Shorthand link syntax
+;; * Remove
+;;
+
+(defn- remove-ref [db ref]
+  (reduce-kv
+   (fn [db k v]
+     (cond
+       (mg/ref? db v) (remove-ref db v)
+       (coll? v)      (reduce remove-ref db v)
+       :else          db))
+   (dissoc db ref) (get db ref)))
+
+(defn remove-entity [db entity]
+  (remove-ref db (mg/ref-to db entity)))
+
+(defn remove-links [db & keywords]
+  (reduce remove-ref db (map (partial get db) keywords)))
+
+;;
+;; * Shorthand link syntax
 ;;
 
 (defn rewrite-pattern? [pattern]

@@ -1,11 +1,9 @@
 (ns vimsical.frontend.app.subs
   (:require
-   [re-frame.core :as re-frame]
-   [vimsical.frontend.util.mapgraph :as util.mg]
-   [vimsical.vims :as vims]
-   [vimsical.user :as user]
    [com.stuartsierra.mapgraph :as mg]
-   [re-frame.interop :as interop]))
+   [re-frame.core :as re-frame]
+   [vimsical.user :as user]
+   [vimsical.vims :as vims]))
 
 (re-frame/reg-sub
  ::route

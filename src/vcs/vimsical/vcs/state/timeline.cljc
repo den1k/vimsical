@@ -7,7 +7,7 @@
 
   1. As deltas get added, we build chunks grouped by their branch
 
-     The only partitioning that needs to happen in this step is a file partitioning.
+      The only partitioning that needs to happen in this step is a file partitioning.
 
      {:<branch-uid>
        {:chunks [{:start-delta-uid nil
@@ -344,8 +344,8 @@
             [expect-abs-time [abs-time chunk :as chunk-entry]]
             (let [[rel-time _] (chunk/first-entry chunk)]
               (< expect-abs-time (+ abs-time rel-time))))]
-    (let [[abs-time _ :as nearest-chunk-entry]
-          (avl/nearest chunks-by-absolute-start-time test expect-abs-time)]
+    (when-some [[abs-time _ :as nearest-chunk-entry]
+                (avl/nearest chunks-by-absolute-start-time test expect-abs-time)]
       (if (and (= < test)
                (before-first-delta? expect-abs-time nearest-chunk-entry))
         (avl/nearest chunks-by-absolute-start-time test abs-time)
@@ -365,12 +365,12 @@
           (nearest-chunk-entry < expect-abs-time)
           (nearest-delta-entry <= expect-abs-time)))
 
-(s/fdef first-entry :args (s/cat :timeline ::timeline) :ret ::entry)
+(s/fdef first-entry :args (s/cat :timeline ::timeline) :ret (s/nilable ::entry))
 
 (defn first-entry
   [{::keys [chunks-by-absolute-start-time]}]
   (let [[_ chunk] (first chunks-by-absolute-start-time)]
-    (chunk/first-entry chunk)))
+    (some-> chunk chunk/first-entry)))
 
 (s/fdef next-entry :args (s/cat :timeline ::timeline :entry ::entry) :ret (s/nilable ::entry))
 
@@ -379,6 +379,16 @@
   ;; The next delta might be in the next chunk, but we look to the left first
   (or (some-> timeline (nearest-chunk-entry < t)  (nearest-delta-entry > t))
       (some-> timeline (nearest-chunk-entry >= t) (nearest-delta-entry > t))))
+
+(s/fdef last-entry :args (s/cat :timeline ::timeline) :ret (s/nilable ::entry))
+
+(defn last-entry
+  [{::keys [chunks-by-absolute-start-time]}]
+  ;; Faster than last on AVL
+  (let [[_ chunk] (avl/nearest
+                   chunks-by-absolute-start-time
+                   <= #?(:clj  Integer/MAX_VALUE :cljs js/Number.MAX_SAFE_INTEGER))]
+    (some-> chunk chunk/last-entry)))
 
 (defn delta-at-absolute-time
   [timeline expect-abs-time]

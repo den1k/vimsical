@@ -1,55 +1,39 @@
 (ns vimsical.backend.components.server.interceptors.event
   (:require
    [io.pedestal.interceptor :as interceptor]
-   [io.pedestal.interceptor.chain :as interceptor.chain]
-   [ring.util.response :as response]
-   vimsical.backend.handler             ; require for side-effects
    [vimsical.backend.handlers.multi :as events.multi]
-   [clojure.spec :as s]))
+   ;;
+   ;; * Event handler methods (required for side-effects)
+   ;;
+   [vimsical.backend.handlers.auth.commands]
+   [vimsical.backend.handlers.user.queries]
+   [vimsical.backend.handlers.status]
+   [vimsical.backend.handlers.vcs.commands]
+   [vimsical.backend.handlers.vcs.queries]
+   [vimsical.backend.handlers.vims.commands]
+   [vimsical.backend.handlers.vims.queries]))
 
-;;
-;; * Event helpers
-;;
-
-(defn- context-lift-request
+(defn- enter
+  "Gets the event from the response body and invoke
+  `events.multi/handle-event`. The event is added to the context since we used
+  that key for convenience in the request-context multi-spec."
   [context]
-  (assoc context :event (some-> context :request :body)))
+  (if-some [event (some-> context :request :body)]
+    (events.multi/handle-event (assoc context :event event) event)
+    (throw (ex-info "No event found" (select-keys context [:request])))))
 
-(defn- context-lift-result
-  [result request-context]
-  (letfn [(context?  [result] (some? (:request result)))
-          (response? [result] (some? (:body result)))
-          (ensure-response [context]
-            (update context :response (fnil identity (response/response nil))))]
-    (interceptor.chain/terminate
-     (ensure-response
-      (cond
-        (context? result)  result
-        (response? result) (assoc request-context :response result)
-        :else              (assoc request-context :response (response/response result)))))))
-
-;;
-;; * Handler
-;;
-
-(defn handle-event [{:keys [event] :as context}]
-  (events.multi/handle-event context event))
-
-(s/fdef enter
-        :args (s/cat :context ::events.multi/context-in)
-        :ret ::events.multi/context-out)
-
-(defn enter
+(defn- leave
+  "Ensure the context has a well-formed response, if the enter interceptor
+  doesn't add a body or status we'll set it here."
   [context]
-  (-> context
-      (context-lift-request)
-      (handle-event)
-      (context-lift-result context)))
+  (update context :response
+          (fn [{:keys [status body] :as response}]
+            (cond-> response
+              (nil? status) (assoc :status 200)
+              (nil? body)   (assoc :body [])))))
 
-;;
-;; * Interceptor
-;;
-
-(def event
+(def handle-event
   (interceptor/interceptor
-   {:name ::event :enter enter}))
+   {:name  ::handle-event
+    :enter enter
+    :leave leave}))

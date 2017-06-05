@@ -1,9 +1,10 @@
-(ns vimsical.backend.components.delta-store.validation-test
+(ns vimsical.vcs.validation-test
   (:require
-   [clojure.test :as t]
-   [vimsical.backend.components.delta-store.validation :as sut]
+   #?(:clj  [clojure.test :as t]
+      :cljs [cljs.test :as t :include-macros true])
    [vimsical.common.test :refer [uuid]]
-   [vimsical.vcs.alg.topo :as topo]))
+   [vimsical.vcs.alg.topo :as topo]
+   [vimsical.vcs.validation :as sut]))
 
 ;;
 ;; * Mock data
@@ -26,7 +27,7 @@
    [{:uid uid :prev-uid (uuid :oops) :op [:str/ins (uuid :oops) "?"] :pad 100 :file-uid (uuid :file) :branch-uid (uuid :branch) :meta {:timestamp 400 :version 2}}]))
 
 (defn stub-new-branch-deltas []
-  [{:uid (uuid) :prev-uid (uuid 1) :op [:str/ins (uuid 0) "H"] :pad 100 :file-uid (uuid :file) :branch-uid (uuid :new-branch) :meta {:timestamp 100 :version 2}}])
+  [{:uid (uuid :new-branch0) :prev-uid (uuid 1) :op [:str/ins (uuid 0) "H"] :pad 100 :file-uid (uuid :file) :branch-uid (uuid :new-branch) :meta {:timestamp 100 :version 2}}])
 
 (defn ok-new-branch-next-deltas []
   [{:uid (uuid 3) :prev-uid (uuid 2) :op [:str/ins (uuid 1) "i"] :pad 100 :file-uid (uuid :file) :branch-uid (uuid :new-branch) :meta {:timestamp 100 :version 2}}])
@@ -58,64 +59,72 @@
 (t/deftest simple-validation-test
   (t/testing "Throws"
     (t/is (thrown?
-           clojure.lang.ExceptionInfo
-           (sut/update-deltas-by-branch-uid {} (ok-next-deltas)))
+           #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+           (sut/update-delta-by-branch-uid {} (ok-next-deltas)))
           "rejects when deltas don't start at begining")
     (t/is (thrown?
-           clojure.lang.ExceptionInfo
-           (sut/update-deltas-by-branch-uid ldbb (bad-next-deltas)))
+           #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+           (sut/update-delta-by-branch-uid ldbb (bad-next-deltas)))
           "reject discontinuity from ldbb")
     (t/is (thrown?
-           clojure.lang.ExceptionInfo
-           (sut/update-deltas-by-branch-uid ldbb (into (ok-next-deltas) (bad-next-deltas))))
+           #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+           (sut/update-delta-by-branch-uid ldbb (into (ok-next-deltas) (bad-next-deltas))))
           "rejects any discontinuity"))
   (t/testing "Proceeds"
-    (t/is (sut/update-deltas-by-branch-uid {} (stub-deltas))
+    (t/is (sut/update-delta-by-branch-uid {} (stub-deltas))
           "accepts changes from beginning with empty ldbb")
-    (t/is (sut/update-deltas-by-branch-uid ldbb (ok-next-deltas))
+    (t/is (sut/update-delta-by-branch-uid ldbb (ok-next-deltas))
           "accepts continuity from ldbb")
-    (t/is (sut/update-deltas-by-branch-uid ldbb (ok-next-deltas (uuid)))
+    (t/is (sut/update-delta-by-branch-uid ldbb (ok-next-deltas (uuid)))
           "accepts new branches")))
 
 (t/deftest batched-validation-test
-  (t/is (sut/update-deltas-by-branch-uid ldbb (into (ok-next-deltas) (stub-new-branch-deltas)))
+  (t/is (sut/update-delta-by-branch-uid ldbb (into (ok-next-deltas) (stub-new-branch-deltas)))
         "accepts valid batches containing a new branch")
   (t/is (-> {}
-            (sut/update-deltas-by-branch-uid (stub-deltas))
-            (sut/update-deltas-by-branch-uid (stub-new-branch-deltas))
-            (sut/update-deltas-by-branch-uid (into (ok-next-deltas) (ok-new-branch-next-deltas))))
+            (sut/update-delta-by-branch-uid (stub-deltas))
+            (sut/update-delta-by-branch-uid (stub-new-branch-deltas))
+            (sut/update-delta-by-branch-uid (into (ok-next-deltas) (ok-new-branch-next-deltas))))
         "accepts valid batches with multiple branches")
   (t/testing "reject invallid batches across branches"
     (let [ldbb (-> {}
-                   (sut/update-deltas-by-branch-uid (stub-deltas))
-                   (sut/update-deltas-by-branch-uid (ok-next-deltas)))]
+                   (sut/update-delta-by-branch-uid (stub-deltas))
+                   (sut/update-delta-by-branch-uid (ok-next-deltas)))]
       (t/testing "Rejects whole batch if one partition is invalid"
         (t/is
          (thrown?
-          clojure.lang.ExceptionInfo
-          (sut/update-deltas-by-branch-uid
+          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+          (sut/update-delta-by-branch-uid
            ldbb
            (into (stub-new-branch-deltas) (bad-next-deltas)))))
         (t/is
          (thrown?
-          clojure.lang.ExceptionInfo
-          (sut/update-deltas-by-branch-uid
+          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+          (sut/update-delta-by-branch-uid
            ldbb
            (into (stub-new-branch-deltas) (bad-new-branch-next-deltas)))))))))
 
 (t/deftest update-last-delta-by-branch-uid
   (t/testing "Bootstrap"
-    (t/is (= ldbb (sut/update-deltas-by-branch-uid {} (stub-deltas)))))
+    (t/is (= ldbb (sut/update-delta-by-branch-uid {} (stub-deltas)))))
   (t/testing "Update"
     (t/is (= next-ldbb (-> {}
-                           (sut/update-deltas-by-branch-uid (stub-deltas))
-                           (sut/update-deltas-by-branch-uid (ok-next-deltas))))))
+                           (sut/update-delta-by-branch-uid (stub-deltas))
+                           (sut/update-delta-by-branch-uid (ok-next-deltas))
+                           (sut/update-delta-by-branch-uid nil)))))
   (t/testing "Update with branches"
     (let [first-deltas  (stub-deltas)
           second-deltas (stub-new-branch-deltas)
           expect        {(:branch-uid (last first-deltas))  (last first-deltas)
                          (:branch-uid (last second-deltas)) (last second-deltas)}
           actual        (-> {}
-                            (sut/update-deltas-by-branch-uid first-deltas)
-                            (sut/update-deltas-by-branch-uid second-deltas))]
+                            (sut/update-delta-by-branch-uid first-deltas)
+                            (sut/update-delta-by-branch-uid second-deltas))]
       (t/is (= expect actual)))))
+
+(t/deftest grouping-test
+  (let [deltas (concat (stub-deltas) (stub-new-branch-deltas))
+        expect {(uuid :branch) (last (stub-deltas))
+                (uuid :new-branch) (last (stub-new-branch-deltas))}]
+    (t/testing "xf"
+      (t/is (=  expect (sut/group-by-branch-uid deltas))))))

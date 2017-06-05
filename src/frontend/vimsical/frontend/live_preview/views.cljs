@@ -25,10 +25,9 @@
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
    [vimsical.common.util.core :as util :include-macros true]
+   [vimsical.frontend.live-preview.error-catcher :as error-catcher]
    [vimsical.frontend.live-preview.handlers :as handlers]
-   [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.file :as file]
-   [vimsical.frontend.live-preview.error-catcher :as error-catcher]))
+   [vimsical.vcs.file :as file]))
 
 ;;
 ;; * iFrame helpers
@@ -49,17 +48,19 @@
   [files]
   (remove file/javascript? files))
 
-(defn register [node {:keys [vims static? error-catcher?]}]
+(defn register [node {:keys [vims from-snapshot? static? error-catcher?]}]
   {:pre [node vims]}
   (re-frame/dispatch-sync [::handlers/register-iframe vims node])
-  (re-frame/dispatch [::handlers/update-iframe-src vims])
+  (if from-snapshot?
+    (re-frame/dispatch [::handlers/update-iframe-snapshots vims])
+    (re-frame/dispatch [::handlers/update-iframe-src vims]))
   (when-not static?
     (when error-catcher?
       (re-frame/dispatch [::error-catcher/init])
       (re-frame/dispatch [::error-catcher/track-start vims]))
     (re-frame/dispatch [::handlers/track-vims vims])))
 
-(defn dispose [{:keys [vims static? error-catcher?]}]
+(defn dispose [{:keys [vims from-snapshot? static? error-catcher?]}]
   (when-not static?
     (when error-catcher?
       (re-frame/dispatch [::error-catcher/track-stop])
@@ -68,7 +69,8 @@
   ;; if live-preview is used in other components with the same vims
   ;; mount/unmount cycle can lead to race conditions which wrongly
   ;; dispose the iframe of the mounting component.
-  #_(re-frame/dispatch [::handlers/dispose-iframe vims]))
+  ;; (re-frame/dispatch [::handlers/dispose-iframe vims])
+  )
 
 (defn recycle
   [node old-opts new-opts]

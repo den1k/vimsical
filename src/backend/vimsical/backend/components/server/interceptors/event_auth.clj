@@ -2,7 +2,7 @@
   "Authentication logic for event handlers.
 
   Event handlers that require user authentication can implement an
-  `authenticated-event?` method that returns true for their event id.
+  `require-auth?` method that returns true for their event id.
 
   If the session does not contain a `::user/uid` the context will be terminated
   and the appropriate HTTP status will be returned.
@@ -19,8 +19,8 @@
 ;; * Event predicate
 ;;
 
-(defmulti  authenticated-event? event/dispatch)
-(defmethod authenticated-event? :default [_] false)
+(defmulti  require-auth? event/dispatch)
+(defmethod require-auth? :default [_] false)
 
 ;;
 ;; * Internal
@@ -29,27 +29,27 @@
 ;; XXX Decomplect request-event-lifting in event handler so that we can insert
 ;; this interceptor in between the event lifting and handling
 
-(defn- authenticate?
+(defn- context-require-auth?
   [context]
-  (some-> context :request :body authenticated-event?))
+  (some-> context :request :body require-auth?))
 
 (defn- context->user-uid
   [context]
   (some-> context :request :session ::user/uid))
 
-(defn- terminate
+(defn- unauthorized
   [context]
-  (let [error-response (response/status {} 401)]
+  (let [error-response (response/status {:body "Unauthorized"} 401)]
     (interceptor.chain/terminate
      (assoc context :response error-response))))
 
 (defn- enter
   [context]
-  (if-not (authenticate? context)
+  (if-not (context-require-auth? context)
     context
     (if-some [user-uid (context->user-uid context)]
       (assoc context ::user/uid user-uid)
-      (terminate context))))
+      (unauthorized context))))
 
 ;;
 ;; * Interceptor

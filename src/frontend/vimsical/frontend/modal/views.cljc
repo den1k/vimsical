@@ -5,7 +5,6 @@
 
 (defn modal []
   (when-let [modal (<sub [::app.subs/modal])]
-    (re-frame.loggers/console :log :MODALL)
     [:div.modal-overlay.jc
      [:div.modal-container
       (case modal

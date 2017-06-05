@@ -42,6 +42,17 @@
 
 (assert (string? (pr-str (cql/->raw select-deltas))))
 
+(def select-delta-by-branch-uid
+  (cql/select
+   :delta
+   (cql/columns :branch_uid :uid :prev_uid)
+   (cql/where
+    [[= (cql/token :vims_uid) (cql/token cql/?)]])))
+
+;;
+;; * Commands
+;;
+
 (def insert-delta
   (cql/insert
    :delta

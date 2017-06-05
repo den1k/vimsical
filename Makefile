@@ -23,7 +23,7 @@ clean:
 # Test
 #
 
-test: test-clj test-cljs test-cljs-advanced
+test: test-clj test-integration test-cljs test-cljs-advanced
 
 test-clj: deps clean
 	lein with-profile backend-test test
@@ -33,6 +33,9 @@ test-cljs: deps clean
 
 test-cljs-advanced: deps clean
 	lein with-profile +frontend-test,-css doo node test-advanced once
+
+test-integration: deps clean
+	lein with-profile integration-test test
 
 #
 # Build
@@ -78,3 +81,6 @@ infra: infra-start infra-logs
 infra-stop:
 	cd infra \
 	&& docker-compose down -v --remove-orphans
+
+run: infra-start
+	lein with-profile backend-dev run

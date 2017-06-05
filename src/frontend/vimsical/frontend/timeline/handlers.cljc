@@ -134,6 +134,12 @@
  (fn [{:keys [ui-db]} [_ vims t]]
    {:ui-db (timeline.ui-db/set-playhead ui-db vims t)}))
 
+(re-frame/reg-event-fx
+ ::set-playhead-with-timeline-entry
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db]} [_ vims [t]]]
+   {:ui-db (timeline.ui-db/set-playhead ui-db vims t)}))
+
 ;; Used when clicking the timeline, we need to set:
 ;; - the playhead in the ui-db
 ;; - the playhead-entry in the db

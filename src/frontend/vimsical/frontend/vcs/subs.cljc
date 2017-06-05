@@ -1,37 +1,36 @@
 (ns vimsical.frontend.vcs.subs
   (:require
-   [vimsical.vims :as vims]
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
-   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.util.lint.core :as lint]
+   [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.frontend.util.preprocess.core :as preprocess]
+   [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as db]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.file :as file]
    [vimsical.vcs.core :as vcs]
-   [re-frame.interop :as interop]
-   [vimsical.frontend.util.re-frame :as util.re-frame]
-   [clojure.spec :as s]))
+   [vimsical.vcs.file :as file]
+   [vimsical.vims :as vims]))
 
 ;;
 ;; * VCS
 ;;
 
 (re-frame/reg-sub
+ ::vims-vcs
+ (fn [db [_ vims :as event]]
+   (mg/pull db queries/vims-vcs (util.mg/->ref db vims))))
+
+(re-frame/reg-sub
  ::vcs
  (fn [db [_ vims :as event]]
-   (if-some [lookup-ref (mg/ref-to db vims)]
+   (if-some [lookup-ref (util.mg/->ref db vims)]
      (-> db
          (mg/pull queries/vims-vcs lookup-ref)
          (get-in [::vims/vcs]))
-     (do
-       (re-frame.loggers/console :error (ex-info "No Vims" {:event event}))
-       (-> db
-           (mg/pull [{[:app/vims '_] queries/vims-vcs}])
-           (get-in [:app/vims ::vims/vcs]))))))
+     (re-frame.loggers/console :error (ex-info "No Vims" {:event event})))))
 
 ;;
 ;; * Branch
@@ -43,12 +42,12 @@
 (re-frame/reg-sub
  ::branches
  vims-vcs-sub
- (fn [{::vcs/keys [branches]}] branches))
+ (fn [{::vcs/keys [branches]} _] branches))
 
 (re-frame/reg-sub
  ::branch-uid
  vims-vcs-sub
- (fn [{::db/keys [branch-uid]}] branch-uid))
+ (fn [{::db/keys [branch-uid]} _] branch-uid))
 
 (re-frame/reg-sub
  ::branch
@@ -56,7 +55,9 @@
    [(re-frame/subscribe [::branch-uid vims])
     (re-frame/subscribe [::branches vims])])
  (fn [[branch-uid branches] _]
-   (util/ffilter (partial util/=by identity :db/uid branch-uid) branches)))
+   (util/ffilter
+    (fn [branch] (util/=by identity :db/uid branch-uid branch))
+    branches)))
 
 ;;
 ;; * Heads (timeline entries)
@@ -124,6 +125,25 @@
  (fn [[vcs [_ {delta-uid :uid}]] [_ _ {file-uid :db/uid}]]
    (when (and file-uid delta-uid)
      (vcs/file-cursor vcs file-uid delta-uid))))
+
+(re-frame/reg-sub
+ ::snapshots
+ (fn [[_ {:keys [db/uid] :as vims}]]
+   (re-frame/subscribe
+    [:q [{::vims/snapshots ['*]}] [:db/uid uid]]))
+ (fn [vims-snapshots _]
+   (::vims/snapshots vims-snapshots)))
+
+;;
+;; * Libs
+;;
+
+(re-frame/reg-sub
+ ::libs
+ (fn [[_ vims]]
+   (re-frame/subscribe [::branch vims]))
+ (fn [{::branch/keys [libs]} _]
+   libs))
 
 ;;
 ;; * Pre-processors

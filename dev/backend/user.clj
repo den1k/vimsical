@@ -10,20 +10,20 @@
 ;; * State
 ;;
 
-(def system (sys/new-system))
+(defonce system nil)
 
 (defn drop!
   ([] (drop! system))
-  ([{:api.system/keys [datomic redis cassandra]}]
+  ([{:keys [datomic session-store cassandra-connection]}]
    (datomic/delete-database! datomic)
-   (redis/flushall! redis)
-   (cassandra/drop-keyspace! cassandra)))
+   (redis/flushall! session-store)
+   (cassandra/drop-keyspace! cassandra-connection)))
 
 ;;
 ;; * Reloaded
 ;;
 
-(defn start!   [] (alter-var-root #'system cp/start))
+(defn start!   [] (alter-var-root #'system (fn [_] (cp/start (sys/new-system)))))
 (defn stop!    [] (alter-var-root #'system cp/stop))
 (defn restart! [] (do (try (stop!) (catch Throwable _)) (start!)))
 

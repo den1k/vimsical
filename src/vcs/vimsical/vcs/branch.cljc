@@ -11,24 +11,19 @@
 ;; * Spec
 ;;
 
-(s/def ::branch
-  (s/keys :req [:db/uid] :opt [::start-delta-uid ::entry-delta-uid ::parent ::files ::name]))
+;; NOTE entity needs be defined before the ::parent spec or this fails to
+;; compile in ClojureScript
 
-;;
-;; ** Attributes
-;;
+(s/def ::branch
+  (s/keys :req [:db/uid] :opt [::start-delta-uid ::branch-off-delta-uid ::parent ::files ::name]))
 
 (s/def ::uid uuid?)
 (s/def :db/uid ::uid)
 (s/def ::name string?)
 (s/def ::start-delta-uid (s/nilable ::delta/uid))
-(s/def ::entry-delta-uid (s/nilable ::delta/uid))
+(s/def ::branch-off-delta-uid (s/nilable ::delta/uid))
 (s/def ::branch-off-delta-uid (s/nilable ::delta/uid))
 (s/def ::created-at nat-int?)
-
-;;
-;; ** Relations
-;;
 
 (s/def ::parent (s/nilable ::branch))
 (s/def ::files (s/coll-of ::file/file))
@@ -51,17 +46,18 @@
         :ret ::branch)
 
 (defn new-branch
-  ([uuid created-at files]
-   {:db/uid      uuid
+  ([uid created-at files]
+   {:db/uid      uid
     ::created-at created-at
     ::files      files})
-  ([uuid created-at {:keys [db/uid] ::keys [files] :as parent} {:keys [uid prev-uid]}]
-   {:db/uid                uuid
-    ::parent               parent
-    ::start-delta-uid      uid
-    ::branch-off-delta-uid prev-uid
-    ::created-at           created-at
-    ::files                files}))
+  ([uid created-at {::keys [libs files] :as parent} {start-delta-uid :uid branch-off-delta-uid :prev-uid}]
+   (cond-> {:db/uid                uid
+            ::parent               parent
+            ::start-delta-uid      start-delta-uid
+            ::branch-off-delta-uid branch-off-delta-uid
+            ::created-at           created-at
+            ::files                files}
+     (seq libs) (assoc ::libs libs))))
 
 ;;
 ;; * Lineage

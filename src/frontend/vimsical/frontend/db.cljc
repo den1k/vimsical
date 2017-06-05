@@ -1,24 +1,31 @@
 (ns vimsical.frontend.db
+  (:refer-clojure :exclude [uuid])
   (:require
-   [vimsical.vims :as vims]
-   [vimsical.user :as user]
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
    [vimsical.common.test :refer [uuid]]
-   [vimsical.common.util.core :as util :include-macros true]
-   [vimsical.remotes.backend.status.queries :as status.queries]
    [vimsical.frontend.quick-search.commands :as quick-search.commands]
-   [vimsical.frontend.util.mapgraph :as util.mg])
-  (:refer-clojure :exclude [uuid]))
+   [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.vcs.compiler :as compiler]
+   [vimsical.vcs.lib :as lib]))
+
+(def js-libs
+  [{:db/uid        (uuid :lib-js-jquery)
+    ::lib/name    "jQuery"
+    ::lib/type     :text
+    ::lib/sub-type :javascript
+    ::lib/src      "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"}])
+
+(def compilers
+  [{:db/uid                (uuid :babel-compiler)
+    ::compiler/name        "Babel"
+    ::compiler/type        :text
+    ::compiler/sub-type    :babel
+    ::compiler/to-sub-type :javascript}])
 
 (def state
-  {:app/user         {:db/uid           (uuid :user)
-                      ::user/first-name "Jane"
-                      ::user/last-name  "Applecrust"
-                      ::user/email      "kalavox@gmail.com"
-                      ::user/vimsae     [(vims/new-vims (uuid "NLP Chatbot running on React Fiber") {:db/uid (uuid :user)} "NLP Chatbot running on React Fiber")
-                                         (vims/new-vims (uuid "CatPhotoApp") {:db/uid (uuid :user)} "CatPhotoApp" {:js-libs vims/sub-type->libs})]}
-   :app/vims         [:db/uid (uuid "CatPhotoApp")]
+  {:app/user         {:db/uid (uuid)}
+   :app/vims         nil
    :app/quick-search {:db/uid                           (uuid :quick-search)
                       :quick-search/show?               false
                       :quick-search/result-idx          0
@@ -27,22 +34,26 @@
                       :quick-search/filter-idx          nil
                       :quick-search/filter-result-idx   nil
                       :quick-search/filter-category-idx nil}
-   :app/libs         vims/js-libs
-   :app/compilers    vims/compilers
-   :app/route        :route/vims
+   :app/libs         js-libs
+   :app/compilers    compilers
+   :app/route        :route/landing
    :app/modal        nil})
 
-(def default-db
+;;
+;; * Mapgraph db
+;;
+
+(defn new-db
+  [state]
   (-> (mg/new-db)
       (mg/add-id-attr :db/uid)
       (util.mg/add-linked-entities state)))
 
-(re-frame/reg-event-fx
- ::init
- (fn [_ _]
-   {:db     default-db
-    :remote {:id :backend :event [::status.queries/status]}}))
+(def default-db (new-db state))
 
-(re-frame/reg-event-fx
- ::status.queries/status-result
- (fn [_ [_ result]] (println result)))
+;;
+;; * Re-frame
+;;
+
+(re-frame/reg-event-db ::init (constantly default-db))
+(re-frame/reg-sub ::db (fn [db _] db))

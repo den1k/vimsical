@@ -2,13 +2,14 @@
   (:require
    [clojure.spec :as s]
    [vimsical.vcs.branch :as vcs.branch]
+   [vimsical.vcs.snapshot :as vcs.snapshot]
    [vimsical.common.util.core :as util]
    [vimsical.common.uuid :refer [uuid]]
-   [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.compiler :as compiler]
-   [vimsical.vcs.file :as file]
-   [vimsical.vcs.lib :as lib])
-  (:refer-clojure :exclude [uuid]))
+   [vimsical.vcs.file :as vcs.file]))
+
+;;
+;; * Spec
+;;
 
 (s/def ::uid uuid?)
 (s/def :db/uid ::uid)
@@ -17,68 +18,53 @@
 ;; NOTE branch owner is not defined in vcs
 (s/def ::owner (s/keys :req [:db/uid]))
 (s/def ::vcs.branch/owner ::owner)
-(s/def ::branch
-  (s/merge ::vcs.branch/branch (s/keys :req [::vcs.branch/owner])))
+(s/def ::branch (s/merge ::vcs.branch/branch (s/keys :req [::vcs.branch/owner])))
 (s/def ::branches (s/every ::branch))
+(s/def ::snapshots (s/every ::vcs.snapshot/frontend-snapshot))
+(s/def ::vims (s/keys :req [:db/uid ::owner ::branches] :opt [::title ::cast ::snapshots]))
 
-(s/def ::vims
-  (s/keys :req [:db/uid ::owner ::branches] :opt [::title ::cast]))
+;;
+;; * Helpers
+;;
 
 (defn master-branch [vims] (-> vims ::branches vcs.branch/master))
 
 ;;
-;; * New Vims
+;; * Constructor
 ;;
 
-(def js-libs
-  [{:db/uid        (uuid)
-    ::lib/title    "jQuery"
-    ::lib/type     :text
-    ::lib/sub-type :javascript
-    ::lib/src      "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"}])
+(s/def ::branch-uid ::uid)
+(s/def ::created-at ::vcs.branch/created-at)
+(s/def ::new-vims-opts (s/keys :opt-un [::uid ::branch-uid ::created-at]))
 
-(def sub-type->libs (group-by ::lib/sub-type js-libs))
+(defn default-files
+  ([] (default-files (uuid) (uuid) (uuid)))
+  ([html-uid css-uid javascript-uid]
+   [(vcs.file/new-file html-uid       :text :html)
+    (vcs.file/new-file css-uid        :text :css)
+    (vcs.file/new-file javascript-uid :text :javascript)]))
 
-(def compilers
-  [{:db/uid                (uuid)
-    ::compiler/name        "Babel"
-    ::compiler/type        :text
-    ::compiler/sub-type    :babel
-    ::compiler/to-sub-type :javascript}])
+(s/fdef new-vims
+        :args (s/cat :owner ::owner
+                     :opts  (s/? (s/cat :title (s/nilable ::title)
+                                        :files ::vcs.branch/files
+                                        :opts (s/nilable ::new-vims-opts)))))
 
-(def to-sub-type->compiler (util/project ::compiler/to-sub-type compilers))
-
-(defn- new-file
-  ([uid type sub-type] (new-file uid type sub-type nil nil))
-  ([uid type sub-type lang-version compilers]
-   (-> {:db/uid         uid
-        ::file/type     type
-        ::file/sub-type sub-type}
-       (util/assoc-some
-        ::file/lang-version lang-version
-        ::file/compiler (get compilers sub-type)))))
-
-(defn- new-branch
-  [uid owner name files libs]
-  (-> {:db/uid                       uid
-       ::branch/owner                owner
-       ::branch/name                 name
-       ::branch/start-delta-uid      nil
-       ::branch/branch-off-delta-uid nil
-       ::branch/created-at           (util/now)
-       ::branch/files                files}
-      (util/assoc-some ::branch/libs libs)))
 
 (defn new-vims
-  ([uid owner] (new-vims uid owner nil {}))
-  ([uid owner title] (new-vims uid owner title {}))
-  ([uid owner title {:keys [js-libs compilers]}]
-   (let [files    [(new-file (uuid) :text :html)
-                   (new-file (uuid) :text :css)
-                   (new-file (uuid) :text :javascript "5" compilers)]
-         branches [(new-branch (uuid) owner "master" files (:javascript js-libs))]]
-
-     {:db/uid    uid
-      ::owner    owner
-      ::title    title
-      ::branches branches})))
+  ([owner] (new-vims owner nil (default-files) nil))
+  ([owner title files {:keys [uid branch-uid created-at]
+                       :or   {uid        (uuid)
+                              branch-uid (uuid)
+                              created-at (util/now)}}]
+   ;; NOTE the vcs doesn't know of ::branch/owner, so we manually add it here,
+   ;; might want to move that concern down there?
+   (letfn [(new-branches [owner]
+             (-> (vcs.branch/new-branch branch-uid created-at files)
+                 (assoc ::vcs.branch/owner owner)
+                 (vector)))]
+     (let [branches (new-branches owner)]
+       (-> {:db/uid    uid
+            ::owner    owner
+            ::branches branches}
+           (util/assoc-some ::title title))))))

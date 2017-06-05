@@ -33,7 +33,7 @@
 (deftest service-fn-test (is (ifn? *service-fn*)))
 
 (deftest status-test
-  (let [expect {:status 200 :headers {"Content-Type" "application/transit+json"} :body (transit/write-transit {:status :ok})}
+  (let [expect {:status 200 :headers {"Content-Type" "application/transit+json"} :body {:status :ok}}
         actual (-> (test/response-for *service-fn* [::status.queries/status])
                    (select-headers "Content-Type"))]
     (is (= expect actual))))

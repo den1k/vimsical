@@ -1,17 +1,27 @@
 (ns vimsical.backend.components.delta-store-test
   (:require
+   [vimsical.vcs.validation-test :as validation-test]
    [clojure.core.async :as a]
-   [vimsical.common.test :refer [uuid]]
-   [clojure.test :refer [deftest testing is are use-fixtures]]
+   [clojure.test :refer [deftest is testing use-fixtures]]
    [orchestra.spec.test :as st]
    [vimsical.backend.components.delta-store.fixture :as fixture :refer [*delta-store*]]
    [vimsical.backend.components.delta-store.protocol :as p]
-   [vimsical.backend.adapters.cassandra.protocol :refer [<? <??]]))
+   [vimsical.backend.components.delta-store :as sut]
+   [vimsical.backend.util.async :refer [<??]]
+   [vimsical.common.test :refer [uuid]]
+   [vimsical.backend.data :as data]))
 
 (st/instrument)
 
 (use-fixtures :once fixture/once)
 (use-fixtures :each fixture/each)
+
+(deftest validation-chan-test
+  (let [deltas (concat (validation-test/stub-deltas) (validation-test/stub-new-branch-deltas))
+        expect {(uuid :branch)     (last (validation-test/stub-deltas))
+                (uuid :new-branch) (last (validation-test/stub-new-branch-deltas))}
+        actual (a/<!! (doto (sut/group-by-branch-uid-chan 10) (a/onto-chan deltas)))]
+    (is (= expect actual))))
 
 (deftest deltas-io-test
   (let [deltas [{:uid        (uuid :uid0) ,
@@ -38,4 +48,10 @@
             _      (a/<!! wc)
             _      (p/select-deltas-async *delta-store* (uuid :async) (partial a/put! rc) (partial a/put! rc))
             actual (a/<!! rc)]
-        (is (= deltas actual))))))
+        (is (= deltas actual))))
+    (testing "delta-by-branch-uid"
+      (is (nil? (<?? (p/insert-deltas-chan *delta-store* (uuid :vims) deltas))))
+      (is (= {(uuid :branch) {:uid        (uuid :uid1) ,
+                              :prev-uid   (uuid :uid0) ,
+                              :branch-uid (uuid :branch)}}
+             (a/<!! (p/select-delta-by-branch-uid-chan *delta-store* (uuid :vims))))))))

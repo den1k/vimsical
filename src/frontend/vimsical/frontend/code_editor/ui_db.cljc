@@ -1,6 +1,7 @@
 (ns vimsical.frontend.code-editor.ui-db)
 
 (defn path [{vims-uid :db/uid} {file-uid :db/uid} k]
+  {:pre [vims-uid file-uid]}
   [vims-uid file-uid k])
 
 ;;

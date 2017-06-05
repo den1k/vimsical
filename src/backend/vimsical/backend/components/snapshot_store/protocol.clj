@@ -1,13 +1,11 @@
 (ns vimsical.backend.components.snapshot-store.protocol)
 
 (defprotocol ISnapshotStoreAsync
-  (select-snapshots-async [_ user-uid vims-uid success error])
-  (insert-snapshots-async [_ user-uid vims-uid snapshots success error]))
+  (select-user-snapshots-async [_ user-uid success error])
+  (select-vims-snapshots-async [_ user-uid vims-uid success error])
+  (insert-snapshots-async      [_ snapshots success error]))
 
 (defprotocol ISnapshotStoreChan
-  (select-snapshots-chan
-    [_ user-uid vims-uid]
-    [_ user-uid vims-uid options])
-  (insert-snapshots-chan
-    [_ user-uid vims-uid snapshots]
-    [_ user-uid vims-uid snapshots options]))
+  (select-user-snapshots-chan [_ user-uid] [_ user-uid options])
+  (select-vims-snapshots-chan [_ user-uid vims-uid] [_ user-uid vims-uid options])
+  (insert-snapshots-chan      [_ snapshots] [_ snapshots options]))

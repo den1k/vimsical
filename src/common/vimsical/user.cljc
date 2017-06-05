@@ -11,7 +11,7 @@
 (s/def ::email string?)
 (s/def ::password string?)
 (s/def ::vimsae (s/every ::vims/vims))
-(s/def ::setting (s/every ::settings/settings))
+(s/def ::settings (s/every ::settings/settings))
 
 (s/def ::user
   (s/keys :opt [:db/uid
@@ -21,3 +21,7 @@
                 ::password
                 ::vimsae
                 ::settings]))
+
+(defn anon? [{::keys [email]}] (nil? email))
+
+(def logged-in? (complement anon?))

@@ -92,11 +92,13 @@
    ;; * Immutant <> Pedestal HTTP stack
    ;;
 
+   :service-map service/service-map
+
    :server
    (cp/using
-    (server/->server
-     {::server/service-map service/service-map})
+    (server/->server)
     [:datomic
      :delta-store
      :snapshot-store
-     :session-store])))
+     :session-store
+     :service-map])))

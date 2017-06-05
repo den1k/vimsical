@@ -5,12 +5,12 @@
    [re-com.core :as re-com]
    [vimsical.frontend.util.crypt :as crypt]))
 
-(defn gravatar-img-url [email]
-  {:pre [email]}
-  (str "https://www.gravatar.com/avatar/" (crypt/md5 email) "?=50"))
+(defn gravatar-img-url [{::user/keys [email]}]
+  (when email
+    (str "https://www.gravatar.com/avatar/" (crypt/md5 email) "?=50")))
 
 (defn avatar [{:keys [user on-click img-url] :as opts}]
-  (let [img-url (or img-url (gravatar-img-url (::user/email user)))]
+  (let [img-url (or img-url (gravatar-img-url user))]
     [:div.avatar
      {:on-click on-click}
      [:img.pic {:src img-url}]]))
@@ -24,8 +24,7 @@
 
 (defn avatar-full-name
   [{:keys [user class img-url on-click on-click-avatar on-click-name] :as opts}]
-  {:pre [(::user/first-name user) (:user/last-name user)]}
-  (let [{::user/keys [first-name last-name email]} user]
+  (when-some [{::user/keys [first-name last-name email]} user]
     [:div.user.ac
      (select-keys opts [:class :on-click])
      [avatar {:user     user
