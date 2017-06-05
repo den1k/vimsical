@@ -1,7 +1,7 @@
 (ns vimsical.frontend.quick-search.handlers
   (:require [re-frame.core :as re-frame]
             [com.stuartsierra.mapgraph :as mg]
-            [vimsical.frontend.app.handlers :as app.handlers]
+            [vimsical.frontend.router.handlers :as router.handlers]
             [vimsical.common.util.core :as util :include-macros true]))
 
 (defn move-filters [quick-search filters dir]
@@ -89,17 +89,12 @@
    (let [link (:app/quick-search db)]
      (assoc-in db [link :quick-search/show?] false))))
 
-(re-frame/reg-event-fx
- ::go-to
- (fn [{:keys [db]} [_ route]]
-   {:db       db
-    :dispatch [::app.handlers/route route]}))
 
 (re-frame/reg-event-db
  ::set-query
  (fn [db [_ query quick-search]]
    (let [quick-search (assoc quick-search :quick-search/query query
-                                          :quick-search/result-idx 0)]
+                             :quick-search/result-idx 0)]
      (mg/add db quick-search))))
 
 (re-frame/reg-event-fx

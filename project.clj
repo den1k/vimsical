@@ -55,7 +55,7 @@
    ;;
    :backend
    [{:source-paths   ["src/backend"]
-     :resource-paths ["resources/backend" "resources/backend/logback/prod"]
+     :resource-paths ["resources" "resources/backend" "resources/backend/logback/prod"]
      :main           vimsical.backend.core
      :repositories   {"my.datomic.com"
                       {:url      "https://my.datomic.com/repo"
@@ -114,7 +114,9 @@
                    [com.andrewmcveigh/cljs-time "0.5.0"] ; required re-com, but we need a newer version
                    [re-com "2.1.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async com.andrewmcveigh/cljs-time]]
                    [day8.re-frame/async-flow-fx "0.0.7-SNAPSHOT" :exclusions [re-frame org.clojure/clojurescript]]
-                   [thi.ng/color "1.2.0"]]}
+                   [thi.ng/color "1.2.0"]
+                   [bidi "2.1.1"]
+                   [kibu/pushy "0.3.7"]]}
 
    :-frontend-dev-config
    {:source-paths ["dev/frontend"]

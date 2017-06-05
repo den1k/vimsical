@@ -5,21 +5,14 @@
    [re-frame.core :as re-frame]
    [re-frame.interceptor :as interceptor]
    [vimsical.common.uuid :refer [uuid]]
+   [vimsical.frontend.router.handlers :as router.handlers]
+   [vimsical.frontend.router.routes :as router.routes]
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.frontend.vcs.handlers :as vcs.handlers]
    [vimsical.frontend.vcs.sync.handlers :as vcs.sync.handlers]
    [vimsical.frontend.vims.db :as vims.db]
    [vimsical.frontend.vims.handlers :as vims.handlers]
    [vimsical.vims :as vims]))
-
-;;
-;; * Routes
-;;
-
-(re-frame/reg-event-db
- ::route
- (fn [db [_ route]]
-   (assoc db :app/route route)))
 
 ;;
 ;; * Modal
@@ -92,9 +85,10 @@
  ::set-vims
  [close-prev-vims-interceptor]
  (fn [{:keys [db]} [_ vims]]
-   (let [vims-ref (util.mg/->ref db vims)]
+   (let [vims-ref (util.mg/->ref db vims)
+         vims-ent (util.mg/->entity db vims)]
      {:db         (assoc db :app/vims vims-ref)
-      :dispatch-n [[::route :route/vims]]})))
+      :dispatch-n [[::router.handlers/route ::router.routes/vims vims-ent]]})))
 
 ;;
 ;; * New
@@ -116,13 +110,19 @@
 ;; * Open
 ;;
 
+(defmethod router.handlers/route-dispatch ::router.routes/vims
+  [{::router.routes/keys [args]} {:keys [db]}]
+  {:dispatch [::open-vims uuid args]})
+
 (re-frame/reg-event-fx
  ::open-vims
  (fn [{:keys [db]} [_ uuid-fn {::vims/keys [vcs] :as vims}]]
    {:pre [vims]}
-   (let [[_ vims-uid :as vims-ref] (util.mg/->ref db vims)
-         async-load?               (nil? vcs)]
-     (cond-> {:dispatch-n [[::set-vims vims]]}
+   (let [[_ vims-uid] (util.mg/->ref db vims)
+         async-load?  (nil? vcs)]
+     (cond-> {:dispatch-n
+              [[::set-vims vims]
+               [::close-modal]]}
        async-load? (assoc :async-flow (open-vims-async-flow uuid-fn vims-uid))))))
 
 ;;

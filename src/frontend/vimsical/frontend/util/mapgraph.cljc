@@ -26,9 +26,9 @@
   ([db x] (->entity db :db/uid x))
   ([db id-key x]
    (cond
-     (map? x) x
+     (map? x)       (select-keys x [id-key])
      (mg/ref? db x) (apply hash-map x)
-     (uuid? x) {id-key x})))
+     (uuid? x)      {id-key x})))
 
 (defn ->ref
   ([db x] (->ref db :db/uid x))

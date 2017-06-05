@@ -3,8 +3,10 @@
             [vimsical.frontend.code-editor.util :as util]))
 
 (defn require-monaco [cb]
-  (js/require (array "vs/editor/editor.main")
-              (fn []
-                (configure-editor)
-                (util/define-util-fns)
-                (cb))))
+  (js/require.config (clj->js {:paths {"vs" "/js/vs"}}))
+  (js/require
+   (array "vs/editor/editor.main")
+   (fn []
+     (configure-editor)
+     (util/define-util-fns)
+     (cb))))

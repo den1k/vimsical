@@ -14,7 +14,9 @@
    [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.views.icons :as icons]
    [vimsical.user :as user]
-   [vimsical.vims :as vims]))
+   [vimsical.vims :as vims]
+   [vimsical.frontend.router.handlers :as router.handlers]
+   [vimsical.frontend.router.routes :as router.routes]))
 
 (defn limit-title-length? [e]
   (let [txt             (-> e .-target .-innerHTML)
@@ -95,7 +97,6 @@
 (defn nav []
   (let
       [show-popup? (interop/ratom false)
-       route       (<sub [::app.subs/route])
        modal       (<sub [::app.subs/modal])
        {::user/keys [first-name last-name vimsae] :as user}
        (<sub [:q [:app/user
@@ -111,8 +112,8 @@
     [:div.main-nav.ac.jsb
      {:class (when modal "no-border")}
      [:div.logo-and-type
-      {:on-click (e> (re-frame/dispatch [::app.handlers/route :route/landing]))
-       :on-double-click (e> (re-frame/dispatch [::app.handlers/route :route/signup]))}
+      {:on-click        (e> (re-frame/dispatch [::router.handlers/route ::router.routes/landing]))
+       :on-double-click (e> (re-frame/dispatch [::router.handlers/route ::router.routes/signup]))}
       [:span.logo icons/vimsical-logo]
       [:span.type icons/vimsical-type]]
      (when app-vims

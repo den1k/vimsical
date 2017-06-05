@@ -2,6 +2,8 @@
   (:require [vimsical.frontend.util.content :as util.content]
             [vimsical.frontend.config :as config]
             [vimsical.frontend.code-editor.handlers :as code-editor.handlers]
+            [vimsical.frontend.router.handlers :as router.handlers]
+            [vimsical.frontend.router.routes :as router.routes]
             [vimsical.frontend.quick-search.handlers :as handlers]))
 
 (def commands
@@ -18,10 +20,10 @@
                              :dispatch [::code-editor.handlers/paste
                                         (util.content/lorem-ipsum 1)]}
          ["go to" "player"] {:title    "Go to Player"
-                             :dispatch [::handlers/go-to :route/player]}
+                             :dispatch [::router.handlers/route ::router.routes/player]}
 
          ["go to" "vcr"]    {:title    "Go to VCR"
-                             :dispatch [::handlers/go-to :route/vcr]}}
+                             :dispatch [::router.handlers/route ::router.routes/vcr]}}
         dev
         {["clear" "console"] {:title    "Clear JS Console"
                               :dispatch [::handlers/clear-console]}}]

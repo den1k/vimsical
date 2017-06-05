@@ -6,14 +6,9 @@
    [vimsical.vims :as vims]))
 
 (re-frame/reg-sub
- ::route
- (fn [db _]
-   (:app/route db)))
-
-(re-frame/reg-sub
  ::modal
  (fn [db _]
-    (:app/modal db)))
+   (:app/modal db)))
 
 (re-frame/reg-sub-raw
  ::user

@@ -3,7 +3,8 @@
    [re-frame.core :as re-frame]
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.remotes.backend.auth.commands :as auth.commands]
-   [vimsical.frontend.app.handlers :as app.handlers]))
+   [vimsical.frontend.router.handlers :as router.handlers]
+   [vimsical.frontend.router.routes :as router.routes]))
 
 ;;
 ;; * Signup
@@ -22,7 +23,7 @@
   [{:keys [db]} [_ user]]
   {:db (util.mg/add-linked-entities db {:app/user user})
    :dispatch
-   [::app.handlers/route :route/landing]})
+   [::router.handlers/route ::router.routes/landing]})
 
 (re-frame/reg-event-fx ::signup         signup-handler)
 (re-frame/reg-event-fx ::signup-success signup-success-handler)

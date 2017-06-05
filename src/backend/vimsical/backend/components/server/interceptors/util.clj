@@ -8,6 +8,9 @@
 (defn prepend-interceptors [service-map new]
   (update service-map ::http/interceptors prepend new))
 
+(defn append-interceptors [service-map new]
+  (update service-map ::http/interceptors concat new))
+
 (defn prepend-default-interceptors
   "Update the `::http/default-injectors` of `service-map` by prepending `new`."
   [service-map new]

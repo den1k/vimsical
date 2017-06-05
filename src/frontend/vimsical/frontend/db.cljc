@@ -7,7 +7,8 @@
    [vimsical.frontend.quick-search.commands :as quick-search.commands]
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.vcs.compiler :as compiler]
-   [vimsical.vcs.lib :as lib]))
+   [vimsical.vcs.lib :as lib]
+   [vimsical.frontend.router.routes :as router.routes]))
 
 (def js-libs
   [{:db/uid        (uuid :lib-js-jquery)
@@ -36,7 +37,7 @@
                       :quick-search/filter-category-idx nil}
    :app/libs         js-libs
    :app/compilers    compilers
-   :app/route        :route/landing
+   :app/route        (router.routes/new-route ::router.routes/landing)
    :app/modal        nil})
 
 ;;
