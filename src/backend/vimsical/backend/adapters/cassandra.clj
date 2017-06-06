@@ -1,7 +1,7 @@
 (ns vimsical.backend.adapters.cassandra
   (:require
    [clojure.core.async :as async]
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [com.stuartsierra.component :as cp]
    [qbits.alia :as alia]
    [qbits.alia.async :as alia.async]

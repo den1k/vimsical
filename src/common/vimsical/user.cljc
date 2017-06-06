@@ -1,6 +1,6 @@
 (ns vimsical.user
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vims :as vims]
    [vimsical.user.settings :as settings]))
 

@@ -1,6 +1,6 @@
 (ns vimsical.backend.handlers.multi-test
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [clojure.test :as t]
    [orchestra.spec.test :as st]
    [vimsical.backend.handlers.multi :as sut]))

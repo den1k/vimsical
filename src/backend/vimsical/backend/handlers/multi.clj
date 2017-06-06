@@ -1,6 +1,6 @@
 (ns vimsical.backend.handlers.multi
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [io.pedestal.interceptor.chain :as interceptor.chain]
    [vimsical.remotes.event :as event]
    [vimsical.backend.util.async :as async]

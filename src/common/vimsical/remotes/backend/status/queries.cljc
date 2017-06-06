@@ -1,6 +1,6 @@
 (ns vimsical.remotes.backend.status.queries
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.remotes.event :as event]))
 
 (s/def ::status #{:ok})

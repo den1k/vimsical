@@ -44,7 +44,7 @@
 
 (comment
   (do
-    (require '[clojure.spec.test :as st])
-    (st/instrument)
-    (s/check-asserts true))
+      (require '[clojure.spec.test.alpha :as st])
+      (st/instrument)
+      (s/check-asserts true))
   (st/instrument))

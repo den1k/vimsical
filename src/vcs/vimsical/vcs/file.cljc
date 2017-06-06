@@ -1,6 +1,6 @@
 (ns vimsical.vcs.file
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.common.util.core :as util]
    [vimsical.vcs.compiler :as compiler]))
 

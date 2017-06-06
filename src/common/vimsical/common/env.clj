@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [reset!])
   (:require
    [clojure.java.io :as io]
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [environ.core :as env]))
 

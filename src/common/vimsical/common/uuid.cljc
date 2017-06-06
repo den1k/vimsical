@@ -1,12 +1,13 @@
 (ns vimsical.common.uuid
   #?@(:clj
-      [(:require [clojure.spec :as s])
+      [
+       (:require [clojure.spec.alpha :as s])
        (:import java.util.UUID)]
       :cljs
       [(:refer-clojure :exclude [uuid])
        (:require
         [cljs-uuid-utils.core :as uuid]
-        [clojure.spec :as s])]))
+        [clojure.spec.alpha :as s])]))
 
 (s/def :db/uid uuid?)
 

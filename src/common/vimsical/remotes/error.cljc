@@ -1,6 +1,6 @@
 (ns vimsical.remotes.error
   (:require
-   [clojure.spec :as s]))
+   [clojure.spec.alpha :as s]))
 
 (s/def ::remote keyword?)
 

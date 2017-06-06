@@ -1,6 +1,7 @@
 (defproject vimsical "0.1.0-SNAPSHOT"
   :dependencies
-  [[org.clojure/clojure "1.9.0-alpha15"]]
+  [[org.clojure/clojure "1.9.0-alpha17"]
+   [org.clojure/spec.alpha "0.1.123"]]
 
   :source-paths []                      ; ignore src/ in all profiles
   :test-paths []
@@ -13,7 +14,7 @@
   {:dev
    [{:dependencies
      ;; Help CIDER find the Java code in Clojure
-     [[org.clojure/clojure "1.9.0-alpha15" :classifier "sources"]]
+     [[org.clojure/clojure "1.9.0-alpha17" :classifier "sources"]]
      :plugins
      [[lein-pprint "1.1.2"]             ; lein with-profile frontend-dev pprint
       [lein-environ "1.1.0"]]}]
@@ -21,7 +22,7 @@
    :test
    {:dependencies
     [[org.clojure/test.check "0.9.0"]
-     [orchestra "0.2.0"]]
+     [orchestra "0.3.0"]]
     :global-vars
     {*assert* true *warn-on-reflection* false *unchecked-math* false}}
 
@@ -44,9 +45,9 @@
    {:source-paths ["src/common"]
     :dependencies [[com.cognitect/transit-clj "0.8.300"]
                    [com.cognitect/transit-cljs "0.8.239"]
-                   [org.clojure/core.async "0.3.442"]
+                   [org.clojure/core.async "0.3.443"]
                    [com.stuartsierra/component "0.3.2"]
-                   [medley "0.8.4"]
+                   [medley "1.0.0"]
                    [environ "1.1.0"]
                    [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]]}
    ;;
@@ -105,12 +106,12 @@
    {:source-paths ["src/frontend"]
     :plugins      [[lein-cljsbuild "1.1.5"
                     :exclusions [org.apache.commons/commons-compress]]]
-    :dependencies [[org.clojure/clojurescript "1.9.518" :exclusions [org.clojure/tools.reader]]
+    :dependencies [[org.clojure/clojurescript "1.9.562" :exclusions [org.clojure/tools.reader]]
                    ;; Our mapgraph fork. Must be be symlinked in checkouts.
                    [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
-                   [reagent "0.6.1" :exclusions [org.clojure/clojurescript]]
-                   [re-frame "0.9.2" :exclusions [org.clojure/clojurescript]]
-                   [re-com "2.0.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
+                   [reagent "0.6.2" :exclusions [org.clojure/clojurescript]]
+                   [re-frame "0.9.4" :exclusions [org.clojure/clojurescript]]
+                   [re-com "2.1.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
                    ;; this package does not have externs
                    [cljsjs/babel-standalone "6.18.1-2"]
                    [thi.ng/color "1.2.0"]]}
@@ -120,12 +121,12 @@
     :plugins      [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]]
     :dependencies [[com.cemerick/piggieback "0.2.2-SNAPSHOT"]
                    [figwheel-sidecar "0.5.10" :exclusions [org.clojure/clojurescript]]
-                   [re-frisk "0.4.4" :exclusions [re-frame org.clojure/clojurescript]]
+                   [re-frisk "0.4.5" :exclusions [re-frame org.clojure/clojurescript]]
                    ;; needed as a dep for re-frame.trace
-                   [binaryage/devtools "0.8.3"]
+                   [binaryage/devtools "0.9.4"]
                    ;; re-frame.trace - clone and install to use
                    ;; https://github.com/Day8/re-frame-trace
-                   [day8.re-frame/abra "0.0.9-SNAPSHOT" :exclusions [re-frame reagent org.clojure/clojurescript]]
+                   [day8.re-frame/abra "0.0.9" :exclusions [re-frame reagent org.clojure/clojurescript]]
                    [org.clojure/tools.nrepl "0.2.13"]]
     :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
 
@@ -151,7 +152,7 @@
      :test-paths   ^{:protect false} ["test/integration"]
      :dependencies [[day8.re-frame/test "0.1.5" :exclusions [re-frame org.clojure/clojurescript]]
                     ;; Need more exclusions because guava conflicts with datomic
-                    [org.clojure/clojurescript "1.9.518" :exclusions [com.google.guava/guava org.clojure/tools.reader]]]}
+                    [org.clojure/clojurescript "1.9.562" :exclusions [com.google.guava/guava org.clojure/tools.reader]]]}
     :-frontend-config
     :env.frontend/dev
     :backend-test
@@ -170,8 +171,9 @@
    {:plugins      [[lein-garden "0.2.8" :exclusions [org.clojure/clojure]]]
     :dependencies [[garden "1.3.2"]
                    ;; Added this to fix a compilation issue with garden
-                   [ns-tracker "0.3.0"]]
-    :prep-tasks   [["garden" "once"]]}
+                   [ns-tracker "0.3.1"]]
+    ;:prep-tasks   [["garden" "once"]]
+    }
 
    :css
    [:-css-dev-config
@@ -218,7 +220,8 @@
                       ;; be useful when debugging issues in the optimized
                       ;; JavaScript and can aid in finding missing
                       ;; externs. Defaults to false.
-                      :pseudo-names    false}}
+                      :pseudo-names    false
+                      :infer-externs   true}}
       {:id           "dev"
        :figwheel     {:on-jsload vimsical.frontend.dev/on-reload}
        :source-paths ["checkouts/mapgraph/src" "dev/frontend" "src/frontend" "src/common" "src/vcs" "dev/frontend"]

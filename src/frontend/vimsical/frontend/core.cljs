@@ -1,6 +1,6 @@
 (ns vimsical.frontend.core
   (:require
-   [clojure.spec.test :as st]
+   [clojure.spec.test.alpha :as st]
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
    [vimsical.frontend.remotes.fx]      ;; side-effects

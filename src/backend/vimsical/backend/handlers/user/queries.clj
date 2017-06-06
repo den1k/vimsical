@@ -1,7 +1,7 @@
 (ns vimsical.backend.handlers.user.queries
   (:require
    [clojure.core.async :as a]
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.backend.components.datomic :as datomic]
    [vimsical.backend.components.server.interceptors.event-auth :as event-auth]
    [vimsical.backend.components.snapshot-store :as snapshot-store]

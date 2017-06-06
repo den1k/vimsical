@@ -1,6 +1,6 @@
 (ns vimsical.frontend.remotes.fx
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [re-frame.core :as re-frame]
    [re-frame.loggers :as re-frame.loggers]
    [re-frame.interop :as interop]

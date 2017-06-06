@@ -1,7 +1,7 @@
 (ns vimsical.vcs.branch
   (:refer-clojure :exclude [ancestors common-ancestors])
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.common.core :as common :refer [=by some-val]]
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.file :as file]

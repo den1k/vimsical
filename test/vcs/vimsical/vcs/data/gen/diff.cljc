@@ -2,7 +2,7 @@
   "This ns provides the building blocks for programatically generating edit
   events by diffing strings."
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [diffit.vec :as diffit]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.core :as vcs]

@@ -1,6 +1,6 @@
 (ns vimsical.remotes.backend.vcs.commands
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.remotes.event :as event]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]))

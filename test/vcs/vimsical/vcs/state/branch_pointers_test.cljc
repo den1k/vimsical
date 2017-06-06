@@ -7,7 +7,7 @@
         [vimsical.vcs.state.branch-pointers :as sut])]
       :cljs
       [(:require
-        [clojure.spec.test :as st]
+        [clojure.spec.test.alpha :as st]
         [clojure.test :as t :refer-macros [deftest is]]
         [vimsical.vcs.examples :as examples]
         [vimsical.vcs.state.branch-pointers :as sut])]))

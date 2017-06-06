@@ -2,7 +2,7 @@
   (:require
    ;; [vimsical.vcs.edit-event :as edit-event]
    ;; [vimsical.vcs.delta :as delta]
-   [clojure.spec :as s]))
+   [clojure.spec.alpha :as s]))
 
 
 (s/def ::uuid-fn      ifn?)

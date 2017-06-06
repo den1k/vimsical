@@ -8,7 +8,7 @@
       :cljs
       [(:require
         [cljs.test :as t :refer [deftest is testing]]
-        [clojure.spec.test :as st]
+        [clojure.spec.test.alpha :as st]
         [vimsical.common.test :refer [uuid]]
         [vimsical.vcs.alg.topo :as sut])]))
 

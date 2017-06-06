@@ -1,6 +1,6 @@
 (ns vimsical.integration.remotes.backend.vims.queries-test
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [clojure.test :refer [deftest is use-fixtures]]
    [com.stuartsierra.mapgraph :as mg]
    [day8.re-frame.test :as re-frame.test]

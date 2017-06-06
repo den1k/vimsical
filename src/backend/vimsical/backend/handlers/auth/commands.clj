@@ -1,6 +1,6 @@
 (ns vimsical.backend.handlers.auth.commands
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.backend.components.datomic :as datomic]
    [vimsical.backend.components.session-store :as session-store]
    [vimsical.backend.handlers.multi :as multi]

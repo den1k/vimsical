@@ -4,7 +4,7 @@
   or omitting 0: test for identical? return values."
   #?@(:clj
       [(:require
-        [clojure.spec :as s]
+        [clojure.spec.alpha :as s]
         [clojure.test :as t :refer [testing]]
         [clojure.test.check.clojure-test :as tc :refer [defspec]]
         [clojure.test.check.generators :as gen]
@@ -14,8 +14,8 @@
         [vimsical.vcs.data.splittable :as sut])]
       :cljs
       [(:require
-        [clojure.spec :as s]
-        [clojure.spec.test :as st]
+        [clojure.spec.alpha :as s]
+        [clojure.spec.test.alpha :as st]
         [cljs.test :as t :refer-macros [deftest is testing]]
         [clojure.test.check.clojure-test :as tc :refer-macros [defspec]]
         [clojure.test.check.generators :as gen]

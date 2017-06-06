@@ -2,7 +2,7 @@
   (:require
    [clojure.core.async :as a]
    [clojure.core.async.impl.protocols :as ap]
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [com.stuartsierra.component :as cp]
    [vimsical.backend.adapters.cassandra.protocol :as cassandra]
    [vimsical.backend.components.delta-store.protocol :as protocol]

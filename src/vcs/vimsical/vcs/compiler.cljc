@@ -1,6 +1,6 @@
 (ns vimsical.vcs.compiler
   (:require
-   [clojure.spec :as s]))
+   [clojure.spec.alpha :as s]))
 
 (def sub-types #{:babel})
 (def to-sub-types #{:javascript})

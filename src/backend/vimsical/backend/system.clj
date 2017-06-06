@@ -3,7 +3,7 @@
   - Have a strategy to measure latency and throughput
   - Add an nRepl server component for prod"
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [com.stuartsierra.component :as cp]
    [vimsical.backend.adapters.cassandra :as cassandra]
    [vimsical.backend.adapters.cassandra.cluster :as cassandra-cluster]

@@ -1,6 +1,6 @@
 (ns vimsical.backend.components.datomic
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [clojure.java.io :as io]
    [com.stuartsierra.component :as cp]
    [datomic.api :as d]

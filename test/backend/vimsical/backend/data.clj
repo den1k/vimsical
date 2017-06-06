@@ -1,6 +1,6 @@
 (ns vimsical.backend.data
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.common.test :as uuid :refer [uuid]]
    [vimsical.common.util.core :as util]
    [vimsical.user :as user]

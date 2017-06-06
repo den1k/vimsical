@@ -1,6 +1,6 @@
 (ns vimsical.backend.components.server-test
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [clojure.test :refer [deftest is use-fixtures]]
    [orchestra.spec.test :as st]
    [vimsical.common.util.transit :as transit]

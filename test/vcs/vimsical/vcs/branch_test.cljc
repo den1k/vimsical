@@ -7,7 +7,7 @@
         [vimsical.vcs.examples :as examples])]
       :cljs
       [(:require
-        [clojure.spec.test :as st]
+        [clojure.spec.test.alpha :as st]
         [clojure.test :as t :refer-macros [are deftest is]]
         [vimsical.vcs.branch :as sut]
         [vimsical.vcs.examples :as examples])]))

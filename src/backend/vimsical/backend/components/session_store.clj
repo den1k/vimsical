@@ -1,7 +1,7 @@
 (ns vimsical.backend.components.session-store
   (:require
    [vimsical.backend.util.log :as log]
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [ring.middleware.session.store :as store]
    [taoensso.carmine :as car]
    [vimsical.backend.adapters.redis :as redis]

@@ -1,6 +1,6 @@
 (ns vimsical.vcs.state.deltas
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.alg.topo :as topo]
    [vimsical.vcs.delta :as delta]))
 

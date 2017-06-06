@@ -1,7 +1,7 @@
 (ns vimsical.vcs.data.indexed.vector-test
   #?@(:clj
       [(:require
-        [clojure.spec :as s]
+        [clojure.spec.alpha :as s]
         [clojure.test :refer [are deftest is testing]]
         [orchestra.spec.test :as st]
         [vimsical.vcs.data.indexed.vector :as sut]
@@ -9,8 +9,8 @@
       :cljs
       [(:require
         [cljs.test :refer-macros [are deftest is testing]]
-        [clojure.spec :as s]
-        [clojure.spec.test :as st]
+        [clojure.spec.alpha :as s]
+        [clojure.spec.test.alpha :as st]
         [vimsical.vcs.data.indexed.vector :as sut]
         [vimsical.vcs.data.splittable :as splittable])]))
 

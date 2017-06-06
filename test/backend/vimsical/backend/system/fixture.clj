@@ -1,7 +1,7 @@
 (ns vimsical.backend.system.fixture
   (:require
    [clojure.core.async :as async]
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.common.test :refer [uuid]]
    [com.stuartsierra.component :as cp]
    [io.pedestal.http :as http]

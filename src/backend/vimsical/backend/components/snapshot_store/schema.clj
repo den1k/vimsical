@@ -1,6 +1,6 @@
 (ns vimsical.backend.components.snapshot-store.schema
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.backend.adapters.cassandra.cql :as cql]
    [vimsical.user :as user]
    [vimsical.vcs.branch :as branch]

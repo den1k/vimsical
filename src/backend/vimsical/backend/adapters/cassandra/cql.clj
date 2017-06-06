@@ -1,6 +1,6 @@
 (ns vimsical.backend.adapters.cassandra.cql
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.backend.adapters.cassandra.util :as util]
    [qbits.hayt :as cql]))
 
