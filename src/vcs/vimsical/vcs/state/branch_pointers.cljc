@@ -1,7 +1,7 @@
 (ns vimsical.vcs.state.branch-pointers
   "Keep track of the start and end deltas for each branch."
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]))
 

@@ -1,5 +1,5 @@
 (ns vimsical.frontend.config
-  (:require [clojure.spec :as s]))
+  (:require [clojure.spec.alpha :as s]))
 
 (def debug?
   #?(:clj  false

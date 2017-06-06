@@ -1,6 +1,6 @@
 (ns vimsical.backend.handlers.vcs.queries
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.backend.components.delta-store :as delta-store]
    [vimsical.backend.components.delta-store.protocol :as delta-store.protocol]
    [vimsical.vcs.validation :as vcs.validation]

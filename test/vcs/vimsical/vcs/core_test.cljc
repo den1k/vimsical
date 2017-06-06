@@ -12,7 +12,7 @@
         [vimsical.vcs.examples :as examples])]
       :cljs
       [(:require
-        [clojure.spec.test :as st]
+        [clojure.spec.test.alpha :as st]
         [clojure.test :as t :refer-macros [are deftest is testing]]
         [vimsical.common.test :refer [uuid uuid-fixture uuid-gen]]
         [vimsical.vcs.core :as sut]

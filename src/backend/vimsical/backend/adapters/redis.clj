@@ -1,6 +1,6 @@
 (ns vimsical.backend.adapters.redis
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [com.stuartsierra.component :as cp]
    [taoensso.carmine :as car :refer [wcar]]))
 

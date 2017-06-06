@@ -1,6 +1,6 @@
 (ns vimsical.vcs.edit-event
   (:require
-   [clojure.spec :as s]))
+   [clojure.spec.alpha :as s]))
 
 (s/def ::op #{:str/ins :str/rem :str/rplc :crsr/mv :crsr/sel})
 (s/def ::amt pos-int?)

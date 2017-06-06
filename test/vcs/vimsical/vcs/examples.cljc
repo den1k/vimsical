@@ -1,6 +1,6 @@
 (ns vimsical.vcs.examples
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.common.test :refer [uuid]]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.data.indexed.vector :as indexed]

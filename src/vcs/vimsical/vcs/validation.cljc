@@ -1,6 +1,6 @@
 (ns vimsical.vcs.validation
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [net.cgrand.xforms :as x]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]))

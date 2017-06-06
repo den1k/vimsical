@@ -23,7 +23,7 @@
   events?
   "
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.edit-event :as edit-event]

@@ -1,6 +1,6 @@
 (ns vimsical.vcs.state.chunks
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.common.util.core :as util]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.state.chunk :as chunk]))

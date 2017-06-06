@@ -7,7 +7,7 @@
   "
 
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [com.stuartsierra.component :as component]
    [io.pedestal.http :as http]
    [vimsical.backend.components.server.interceptors.deps :as interceptors.deps]

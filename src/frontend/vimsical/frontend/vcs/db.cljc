@@ -1,6 +1,6 @@
 (ns vimsical.frontend.vcs.db
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]

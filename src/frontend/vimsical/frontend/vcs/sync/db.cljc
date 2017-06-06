@@ -1,6 +1,6 @@
 (ns vimsical.frontend.vcs.sync.db
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [re-frame.interceptor :as interceptor]
    [re-frame.std-interceptors :as std-interceptors]
    [vimsical.vcs.branch :as branch]

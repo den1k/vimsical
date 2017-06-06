@@ -1,6 +1,6 @@
 (ns vimsical.backend.components.server.test
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [io.pedestal.test :as pedestal.test]
    [vimsical.backend.components.service :as service]
    [vimsical.backend.components.session-store :as session-store]

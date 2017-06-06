@@ -1,7 +1,7 @@
 (ns vimsical.frontend.util.scheduler
   "Simple dispatch scheduler for re-frame."
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [clojure.data.avl :as avl]
    [re-frame.core :as re-frame]))
 

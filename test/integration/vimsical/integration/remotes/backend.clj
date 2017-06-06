@@ -1,6 +1,6 @@
 (ns vimsical.integration.remotes.backend
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.backend.components.server.test :as server.test]
    [vimsical.backend.util.log :as log]
    [vimsical.common.env :as env]

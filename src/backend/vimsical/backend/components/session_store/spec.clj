@@ -1,6 +1,6 @@
 (ns vimsical.backend.components.session-store.spec
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.validation :as vcs.validation]
    [vimsical.user :as user]
    [vimsical.vims :as vims]))

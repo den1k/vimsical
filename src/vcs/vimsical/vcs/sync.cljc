@@ -1,6 +1,6 @@
 (ns vimsical.vcs.sync
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.data.indexed.vector :as indexed]
    [vimsical.vcs.data.splittable :as splittable]

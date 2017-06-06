@@ -1,7 +1,7 @@
 (ns vimsical.remotes.backend.vims.queries
   (:require
-   [clojure.spec :as s]
-   #?(:clj    [clojure.core.async.impl.protocols :as ap])
+   [clojure.spec.alpha :as s]
+   #?(:clj [clojure.core.async.impl.protocols :as ap])
    [vimsical.remotes.event :as event]
    [vimsical.vcs.delta :as delta]
    [vimsical.vims :as vims]))

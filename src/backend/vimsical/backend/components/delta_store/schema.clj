@@ -1,6 +1,6 @@
 (ns vimsical.backend.components.delta-store.schema
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.backend.adapters.cassandra.cql :as cql]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]

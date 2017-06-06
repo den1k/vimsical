@@ -1,6 +1,6 @@
 (ns vimsical.vcs.delta
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.op :as op]))
 
 ;;

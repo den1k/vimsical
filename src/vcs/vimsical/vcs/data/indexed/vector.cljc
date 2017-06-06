@@ -24,7 +24,7 @@
   offset it anyway."
   (:refer-clojure :exclude [vec vector vector?])
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.data.indexed.vector-impl :as impl]
    [vimsical.vcs.data.splittable :as splittable]
    #?(:clj [clojure.pprint :as pprint])))

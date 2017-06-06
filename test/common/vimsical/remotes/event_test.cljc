@@ -1,6 +1,6 @@
 (ns vimsical.remotes.event-test
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.remotes.backend.auth.commands :as commands]
    #?(:clj [orchestra.spec.test :as st])
    [vimsical.remotes.event :as sut]

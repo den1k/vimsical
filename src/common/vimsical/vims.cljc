@@ -1,6 +1,6 @@
 (ns vimsical.vims
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.branch :as vcs.branch]
    [vimsical.vcs.snapshot :as vcs.snapshot]
    [vimsical.common.util.core :as util]

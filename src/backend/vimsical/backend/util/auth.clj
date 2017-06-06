@@ -1,7 +1,7 @@
 (ns vimsical.backend.util.auth
   (:require
    [buddy.hashers :as hashers]
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.user :as user]))
 
 ;;

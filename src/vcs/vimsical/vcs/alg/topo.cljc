@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [sort sorted?])
   (:require
    [clojure.set :as set]
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.common.coll :as coll]
    [vimsical.common.core :refer [=by]]
    [vimsical.vcs.delta :as delta]))

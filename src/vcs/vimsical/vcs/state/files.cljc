@@ -1,7 +1,7 @@
 (ns vimsical.vcs.state.files
   "Keep track of the deltas, string and cursor position for files."
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.data.indexed.vector :as indexed]
    [vimsical.vcs.data.splittable :as splittable]

@@ -62,7 +62,7 @@
   "
   (:require
    [clojure.data.avl :as avl]
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.state.chunks :as state.chunks]
    [vimsical.vcs.alg.traversal :as traversal]
    [vimsical.vcs.branch :as branch]

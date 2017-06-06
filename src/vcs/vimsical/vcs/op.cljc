@@ -1,6 +1,6 @@
 (ns vimsical.vcs.op
   (:require
-   [clojure.spec :as s]))
+   [clojure.spec.alpha :as s]))
 
 (s/def ::uid (s/nilable uuid?))
 (s/def ::amt pos-int?)

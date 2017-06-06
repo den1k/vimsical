@@ -1,7 +1,7 @@
 (ns vimsical.vcs.state.branches
   "Keep track of the deltas for a branch"
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.alg.topo :as topo]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.data.indexed.vector :as indexed]

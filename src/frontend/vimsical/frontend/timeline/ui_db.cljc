@@ -1,5 +1,5 @@
 (ns vimsical.frontend.timeline.ui-db
-  (:require [clojure.spec :as s]))
+  (:require [clojure.spec.alpha :as s]))
 
 (s/def ::playhead (s/nilable number?))
 (s/def ::skimhead (s/nilable number?))

@@ -1,6 +1,6 @@
 (ns vimsical.common.env-cljs
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.common.env :as env]))
 
 (s/def ::boolean ::env/boolean)

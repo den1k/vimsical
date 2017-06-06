@@ -1,7 +1,7 @@
 (ns vimsical.vcs.data.indexed.vector-impl
   (:refer-clojure :exclude [vec vector vector?])
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.data.splittable :as splittable]))
 
 ;;

@@ -1,5 +1,5 @@
 (ns vimsical.remotes.event
-  (:require [clojure.spec :as s]))
+  (:require [clojure.spec.alpha :as s]))
 
 ;;
 ;; * Internal event spec

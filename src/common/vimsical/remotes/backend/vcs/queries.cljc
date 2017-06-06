@@ -1,5 +1,5 @@
 (ns vimsical.remotes.backend.vcs.queries
-  (:require [clojure.spec :as s]
+  (:require [clojure.spec.alpha :as s]
             [vimsical.remotes.event :as event]
             [vimsical.vims :as vims]))
 

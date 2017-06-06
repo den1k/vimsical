@@ -1,6 +1,6 @@
 (ns vimsical.backend.adapters.cassandra.cluster
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [com.stuartsierra.component :as cp]
    [qbits.alia.policy.load-balancing :as balance]
    [qbits.alia.policy.retry :as retry])

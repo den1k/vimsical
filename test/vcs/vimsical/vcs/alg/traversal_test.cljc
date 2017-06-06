@@ -11,7 +11,7 @@
       :cljs
       [(:require
         [cljs.test :as t :refer-macros [are deftest is testing]]
-        [clojure.spec.test :as st]
+        [clojure.spec.test.alpha :as st]
         [vimsical.common.test :refer [uuid]]
         [vimsical.vcs.alg.traversal :as sut]
         [vimsical.vcs.branch :as branch]

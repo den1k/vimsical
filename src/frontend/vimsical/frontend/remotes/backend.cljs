@@ -1,7 +1,7 @@
 (ns vimsical.frontend.remotes.backend
   (:require
    [clojure.pprint :as pprint]
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.common.util.transit :as transit]
    [vimsical.frontend.remotes.remote :as remote]
    [vimsical.frontend.util.xhr :as xhr]

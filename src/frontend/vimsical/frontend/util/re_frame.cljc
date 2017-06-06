@@ -6,7 +6,7 @@
    [vimsical.common.uuid :as uuid]
    [vimsical.common.util.core :as util #?@(:cljs [:include-macros true])]
    [vimsical.frontend.util.scheduler :as scheduler]
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    #?@(:cljs [[reagent.ratom :as ratom]])))
 
 #?(:clj

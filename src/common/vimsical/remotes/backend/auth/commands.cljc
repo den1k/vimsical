@@ -1,6 +1,6 @@
 (ns vimsical.remotes.backend.auth.commands
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.remotes.event :as event]
    [vimsical.user :as user]))
 

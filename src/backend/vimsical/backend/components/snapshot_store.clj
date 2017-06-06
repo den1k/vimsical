@@ -1,6 +1,6 @@
 (ns vimsical.backend.components.snapshot-store
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [com.stuartsierra.component :as cp]
    [vimsical.backend.adapters.cassandra.protocol :as cassandra]
    [vimsical.backend.adapters.cassandra.util :as cassandra.util]

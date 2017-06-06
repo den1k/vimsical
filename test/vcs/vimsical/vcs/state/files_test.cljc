@@ -11,7 +11,7 @@
         [vimsical.vcs.state.files :as sut])]
       :cljs
       [(:require
-        [clojure.spec.test :as st]
+        [clojure.spec.test.alpha :as st]
         [clojure.test :as t :refer-macros [deftest is testing]]
         [vimsical.common.test :refer [uuid]]
         [vimsical.vcs.alg.topo :as topo]

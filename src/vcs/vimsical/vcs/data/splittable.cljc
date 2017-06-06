@@ -1,7 +1,7 @@
 (ns vimsical.vcs.data.splittable
   (:refer-clojure :exclude [interleave])
   (:require
-   [clojure.spec :as s]))
+   [clojure.spec.alpha :as s]))
 
 ;;
 ;; * Split

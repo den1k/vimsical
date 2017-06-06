@@ -3,7 +3,7 @@
   snapshot per file. Later we can fill in the current delta-id to keep multiple
   versions."
   (:require
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.file :as file]
    [vimsical.common.util.core :as util]))

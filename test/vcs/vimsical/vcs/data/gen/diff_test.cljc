@@ -11,7 +11,7 @@
         [vimsical.vcs.editor :as editor])]
       :cljs
       [(:require
-        [clojure.spec.test :as st]
+        [clojure.spec.test.alpha :as st]
         [clojure.test :as t :refer-macros [deftest is]]
         [vimsical.common.test :refer [uuid uuid-gen uuid-fixture]]
         [vimsical.vcs.core :as vcs]
