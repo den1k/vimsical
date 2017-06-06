@@ -47,7 +47,7 @@
 
 (defn login-error-event-fx
   [{:keys [db]} [_ error]]
-  (println "Login error" error))
+  (re-frame.loggers/console :log "Login error" error))
 
 (re-frame/reg-event-fx ::login         login-event-fx)
 (re-frame/reg-event-fx ::login-success login-success-event-fx)

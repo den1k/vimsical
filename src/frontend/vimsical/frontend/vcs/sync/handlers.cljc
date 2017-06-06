@@ -68,7 +68,7 @@
      ;; Diff it against the current state of the vcs
      (if-some [deltas (vcs.sync/diff-deltas vcs delta-by-branch-uid)]
        ;; If we have some diffed deltas, send them to the backend
-       (do (println "Syncing " (count deltas) " deltas...")
+       (do (re-frame.loggers/console :log "Syncing " (count deltas) " deltas...")
            {:remote
             {:id               :backend
              :event            [::commands/add-deltas vims-uid deltas]
@@ -84,7 +84,7 @@
    ;; If we successfully synced some deltas we need to update the sync state to
    ;; point to the deltas that we just synced
    (when (seq ?deltas)
-     (println "Sync success")
+     (re-frame.loggers/console :log "Sync success")
      (let [path (db/path vims-uid ::db/delta-by-branch-uid)]
        {:db (update-in db path vcs.validation/update-delta-by-branch-uid ?deltas)}))))
 

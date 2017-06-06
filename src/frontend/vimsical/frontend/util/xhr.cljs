@@ -1,14 +1,15 @@
 (ns vimsical.frontend.util.xhr
   "Success cb: remote, event, data
-  Error cb: remote, event , errorn
-  "
+  Error cb: remote, event , errorn"
   (:require
    [clojure.string :as str]
    [goog.dom :as gdom]
    [goog.events :as gevents]
    [goog.net.EventType :as EventType])
   (:require-macros
-   [vimsical.common.env-cljs :as env :refer [optional]]))
+   [vimsical.common.env-cljs :as env :refer [optional]])
+  (:import goog.Uri
+           [goog.net XhrIo]))
 
 ;;
 ;; * HTTP Helpers
@@ -21,7 +22,7 @@
 (defn- new-uri
   [{:keys [protocol host port path]}]
   (str
-   (doto (goog.Uri.)
+   (doto (Uri.)
      (.setScheme protocol)
      (.setDomain host)
      (.setPort port)
@@ -61,7 +62,7 @@
 
 (defn new-post-request
   [uri post-body headers success-cb error-cb]
-  (doto (goog.net.XhrIo.)
+  (doto (XhrIo.)
     ;; This option is required to get the session to work with
     ;; CORS. Won't be necessary if we move the cljs server to the API.
     (.setWithCredentials true)

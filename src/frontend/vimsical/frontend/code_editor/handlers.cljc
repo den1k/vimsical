@@ -16,11 +16,6 @@
    [vimsical.vcs.file :as file]
    [vimsical.vims :as vims]))
 
-(defn- set-model-language [file editor-instance]
-  #?(:cljs
-     (let [model (.-model editor-instance)]
-       (.. js/monaco -editor (setModelLanguage model (interop/file-lang file))))))
-
 ;;
 ;; * Model listeners
 ;;
@@ -78,7 +73,7 @@
  (fn [{:keys       [ui-db]
        ::subs/keys [playhead-string]} [_ {:keys [vims file] :as opts}]]
    (let [editor    (ui-db/get-editor ui-db vims file)
-         _         (set-model-language file editor)
+         _         (interop/set-model-language file editor)
          listeners (new-listeners vims file editor)]
      {:ui-db      (ui-db/set-listeners ui-db vims file listeners)
       :dispatch-n [[::set-string vims nil file playhead-string]
@@ -110,9 +105,11 @@
  ::dispose
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ {:keys [vims file]}]]
-   (interop/dispose-editor (ui-db/get-editor ui-db vims file))
-   {:dispatch-n [[::clear-disposables vims file]
-                 [::track-stop vims file]]}))
+   #?(:cljs
+      (do
+        (interop/dispose-editor (ui-db/get-editor ui-db vims file))
+        {:dispatch-n [[::clear-disposables vims file]
+                      [::track-stop vims file]]}))))
 
 ;;
 ;; * Listeners lifecycle
@@ -125,11 +122,7 @@
    #?(:cljs
       (if-some [disposables (ui-db/get-disposables ui-db vims file)]
         (do
-          ;; Clear disposables
-          (reduce-kv
-           (fn [_ k disposable]
-             (.dispose disposable))
-           nil disposables)
+          (interop/clear-disposables disposables)
           {:ui-db (ui-db/set-disposables ui-db vims file nil)})
         (console :error "disposables not found")))))
 
@@ -195,19 +188,21 @@
  ::content-change
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ vims file e]]
-   (let [editor     (ui-db/get-editor ui-db vims file)
-         model      (.-model editor)
-         edit-event (interop/parse-content-event model e)]
-     {:dispatch [::vcs.handlers/add-edit-event vims file edit-event]})))
+   #?(:cljs
+      (let [editor     (ui-db/get-editor ui-db vims file)
+            model      (.-model editor)
+            edit-event (interop/parse-content-event model e)]
+        {:dispatch [::vcs.handlers/add-edit-event vims file edit-event]}))))
 
 (re-frame/reg-event-fx
  ::cursor-change
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ vims file e]]
-   (let [editor     (ui-db/get-editor ui-db vims file)
-         model      (.-model editor)
-         edit-event (interop/parse-selection-event model e)]
-     {:dispatch [::vcs.handlers/add-edit-event vims file edit-event]})))
+   #?(:cljs
+      (let [editor     (ui-db/get-editor ui-db vims file)
+            model      (.-model editor)
+            edit-event (interop/parse-selection-event model e)]
+        {:dispatch [::vcs.handlers/add-edit-event vims file edit-event]}))))
 
 (re-frame/reg-event-fx
  ::focus
@@ -251,7 +246,7 @@
    [{:keys [ui-db]} [_ vims read-only? file string]]
    #?(:cljs
       (if-some [editor (ui-db/get-editor ui-db vims file)]
-        (do (.setValue editor string) nil)
+        (do (interop/set-value editor string) nil)
         (console :error "editor not found")))))
 
 (re-frame/reg-event-fx
@@ -262,9 +257,9 @@
    #?(:cljs
       (if-some [editor (ui-db/get-editor ui-db vims file)]
         (when-some [js-pos (some-> position interop/pos->js-pos)]
-          (.revealRange editor js-pos)
-          (.setSelection editor js-pos)
-          (.focus editor)
+          (interop/reveal-range editor js-pos)
+          (interop/set-selection editor js-pos)
+          (interop/focus editor)
           nil)
         (console :error "editor not found")))))
 

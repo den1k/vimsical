@@ -18,7 +18,8 @@
    [com.stuartsierra.mapgraph :as mg]
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.common.util.core :as util]
-   [vimsical.vcs.file :as file]))
+   [vimsical.vcs.file :as file])
+  #?(:cljs (:refer-clojure :exclude [uuid])))
 
 ;;
 ;; * New vims
@@ -29,8 +30,8 @@
 (defn- default-files
   ([] (default-files (uuid) (uuid) (uuid)))
   ([html-uid css-uid javascript-uid]
-   [(vcs.file/new-file html-uid       :text :html)
-    (vcs.file/new-file css-uid        :text :css)
+   [(vcs.file/new-file html-uid :text :html)
+    (vcs.file/new-file css-uid :text :css)
     (vcs.file/new-file javascript-uid :text :javascript)]))
 
 (defn new-event-fx
@@ -44,15 +45,15 @@
         db'       (util.mg/add db new-vims)]
     {:db db'
      :remote
-     {:id               :backend
-      :event            [::vims.commands/new new-vims]
-      :dispatch-success (fn [_] [::new-success new-vims])
-      :dispatch-error   (fn [error] [::new-error new-vims error])
-      :status-key       status-key}}))
+         {:id               :backend
+          :event            [::vims.commands/new new-vims]
+          :dispatch-success (fn [_] [::new-success new-vims])
+          :dispatch-error   (fn [error] [::new-error new-vims error])
+          :status-key       status-key}}))
 
 (re-frame/reg-event-fx ::new new-event-fx)
-(re-frame/reg-event-fx ::new-success (fn [_ _] (println "New vims success")))
-(re-frame/reg-event-fx ::new-error (fn [_ e] (println "Vims error" e)))
+(re-frame/reg-event-fx ::new-success (fn [_ _] (re-frame.loggers/console :log "New vims success")))
+(re-frame/reg-event-fx ::new-error (fn [_ e] (re-frame.loggers/console :log "Vims error" e)))
 
 ;;
 ;; * Title
@@ -65,14 +66,14 @@
         db'    (util.mg/add db vims')]
     {:db db'
      :remote
-     {:id               :backend
-      :event            [::vims.commands/title remote]
-      :dispatch-success (fn [_] [::title-success vims])
-      :dispatch-error   (fn [error] [::title-error vims error])
-      :status-key       status-key}}))
+         {:id               :backend
+          :event            [::vims.commands/title remote]
+          :dispatch-success (fn [_] [::title-success vims])
+          :dispatch-error   (fn [error] [::title-error vims error])
+          :status-key       status-key}}))
 
 (re-frame/reg-event-fx ::title title-event-fx)
-(re-frame/reg-event-fx ::title-success (fn [_ _] (println "title success")))
+(re-frame/reg-event-fx ::title-success (fn [_ _] (re-frame.loggers/console :log "title success")))
 
 ;;
 ;; * Snapshots
@@ -114,15 +115,15 @@
  (fn upload-snapshots-event-fx
    [{:keys [db]} [_ vims status-key]]
    ;; Pull the vims again since we know it is now stale
-   (let [vims-ref                  (util.mg/->ref db vims)
+   (let [vims-ref         (util.mg/->ref db vims)
          {::vims/keys [snapshots]} (mg/pull db [{::vims/snapshots ['*]}] vims-ref)
-         remote-snapshots          (mapv vcs.snapshot/->remote-snapshot snapshots)]
+         remote-snapshots (mapv vcs.snapshot/->remote-snapshot snapshots)]
      (when (seq remote-snapshots)
        {:remote
         {:id               :backend
          :event            [::vims.commands/update-snapshots remote-snapshots]
-         :dispatch-success (fn [resp] (println "SNAPSHOTS success"))
-         :dispatch-error   (fn [e] (println "SNAPSHOTS error" e))
+         :dispatch-success (fn [resp] (re-frame.loggers/console :log "SNAPSHOTS success"))
+         :dispatch-error   (fn [e] (re-frame.loggers/console :log "SNAPSHOTS error" e))
          :status-key       status-key}}))))
 
 ;;
@@ -145,7 +146,7 @@
   [{:keys [db]} [_ vims]]
   {:db (util.mg/add db vims)})
 
-(re-frame/reg-event-fx ::vims              vims-handler)
+(re-frame/reg-event-fx ::vims vims-handler)
 (re-frame/reg-event-fx ::vims.queries/vims vims-success-event-fx)
 
 ;;
