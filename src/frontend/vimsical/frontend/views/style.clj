@@ -2,6 +2,7 @@
 
 (def icons
   [:.logo-and-type {:display     :flex
+                    :flex-shrink 0
                     :align-items :center
                     :cursor      :pointer}
    [:.vimsical-logo {:height :36px

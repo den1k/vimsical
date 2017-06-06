@@ -83,25 +83,25 @@
    {:render
     (fn [c]
       (let [{:keys [vims]} (reagent/props c)
-            dur            (<sub [::timeline.subs/duration vims])
-            playhead       (<sub [::timeline.subs/playhead vims])
-            skimhead       (<sub [::timeline.subs/skimhead vims])
-            playhead-perc  (str (time->pct dur playhead) "%")
-            skimhead-perc  (when skimhead (str (time->pct dur skimhead) "%"))
+            dur           (<sub [::timeline.subs/duration vims])
+            playhead      (<sub [::timeline.subs/playhead vims])
+            skimhead      (<sub [::timeline.subs/skimhead vims])
+            playhead-perc (str (time->pct dur playhead) "%")
+            skimhead-perc (when skimhead (str (time->pct dur skimhead) "%"))
             ;; Urgh Flexbox behaves differently in Safari and Chrome inside
             ;; absolutely positioned elements
-            ios-or-safari? (or (= :safari util.dom/browser) (= :os util.dom/browser))]
+            ios?          (= :ios util.dom/operating-system)]
         [:div.timeline.ac.f1
          (cond-> (handlers c vims dur)
-           ios-or-safari? (assoc :class "dc jc"))
+           ios? (assoc :class "dc jc"))
          [:div.time.left
-          {:style (when ios-or-safari? {:margin-top -2})}] ; .progress class clashes with bootstrap
+          {:style (when ios? {:margin-top -2})}] ; .progress class clashes with bootstrap
          [:div.time.passed
-          {:style (cond-> {:width playhead-perc} ios-or-safari? (assoc :margin-top -2))}]
+          {:style (cond-> {:width playhead-perc} ios? (assoc :margin-top -2))}]
          [:div.head
           {:class (if skimhead "skimhead" "playhead")
            :style {:left       (or skimhead-perc playhead-perc)
-                   :margin-top (when ios-or-safari? (if skimhead -9 -8))}}]]))}))
+                   :margin-top (when ios? (if skimhead -9 -8))}}]]))}))
 
 (defn timeline-bar [{:keys [vims]}]
   [re-com/h-box

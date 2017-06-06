@@ -19,10 +19,13 @@
   (with-subs [route      [::subs/route]
               vims       [::subs/vims]
               modal      [::subs/modal]
-              on-mobile? [::ui.subs/on-mobile?]]
+              on-mobile? [::ui.subs/on-mobile?]
+              height     [::ui.subs/height]]
     [:div.app
      {:class    (str "route-" (name route))
-      :on-click (e> (re-frame/dispatch [::handlers/close-modal]))}
+      :on-click (e> (re-frame/dispatch [::handlers/close-modal]))
+      ;; height is set for landscape mode on mobile
+      :style    {:height height}}
      (when-not on-mobile? [nav])
      [views.modal/modal]
      [:div.main

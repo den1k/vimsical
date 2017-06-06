@@ -13,3 +13,9 @@
  :<- [::ui-db/ui-db]
  (fn [ui-db _]
    (:on-mobile? ui-db)))
+
+(re-frame/reg-sub
+ ::height
+ :<- [::ui-db/ui-db]
+ (fn [ui-db _]
+   (:height ui-db)))

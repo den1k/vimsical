@@ -182,10 +182,28 @@
         rxp        #"android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini"]
     (boolean (re-find rxp user-agent))))
 
+(def fullscreen-mode?
+  (boolean js/window.navigator.standalone))
+
 (def browser
   (let [user-agent (str/lower-case (.. js/window -navigator -userAgent))
-        rxp        #"chrome|safari|firefox"]
-    (or (some-> (re-find rxp user-agent) keyword) :os)))
+        rxp        #"chrome|safari|firefox"
+        ; chrome on ios
+        chrome?    (str/includes? user-agent "crios")]
+    (cond
+      chrome? :chrome
+      :else (some-> (re-find rxp user-agent) keyword))))
+
+(def operating-system
+  (let [mac-os-platforms #{"Macintosh" "MacIntel"}
+        win-os-platforms #{"Win32" "Win64" "Windows" "WinCE"}
+        ios-platforms    #{"iPhone" "iPad" "iPod"}
+        platform         js/window.navigator.platform]
+    (cond
+      (clojure.core/contains? mac-os-platforms platform) :macos
+      (clojure.core/contains? win-os-platforms platform) :windows
+      (clojure.core/contains? ios-platforms platform) :ios)))
 
 (defn first-touch->e [e]
   (get (.-targetTouches e) 0))
+

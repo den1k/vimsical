@@ -3,6 +3,8 @@
             [re-frame.core :as re-frame]
             [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
             [vimsical.frontend.quick-search.handlers :as quick-search.handlers]
+            [vimsical.frontend.util.re-frame :refer [<sub]]
+            [vimsical.frontend.ui.subs :as ui.subs]
             [vimsical.frontend.ui.handlers :as ui.handlers]))
 
 ;;
@@ -53,18 +55,29 @@
                              (re-frame/dispatch [::quick-search.handlers/toggle]))
       nil)))
 
-(defn handle-resize [& _]
+(defn handle-resize [_]
   (re-frame/dispatch [::ui.handlers/on-resize]))
 
+(defn handle-scroll [_]
+  (re-frame/dispatch [::ui.handlers/on-scroll]))
+
 (defn window-listeners []
-  (let [listeners {"keydown" handle-shortcut
-                   "resize"  handle-resize}]
+  (let [on-mobile? (<sub [::ui.subs/on-mobile?])
+        listeners  (cond-> {"keydown" handle-shortcut
+                            "resize"  handle-resize}
+                     on-mobile? (assoc "scroll" handle-scroll))]
     (reagent/create-class
      {:component-did-mount
-      #(doseq [[event-type handler] listeners]
-         (.addEventListener js/window event-type handler))
+      (fn [_]
+        (when on-mobile?
+          (re-frame/dispatch [::ui.handlers/track-orientation]))
+        (doseq [[event-type handler] listeners]
+          (.addEventListener js/window event-type handler)))
       :component-will-unmount
-      #(doseq [[event-type handler] listeners]
-         (.removeEventListener js/window event-type handler))
+      (fn []
+        (when on-mobile?
+          (re-frame/dispatch [::ui.handlers/untrack-orientation]))
+        (doseq [[event-type handler] listeners]
+          (.removeEventListener js/window event-type handler)))
       :render
       (fn [_] [:div])})))
