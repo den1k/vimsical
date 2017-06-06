@@ -7,7 +7,8 @@
 #?(:cljs
    (do
      (enable-console-print!)
-     (enable-re-frisk!)
+     ;; Breaks async-flow-fx
+     ;; (enable-re-frisk!)
      (println "dev mode")))
 
 #?(:cljs

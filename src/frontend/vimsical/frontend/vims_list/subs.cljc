@@ -16,4 +16,4 @@
         (remove (partial util/=by :db/uid cur-vims))
         (reverse)
         (partition-all per-page)
-        vec)))
+        (vec))))

@@ -1,25 +1,19 @@
 (ns vimsical.frontend.vims.handlers
   (:require
+   [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
+   [vimsical.common.util.core :as util]
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.subs :as vcs.subs]
-   [vimsical.frontend.vcs.handlers :as vcs.handlers]
-   [vimsical.vcs.snapshot :as vcs.snapshot]
+   [vimsical.frontend.vims.db :as db]
    [vimsical.remotes.backend.vims.commands :as vims.commands]
    [vimsical.remotes.backend.vims.queries :as vims.queries]
-   [vimsical.user :as user]
-   [vimsical.vcs.core :as vcs.core]
-   [vimsical.vcs.core :as vcs.core]
-   [vimsical.queries.snapshot :as queries.snapshot]
    [vimsical.vcs.file :as vcs.file]
-   [vimsical.frontend.vcs.queries :as vcs.queries]
+   [vimsical.vcs.snapshot :as vcs.snapshot]
    [vimsical.vims :as vims]
-   [com.stuartsierra.mapgraph :as mg]
-   [vimsical.frontend.util.re-frame :as util.re-frame]
-   [vimsical.common.util.core :as util]
-   [vimsical.vcs.file :as file])
-  #?(:cljs (:refer-clojure :exclude [uuid])))
+   [vimsical.user :as user]))
 
 ;;
 ;; * New vims
@@ -36,20 +30,20 @@
 
 (defn new-event-fx
   [{:keys [db]} [_ owner status-key opts]]
-  (let [new-files (vims/default-files)
-        owner'    (select-keys owner [:db/uid])
-        new-vims  (vims/new-vims owner' nil new-files opts)
+  (let [new-files                       (vims/default-files)
+        owner'                          (select-keys owner [:db/uid])
+        {vims-uid :db/uid :as new-vims} (vims/new-vims owner' nil new-files opts)
         ;; This is a bit low-level, we could just conj the vims onto the owner
         ;; and add that, but we'd have to make sure we're passed the full
         ;; app/user, not sure if that'd be inconvenient.
-        db'       (util.mg/add db new-vims)]
+        db'                             (util.mg/add-join db owner' ::user/vimsae new-vims)]
     {:db db'
      :remote
-         {:id               :backend
-          :event            [::vims.commands/new new-vims]
-          :dispatch-success (fn [_] [::new-success new-vims])
-          :dispatch-error   (fn [error] [::new-error new-vims error])
-          :status-key       status-key}}))
+     {:id               :backend
+      :event            [::vims.commands/new new-vims]
+      :dispatch-success (fn [_] [::new-success vims-uid new-vims])
+      :dispatch-error   (fn [error] [::new-error vims-uid new-vims error])
+      :status-key       status-key}}))
 
 (re-frame/reg-event-fx ::new new-event-fx)
 (re-frame/reg-event-fx ::new-success (fn [_ _] (re-frame.loggers/console :log "New vims success")))
@@ -66,11 +60,11 @@
         db'    (util.mg/add db vims')]
     {:db db'
      :remote
-         {:id               :backend
-          :event            [::vims.commands/title remote]
-          :dispatch-success (fn [_] [::title-success vims])
-          :dispatch-error   (fn [error] [::title-error vims error])
-          :status-key       status-key}}))
+     {:id               :backend
+      :event            [::vims.commands/title remote]
+      :dispatch-success (fn [_] [::title-success vims])
+      :dispatch-error   (fn [error] [::title-error vims error])
+      :status-key       status-key}}))
 
 (re-frame/reg-event-fx ::title title-event-fx)
 (re-frame/reg-event-fx ::title-success (fn [_ _] (re-frame.loggers/console :log "title success")))
@@ -140,27 +134,30 @@
    {:id               :backend
     :status-key       status-key
     :event            [::vims.queries/vims vims-uid]
-    :dispatch-success true}})
+    :dispatch-success (fn [vims] [::vims-success vims-uid vims])}})
 
 (defn vims-success-event-fx
-  [{:keys [db]} [_ vims]]
+  [{:keys [db]} [_ _ vims]]
   {:db (util.mg/add db vims)})
 
-(re-frame/reg-event-fx ::vims vims-handler)
-(re-frame/reg-event-fx ::vims.queries/vims vims-success-event-fx)
+(re-frame/reg-event-fx ::vims         vims-handler)
+(re-frame/reg-event-fx ::vims-success vims-success-event-fx)
 
 ;;
 ;; ** Deltas
 ;;
 
 (defn deltas-handler
-  [{:keys [db]} [_ uuid-fn vims-uid status-key]]
+  [{:keys [db]} [_ vims-uid status-key]]
   {:remote
    {:id               :backend
     :status-key       status-key
     :event            [::vims.queries/deltas vims-uid]
-    ;; Close over vims-uid so that the vcs handler can retrieve the vims
-    :dispatch-success (fn [deltas]
-                        [::vcs.handlers/init uuid-fn vims-uid deltas])}})
+    :dispatch-success (fn [deltas] [::deltas-success vims-uid deltas])}})
+
+(defn deltas-success-handler
+  [{:keys [db]} [_ vims-uid deltas]]
+  {:db (db/set-deltas db vims-uid deltas)})
 
 (re-frame/reg-event-fx ::deltas deltas-handler)
+(re-frame/reg-event-fx ::deltas-success deltas-success-handler)

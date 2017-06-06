@@ -4,6 +4,7 @@
    [re-frame.core :as re-frame]
    [re-frame.interop :as interop]
    [vimsical.common.util.core :as util :refer [=by] :include-macros true]
+   [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.app.handlers :as app.handlers]
    [vimsical.frontend.app.subs :as app.subs]
    [vimsical.frontend.auth.views :as auth.views]
@@ -120,7 +121,7 @@
        [:div.new-and-my-vims.button-group
         [:div.button
          {:on-click (e> (re-frame/dispatch
-                         [::app.handlers/new-vims user {:open? true}]))}
+                         [::app.handlers/new-vims uuid user]))}
          "New Vims"]
         [:div.button
          {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view
