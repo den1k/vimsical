@@ -1,18 +1,24 @@
 (ns vimsical.frontend.vims.handlers
   (:require
-   [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
-   [vimsical.common.util.core :as util]
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.util.mapgraph :as util.mg]
-   [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.subs :as vcs.subs]
-   [vimsical.frontend.vims.db :as db]
+   [vimsical.frontend.vcs.handlers :as vcs.handlers]
+   [vimsical.vcs.snapshot :as vcs.snapshot]
    [vimsical.remotes.backend.vims.commands :as vims.commands]
    [vimsical.remotes.backend.vims.queries :as vims.queries]
+   [vimsical.user :as user]
+   [vimsical.vcs.core :as vcs.core]
+   [vimsical.vcs.core :as vcs.core]
+   [vimsical.queries.snapshot :as queries.snapshot]
    [vimsical.vcs.file :as vcs.file]
-   [vimsical.vcs.snapshot :as vcs.snapshot]
-   [vimsical.vims :as vims]))
+   [vimsical.frontend.vcs.queries :as vcs.queries]
+   [vimsical.vims :as vims]
+   [com.stuartsierra.mapgraph :as mg]
+   [vimsical.frontend.util.re-frame :as util.re-frame]
+   [vimsical.common.util.core :as util]
+   [vimsical.vcs.file :as file]))
 
 ;;
 ;; * New vims
@@ -133,30 +139,27 @@
    {:id               :backend
     :status-key       status-key
     :event            [::vims.queries/vims vims-uid]
-    :dispatch-success (fn [vims] [::vims-success vims-uid vims])}})
+    :dispatch-success true}})
 
 (defn vims-success-event-fx
-  [{:keys [db]} [_ _ vims]]
+  [{:keys [db]} [_ vims]]
   {:db (util.mg/add db vims)})
 
-(re-frame/reg-event-fx ::vims         vims-handler)
-(re-frame/reg-event-fx ::vims-success vims-success-event-fx)
+(re-frame/reg-event-fx ::vims              vims-handler)
+(re-frame/reg-event-fx ::vims.queries/vims vims-success-event-fx)
 
 ;;
 ;; ** Deltas
 ;;
 
 (defn deltas-handler
-  [{:keys [db]} [_ vims-uid status-key]]
+  [{:keys [db]} [_ uuid-fn vims-uid status-key]]
   {:remote
    {:id               :backend
     :status-key       status-key
     :event            [::vims.queries/deltas vims-uid]
-    :dispatch-success (fn [deltas] [::deltas-success vims-uid deltas])}})
-
-(defn deltas-success-handler
-  [{:keys [db]} [_ vims-uid deltas]]
-  {:db (db/set-deltas db vims-uid deltas)})
+    ;; Close over vims-uid so that the vcs handler can retrieve the vims
+    :dispatch-success (fn [deltas]
+                        [::vcs.handlers/init uuid-fn vims-uid deltas])}})
 
 (re-frame/reg-event-fx ::deltas deltas-handler)
-(re-frame/reg-event-fx ::deltas-success deltas-success-handler)
