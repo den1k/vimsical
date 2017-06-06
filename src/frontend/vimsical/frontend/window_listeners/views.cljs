@@ -62,18 +62,21 @@
   (re-frame/dispatch [::ui.handlers/on-scroll]))
 
 (defn window-listeners []
-  (let [listeners (cond-> {"keydown" handle-shortcut
-                           "resize"  handle-resize}
-                    (util.dom/on-mobile?) (assoc "scroll" handle-scroll))]
+  (let [on-mobile? (<sub [::ui.subs/on-mobile?])
+        listeners  (cond-> {"keydown" handle-shortcut
+                            "resize"  handle-resize}
+                     on-mobile? (assoc "scroll" handle-scroll))]
     (reagent/create-class
      {:component-did-mount
       (fn [_]
-        (re-frame/dispatch [::ui.handlers/track-orientation])
+        (when on-mobile?
+          (re-frame/dispatch [::ui.handlers/track-orientation]))
         (doseq [[event-type handler] listeners]
           (.addEventListener js/window event-type handler)))
       :component-will-unmount
       (fn []
-        (re-frame/dispatch [::ui.handlers/untrack-orientation])
+        (when on-mobile?
+          (re-frame/dispatch [::ui.handlers/untrack-orientation]))
         (doseq [[event-type handler] listeners]
           (.removeEventListener js/window event-type handler)))
       :render

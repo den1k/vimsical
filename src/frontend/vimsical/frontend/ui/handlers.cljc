@@ -15,10 +15,9 @@
 
 (re-frame/reg-event-fx
  ::on-resize
- [(re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub [::subs/on-mobile?])]
+ [(re-frame/inject-cofx :ui-db)]
  #?(:cljs
-    (fn [{:keys [ui-db] ::subs/keys [on-mobile?]} _]
+    (fn [{:keys [ui-db]} _]
       (cond-> {:ui-db (cond-> ui-db
                         true (assoc :orientation (util.dom/orientation))
                         ; check to switch the app between views in device dev simulator
