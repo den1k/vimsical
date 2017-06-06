@@ -87,7 +87,7 @@
     :env.backend/dev
     :backend-log-dev
     {:dependencies
-                   [[criterium "0.4.4"]]
+     [[criterium "0.4.4"]]
      ;; Get proper deps resolution for fixtures etc
      :source-paths ["dev/backend" "test/vcs" "test/backend" "test/common"]}]
 
@@ -112,6 +112,7 @@
                    [reagent "0.6.2" :exclusions [org.clojure/clojurescript]]
                    [re-frame "0.9.4" :exclusions [org.clojure/clojurescript]]
                    [re-com "2.1.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
+                   [day8.re-frame/async-flow-fx "0.0.7-SNAPSHOT" :exclusions [re-frame org.clojure/clojurescript]]
                    ;; this package does not have externs
                    [cljsjs/babel-standalone "6.18.1-2"]
                    [thi.ng/color "1.2.0"]]}
@@ -172,7 +173,7 @@
     :dependencies [[garden "1.3.2"]
                    ;; Added this to fix a compilation issue with garden
                    [ns-tracker "0.3.1"]]
-    ;:prep-tasks   [["garden" "once"]]
+                                        ;:prep-tasks   [["garden" "once"]]
     }
 
    :css
@@ -207,7 +208,12 @@
     {:builds
      [{:id           "prod"
        :jar          true
-       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs"]
+       :source-paths ["checkouts/mapgraph/src"
+                      "checkouts/re-frame-async-flow-fx/src"
+                      "checkouts/re-frame-forward-events-fx/src"
+                      "src/frontend"
+                      "src/common"
+                      "src/vcs"]
        :compiler     {:main            vimsical.frontend.core
                       :asset-path      "/js"
                       :externs         ["resources/externs/svg.js"]
@@ -224,7 +230,14 @@
                       :infer-externs   true}}
       {:id           "dev"
        :figwheel     {:on-jsload vimsical.frontend.dev/on-reload}
-       :source-paths ["checkouts/mapgraph/src" "dev/frontend" "src/frontend" "src/common" "src/vcs" "dev/frontend"]
+       :source-paths ["checkouts/mapgraph/src"
+                      "checkouts/re-frame-async-flow-fx/src"
+                      "checkouts/re-frame-forward-events-fx/src"
+                      "dev/frontend"
+                      "src/frontend"
+                      "src/common"
+                      "src/vcs"
+                      "dev/frontend"]
        :compiler     {:main                 vimsical.frontend.core
                       :asset-path           "/js/compiled/out"
                       :output-to            "resources/public/js/compiled/vimsical.js"
@@ -246,7 +259,14 @@
                                               :fn-symbol           "λ"}}}}
       {:id           "player-dev"
        :figwheel     {:on-jsload vimsical.frontend.player.dev/on-reload}
-       :source-paths ["checkouts/mapgraph/src" "dev/frontend" "src/frontend" "src/common" "src/vcs" "dev/frontend"]
+       :source-paths ["checkouts/mapgraph/src"
+                      "checkouts/re-frame-async-flow-fx/src"
+                      "checkouts/re-frame-forward-events-fx/src"
+                      "dev/frontend"
+                      "src/frontend"
+                      "src/common"
+                      "src/vcs"
+                      "dev/frontend"]
        :compiler     {:main                 vimsical.frontend.player.core
                       :asset-path           "/js/compiled/player/out"
                       :output-to            "resources/public/js/compiled/vimsical-player.js"
@@ -265,7 +285,16 @@
                                              {:features-to-install :all
                                               :fn-symbol           "λ"}}}}
       {:id           "test"
-       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
+       :source-paths ["checkouts/mapgraph/src"
+                      "checkouts/re-frame-async-flow-fx/src"
+                      "checkouts/re-frame-forward-events-fx/src"
+                      "src/frontend"
+                      "src/common"
+                      "src/vcs"
+                      "test/frontend"
+                      "test/common"
+                      "test/vcs"
+                      "test/runner"]
        :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
                       :output-dir     "resources/public/js/compiled/out-test"
                       :main           vimsical.runner
@@ -275,7 +304,16 @@
                       :foreign-libs   [{:file     "public/js/jshint.js"
                                         :provides ["jshint"]}]}}
       {:id           "test-advanced"
-       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
+       :source-paths ["checkouts/mapgraph/src"
+                      "checkouts/re-frame-async-flow-fx/src"
+                      "checkouts/re-frame-forward-events-fx/src"
+                      "src/frontend"
+                      "src/common"
+                      "src/vcs"
+                      "test/frontend"
+                      "test/common"
+                      "test/vcs"
+                      "test/runner"]
        :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
                       :output-dir     "resources/public/js/compiled/out-test-advanced"
                       :main           vimsical.runner
