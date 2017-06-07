@@ -150,7 +150,7 @@
    [:vcs :common :css-player :-frontend-config]
 
    :player-dev
-   [:player :-frontend-dev-config]
+   [:player :-frontend-dev-config :env.frontend/dev]
 
    :integration-dev
    [{:source-paths ["test/integration"]
@@ -291,6 +291,28 @@
                       :external-config      {:devtools/config
                                              {:features-to-install :all
                                               :fn-symbol           "λ"}}}}
+      {:id           "player-prod"
+       :jar          true
+       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs"]
+       :compiler     {:main            vimsical.frontend.player.core
+                      :asset-path      "/js"
+                      :externs         ["resources/externs/svg.js"]
+                      :output-to       "resources/public/js/compiled/vimsical-player.js"
+                      :output-dir      "resources/public/js/compiled/player/out-prod"
+                      :optimizations   :advanced
+                      :infer-externs   true
+
+                      :parallel-build  true
+                      :closure-defines {goog.DEBUG false}
+
+                      ;; debug
+                      ;; Determines whether readable names are emitted. This can
+                      ;; be useful when debugging issues in the optimized
+                      ;; JavaScript and can aid in finding missing
+                      ;; externs. Defaults to false.
+                      :pseudo-names    false
+                      :pretty-print    false
+                      :verbose         false}}
       {:id           "test"
        :source-paths ["checkouts/mapgraph/src"
                       "checkouts/re-frame-async-flow-fx/src"
