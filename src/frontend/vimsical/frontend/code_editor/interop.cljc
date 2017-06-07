@@ -6,9 +6,26 @@
 (defn file-lang [{::file/keys [sub-type]}]
   (name sub-type))
 
+(defn set-model-language [file editor-instance]
+  #?(:cljs
+     (let [model (.-model editor-instance)]
+       (.. js/monaco -editor (setModelLanguage model (file-lang file))))))
+
 ;;
 ;; * Position <> Index
 ;;
+
+#?(:cljs
+   (defn reveal-range [^js/monaco.editor editor js-pos]
+     (.revealRange editor js-pos)))
+
+#?(:cljs
+   (defn set-selection [^js/monaco.editor editor js-pos]
+     (.setSelection editor js-pos)))
+
+#?(:cljs
+   (defn focus [^js/monaco.editor editor]
+     (.focus editor)))
 
 (defn pos->str-idx
   "Takes a line, col, and lines, array of strings. Counts the characters of
@@ -36,8 +53,8 @@
   [idx string]
   (let [str-len (count string)]
     (cond
-      (zero? idx)     {:line 1 :col 1}
-      (> idx str-len) nil ; out of bounds
+      (zero? idx) {:line 1 :col 1}
+      (> idx str-len) nil               ; out of bounds
       :else
       (reduce
        (fn [[cur-idx line col :as step] char]
@@ -58,79 +75,95 @@
 ;; * Change Parsing
 ;;
 
-(defn- content-event-state [model e]
-  (let [range         (.-range e)
-        diff          (.-text e)
-        added-count   (.-length diff)
-        start-line    (.-startLineNumber range)
-        deleted-count (.-rangeLength e)
-        start-column  (.-startColumn range)
-        lines         (.getLinesContent model)]
-    {:idx     (pos->str-idx start-line start-column lines)
-     :diff    diff
-     :added   (when-not (zero? added-count) added-count)
-     :deleted (when-not (zero? deleted-count) deleted-count)}))
+#?(:cljs
+   (defn- content-event-state [^js/Object model ^js/Object e]
+     (let [range         (.-range e)
+           diff          (.-text e)
+           added-count   (.-length diff)
+           start-line    (.-startLineNumber range)
+           deleted-count (.-rangeLength e)
+           start-column  (.-startColumn range)
+           lines         (.getLinesContent model)]
+       {:idx     (pos->str-idx start-line start-column lines)
+        :diff    diff
+        :added   (when-not (zero? added-count) added-count)
+        :deleted (when-not (zero? deleted-count) deleted-count)})))
 
 (defn content-event-type [{:keys [added deleted]}]
   (or
    (and deleted (if added :str/rplc :str/rem))
    (and added :str/ins)))
 
-(defn parse-content-event [model e]
-  (let [{:keys [diff idx added deleted]
-         :as   e-state} (content-event-state model e)
-        event-type      (content-event-type e-state)]
-    (case event-type
-      :str/ins  {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
-      :str/rem  {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
-      :str/rplc {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx ::edit-event/amt deleted})))
+#?(:cljs
+   (defn parse-content-event [model e]
+     (let [{:keys [diff idx added deleted]
+            :as   e-state} (content-event-state model e)
+           event-type (content-event-type e-state)]
+       (case event-type
+         :str/ins {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
+         :str/rem {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
+         :str/rplc {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx ::edit-event/amt deleted}))))
 
 ;;
 ;; * Cursor & Selection change
 ;;
 
-(defn- selection-event-state [model e]
-  (let [sel          (.-selection e)
-        start-line   (.-startLineNumber sel)
-        start-column (.-startColumn sel)
-        end-line     (.-endLineNumber sel)
-        end-column   (.-endColumn sel)
-        lines        (.getLinesContent model)
-        selection?   (or (not (identical? start-column end-column))
-                         (not (identical? start-line end-line)))]
-    {:selection? selection?
-     :start-idx  (pos->str-idx start-line start-column lines)
-     :end-idx    (when selection? (pos->str-idx end-line end-column lines))
-     :lines      lines}))
+#?(:cljs
+   (defn- selection-event-state [^js/Object model ^js/Object e]
+     (let [sel          (.-selection e)
+           start-line   (.-startLineNumber sel)
+           start-column (.-startColumn sel)
+           end-line     (.-endLineNumber sel)
+           end-column   (.-endColumn sel)
+           lines        (.getLinesContent model)
+           selection?   (or (not (identical? start-column end-column))
+                            (not (identical? start-line end-line)))]
+       {:selection? selection?
+        :start-idx  (pos->str-idx start-line start-column lines)
+        :end-idx    (when selection? (pos->str-idx end-line end-column lines))
+        :lines      lines})))
 
-(defn parse-selection-event [model e]
-  (let [{:keys [selection? start-idx end-idx]} (selection-event-state model e)]
-    (if-not selection?
-      {::edit-event/op :crsr/mv ::edit-event/idx start-idx}
-      {::edit-event/op :crsr/sel ::edit-event/range [start-idx end-idx]})))
+#?(:cljs
+   (defn parse-selection-event [model e]
+     (let [{:keys [selection? start-idx end-idx]} (selection-event-state model e)]
+       (if-not selection?
+         {::edit-event/op :crsr/mv ::edit-event/idx start-idx}
+         {::edit-event/op :crsr/sel ::edit-event/range [start-idx end-idx]}))))
 
-;; todo, move into monaco URLs?
-(defn dispose-editor
-  "Dispose Monaco editor"
-  [editor]
-  (.dispose editor))
+#?(:cljs
+   (defn dispose-editor
+     "Dispose Monaco editor"
+     [^js/monaco.editor editor]
+     (.dispose editor)))
 
-(defn bind-listeners
-  "Register `listeners` with their respective handlers on `editor` and return a
-  map with the same keys as `listeners` but where the values are the disposables
-  returned from binding the listeners."
-  [editor
-   {:as listeners
-    :keys
-    [model->content-change-handler
-     model->cursor-change-handler
-     editor->focus-handler
-     editor->blur-handler
-     editor->mouse-down-handler]}]
-  (when (and editor listeners)
-    (let [model (.-model editor)]
-      {:model->content-change-handler (.onDidChangeModelContent editor (model->content-change-handler model))
-       :model->cursor-change-handler  (.onDidChangeCursorSelection editor (model->cursor-change-handler model))
-       :editor->focus-handler         (.onDidFocusEditor editor (editor->focus-handler editor))
-       :editor->blur-handler          (.onDidBlurEditor editor (editor->blur-handler editor))
-       :editor->mouse-down-handler    (.onMouseDown editor editor->mouse-down-handler)})))
+#?(:cljs
+   (defn clear-disposables [disposables]
+     (reduce-kv
+      (fn [_ k ^js/Object disposable]
+        (.dispose disposable))
+      nil disposables)))
+
+#?(:cljs
+   (defn set-value [^js/monaco.editor editor string]
+     (.setValue editor string)))
+
+#?(:cljs
+   (defn bind-listeners
+     "Register `listeners` with their respective handlers on `editor` and return a
+     map with the same keys as `listeners` but where the values are the disposables
+     returned from binding the listeners."
+     [^js/monaco.editor editor
+      {:as listeners
+       :keys
+           [model->content-change-handler
+            model->cursor-change-handler
+            editor->focus-handler
+            editor->blur-handler
+            editor->mouse-down-handler]}]
+     (when (and editor listeners)
+       (let [model (.-model editor)]
+         {:model->content-change-handler (.onDidChangeModelContent editor (model->content-change-handler model))
+          :model->cursor-change-handler  (.onDidChangeCursorSelection editor (model->cursor-change-handler model))
+          :editor->focus-handler         (.onDidFocusEditor editor (editor->focus-handler editor))
+          :editor->blur-handler          (.onDidBlurEditor editor (editor->blur-handler editor))
+          :editor->mouse-down-handler    (.onMouseDown editor editor->mouse-down-handler)}))))

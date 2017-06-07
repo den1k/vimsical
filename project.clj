@@ -1,7 +1,8 @@
 (defproject vimsical "0.1.0-SNAPSHOT"
   :dependencies
   [[org.clojure/clojure "1.9.0-alpha17"]
-   [org.clojure/spec.alpha "0.1.123"]]
+   [org.clojure/spec.alpha "0.1.123"]
+   [org.clojure/test.check "0.9.0"]]
 
   :source-paths []                      ; ignore src/ in all profiles
   :test-paths []
@@ -21,8 +22,7 @@
 
    :test
    {:dependencies
-    [[org.clojure/test.check "0.9.0"]
-     [orchestra "0.3.0"]]
+    [[orchestra "0.3.0"]]
     :global-vars
     {*assert* true *warn-on-reflection* false *unchecked-math* false}}
 
@@ -104,16 +104,17 @@
    ;;
    :-frontend-config
    {:source-paths ["src/frontend"]
-    :plugins      [[lein-cljsbuild "1.1.5"
+    :plugins      [[lein-cljsbuild "1.1.6"
                     :exclusions [org.apache.commons/commons-compress]]]
     :dependencies [[org.clojure/clojurescript "1.9.562" :exclusions [org.clojure/tools.reader]]
                    ;; Our mapgraph fork. Must be be symlinked in checkouts.
                    [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
                    [reagent "0.6.2" :exclusions [org.clojure/clojurescript]]
                    [re-frame "0.9.4" :exclusions [org.clojure/clojurescript]]
-                   [re-com "2.1.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async]]
-                   ;; this package does not have externs
-                   [cljsjs/babel-standalone "6.18.1-2"]
+                   [com.andrewmcveigh/cljs-time "0.5.0"] ; used by re-com
+                   [re-com "2.1.0" :exclusions [reagent org.clojure/clojurescript
+                                                org.clojure/core.async
+                                                com.andrewmcveigh/cljs-time]]
                    [thi.ng/color "1.2.0"]]}
 
    :-frontend-dev-config
@@ -212,16 +213,21 @@
                       :asset-path      "/js"
                       :externs         ["resources/externs/svg.js"]
                       :output-to       "resources/public/js/compiled/vimsical.js"
+                      :output-dir      "resources/public/js/compiled/out-prod"
                       :optimizations   :advanced
-                      :pretty-print    false
+                      :infer-externs   true
+
                       :parallel-build  true
                       :closure-defines {goog.DEBUG false}
+
+                      ;; debug
                       ;; Determines whether readable names are emitted. This can
                       ;; be useful when debugging issues in the optimized
                       ;; JavaScript and can aid in finding missing
                       ;; externs. Defaults to false.
                       :pseudo-names    false
-                      :infer-externs   true}}
+                      :pretty-print    false
+                      :verbose         false}}
       {:id           "dev"
        :figwheel     {:on-jsload vimsical.frontend.dev/on-reload}
        :source-paths ["checkouts/mapgraph/src" "dev/frontend" "src/frontend" "src/common" "src/vcs" "dev/frontend"]
@@ -230,8 +236,6 @@
                       :output-to            "resources/public/js/compiled/vimsical.js"
                       :output-dir           "resources/public/js/compiled/out"
                       :optimizations        :none
-                      :foreign-libs         [{:file     "public/js/jshint.js"
-                                              :provides ["jshint"]}]
                       :parallel-build       true
                       ;; Add cache busting timestamps to source map urls.
                       ;; This is helpful for keeping source maps up to date when
@@ -271,9 +275,7 @@
                       :main           vimsical.runner
                       :target         :nodejs
                       :optimizations  :none
-                      :parallel-build true
-                      :foreign-libs   [{:file     "public/js/jshint.js"
-                                        :provides ["jshint"]}]}}
+                      :parallel-build true}}
       {:id           "test-advanced"
        :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
        :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
@@ -283,6 +285,4 @@
                       :optimizations  :advanced
                       :pretty-print   true
                       :pseudo-names   true
-                      :parallel-build true
-                      :foreign-libs   [{:file     "public/js/jshint.js"
-                                        :provides ["jshint"]}]}}]}}})
+                      :parallel-build true}}]}}})

@@ -2,7 +2,7 @@
   (:require [vimsical.vcs.file :as file]
             [vimsical.vcs.compiler :as compiler]
             [clojure.string :as string]
-   #?(:cljs [cljsjs.babel-standalone])))
+   #_(:cljs [cljsjs.babel-standalone])))
 
 (defmulti preprocess
   (fn [{::file/keys [compiler]} string]
@@ -31,7 +31,7 @@
      :pos  pos
      :msg  message}))
 
-#?(:cljs
+#_(:cljs
    (defmethod preprocess :babel
      [_ string]
      (try
