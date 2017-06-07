@@ -5,7 +5,8 @@
    [vimsical.vcs.snapshot :as vcs.snapshot]
    [vimsical.common.util.core :as util]
    [vimsical.common.uuid :refer [uuid]]
-   [vimsical.vcs.file :as vcs.file]))
+   [vimsical.vcs.file :as vcs.file])
+  #?(:cljs (:refer-clojure :exclude [uuid])))
 
 ;;
 ;; * Spec

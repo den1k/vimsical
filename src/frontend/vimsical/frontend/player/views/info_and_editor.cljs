@@ -34,7 +34,7 @@
 
 (defn info-and-editor-container []
   (let [info-hover? (reagent/atom true)
-        desc        (util.content/lorem-ipsum 2)]
+        desc        nil #_(util.content/lorem-ipsum 2)]
     (reagent/create-class
      {:render
       (fn [c]
@@ -54,9 +54,7 @@
                                                      :compact? true}])
                                      uid->file)
               on-mobile?            (<sub [::ui.subs/on-mobile?])
-              show-info?            (if-not on-mobile?
-                                      @info-hover?
-                                      (not (<sub [::timeline.subs/playing? vims])))]
+              show-info?            (not (<sub [::timeline.subs/active? vims]))]
           [:div.info-and-editor-panel.dc
            {:class (when show-info? "show-info")
             :on-mouse-enter
@@ -68,7 +66,7 @@
             [:div.header.ac
              [user.views/avatar {:user owner}]
              [:div.title-and-creator
-              [:div.title.truncate title]
+              [:div.title.truncate (or title "Untitled")]
               [:div.creator.truncate (user-full-name owner)]]]
             (when desc
               [:div.desc desc])]
