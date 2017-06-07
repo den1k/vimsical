@@ -4,15 +4,6 @@
   (create-schema! [_ schema])
   (prepare-queries [_ queries]))
 
-(defprotocol ICassandraAsync
-  (execute-async
-    [this executable success error]
-    [this executable success error opts])
-  (execute-batch-async
-    [this commands success error]
-    [this commands batch-type success error]
-    [this commands batch-type success error opts]))
-
 (defprotocol ICassandraChan
   (execute-chan
     [this executable]

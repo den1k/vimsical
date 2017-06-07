@@ -1,14 +1,42 @@
 (ns vimsical.backend.components.session-store
   (:require
-   [vimsical.backend.util.log :as log]
    [clojure.spec.alpha :as s]
    [ring.middleware.session.store :as store]
    [taoensso.carmine :as car]
    [vimsical.backend.adapters.redis :as redis]
-   [vimsical.backend.components.session-store.spec :as spec])
+   [vimsical.backend.util.log :as log]
+   [vimsical.user :as user]
+   [vimsical.vcs.validation :as vcs.validation]
+   [vimsical.vims :as vims])
   (:import
    (java.util UUID)
    (vimsical.backend.adapters.redis Redis)))
+
+;;
+;; * Session spec
+;;
+
+(s/def ::user-session
+  (s/keys :req [::user/uid]))
+
+(s/def ::vims-session
+  (s/or :empty empty?
+        :active (s/keys :req [::vcs.validation/delta-by-branch-uid ::vcs.validation/order-by-branch-uid])))
+
+(s/def ::vims-session-by-vims-uid
+  (s/every-kv ::vims/uid ::vims-session))
+
+(s/def ::vimsae-session
+  (s/merge ::user-session (s/keys :req [::vims-session-by-vims-uid])))
+
+(s/def ::session
+  (s/or :vimsae ::vimsae-session
+        :user ::user-session
+        :empty empty?))
+
+(defn vims-session-path
+  [vims-uid]
+  [::vims-session-by-vims-uid vims-uid])
 
 ;;
 ;; * Internal specs
@@ -31,7 +59,7 @@
 
 (s/fdef read-session*
         :args (s/cat :redis ::redis/redis :k ::read-key)
-        :ret ::spec/session)
+        :ret ::session)
 
 (defn read-session*
   [redis session-key]
@@ -44,7 +72,7 @@
       (throw t))))
 
 (s/fdef write-session*
-        :args (s/cat :redis ::redis/redis :k ::write-key :val ::spec/session)
+        :args (s/cat :redis ::redis/redis :k ::write-key :val ::session)
         :ret  ::read-key)
 
 (defn write-session*
@@ -83,9 +111,9 @@
 
 (extend-protocol store/SessionStore
   Redis
-  (read-session   [redis session-key]       (read-session* redis session-key))
+  (read-session   [redis session-key]         (read-session* redis session-key))
   (write-session  [redis session-key session] (write-session* redis session-key session))
-  (delete-session [redis session-key]       (delete-session* redis session-key)))
+  (delete-session [redis session-key]         (delete-session* redis session-key)))
 
 ;;
 ;; * Constructor

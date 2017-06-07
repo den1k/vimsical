@@ -2,11 +2,9 @@
   (:require
    [clojure.core.async :as async]
    [clojure.spec.alpha :as s]
-   [vimsical.common.test :refer [uuid]]
    [com.stuartsierra.component :as cp]
    [io.pedestal.http :as http]
    [vimsical.backend.adapters.cassandra :as cassandra]
-   [vimsical.backend.util.async :as util.async]
    [vimsical.backend.adapters.cassandra.fixture :as cassandra.fixture]
    [vimsical.backend.adapters.redis :as redis]
    [vimsical.backend.components.datomic :as datomic]
@@ -16,7 +14,9 @@
    [vimsical.backend.components.snapshot-store.protocol :as snapshot-store.protocol]
    [vimsical.backend.data :as data]
    [vimsical.backend.system :as system]
+   [vimsical.backend.util.async :as util.async]
    [vimsical.common.env :as env]
+   [vimsical.common.test :refer [uuid]]
    [vimsical.user :as user]
    [vimsical.vcs.snapshot :as snapshot]))
 
@@ -93,7 +93,7 @@
        (throw (ex-info "`deltas` fixture should be nested inside the `user` fixture." {}))
        (let [{:keys [delta-store]} *system*]
          (async/<!!
-          (delta-store.protocol/insert-deltas-chan delta-store (uuid ::data/vims) data/deltas))
+          (delta-store.protocol/insert-deltas-chan delta-store (uuid ::data/vims) (uuid ::data/user) {} data/deltas))
          (f)))
      (throw (ex-info "`deltas` fixture should be nested inside the `system` fixture" {})))))
 
