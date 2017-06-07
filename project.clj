@@ -115,8 +115,6 @@
                    [re-com "2.1.0" :exclusions [reagent org.clojure/clojurescript
                                                 org.clojure/core.async
                                                 com.andrewmcveigh/cljs-time]]
-                   ;; this package does not have externs
-                   [cljsjs/babel-standalone "6.18.1-2"]
                    [thi.ng/color "1.2.0"]]}
 
    :-frontend-dev-config
@@ -221,8 +219,7 @@
 
                       :parallel-build  true
                       :closure-defines {goog.DEBUG false}
-                      :foreign-libs    [{:file     "public/js/jshint.js"
-                                         :provides ["jshint"]}]
+
                       ;; debug
                       ;; Determines whether readable names are emitted. This can
                       ;; be useful when debugging issues in the optimized
@@ -239,8 +236,6 @@
                       :output-to            "resources/public/js/compiled/vimsical.js"
                       :output-dir           "resources/public/js/compiled/out"
                       :optimizations        :none
-                      :foreign-libs         [{:file     "public/js/jshint.js"
-                                              :provides ["jshint"]}]
                       :parallel-build       true
                       ;; Add cache busting timestamps to source map urls.
                       ;; This is helpful for keeping source maps up to date when
@@ -280,9 +275,7 @@
                       :main           vimsical.runner
                       :target         :nodejs
                       :optimizations  :none
-                      :parallel-build true
-                      :foreign-libs   [{:file     "public/js/jshint.js"
-                                        :provides ["jshint"]}]}}
+                      :parallel-build true}}
       {:id           "test-advanced"
        :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs" "test/frontend" "test/common" "test/vcs" "test/runner"]
        :compiler     {:output-to      "resources/public/js/compiled/vimsical-test.js"
@@ -292,6 +285,4 @@
                       :optimizations  :advanced
                       :pretty-print   true
                       :pseudo-names   true
-                      :parallel-build true
-                      :foreign-libs   [{:file     "public/js/jshint.js"
-                                        :provides ["jshint"]}]}}]}}})
+                      :parallel-build true}}]}}})

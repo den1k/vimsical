@@ -1,6 +1,6 @@
 (ns vimsical.frontend.util.lint.core
   (:require [vimsical.vcs.file :as file]
-   #?(:cljs [jshint])))
+   #_(:cljs [jshint])))
 
 (defmulti lint
   (fn [{::file/keys [sub-type lang-version compiler]} string]
@@ -19,13 +19,13 @@
              :col  (.-character r)}
       :msg  (.-reason r)})))
 
-#?(:cljs
+#_(:cljs
    (defn valid?
      "http://jshint.com/docs/options/"
      [string opts]
      (js/JSHINT string (clj->js opts))))
 
-#?(:cljs
+#_(:cljs
    (defmethod lint :javascript
      [{::file/keys [lang-version]} string]
      (assert (contains? #{"5" "6"} lang-version))
