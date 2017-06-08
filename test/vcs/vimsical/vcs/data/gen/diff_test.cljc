@@ -46,8 +46,8 @@
                            ::editor/uuid-fn      uuid-fn}
         branches          [{:db/uid (uuid :master)}]
         vcs               (vcs/empty-vcs branches)
-        [vcs _ delta-uid] (sut/diffs->vcs vcs effects (uuid :file) (uuid :master) nil "" ["abc"])
-        deltas            (vcs/deltas vcs delta-uid)]
+        [vcs deltas] (sut/diffs->vcs vcs effects (uuid :file) (uuid :master) nil "" ["abc"])
+        deltas            (vcs/deltas vcs (-> deltas last :uid))]
     ;; Assertion is trivial but rely on the deltas spec to check for the topo
     ;; sort as wel as valid delta ops
     (is (= 6 (count deltas)))))

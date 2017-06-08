@@ -32,35 +32,35 @@
 (defn- add-edit-events
   [vcs effects file-uid branch-uid delta-uid edit-events]
   (reduce
-   (fn [[vcs _ delta-uid] edit-event]
-     (sut/add-edit-event vcs effects file-uid branch-uid delta-uid edit-event))
+   (fn [[vcs deltas delta-uid] edit-event]
+     (sut/add-edit-event vcs effects file-uid branch-uid (or (-> deltas last :uid) delta-uid) edit-event))
    [vcs nil delta-uid] edit-events))
 
 (deftest add-edit-event-test
-  (let [{uuid-fn :f}      (uuid-gen)
-        branches          [examples/master]
-        expect-html       "<body><h1>Hello</h1></body>"
-        html-edit-events  (diff/diffs->edit-events
-                           ""
-                           ["<body></body>"]
-                           ["<body><h1>YO</h1></body>"]
-                           [expect-html])
-        expect-css        "body { color: orange; }"
-        css-edit-events   (diff/diffs->edit-events
-                           ""
-                           ["body { color: red; }"]
-                           [expect-css])
-        all-edit-events   (into html-edit-events css-edit-events)
-        effects           {::editor/pad-fn       (constantly 1)
-                           ::editor/uuid-fn      (fn [& _] (uuid-fn))
-                           ::editor/timestamp-fn (constantly 1)}
-        [vcs _ delta-uid] (-> (sut/empty-vcs branches)
-                              (add-edit-events effects (uuid :html) (uuid :master) nil html-edit-events))
-        [vcs _ delta-uid] (-> vcs
-                              (add-edit-events effects (uuid :css) (uuid :master) delta-uid css-edit-events))
-        html-deltas       (sut/file-deltas vcs (uuid :html) delta-uid)
-        css-deltas        (sut/file-deltas vcs (uuid :css) delta-uid)
-        all-deltas        (into html-deltas css-deltas)]
+  (let [{uuid-fn :f}           (uuid-gen)
+        branches               [examples/master]
+        expect-html            "<body><h1>Hello</h1></body>"
+        html-edit-events       (diff/diffs->edit-events
+                                ""
+                                ["<body></body>"]
+                                ["<body><h1>YO</h1></body>"]
+                                [expect-html])
+        expect-css             "body { color: orange; }"
+        css-edit-events        (diff/diffs->edit-events
+                                ""
+                                ["body { color: red; }"]
+                                [expect-css])
+        all-edit-events        (into html-edit-events css-edit-events)
+        effects                {::editor/pad-fn       (constantly 1)
+                                ::editor/uuid-fn      (fn [& _] (uuid-fn))
+                                ::editor/timestamp-fn (constantly 1)}
+        [vcs deltas delta-uid] (-> (sut/empty-vcs branches)
+                                   (add-edit-events effects (uuid :html) (uuid :master) nil html-edit-events))
+        [vcs _ delta-uid]      (-> vcs
+                                   (add-edit-events effects (uuid :css) (uuid :master) (-> deltas last :uid) css-edit-events))
+        html-deltas            (sut/file-deltas vcs (uuid :html) delta-uid)
+        css-deltas             (sut/file-deltas vcs (uuid :css) delta-uid)
+        all-deltas             (into html-deltas css-deltas)]
     (testing "file"
       (testing "string"
         (is (= expect-html (sut/file-string vcs (uuid :html) delta-uid)))
@@ -72,10 +72,10 @@
           (uuid :html) 3 "<bod"))
       (testing "cursor"
         (are [file-uid delta-index cursor] (is (= cursor (sut/file-cursor vcs file-uid (->> delta-index (nth all-deltas) :uid))))
-          (uuid :html) 0 0
-          (uuid :html) 1 1
-          (uuid :html) 2 2
-          (uuid :html) 3 3)))
+          (uuid :html) 0 1
+          (uuid :html) 1 2
+          (uuid :html) 2 3
+          (uuid :html) 3 4)))
     (testing "timeline"
       (is (= (sut/timeline-duration vcs) (count all-edit-events)))
       (is (= 2 (count (sut/timeline-chunks-by-absolute-start-time vcs)))))
@@ -93,28 +93,28 @@
 
 (deftest add-deltas-gen-test
   (let [{uuids   :seq
-         uuid-fn :f}      (uuid-gen)
-        branches          [examples/master]
-        editor-effects    {::editor/pad-fn       (constantly 1)
-                           ::editor/timestamp-fn (constantly 2)
-                           ::editor/uuid-fn      uuid-fn}
-        expect-html       "<body><h1>Hello</h1></body>"
-        expect-css        "body { color: orange; }"
-        [vcs _ delta-uid] (-> (sut/empty-vcs branches)
-                              (diff/diffs->vcs
-                               editor-effects (uuid :html) (uuid :master) nil
-                               ""
-                               ["<body></body>"]
-                               ["<body><h1>YO</h1></body>"]
-                               [expect-html]))
-        [vcs _ delta-uid] (-> vcs
-                              (diff/diffs->vcs
-                               editor-effects (uuid :css) (uuid :master) delta-uid
-                               ""
-                               ["body { color: red; }"]
-                               [expect-css]))
-        actual-html       (sut/file-string vcs (uuid :html) delta-uid)
-        actual-css        (sut/file-string vcs (uuid :css) delta-uid)]
+         uuid-fn :f}           (uuid-gen)
+        branches               [examples/master]
+        editor-effects         {::editor/pad-fn       (constantly 1)
+                                ::editor/timestamp-fn (constantly 2)
+                                ::editor/uuid-fn      uuid-fn}
+        expect-html            "<body><h1>Hello</h1></body>"
+        expect-css             "body { color: orange; }"
+        [vcs deltas delta-uid] (-> (sut/empty-vcs branches)
+                                   (diff/diffs->vcs
+                                    editor-effects (uuid :html) (uuid :master) nil
+                                    ""
+                                    ["<body></body>"]
+                                    ["<body><h1>YO</h1></body>"]
+                                    [expect-html]))
+        [vcs deltas delta-uid]      (-> vcs
+                                        (diff/diffs->vcs
+                                         editor-effects (uuid :css) (uuid :master) (-> deltas last :uid)
+                                         ""
+                                         ["body { color: red; }"]
+                                         [expect-css]))
+        actual-html            (sut/file-string vcs (uuid :html) (-> deltas last :uid))
+        actual-css             (sut/file-string vcs (uuid :css) (-> deltas last :uid))]
     (testing "files"
       (is (= expect-html actual-html))
       (is (= expect-css actual-css)))))
