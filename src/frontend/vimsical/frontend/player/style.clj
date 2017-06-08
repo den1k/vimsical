@@ -79,10 +79,14 @@
     {:flex :2}]])
 
 (def play-pause-buttons
-  [:.play-symbol :.pause-symbol
-   {:fill   :black                      ;; temp
-    :stroke :black
-    :cursor :pointer}])
+  [[:.play-button
+    {:width     :15%
+     :min-width :60px
+     :max-width :80px}]
+   [:.play-symbol :.pause-symbol
+    {:fill   :black                     ;; temp
+     :stroke :black
+     :cursor :pointer}]])
 
 (def explore
   [:.explore
@@ -108,7 +112,8 @@
       ["&::-webkit-scrollbar"           ; wider on mobile
        {:width "9px !important"}]]])
    [:.info-and-editor-panel
-    {:position :relative
+    {:flex     1
+     :position :relative
      :overflow :hidden}
     [:&.show-info
      [:.info
@@ -121,8 +126,9 @@
      [:.code-editor
       {:margin-top :15px}]]
     [:.info
-     {:padding       "0px 22px 0px 22px"
+     {:padding       "0px 22px"
       :max-height    0
+      :margin-right  :1px               ; margin for scrollbar
       :margin-bottom 0}
      {:transition          "all 0.3s ease"
       :transition-property "max-height, padding-top"}
@@ -132,20 +138,20 @@
        :width      :7px}]
      ["&::-webkit-scrollbar-thumb"
       {:background :white
-       :border     "1px solid lightgrey"
-       :right      :5px}]
+       :border     "1px solid lightgrey"}]
      [:.header
       [:.avatar
        {:height :50px
         :width  :50px}]
       [:div.title-and-creator
-       {:margin-left :10px
-        :line-height 1.2}
+       {:margin-left    :10px
+        :line-height    1.2
+        :letter-spacing :0.5px}
        [:.title
-        {:font-size   :20px
-         :font-weight :bold}]
+        {:font-size   :18px
+         :font-weight :600}]
        [:.creator
-        {:font-size :16px
+        {:font-size :14px
          :color     :grey}]]]
      [:.desc
       {:margin-top  :12px
@@ -207,19 +213,13 @@
     :display        :flex
     :flex-direction :column}])
 
-(def portrait-info-and-editor-panel
-  [:.info-and-editor-panel
-   {:flex :1}
-   [:.info
-    {:max-height "100%"}]])
-
 (def bar
   [[:&.portrait
     [:.bar
      {:padding "0 18px"}]]
    [:&.landscape
     [:.bar
-     {:padding "0 25px"}]]
+     {:padding "0 22px"}]]
    [:.bar
     {:height          "50px"
      :display         :flex
@@ -231,6 +231,7 @@
 
 (def player
   [:.vimsical-frontend-player
+   {:background :white}
    [:&.landscape
     {:display   :flex
      :min-width :700px
@@ -244,8 +245,7 @@
      :flex-direction :column
      :width          :100vw
      :height         :100%}
-    portrait-split
-    portrait-info-and-editor-panel]
+    portrait-split]
    bar
    preview
    editor-panel])
@@ -253,13 +253,10 @@
 (def embed-styles
   "Standalone styles for the embedded version of Player.
   Required in project.clj."
-  [:#player
-   {:width  :100vw
-    :height :100vh}
-   [app/defaults
-    views/icons
-    user
-    player]
+  [app/defaults
+   views/icons
+   user
+   player
    ;; overwrite player styles to fill entire iframe
    [:.vimsical-frontend-player
     {:max-width :initial

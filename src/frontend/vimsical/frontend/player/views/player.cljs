@@ -6,7 +6,9 @@
    [vimsical.frontend.player.views.elems :as elems]
    [vimsical.frontend.player.views.preview :refer [social-bar preview-panel preview-container]]
    [vimsical.frontend.player.views.info-and-editor :refer [info-and-editor-container]]
-   [vimsical.frontend.player.views.timeline :refer [timeline-bar]]))
+   [vimsical.frontend.player.views.timeline :refer [timeline-bar]]
+   [vimsical.frontend.window-listeners.views :refer [window-listeners]]
+   [vimsical.frontend.app.subs :as app.subs]))
 
 (defn landscape [{:keys [vims]}]
   [splits/n-h-split
@@ -26,11 +28,15 @@
    [timeline-bar {:vims vims}]
    [info-and-editor-container {:vims vims}]])
 
-(defn player [{:keys [vims]}]
-  (let [orientation (<sub [::ui.subs/orientation])]
-    [:div.vimsical-frontend-player
-     {:class (name orientation)}
-     [(case orientation
-        :landscape landscape
-        :portrait portrait)
-      {:vims vims}]]))
+(defn player [{:keys [vims standalone?]}]
+  (let [orientation (<sub [::ui.subs/orientation])
+        vims        (if standalone? (<sub [::app.subs/vims]) vims)]
+    (when vims                          ; fixme player should have loader
+      [:div.vimsical-frontend-player.player
+       {:class (name orientation)}
+       [(case orientation
+          :landscape landscape
+          :portrait portrait)
+        {:vims vims}]
+       (when standalone?
+         [window-listeners])])))

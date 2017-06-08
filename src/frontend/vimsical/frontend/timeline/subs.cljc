@@ -32,6 +32,14 @@
  (fn [{::timeline.ui-db/keys [skimming?]} _] (boolean skimming?)))
 
 (re-frame/reg-sub
+ ::active?
+ (fn [[_ vims]]
+    [(re-frame/subscribe [::playing? vims])
+     (re-frame/subscribe [::skimming? vims])])
+ (fn [[playing? skimming?] _]
+    (or playing? skimming?)))
+
+(re-frame/reg-sub
  ::time
  (fn [[_ vims]]
    [(re-frame/subscribe [::playhead vims])

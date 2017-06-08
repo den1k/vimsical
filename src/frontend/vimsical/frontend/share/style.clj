@@ -8,13 +8,15 @@
     [:.embed
      {:display :flex
       :width   :700px}
-     [:.player
-      {:margin-top :15px
-       :box-shadow "0 10px 30px hsla(0,0%,0%,0.3)"}]
+     [:.embed-preview
+      [:.player
+       {:height     :400px
+        :margin-top :15px
+        :box-shadow "0 10px 30px hsla(0,0%,0%,0.3)"}]]
      [:.markup-and-copy
       {:margin-top :50px}
       [:.embed-markup
-       {:width                      :640px
+       {:width                      :630px
         :margin                     0
         :white-space                :pre-wrap
         :border-top-right-radius    0
@@ -23,7 +25,7 @@
       [:.rc-point-wrapper
        {:flex-flow "none !important"}]
       [:.button
-       {:width                     :60px
+       {:width                     :70px
         :border-left               :none
         :border-top-left-radius    0
         :border-bottom-left-radius 0

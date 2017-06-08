@@ -69,7 +69,7 @@
      :border-radius :5px
      :background    (:beatwhite colors)
      :box-shadow    "0 10px 30px hsla(0,0%,0%,0.3)"
-     :width         :100%}
+     :width         :90%}
     [:.chevron
      {:font-size :120px}]
     [:.list vims-list-item]]])
