@@ -124,11 +124,18 @@
          {:on-click (e> (re-frame/dispatch
                          [::app.handlers/new-vims user]))}
          "New Vims"]
-        [:div.button
-         {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view
-                        (re-frame/dispatch
-                         [::app.handlers/toggle-modal :modal/vims-list]))}
-         "My Vims"]])
+        (when (not-empty vimsae)
+          [:div.button
+           {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view
+                          (re-frame/dispatch
+                           [::app.handlers/toggle-modal :modal/vims-list]))}
+           "My Vims"])])
+     (when (= route :route/vims)
+       [:div.button
+        {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view
+                       (re-frame/dispatch
+                        [::app.handlers/toggle-modal :modal/share]))}
+        "Share"])
      [:div.auth-or-user
       ;; popovers use no-op :on-cancel cb because event bubbles up here
       {:on-click (e> (swap! show-popup? not))}

@@ -24,10 +24,11 @@
             [vimsical.frontend.player.views.elems :as elems]))
 
 (defn active-file-badge [{:keys [file]}]
-  (let [{::file/keys [sub-type]} file]
+  (let [{::file/keys [sub-type]} file
+        title (name (get {:javascript :js} sub-type sub-type))]
     [:div.active-file-type
-     {:class sub-type}
-     (-> sub-type name string/upper-case)]))
+     {:class title}
+     (string/upper-case title)]))
 
 (defn user-full-name [{::user/keys [first-name last-name]}]
   (util/space-join first-name last-name))

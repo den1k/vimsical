@@ -22,13 +22,12 @@
 
 (def vims-list-item
   [:.vims-list-item
-   {:padding :10px
-    :cursor  :pointer}
-   ;[:&:first-child {:padding-top 0}]
+   {:padding-top :15px
+    :cursor      :pointer
+    :width       :600px}
+   [:&:first-child {:padding-top 0}]
    vims-preview
    [:&:hover
-    {:background    (:lightgrey colors)
-     :border-radius :5px}
     [:.live-preview
      {:transform "scale(1)"}]]
    [:.vims-title-and-delete
@@ -66,7 +65,11 @@
    [:.title
     {:margin-left :15px}]
    [:.list-box
-    {:width :100%}
+    {:padding       "15px 20px"
+     :border-radius :5px
+     :background    (:beatwhite colors)
+     :box-shadow    "0 10px 30px hsla(0,0%,0%,0.3)"
+     :width         :100%}
     [:.chevron
      {:font-size :120px}]
     [:.list vims-list-item]]])

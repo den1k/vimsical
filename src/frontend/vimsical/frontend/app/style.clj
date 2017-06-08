@@ -110,12 +110,14 @@
      :background      :white
      :border          (str "1px solid " (:lightgrey colors))
      :display         :flex
+     :flex-shrink     0
      :justify-content :center
      :align-items     :center
      :border-radius   :5px
      :padding         "5px 10px"
      :outline         :none
-     :white-space     :nowrap}
+     :white-space     :nowrap
+     :align-self      :baseline}
     [:&:hover
      {:color  (str (:darkgrey colors) " !important")
       :border (str "1px solid " (:grey colors))}]]
