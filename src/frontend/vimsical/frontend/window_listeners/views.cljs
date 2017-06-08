@@ -4,6 +4,7 @@
             [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
             [vimsical.frontend.quick-search.handlers :as quick-search.handlers]
             [vimsical.frontend.util.re-frame :refer [<sub]]
+            [vimsical.frontend.app.handlers :as app.handlers]
             [vimsical.frontend.ui.subs :as ui.subs]
             [vimsical.frontend.ui.handlers :as ui.handlers]))
 
@@ -53,6 +54,7 @@
       :option-forwardslash (do
                              (.preventDefault e) ;; prevent typing
                              (re-frame/dispatch [::quick-search.handlers/toggle]))
+      :esc (re-frame/dispatch [::app.handlers/close-modal])
       nil)))
 
 (defn handle-resize [_]
