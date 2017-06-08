@@ -66,7 +66,7 @@
    [:.title
     {:margin-left :15px}]
    [:.list-box
-    [:.list vims-list-item]]
-   #_[:.no-vimsae
-      {:display         :flex
-       :justify-content :center}]])
+    {:width :100%}
+    [:.chevron
+     {:font-size :120px}]
+    [:.list vims-list-item]]])

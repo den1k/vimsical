@@ -10,7 +10,10 @@
  ::vimsae
  :<- [::user.subs/vimsae queries.vims/pull-query]
  :<- [::app.subs/vims [:db/uid]]
- (fn [[vimsae cur-vims] _]
+ (fn [[vimsae cur-vims] [_ {:keys [per-page]}]]
+   {:pre [per-page]}
    (->> vimsae
         (remove (partial util/=by :db/uid cur-vims))
-        (reverse))))
+        (reverse)
+        (partition-all per-page)
+        vec)))

@@ -8,7 +8,8 @@
    [vimsical.frontend.views.popovers :as popovers]
    [vimsical.frontend.vims-list.subs :as subs]
    [re-frame.interop :as interop]
-   [vimsical.vims :as vims]))
+   [vimsical.vims :as vims]
+   [re-com.core :as re-com]))
 
 (defn vims-list-item
   [{::vims/keys [title] :as vims}]
@@ -31,11 +32,23 @@
          :anchor   [:div.delete-x "+"]}]]]]))
 
 (defn vims-list []
-  (let [vimsae (<sub [::subs/vimsae])]
-    [:div.vims-list.dc.ac
-     [:div.list-box
-      [:div.list
-       (if (seq vimsae)
-         (for [{:as vims key :db/uid} vimsae]
-           ^{:key key} [vims-list-item vims])
-         ^{:key ::empty} [:h1 "No vims Placeholder"])]]]))
+  (let [state (interop/ratom {:list-partition-idx 0})]
+    (fn []
+      (let [vimsae (<sub [::subs/vimsae {:per-page 5}])
+            {:keys [list-partition-idx]} @state]
+        [:div.vims-list.dc.ac
+         [:div.list-box.jsb.ac
+          {:on-click (e> (.stopPropagation e))}
+          [re-com/md-icon-button
+           :style {:visibility (when (zero? list-partition-idx) :hidden)}
+           :class "chevron"
+           :on-click (e> (swap! state update :list-partition-idx dec))
+           :md-icon-name "zmdi-chevron-left"]
+          [:div.list
+           (for [{:as vims key :db/uid} (get vimsae list-partition-idx)]
+             ^{:key key} [vims-list-item vims])]
+          [re-com/md-icon-button
+           :style {:visibility (when-not (get vimsae (inc list-partition-idx)) :hidden)}
+           :class "chevron"
+           :on-click (e> (swap! state update :list-partition-idx inc))
+           :md-icon-name "zmdi-chevron-right"]]]))))
