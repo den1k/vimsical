@@ -1,7 +1,8 @@
 (ns vimsical.frontend.code-editor.interop
   (:require
    [vimsical.vcs.edit-event :as edit-event]
-   [vimsical.vcs.file :as file]))
+   [vimsical.vcs.file :as file]
+   [clojure.string :as str]))
 
 (defn file-lang [{::file/keys [sub-type]}]
   (name sub-type))
@@ -40,19 +41,18 @@
       (> idx str-len) nil ; out of bounds
       :else
       (reduce
-       (fn [[cur-idx line col :as step] char]
+       (fn [[cur-idx l c :as step] char]
          (let [next-idx (inc cur-idx)]
            (cond
-             ;; lookahead in case we're at the last char
-             (or (= cur-idx idx) (= next-idx str-len))
-             (reduced {:line line :col (inc col)})
-
-             (identical? \newline char)
-             [next-idx (inc line) 1]
-
-             :else
-             [next-idx line (inc col)])))
-       [0 1 1] string))))
+             (= cur-idx idx)      (reduced {:line l :col c})
+             ;; lookahead at last step of reduction
+             ;; this becomes true only when idx is at last char
+             (= next-idx str-len) (reduced {:line l :col (inc c)})
+             :else                (if (identical? \newline char)
+                                    [next-idx (inc l) 1]
+                                    [next-idx l (inc c)]))))
+       [0 1 1]
+       string))))
 
 ;;
 ;; * Change Parsing
