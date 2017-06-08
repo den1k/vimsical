@@ -82,7 +82,7 @@
    key
    join-ref-or-entity]
   (let [path     (if (keyword? target-ref-or-link-or-entity)
-                   [target-ref-or-link-or-entity key]
+                   [(get db target-ref-or-link-or-entity) key]
                    [(->ref db target-ref-or-link-or-entity) key])
         join-ref (->ref db join-ref-or-entity)]
     (update-in db path (fnil conj []) join-ref)))
@@ -91,7 +91,6 @@
   "Add `join-entity` to the `db` and conj its ref onto the `join-key` on
   `entity`. Will default to a vector if the join doesn't exist."
   [db entity join-key join-entity]
-
   (-> db
       (mg/add join-entity)
       (add-join* entity join-key join-entity)))
