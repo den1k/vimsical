@@ -22,8 +22,8 @@
   interceptors found in `:http/default-interceptors`"
   [{::http/keys [default-interceptors] :as service-map}]
   (-> service-map
-      (interceptors.util/append-interceptors default-interceptors)
-      (http/default-interceptors)))
+      (http/default-interceptors)
+      (interceptors.util/prepend-interceptors default-interceptors)))
 
 ;;
 ;; * Component helpers
@@ -34,7 +34,7 @@
   (let [context-dependencies-interceptor (interceptors.deps/new-context-dependencies-injector component)
         new-interceptors                 [context-dependencies-interceptor]]
     (-> service-map
-        ;; (add-default-interceptors)
+        (add-default-interceptors)
         (interceptors.util/prepend-interceptors new-interceptors)
         (http/create-server)
         (start-fn))))
