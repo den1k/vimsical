@@ -11,6 +11,7 @@
 
 (s/def ::delta (s/keys :req-un [::delta/uid ::delta/prev-uid ::delta/branch-uid]))
 (s/def ::delta-by-branch-uid (s/every-kv ::branch/uid ::delta))
+(s/def ::order-by-branch-uid (s/every-kv ::branch/uid nat-int?))
 
 ;;
 ;; * Predicate
@@ -40,22 +41,35 @@
      (next-in-branch? delta-by-branch-uid branch-uid delta))
    (keys delta-by-branch-uid)))
 
-(defn- validate-contiguous-xf
-  [rf]
-  (fn
-    ([] (rf))
-    ([delta-by-branch-uid] (rf delta-by-branch-uid))
-    ([delta-by-branch-uid {:keys [prev-uid] :as delta}]
-     (if (or (next-in-branch? delta-by-branch-uid delta)
-             (new-branch? delta-by-branch-uid delta)
-             (next-across-branches? delta-by-branch-uid delta)
-             (first-delta? delta-by-branch-uid delta))
-       (rf delta-by-branch-uid delta)
-       (throw
-        (ex-info "Validation error" {:last-deltas-by-branch-uid delta-by-branch-uid :delta delta}))))))
+;;
+;; * Validation transducer
+;;
+
+(defn validate-deltas-xf
+  "Return a pass-through transducer that will throw if the input deltas are not in toplogical order"
+  [delta-by-branch-uid]
+  (fn [rf]
+    (let [state (volatile! delta-by-branch-uid)]
+      (fn
+        ([] (rf))
+        ([acc] (rf acc))
+        ([acc {:keys [branch-uid prev-uid] :as delta}]
+         (let [delta-by-branch-uid (deref state)]
+           (if (or (next-in-branch? delta-by-branch-uid delta)
+                   (new-branch? delta-by-branch-uid delta)
+                   (next-across-branches? delta-by-branch-uid delta)
+                   (first-delta? delta-by-branch-uid delta))
+             (do
+               (vswap! state assoc branch-uid delta)
+               (rf acc delta))
+             (throw
+              (ex-info
+               "Validation error"
+               {:last-deltas-by-branch-uid state
+                :delta                     delta})))))))))
 
 ;;
-;; * API
+;; * (Client) State updates
 ;;
 
 (defn group-by-branch-uid-xf
@@ -65,13 +79,6 @@
 (defn group-by-branch-uid-rf []
   (completing (fn [m [k v]] (assoc m k v))))
 
-(defn group-by-branch-uid
-  [deltas]
-  (transduce
-   (group-by-branch-uid-xf)
-   (group-by-branch-uid-rf)
-   {} deltas))
-
 (s/fdef update-delta-by-branch-uid
         :args (s/cat :deltas-by-branch-uid (s/nilable ::delta-by-branch-uid)
                      :deltas (s/nilable (s/every ::delta)))
@@ -79,14 +86,7 @@
 
 (defn update-delta-by-branch-uid
   [delta-by-branch-uid deltas]
-  (try
-    (transduce
-     (group-by-branch-uid-xf validate-contiguous-xf)
-     (group-by-branch-uid-rf)
-     delta-by-branch-uid deltas)
-    (catch #?(:clj Throwable :cljs :default) t
-        (throw
-         (ex-info "update-delta-by-branch-uid"
-                  {:delta-by-branch-uid delta-by-branch-uid
-                   :detlas              deltas
-                   :ex                  t})))))
+  (transduce
+   (group-by-branch-uid-xf (validate-deltas-xf delta-by-branch-uid))
+   (group-by-branch-uid-rf)
+   delta-by-branch-uid deltas))

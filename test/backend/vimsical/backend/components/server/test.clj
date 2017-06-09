@@ -4,7 +4,6 @@
    [io.pedestal.test :as pedestal.test]
    [vimsical.backend.components.service :as service]
    [vimsical.backend.components.session-store :as session-store]
-   [vimsical.backend.components.session-store.spec :as session-store.spec]
    [vimsical.backend.system.fixture :refer [*service-fn* *session-key* *system*]]
    [vimsical.common.util.transit :as transit]))
 
@@ -40,5 +39,5 @@
   (if-some [session-store (:session-store *system*)]
     (let [session-key (response->session-key response)
           session     (session-store/read-session* session-store session-key)]
-      (s/valid? ::session-store.spec/auth-session session))
+      (s/valid? ::session-store/user-session session))
     (assert false "Session store not found, was the system fixture started?")))

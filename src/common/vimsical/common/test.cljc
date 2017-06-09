@@ -56,28 +56,34 @@
 (defn uuid
   "Return a stable uuid for the given value."
   ([] (uuid/uuid))
-  ([& tags]
-   (or (get (deref *tag->uuid*) tags)
-       (let [uuid (uuid/uuid)]
-         (swap! *tag->uuid* assoc tags uuid)
-         (swap! *uuid->tag* assoc uuid tags)
-         uuid))))
+  ([& [?uuid-fn & ?rest :as tags]]
+   (let [uuid-fn (if (fn? ?uuid-fn) ?uuid-fn uuid/uuid)
+         tags    (if (fn? ?uuid-fn) ?rest tags)]
+     (or (get (deref *tag->uuid*) tags)
+         (let [uuid (uuid-fn)]
+           (swap! *tag->uuid* assoc tags uuid)
+           (swap! *uuid->tag* assoc uuid tags)
+           uuid)))))
 
 (defn- uuid-seq*
-  [sym current]
+  [uuid-fn sym current]
   (lazy-seq
-   (cons (uuid sym current) (uuid-seq* sym (inc current)))))
+   (cons
+    (uuid uuid-fn sym current)
+    (uuid-seq* uuid-fn sym (inc current)))))
 
 (defn uuid-seq
   "Return a lazy-seq of uuids. Values are both unique and stable per seq."
-  [] (uuid-seq* (gensym) 0))
+  ([] (uuid-seq uuid/uuid))
+  ([uuid-fn] (uuid-seq* uuid-fn (gensym) 0)))
 
 (defn uuid-gen
   "Return a map of `:seq` :and `:f` where successive invocations of `f` return
   the next uuid in `:seq`. Useful in testing functions that create uuids by
   side-effect, we can pass `f` as a generator to the sut while asserting against
   the values of `seq`."
-  []
-  (let [n (atom -1)
-        s (uuid-seq)]
-    {:seq s :f (fn [& _] (nth s (swap! n inc)))}))
+  ([] (uuid-gen uuid/uuid))
+  ([uuid-fn]
+   (let [n (atom -1)
+         s (uuid-seq uuid-fn)]
+     {:seq s :f (fn [& _] (nth s (swap! n inc)))})))

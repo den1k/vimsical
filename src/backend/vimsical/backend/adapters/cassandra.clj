@@ -46,7 +46,7 @@
 (s/def ::query-identifier keyword?)
 (s/def ::alia-executable (s/or :raw ::raw-query :prep ::PreparedStatement :stmt ::Statement))
 (s/def ::executable (s/or :key ::query-identifier :exec ::alia-executable))
-(s/def ::values (s/map-of :keyword any?))
+(s/def ::values (s/or :keywords (s/map-of ::query-identifier any?) :positional (s/every any?)))
 (s/def ::command (s/or :exec (s/tuple ::executable) :with-vals (s/tuple ::executable ::values)))
 (s/def ::queries (s/map-of ::query-identifier ::raw-query))
 (s/def ::prepared (s/map-of ::query-identifier ::PreparedStatement))
@@ -100,10 +100,6 @@
 
 (defn new-options [options] (merge default-options options))
 
-(defn async-options
-  [options success error]
-  (assoc (new-options options) :success success :error error))
-
 ;;
 ;; * Connection
 ;;
@@ -155,35 +151,6 @@
   (prepare-queries [this queries]
     (cond-> this
       (seq queries) (update :prepared merge (->prepared session queries))))
-
-  protocol/ICassandraAsync
-  (execute-async
-    [this executable success error]
-    (protocol/execute-async this executable success error nil))
-  (execute-async
-    [{:as this :keys [session]} executable success error options]
-    {:pre [session]}
-    (if-some [statement (command->statement this executable)]
-      (let [options' (async-options options success error)]
-        (alia/execute-async session statement options'))
-      (error (ex-info "invalid executable" {:executable executable}))))
-
-  (execute-batch-async
-    [this commands success error]
-    (protocol/execute-batch-async this commands :logged success error))
-  (execute-batch-async
-    [this commands batch-type success error]
-    (protocol/execute-batch-async this commands batch-type success error nil))
-  (execute-batch-async
-    [{:keys [session] :as this} commands batch-type success error options]
-    (try
-      (if-some [statements (commands->statements this commands)]
-        (let [batch    (alia/batch statements batch-type)
-              options' (async-options options success error)]
-          (alia/execute-async session batch options'))
-        (error (ex-info "invalid commands" {:commands commands})))
-      (catch Throwable t
-        (error t))))
 
   protocol/ICassandraChan
   (execute-chan
