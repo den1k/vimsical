@@ -22,6 +22,10 @@
 ;; * Coercion
 ;;
 
+(defn uuid->str [uuid]
+  #?(:clj (assert false "Not implemented")
+     :cljs (.-s uuid)))
+
 (defn str->uuid [s]
   #?(:clj  (assert false "Not implemented")
      :cljs (if (string? s) (cljs.core/uuid s) s)))
@@ -62,11 +66,12 @@
 ;; constructed from the same string don't test =
 
 (defn args=
-  [a b]
+  [{uida :db/uid :as a}
+   {uidb :db/uid :as b}]
   #?(:clj (= a b)
      :cljs
-     (if (and (:db/uid a) (:db/uid b))
-       (= (.s (:db/uid a)) (.s (:db/uid b)))
+     (if (and uida uidb)
+       (util/=by uuid->str uida uidb)
        (= a b))))
 
 (defn route=
