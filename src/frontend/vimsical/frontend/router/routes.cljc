@@ -71,5 +71,6 @@
 
 (defn route=
   [a b]
-  (and (util/=by ::route-handler a b)
-       (util/=by (comp args= ::args) a b)))
+  (and
+   (util/=by ::route-handler a b)
+   (args= (::args a) (::args b))))
