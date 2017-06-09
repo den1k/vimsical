@@ -40,11 +40,11 @@
             {:keys [list-partition-idx]} @state]
         [:div.vims-list.dc.ac
          [:div.list-box.jsb.ac
-          {:on-click (e> (.stopPropagation e))}
           [re-com/md-icon-button
            :style {:visibility (when (zero? list-partition-idx) :hidden)}
            :class "chevron"
-           :on-click (e> (swap! state update :list-partition-idx dec))
+           :on-click (e> (.stopPropagation e)
+                         (swap! state update :list-partition-idx dec))
            :md-icon-name "zmdi-chevron-left"]
           [:div.list
            (for [{:as vims key :db/uid} (get vimsae list-partition-idx)]
@@ -52,5 +52,6 @@
           [re-com/md-icon-button
            :style {:visibility (when-not (get vimsae (inc list-partition-idx)) :hidden)}
            :class "chevron"
-           :on-click (e> (swap! state update :list-partition-idx inc))
+           :on-click (e> (.stopPropagation e)
+                         (swap! state update :list-partition-idx inc))
            :md-icon-name "zmdi-chevron-right"]]]))))
