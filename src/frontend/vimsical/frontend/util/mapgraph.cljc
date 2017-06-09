@@ -25,14 +25,16 @@
 (defn ->entity
   ([db x] (->entity db :db/uid x))
   ([db id-key x]
+   {:post [(mg/ref-to db %)]}
    (cond
-     (map? x) x
+     (map? x)       (select-keys x [id-key])
      (mg/ref? db x) (apply hash-map x)
-     (uuid? x) {id-key x})))
+     (uuid? x)      {id-key x})))
 
 (defn ->ref
   ([db x] (->ref db :db/uid x))
   ([db id-key x]
+   {:post [(mg/ref? db %)]}
    (cond
      (mg/ref? db x) x
      (map? x) (mg/ref-to db x)
@@ -41,6 +43,7 @@
 (defn ->uid
   ([db x] (->uid db :db/uid x))
   ([db id-key x]
+   {:post [(uuid? %)]}
    (cond
      (uuid? x) x
      (mg/ref? db x) (second x)

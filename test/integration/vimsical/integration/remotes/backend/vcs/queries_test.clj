@@ -29,7 +29,7 @@
     (re-frame.test/run-test-sync
      (re-frame/reg-event-db ::test-db-init (constantly test-db))
      (re-frame/dispatch-sync [::test-db-init])
-     (re-frame/dispatch-sync [::vcs.handlers/init uuid (uuid ::data/vims) data/deltas])
+     (re-frame/dispatch-sync [::vcs.handlers/init (uuid ::data/vims) data/deltas])
      (f))))
 
 ;;

@@ -16,4 +16,4 @@
  (fn [[_ ?pattern]]
    (re-frame/subscribe
     [::app.subs/user [:db/id {::user/settings (or ?pattern '[*])}]]))
- (fn [user] (::user/settings user)))
+ (fn [user _] (::user/settings user)))

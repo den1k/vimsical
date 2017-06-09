@@ -8,7 +8,8 @@
 #?(:clj
    (require
     '[figwheel-sidecar.repl-api :as ra]
-    '[figwheel-sidecar.config :as config]))
+    '[figwheel-sidecar.config :as config]
+    '[vimsical.frontend.figwheel-handler]))
 
 #?(:clj
    ;; This fetches :cljsbuilds from project.clj via the :cljs profile
@@ -29,11 +30,19 @@
    (def config {:build-id build-id :port port}))
 
 #?(:clj
+   (def open-file-command
+     (case (System/getProperty "user.name")
+       "julien" "emacsclient"
+       "dennis" "idea")))
+
+#?(:clj
    (def figwheel-config
      (let [{:keys [build-id port]} config]
-       {:figwheel-options {:css-dirs         ["resources/public/css"]
-                           :reload-clj-files {:clj false :cljc true}
-                           :server-port      port}
+       {:figwheel-options {:css-dirs          ["resources/public/css"]
+                           :reload-clj-files  {:clj false :cljc true}
+                           :server-port       port
+                           :ring-handler      'vimsical.frontend.figwheel-handler/handler
+                           :open-file-command open-file-command}
         :build-ids        [build-id]
         :all-builds       cljs-builds})))
 

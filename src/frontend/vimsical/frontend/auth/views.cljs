@@ -29,7 +29,8 @@
               (status-msg [status]
                 (case status
                   nil                           "Sign up"
-                  ::frontend.remotes.fx/pending "Signing you up..."))]
+                  ::frontend.remotes.fx/pending "Signing you up..."
+                  ::frontend.remotes.fx/success "Success!"))]
         (let [status (<sub [::frontend.remotes.fx/status :backend status-key])]
           [:div.auth.signup.dc.ac
            [:div.beta-signup "Private Beta Signup"]
@@ -81,7 +82,8 @@
             (status-msg [status]
               (case status
                 nil                           "Log in"
-                ::frontend.remotes.fx/pending "Logging you in..."))]
+                ::frontend.remotes.fx/pending "Logging you in..."
+                ::frontend.remotes.fx/success "Success!"))]
       (fn []
         (let [status (<sub [::frontend.remotes.fx/status :backend status-key])]
           [:div.auth.login

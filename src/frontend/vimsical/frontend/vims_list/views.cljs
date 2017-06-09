@@ -4,6 +4,7 @@
    [vimsical.frontend.app.handlers :as app.handlers]
    [vimsical.frontend.live-preview.views :as live-preview.views]
    [vimsical.frontend.util.dom :refer-macros [e>]]
+   [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.views.popovers :as popovers]
    [vimsical.frontend.vims-list.subs :as subs]
@@ -13,6 +14,7 @@
 
 (defn vims-list-item
   [{::vims/keys [title] :as vims}]
+  {:pre [(:db/uid vims)]}
   (let [show-delete-tooltip? (interop/ratom false)]
     [:div.vims-list-item.jsb.ac
      {:on-click
