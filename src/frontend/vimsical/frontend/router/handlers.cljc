@@ -44,7 +44,7 @@
 (defmulti route-dispatch
   (fn [{::routes/keys [route-handler] :as route} coeffects] route-handler))
 
-(defmethod route-dispatch :default [_ coeffects] coeffects)
+(defmethod route-dispatch :default [_ coeffects])
 
 ;;
 ;; * Handlers

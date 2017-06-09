@@ -2,6 +2,7 @@
   (:require
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
+   [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.app.subs :as app.subs]
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
    [vimsical.frontend.util.mapgraph :as util.mg]
@@ -20,8 +21,7 @@
 ;;
 
 (defn init-event-fx
-  [{:keys [db]}
-   [_ uuid-fn vims deltas]]
+  [{:keys [db]} [_ vims deltas {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
   (let [vims-ref                 (util.mg/->ref db vims)
         {:as         vims
          ::vims/keys [branches]} (mg/pull db queries/vims vims-ref)

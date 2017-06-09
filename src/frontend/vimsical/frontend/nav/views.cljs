@@ -122,7 +122,7 @@
        [:div.new-and-my-vims.button-group
         [:div.button
          {:on-click (e> (re-frame/dispatch
-                         [::app.handlers/new-vims uuid user]))}
+                         [::app.handlers/new-vims user]))}
          "New Vims"]
         [:div.button
          {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view

@@ -18,7 +18,7 @@
   (let [show-delete-tooltip? (interop/ratom false)]
     [:div.vims-list-item.jsb.ac
      {:on-click
-      (e> (re-frame/dispatch [::app.handlers/open-vims uuid vims]))}
+      (e> (re-frame/dispatch [::app.handlers/open-vims vims]))}
      [live-preview.views/live-preview
       {:static?        true
        :from-snapshot? true
