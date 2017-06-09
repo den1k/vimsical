@@ -225,6 +225,6 @@
   (assert (every? vector? (next strs)))
   (letfn [(splice-strs [strs] (mapv (fn [str] (if (vector? str) str [str])) strs))]
     (reduce
-     (fn [[vcs _ delta-uid] edit-event]
-       (vcs/add-edit-event vcs effects file-uid branch-uid delta-uid edit-event))
+     (fn [[vcs deltas delta-uid] edit-event]
+       (vcs/add-edit-event vcs effects file-uid branch-uid (or (-> deltas last :uid) delta-uid) edit-event))
      [vcs nil delta-uid] (apply diffs->edit-events (splice-strs strs)))))

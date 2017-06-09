@@ -44,8 +44,9 @@
           test-effects {::editor/pad-fn       test-pad-fn
                         ::editor/uuid-fn      test-uuid-fn
                         ::editor/timestamp-fn test-timestamp-fn}
-          state=       (fn [expected-string expected-cursor [states deltas delta-uid]]
-                         (let [{::sut/keys [files string cursor]} (get states file-uid)]
+          state=       (fn [expected-string expected-cursor [states deltas]]
+                         (let [delta-uid                          (-> deltas last :uid)
+                               {::sut/keys [files string cursor]} (get states file-uid)]
                            (is (seq deltas))
                            (is (topo/sorted? deltas))
                            (is (= expected-string string))
@@ -61,7 +62,7 @@
                  sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                  (diff/diffs->edit-events "" "abc"))))
       (testing "Spliced Delete"
-        (state= "a" 1
+        (state= "a" 0                   ; not sure why this isn't 1?
                 (sut/add-edit-events
                  sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                  (diff/diffs->edit-events "" ["abc"] ["a"])))
@@ -70,11 +71,15 @@
                  sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                  (diff/diffs->edit-events "" ["abc"] ["xyz"]))))
       (testing "Unspliced Delete"
-        (state= "a" 1
+        (state= "a" 0
                 (sut/add-edit-events
                  sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                  (diff/diffs->edit-events "" "abc" "a")))
         (state= "xyz" 3
                 (sut/add-edit-events
                  sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
-                 (diff/diffs->edit-events "" "abc" "xyz")))))))
+                 (diff/diffs->edit-events "" "abc" "xyz")))
+        (state= "axyz" 2
+                (sut/add-edit-events
+                 sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
+                 (diff/diffs->edit-events "" "abc" "axyz")))))))

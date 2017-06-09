@@ -71,23 +71,30 @@
   [{::keys [deltas] :as state}  [_ idx diff] {:keys [prev-uid] :as delta}]
   (cond
     (nil? prev-uid)
-    (assoc state ::deltas (indexed/vec-by :uid [delta]) ::string diff)
+    (assoc state
+           ::cursor (count diff)
+           ::deltas (indexed/vec-by :uid [delta])
+           ::string diff)
 
     (== idx (count deltas))
     (-> state
+        (update ::cursor + (count diff))
         (update ::deltas conj delta)
         (update ::string str diff))
 
     :else
     (-> state
+        (update ::cursor + (count diff))
         (update ::deltas splittable/splice idx (indexed/vec-by :uid [delta]))
         (update ::string splittable/splice idx diff))))
 
 (defmethod update-state :str/rem
   [state  [_ idx amt] _]
-  (-> state
-      (update ::deltas splittable/omit idx amt)
-      (update ::string splittable/omit idx amt)))
+  (letfn [(minus-or-zero [x amt] (max 0 (- x amt)))]
+    (-> state
+        (update ::cursor minus-or-zero amt)
+        (update ::deltas splittable/omit idx amt)
+        (update ::string splittable/omit idx amt))))
 
 (defmethod update-state :crsr/mv  [state  [_ idx] _]       (assoc state ::cursor idx))
 (defmethod update-state :crsr/sel [state  [_ idx-range] _] (assoc state ::cursor idx-range))
@@ -119,9 +126,15 @@
 
 (defn- op-idx->op-uid
   [{::keys [deltas]} op-idx]
-  (let [idx (dec (long op-idx))]
-    (when (<= 0 (long idx))
-      (:uid (nth deltas (long idx))))))
+  (try
+    (let [idx (dec (long op-idx))]
+      (when (<= 0 (long idx))
+        (:uid (nth deltas (long idx)))))
+    (catch #?(:clj Throwable :cljs :default) e
+        (throw
+         (ex-info
+          "Op idx out of bounds"
+          {:op-idx op-idx :idx (dec op-idx) :deltas-count (count deltas) :ex e})))))
 
 ;;
 ;; ** Player API Internals -- adding existing deltas
@@ -303,7 +316,7 @@
                         :timestamp  timestamp})
         deltas'       (conj deltas delta)
         state'        (update-state state [:crsr/mv idx] delta)]
-    [state' deltas' new-delta-uid]))
+    [state' deltas' prev-delta-uid]))
 
 (defmethod add-edit-event-rf :crsr/sel
   [state {:as editor-effects ::editor/keys [pad-fn uuid-fn timestamp-fn]} deltas file-uid branch-uid prev-delta-uid {:as edit-event [from-idx to-idx] ::edit-event/range}]
@@ -340,6 +353,7 @@
 (s/fdef add-delta
         :args (s/cat :state ::state-by-file-uid :delta ::delta/delta)
         :ret ::state-by-file-uid)
+
 
 (defn add-delta
   [state-by-file-uid {:keys [file-uid] :as delta}]

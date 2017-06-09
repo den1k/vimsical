@@ -49,8 +49,8 @@
 (re-frame/reg-sub
  ::editor-instance-for-subtype
  (fn [[_ vims sub-type]]
-     [(re-frame/subscribe [::ui-db/ui-db])
-      (re-frame/subscribe [::vcs.subs/file-for-subtype vims sub-type])])
+   [(re-frame/subscribe [::ui-db/ui-db])
+    (re-frame/subscribe [::vcs.subs/file-for-subtype vims sub-type])])
  (fn [[ui-db file] [_ vims]]
    (code-editor.ui-db/get-editor ui-db vims file)))
 
@@ -64,36 +64,22 @@
  (fn [[skimhead-entry playhead-entry skimming? playing?] _]
    (cond
      skimming? skimhead-entry
-     playing? playhead-entry
-     :else ::sentinel)))
+     playing?  playhead-entry
+     :else     ::sentinel)))
 
 (defn- timeline-entry-subs [[_ vims _]]
   [(re-frame/subscribe [::vcs.subs/vcs vims])
    (re-frame/subscribe [::timeline-entry vims])])
 
-(re-frame/reg-sub
- ::string
- timeline-entry-subs
- string-handler)
-
-(re-frame/reg-sub
- ::cursor
- timeline-entry-subs
- cursor-handler)
+(re-frame/reg-sub ::string timeline-entry-subs string-handler)
+(re-frame/reg-sub ::cursor timeline-entry-subs cursor-handler)
 
 (defn- playhead-entry-subs [[_ vims _]]
   [(re-frame/subscribe [::vcs.subs/vcs vims])
    (re-frame/subscribe [::vcs.subs/playhead-entry vims])])
 
-(re-frame/reg-sub
- ::playhead-string
- playhead-entry-subs
- string-handler)
-
-(re-frame/reg-sub
- ::playhead-cursor
- playhead-entry-subs
- cursor-handler)
+(re-frame/reg-sub ::playhead-string playhead-entry-subs string-handler)
+(re-frame/reg-sub ::playhead-cursor playhead-entry-subs cursor-handler)
 
 (re-frame/reg-sub
  ::position

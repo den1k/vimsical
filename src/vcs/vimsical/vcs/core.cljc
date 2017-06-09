@@ -115,8 +115,8 @@
         all-deltas'             (state.deltas/add-deltas all-deltas deltas')
         timeline'               (state.timeline/add-deltas timeline branches uuid-fn deltas')
         vcs'                    (-> vcs
-                                    (assoc-in [::state-by-delta-uid delta-uid' ::state.deltas/deltas] all-deltas')
-                                    (assoc-in [::state-by-delta-uid delta-uid' ::state.files/state-by-file-uid] files-state-by-file-uid')
+                                    (assoc-in [::state-by-delta-uid (-> deltas' peek :uid) ::state.deltas/deltas] all-deltas')
+                                    (assoc-in [::state-by-delta-uid (-> deltas' peek :uid) ::state.files/state-by-file-uid] files-state-by-file-uid')
                                     (assoc ::timeline timeline'))]
     [vcs' deltas' delta-uid']))
 

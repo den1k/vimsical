@@ -96,10 +96,12 @@
  (fn [_ [_
          {old-vims :vims old-file :file :as old-opts}
          {new-vims :vims new-file :file :as new-opts}]]
-   {:dispatch-n [[::clear-disposables old-vims old-file]
-                 [::track-stop old-vims old-file]
-                 [::handover old-opts new-opts]
-                 [::init new-opts]]}))
+   (when (and old-vims (not (util/=by :db/uid old-vims new-vims)))
+     {:dispatch-n
+      [[::clear-disposables old-vims old-file]
+       [::track-stop old-vims old-file]
+       [::handover old-opts new-opts]
+       [::init new-opts]]})))
 
 (re-frame/reg-event-fx
  ::dispose
