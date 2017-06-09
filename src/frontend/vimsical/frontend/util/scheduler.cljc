@@ -3,7 +3,8 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.data.avl :as avl]
-   [re-frame.core :as re-frame]))
+   [re-frame.core :as re-frame])
+  (:refer-clojure :exclude [time]))
 
 ;;
 ;; * Protocol
@@ -14,7 +15,8 @@
   (start! [_ t tick])
   (pause! [_])
   (stop! [_])
-  (set-time! [_ t]))
+  (set-time! [_ t])
+  (set-speed! [_ sp]))
 
 (defprotocol ITimeScheduler
   (schedule! [_ t event override?]))
@@ -68,17 +70,21 @@
       [(seq (vals (conj l e))) r])))
 
 (deftype TimeScheduler
-    [#?(:cljs ^:mutable tick     :clj ^:unsynchronized-mutable tick)
-     #?(:cljs ^:mutable running     :clj ^:unsynchronized-mutable running)
-     #?(:cljs ^:mutable started-at  :clj ^:unsynchronized-mutable started-at)
-     #?(:cljs ^:mutable time->event :clj ^:unsynchronized-mutable time->event)
-     #?(:cljs ^:mutable tick-id     :clj ^:unsynchronized-mutable tick-id)]
+  [#?(:cljs ^:mutable time :clj ^:unsynchronized-mutable time)
+   #?(:cljs ^:mutable speed :clj ^:unsynchronized-mutable speed)
+   #?(:cljs ^:mutable prev-now :clj ^:unsynchronized-mutable prev-now)
+   #?(:cljs ^:mutable tick :clj ^:unsynchronized-mutable tick)
+   #?(:cljs ^:mutable running :clj ^:unsynchronized-mutable running)
+   #?(:cljs ^:mutable time->event :clj ^:unsynchronized-mutable time->event)
+   #?(:cljs ^:mutable tick-id :clj ^:unsynchronized-mutable tick-id)]
   ISchedulerInternal
   (request-tick! [this]
     (set! tick-id (request-tick* (ticker this))))
   (tick! [this now]
     (when running
-      (let [elapsed (- now started-at)]
+      (let [elapsed (+ time (* (- now prev-now) speed))]
+        (set! prev-now now)
+        (set! time elapsed)
         (when tick (tick elapsed))
         (when-some [[events next-time->event] (events-before time->event elapsed)]
           (doseq [event events] (re-frame/dispatch event))
@@ -89,6 +95,7 @@
   (running? [_] running)
   (start! [this t tick']
     (set-time! this t)
+    (set! prev-now (now))
     (set! tick tick')
     (set! running true)
     (request-tick! this))
@@ -98,11 +105,12 @@
     (when-not running (throw (ex-info "Scheduler not running" {})))
     (cancel-tick* tick-id)
     (when tick (tick nil))
-    (set! started-at nil)
+    (set! time 0)
     (set! time->event (empty time->event)))
   (set-time! [this t]
-    (let [started-at' (cond-> (now) (some? t) (- t))]
-      (set! started-at started-at')))
+    (set! time t))
+  (set-speed! [this sp]
+    (set! speed sp))
 
   ITimeScheduler
   (schedule! [this t event override?]
@@ -112,22 +120,21 @@
 
 (defn scheduler? [x] (and x (instance? TimeScheduler x)))
 
-(defn new-scheduler
-  [] (->TimeScheduler nil false nil (avl/sorted-map) nil))
+(defn new-scheduler [] (->TimeScheduler 0 1 (now) nil false (avl/sorted-map) nil))
 
 (comment
-  (do
-    (require '[re-frame.interop :as interop])
-    (re-frame/reg-event-db :foo (fn [db v] (println :foo v) db))
-    (def elapsed (interop/ratom nil))
-    (def s (new-scheduler (partial reset! elapsed)))
-    (schedule! s 3000 [:foo])
-    (schedule! s 2000 [:foo])
-    (schedule! s 1000 [:foo])
-    (start! s)
-    ;; (pause! s)
-    (deref elapsed)
-    #_(stop! s)))
+ (do
+   (require '[re-frame.interop :as interop])
+   (re-frame/reg-event-db :foo (fn [db v] (println :foo v) db))
+   (def elapsed (interop/ratom nil))
+   (def s (new-scheduler))
+   (schedule! s 3000 [:foo])
+   (schedule! s 2000 [:foo])
+   (schedule! s 1000 [:foo])
+   (start! s)
+   ;; (pause! s)
+   (deref elapsed)
+   #_(stop! s)))
 
 ;;
 ;; * Cofx & Fx
@@ -152,15 +159,16 @@
         :set-time ::set-time
         :schedule ::schedule))
 
-(defonce scheduler (new-scheduler))
+(def scheduler (new-scheduler))
 
 (defmulti perform-action! :action)
 
 (defmethod perform-action! nil [_])
-(defmethod perform-action! :start    [{:keys [t tick]}]  (start! scheduler t tick))
-(defmethod perform-action! :pause    [{:keys [tick]}]    (pause! scheduler))
-(defmethod perform-action! :stop     [{:keys [tick]}]    (stop! scheduler))
-(defmethod perform-action! :set-time [{:keys [t]}]       (set-time! scheduler t))
+(defmethod perform-action! :start [{:keys [t tick]}] (start! scheduler t tick))
+(defmethod perform-action! :pause [{:keys [tick]}] (pause! scheduler))
+(defmethod perform-action! :stop [{:keys [tick]}] (stop! scheduler))
+(defmethod perform-action! :set-time [{:keys [t]}] (set-time! scheduler t))
+(defmethod perform-action! :set-speed [{:keys [speed]}] (set-speed! scheduler speed))
 (defmethod perform-action! :schedule [{:keys [t event override?]}]
   (schedule! scheduler t event override?))
 

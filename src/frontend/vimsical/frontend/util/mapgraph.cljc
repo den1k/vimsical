@@ -26,25 +26,25 @@
   ([db x] (->entity db :db/uid x))
   ([db id-key x]
    (cond
-     (map? x)       x
+     (map? x) x
      (mg/ref? db x) (apply hash-map x)
-     (uuid? x)      {id-key x})))
+     (uuid? x) {id-key x})))
 
 (defn ->ref
   ([db x] (->ref db :db/uid x))
   ([db id-key x]
    (cond
      (mg/ref? db x) x
-     (map? x)       (mg/ref-to db x)
-     (uuid? x)      [id-key x])))
+     (map? x) (mg/ref-to db x)
+     (uuid? x) [id-key x])))
 
 (defn ->uid
   ([db x] (->uid db :db/uid x))
   ([db id-key x]
    (cond
-     (uuid? x)      x
+     (uuid? x) x
      (mg/ref? db x) (second x)
-     (map? x)       (get x id-key))))
+     (map? x) (get x id-key))))
 ;;
 ;; * Add
 ;;
@@ -82,7 +82,7 @@
    key
    join-ref-or-entity]
   (let [path     (if (keyword? target-ref-or-link-or-entity)
-                   [target-ref-or-link-or-entity key]
+                   [(get db target-ref-or-link-or-entity) key]
                    [(->ref db target-ref-or-link-or-entity) key])
         join-ref (->ref db join-ref-or-entity)]
     (update-in db path (fnil conj []) join-ref)))
@@ -109,8 +109,8 @@
    (fn [db k v]
      (cond
        (mg/ref? db v) (remove-ref db v)
-       (coll? v)      (reduce remove-ref db v)
-       :else          db))
+       (coll? v) (reduce remove-ref db v)
+       :else db))
    (dissoc db ref) (get db ref)))
 
 (defn remove-entity [db entity]

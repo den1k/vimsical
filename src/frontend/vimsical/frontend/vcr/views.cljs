@@ -12,8 +12,10 @@
    [vimsical.frontend.vcr.handlers :as handlers]
    [vimsical.frontend.vcr.subs :as subs]
    [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.frontend.user.subs :as user.subs]
    [vimsical.frontend.views.shapes :as shapes]
    [vimsical.frontend.views.splits :as splits]
+   [vimsical.frontend.user.handlers :as user.handlers]
    [vimsical.vcs.file :as file]))
 
 ;;
@@ -48,15 +50,20 @@
 (def triangle-right (speed-triangle :right))
 
 (defn- speed-control []
-  (let [speed-range [1.0 1.5 1.75 2 2.25 2.5]
-        speed       (reagent/atom (first speed-range))]
-    (fn []
+  (fn []
+    (let [{:as            settings
+           :settings/keys [playback-speed]
+           :or            {playback-speed 1}} (<sub [::user.subs/settings])]
       [:div.control.speed
-       (triangle-left {:class    "icon speed-triangle decrease"
-                       :on-click (e> :decrease)})
-       (str @speed "x")
-       (triangle-right {:class    "icon speed-triangle increase"
-                        :on-click (e> :increase)})])))
+       (triangle-left
+        {:class    "icon speed-triangle decrease"
+         :on-click (e> (re-frame/dispatch
+                        [::user.handlers/playback-speed settings :dec]))})
+       (str playback-speed "x")
+       (triangle-right
+        {:class    "icon speed-triangle increase"
+         :on-click (e> (re-frame/dispatch
+                        [::user.handlers/playback-speed settings :inc]))})])))
 
 (defn- playback-control [{:keys [vims]}]
   (let [playing? (<sub [::timeline.subs/playing? vims])]

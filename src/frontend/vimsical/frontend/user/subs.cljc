@@ -9,4 +9,11 @@
  (fn [[_ ?pattern]]
    (re-frame/subscribe
     [::app.subs/user [{::user/vimsae (or ?pattern '[*])}]]))
- ::user/vimsae)
+ (fn [user] (::user/settings user)))
+
+(re-frame/reg-sub
+ ::settings
+ (fn [[_ ?pattern]]
+   (re-frame/subscribe
+    [::app.subs/user [:db/id {::user/settings (or ?pattern '[*])}]]))
+ (fn [user] (::user/settings user)))
