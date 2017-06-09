@@ -1,0 +1,47 @@
+version: 2
+
+jobs:
+  build:
+
+    working_directory: /tmp/vimsical
+
+    docker:
+      - image: julienfantin/ci:0.0.6
+        environment:
+          JVM_OPTS: -Xmx2g
+          DATOMIC_PROTOCOL: "mem"
+          DATOMIC_LOGIN: "$DATOMIC_LOGIN"
+          DATOMIC_PASSWORD: "$DATOMIC_PASSWORD"
+          DATOMIC_LICENSE_KEY: "$DATOMIC_LICENSE_KEY"
+
+      - image: circleci/cassandra:3.10
+        environment:
+          MAX_HEAP_SIZE: 768m
+          HEAP_NEWSIZE: 256m
+
+      - image: redis:3.2.4-alpine
+
+    environment:
+      LEIN_ROOT: true
+      LEIN_SNAPSHOTS_IN_RELEASE: true
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          key: lein-{{ checksum "project.clj" }}
+
+      - run: make deps
+
+      - run:
+          name: wait for cassandra
+          command: |
+            /usr/bin/wait-for-command.sh -c 'nc -z localhost 9042' -t 30
+
+      - run: make test
+
+      - save_cache:
+          paths:
+            - ~/.m2
+            - ~/.lein
+          key: lein-{{ checksum "project.clj" }}

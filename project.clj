@@ -27,9 +27,10 @@
     {*assert* true *warn-on-reflection* false *unchecked-math* false}}
 
    :uberjar
-   {:aot          :all
+   {:aot          [vimsical.backend.core]
     :omit-source  true
-    :uberjar-name "vimsical.jar"}
+    :uberjar-name "vimsical.jar"
+    :main         vimsical.backend.core}
    ;;
    ;; Vcs
    ;;
@@ -67,6 +68,8 @@
                       [cc.qbits/alia-nippy "3.1.4"]
                       [cc.qbits/hayt "4.0.0"]
                       [com.datomic/datomic-pro "0.9.5544" :exclusions [commons-codec org.slf4j/slf4j-nop org.slf4j/slf4j-log4j12]]
+                      [com.amazonaws/aws-java-sdk-dynamodb "1.11.6"
+                       :exclusions [joda-time commons-logging]]
                       [ch.qos.logback/logback-classic "1.2.3"]
                       [org.clojure/tools.logging "0.3.1"]
                       ;; HTTP stack
@@ -214,9 +217,9 @@
     {:builds
      [{:id           "prod"
        :jar          true
-       :source-paths ["checkouts/mapgraph/src"
-                      "checkouts/re-frame-async-flow-fx/src"
-                      "checkouts/re-frame-forward-events-fx/src"
+       :source-paths [;; "checkouts/mapgraph/src"
+                      ;; "checkouts/re-frame-async-flow-fx/src"
+                      ;; "checkouts/re-frame-forward-events-fx/src"
                       "src/frontend"
                       "src/common"
                       "src/vcs"]
@@ -241,9 +244,9 @@
                       :verbose         false}}
       {:id           "dev"
        :figwheel     {:on-jsload vimsical.frontend.dev/on-reload}
-       :source-paths ["checkouts/mapgraph/src"
-                      "checkouts/re-frame-async-flow-fx/src"
-                      "checkouts/re-frame-forward-events-fx/src"
+       :source-paths [;; "checkouts/mapgraph/src"
+                      ;; "checkouts/re-frame-async-flow-fx/src"
+                      ;; "checkouts/re-frame-forward-events-fx/src"
                       "dev/frontend"
                       "src/frontend"
                       "src/common"
@@ -268,9 +271,9 @@
                                               :fn-symbol           "λ"}}}}
       {:id           "player-dev"
        :figwheel     {:on-jsload vimsical.frontend.player.dev/on-reload}
-       :source-paths ["checkouts/mapgraph/src"
-                      "checkouts/re-frame-async-flow-fx/src"
-                      "checkouts/re-frame-forward-events-fx/src"
+       :source-paths [;; "checkouts/mapgraph/src"
+                      ;; "checkouts/re-frame-async-flow-fx/src"
+                      ;; "checkouts/re-frame-forward-events-fx/src"
                       "dev/frontend"
                       "src/frontend"
                       "src/common"
@@ -316,9 +319,9 @@
                       :pretty-print    false
                       :verbose         false}}
       {:id           "test"
-       :source-paths ["checkouts/mapgraph/src"
-                      "checkouts/re-frame-async-flow-fx/src"
-                      "checkouts/re-frame-forward-events-fx/src"
+       :source-paths [;; "checkouts/mapgraph/src"
+                      ;; "checkouts/re-frame-async-flow-fx/src"
+                      ;; "checkouts/re-frame-forward-events-fx/src"
                       "src/frontend"
                       "src/common"
                       "src/vcs"
@@ -333,9 +336,9 @@
                       :optimizations  :none
                       :parallel-build true}}
       {:id           "test-advanced"
-       :source-paths ["checkouts/mapgraph/src"
-                      "checkouts/re-frame-async-flow-fx/src"
-                      "checkouts/re-frame-forward-events-fx/src"
+       :source-paths [;; "checkouts/mapgraph/src"
+                      ;; "checkouts/re-frame-async-flow-fx/src"
+                      ;; "checkouts/re-frame-forward-events-fx/src"
                       "src/frontend"
                       "src/common"
                       "src/vcs"
