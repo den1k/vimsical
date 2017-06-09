@@ -129,7 +129,10 @@
                    ;; re-frame.trace - clone and install to use
                    ;; https://github.com/Day8/re-frame-trace
                    [day8.re-frame/abra "0.0.9" :exclusions [re-frame reagent org.clojure/clojurescript]]
-                   [org.clojure/tools.nrepl "0.2.13"]]
+                   [org.clojure/tools.nrepl "0.2.13"]
+                   ;; Custom ring handler for figwheel, match pedestal dependecy
+                   ;; vector to avoid conflicts in the integration target
+                   [ring/ring-core "1.5.1" :exclusions [org.clojure/clojure org.clojure/tools.reader crypto-random crypto-equality]]]
     :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
 
    :frontend
