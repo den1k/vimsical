@@ -106,14 +106,15 @@
    {:source-paths ["src/frontend"]
     :plugins      [[lein-cljsbuild "1.1.6"
                     :exclusions [org.apache.commons/commons-compress]]]
+    :repositories {"jitpack" {:url "https://jitpack.io"}}
     :dependencies [[org.clojure/clojurescript "1.9.562" :exclusions [org.clojure/tools.reader]]
                    ;; Our mapgraph fork. Must be be symlinked in checkouts.
-                   [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
+                   [com.github.vimsical/mapgraph "parser-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
                    [reagent "0.6.2" :exclusions [org.clojure/clojurescript]]
                    [re-frame "0.9.4" :exclusions [org.clojure/clojurescript]]
                    [com.andrewmcveigh/cljs-time "0.5.0"] ; required re-com, but we need a newer version
                    [re-com "2.1.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async com.andrewmcveigh/cljs-time]]
-                   [day8.re-frame/async-flow-fx "0.0.7-SNAPSHOT" :exclusions [re-frame org.clojure/clojurescript]]
+                   [com.github.vimsical/re-frame-async-flow-fx "-SNAPSHOT" :exclusions [re-frame org.clojure/clojurescript]]
                    [thi.ng/color "1.2.0"]
                    [cljsjs/clipboard "1.6.1-1"]
                    [bidi "2.1.1"]
