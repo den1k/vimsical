@@ -27,7 +27,3 @@
       (re-frame/dispatch-sync [::ui.handlers/init])
       (re-frame/dispatch [::user.handlers/me])
       (mount-root))))
-
-(assert
- (= {:doo {:db/uid (uuid "59399bc0-d292-4da8-a326-b80378ab897d")}}
-    {:doo {:db/uid (uuid "59399bc0-d292-4da8-a326-b80378ab897d")}}))
