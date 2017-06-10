@@ -87,7 +87,7 @@
     :env.backend/dev
     :backend-log-dev
     {:dependencies
-                   [[criterium "0.4.4"]]
+     [[criterium "0.4.4"]]
      ;; Get proper deps resolution for fixtures etc
      :source-paths ["dev/backend" "test/vcs" "test/backend" "test/common"]}]
 
@@ -175,12 +175,12 @@
    ;; Example: `lein with-profile frontend-dev garden auto`
 
    :-css-dev-config
-   {:plugins      [[lein-garden "0.2.8" :exclusions [org.clojure/clojure]]]
+
+   {:plugins      [[lein-garden "0.3.0" :exclusions [org.clojure/clojure]]]
+    ;;:prep-tasks   [["garden" "once"]]
     :dependencies [[garden "1.3.2"]
                    ;; Added this to fix a compilation issue with garden
-                   [ns-tracker "0.3.1"]]
-    ;:prep-tasks   [["garden" "once"]]
-    }
+                   [ns-tracker "0.3.1"]]}
 
    :css
    [:-css-dev-config
