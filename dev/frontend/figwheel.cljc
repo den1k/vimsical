@@ -23,7 +23,7 @@
 
 #?(:clj (def port
           (case build-id
-            "dev"        3449
+            "dev" 3449
             "player-dev" 3450)))
 
 #?(:clj
@@ -31,9 +31,12 @@
 
 #?(:clj
    (def open-file-command
-     (case (System/getProperty "user.name")
-       "julien" "emacsclient"
-       "dennis" "idea")))
+     (let [username (System/getProperty "user.name")]
+       (case username
+         "julien" "emacsclient"
+         "den" "idea"
+         (print "Figwheel: Cannot set open-file-command for unknown user: "
+                username)))))
 
 #?(:clj
    (def figwheel-config

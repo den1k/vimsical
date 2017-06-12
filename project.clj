@@ -87,7 +87,7 @@
     :env.backend/dev
     :backend-log-dev
     {:dependencies
-     [[criterium "0.4.4"]]
+                   [[criterium "0.4.4"]]
      ;; Get proper deps resolution for fixtures etc
      :source-paths ["dev/backend" "test/vcs" "test/backend" "test/common"]}]
 
@@ -115,6 +115,7 @@
                    [re-com "2.1.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async com.andrewmcveigh/cljs-time]]
                    [day8.re-frame/async-flow-fx "0.0.7-SNAPSHOT" :exclusions [re-frame org.clojure/clojurescript]]
                    [thi.ng/color "1.2.0"]
+                   [cljsjs/clipboard "1.6.1-1"]
                    [bidi "2.1.1"]
                    [kibu/pushy "0.3.7"]]}
 
@@ -177,7 +178,7 @@
     :dependencies [[garden "1.3.2"]
                    ;; Added this to fix a compilation issue with garden
                    [ns-tracker "0.3.1"]]
-                                        ;:prep-tasks   [["garden" "once"]]
+    ;:prep-tasks   [["garden" "once"]]
     }
 
    :css

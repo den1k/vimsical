@@ -15,8 +15,10 @@
    [vimsical.frontend.views.icons :as icons]
    [vimsical.user :as user]
    [vimsical.vims :as vims]
+   [vimsical.frontend.router.subs :as router.subs]
    [vimsical.frontend.router.handlers :as router.handlers]
-   [vimsical.frontend.router.routes :as router.routes]))
+   [vimsical.frontend.router.routes :as router.routes]
+   [vimsical.frontend.router.routes :as routes]))
 
 (defn limit-title-length? [e]
   (let [txt             (-> e .-target .-innerHTML)
@@ -54,36 +56,36 @@
                                 hovering?)))]
     (fn []
       (let
-          [user            (<sub [:q [:app/user [:db/uid]]])
+       [user            (<sub [:q [:app/user [:db/uid]]])
 
-           {::vims/keys [title owner] :as vims}
-           (<sub [:q [:app/vims
-                      [:db/uid
-                       ::vims/title
-                       {::vims/owner [:db/uid]}]]])
+        {::vims/keys [title owner] :as vims}
+        (<sub [:q [:app/vims
+                   [:db/uid
+                    ::vims/title
+                    {::vims/owner [:db/uid]}]]])
 
-           {:keys [editing? title-too-long?]} @state
+        {:keys [editing? title-too-long?]} @state
 
-           editable-title? (=by :db/uid user owner)
-           title-html      [:div.title
-                            (when editable-title?
-                              {:class                             (when (nil? title) "untitled")
-                               :content-editable                  true
-                               :suppress-content-editable-warning true
-                               :on-mouse-enter                    #(swap! state assoc :hovering? true)
-                               :on-mouse-leave                    #(swap! state assoc :hovering? false)
-                               :on-key-down                       (e-> keydown-handler)
-                               :on-click                          #(swap! state assoc :editing? true)
-                               :on-blur                           (e>
-                                                                   (swap! state assoc :editing? false)
-                                                                   (re-frame/dispatch
-                                                                    [::handlers/set-vims-title
-                                                                     vims
-                                                                     (util/norm-str inner-html)]))})
-                            (or title
-                                (if editing?
-                                  ""
-                                  title-placeholder))]]
+        editable-title? (=by :db/uid user owner)
+        title-html      [:div.title
+                         (when editable-title?
+                           {:class                             (when (nil? title) "untitled")
+                            :content-editable                  true
+                            :suppress-content-editable-warning true
+                            :on-mouse-enter                    #(swap! state assoc :hovering? true)
+                            :on-mouse-leave                    #(swap! state assoc :hovering? false)
+                            :on-key-down                       (e-> keydown-handler)
+                            :on-click                          #(swap! state assoc :editing? true)
+                            :on-blur                           (e>
+                                                                (swap! state assoc :editing? false)
+                                                                (re-frame/dispatch
+                                                                 [::handlers/set-vims-title
+                                                                  vims
+                                                                  (util/norm-str inner-html)]))})
+                         (or title
+                             (if editing?
+                               ""
+                               title-placeholder))]]
 
         [:div.vims-info.jc.ac
          (if-not editable-title?
@@ -96,19 +98,20 @@
 
 (defn nav []
   (let
-      [show-popup? (interop/ratom false)
-       modal       (<sub [::app.subs/modal])
-       {::user/keys [first-name last-name vimsae] :as user}
-       (<sub [:q [:app/user
-                  [:db/uid
-                   ::user/first-name
-                   ::user/last-name
-                   ::user/email
-                   {::user/vimsae [:db/uid ::vims/title]}]]])
+   [show-popup? (interop/ratom false)
+    route       (<sub [::router.subs/route])
+    modal       (<sub [::app.subs/modal])
+    {::user/keys [first-name last-name vimsae] :as user}
+    (<sub [:q [:app/user
+               [:db/uid
+                ::user/first-name
+                ::user/last-name
+                ::user/email
+                {::user/vimsae [:db/uid ::vims/title]}]]])
 
-       {::vims/keys [title] :as app-vims} (<sub [:q [:app/vims
-                                                     [:db/uid
-                                                      ::vims/title]]])]
+    {::vims/keys [title] :as app-vims} (<sub [:q [:app/vims
+                                                  [:db/uid
+                                                   ::vims/title]]])]
     [:div.main-nav.ac.jsb
      {:class (when modal "no-border")}
      [:div.logo-and-type
@@ -121,8 +124,7 @@
      (when-not (user/anon? user)
        [:div.new-and-my-vims.button-group
         [:div.button
-         {:on-click (e> (re-frame/dispatch
-                         [::app.handlers/new-vims user]))}
+         {:on-click (e> (re-frame/dispatch [::app.handlers/new-vims user]))}
          "New Vims"]
         (when (not-empty vimsae)
           [:div.button
@@ -130,7 +132,7 @@
                           (re-frame/dispatch
                            [::app.handlers/toggle-modal :modal/vims-list]))}
            "My Vims"])])
-     (when (= route :route/vims)
+     (when (routes/route-name= route :vims)
        [:div.button
         {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view
                        (re-frame/dispatch

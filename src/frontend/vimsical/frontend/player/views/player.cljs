@@ -23,13 +23,13 @@
 
 (defn portrait [{:keys [vims]}]
   [:div.portrait-split
-   [social-bar {:vims vims}]
+   ;[social-bar {:vims vims}]
    [preview-container {:vims vims}]
    [timeline-bar {:vims vims}]
    [info-and-editor-container {:vims vims}]])
 
-(defn player [{:keys [vims standalone?]}]
-  (let [orientation (<sub [::ui.subs/orientation])
+(defn player [{:keys [vims standalone? orientation]}]
+  (let [orientation (or orientation (<sub [::ui.subs/orientation]))
         vims        (if standalone? (<sub [::app.subs/vims]) vims)]
     (when vims                          ; fixme player should have loader
       [:div.vimsical-frontend-player.player

@@ -231,20 +231,19 @@
 
 (def player
   [:.vimsical-frontend-player
-   {:background :white}
+   {:background :white
+    :height     :100%}
    [:&.landscape
     {:display   :flex
      :min-width :700px
-     :max-width :1200px
-     :height    :100%}
+     :max-width :1200px}
     landscape-split
     [:.explore
      {:margin-left :18px}]]
    [:&.portrait
     {:display        :flex
      :flex-direction :column
-     :width          :100vw
-     :height         :100%}
+     :width          :100%}
     portrait-split]
    bar
    preview

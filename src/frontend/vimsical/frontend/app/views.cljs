@@ -20,7 +20,6 @@
 
 (defn app []
   (with-subs [route      [::router.subs/route]
-              vims       [::subs/vims]
               modal      [::subs/modal]
               height     [::ui.subs/height]
               on-mobile? [::ui.subs/on-mobile?]]
@@ -30,7 +29,7 @@
       ;; height is set for landscape mode on mobile
       :style    {:height height}}
      (when-not on-mobile? [nav])
-     [views.modal/modal {:vims vims}]
+     [views.modal/modal]
      [:div.main {:class (when modal "modal-overlay")}
       [router.views/view-for route]
       [quick-search]]

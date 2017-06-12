@@ -4,10 +4,11 @@
             [vimsical.frontend.vims-list.views :refer [vims-list]]
             [vimsical.frontend.share.views :refer [share]]))
 
-(defn modal [{:keys [vims]}]
+(defn modal []
   (when-let [modal (<sub [::app.subs/modal])]
-    [:div.modal-overlay.jc
-     [:div.modal-container
-      (case modal
-        :modal/vims-list [vims-list]
-        :modal/share [share {:vims vims}])]]))
+    (let [vims (<sub [::app.subs/vims])]
+      [:div.modal-overlay.jc
+       [:div.modal-container
+        (case modal
+          :modal/vims-list [vims-list]
+          :modal/share [share {:vims vims}])]])))

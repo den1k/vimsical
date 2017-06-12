@@ -7,7 +7,8 @@
 
 (defn embed-preview [{:keys [vims]}]
   [:div.embed-preview
-   [player {:vims vims}]])
+   [player {:orientation :landscape
+            :vims        vims}]])
 
 
 (defn share []

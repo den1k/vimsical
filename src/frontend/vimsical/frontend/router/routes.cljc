@@ -74,6 +74,9 @@
        (util/=by uuid->str uida uidb)
        (= a b))))
 
+(defn route-name= [route route-name]
+  (= (-> route ::route-handler name keyword) route-name))
+
 (defn route=
   [a b]
   (and
