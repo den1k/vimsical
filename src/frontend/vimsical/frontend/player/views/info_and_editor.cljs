@@ -24,17 +24,18 @@
             [vimsical.frontend.player.views.elems :as elems]))
 
 (defn active-file-badge [{:keys [file]}]
-  (let [{::file/keys [sub-type]} file]
+  (let [{::file/keys [sub-type]} file
+        title (name (get {:javascript :js} sub-type sub-type))]
     [:div.active-file-type
-     {:class sub-type}
-     (-> sub-type name string/upper-case)]))
+     {:class title}
+     (string/upper-case title)]))
 
 (defn user-full-name [{::user/keys [first-name last-name]}]
   (util/space-join first-name last-name))
 
 (defn info-and-editor-container []
   (let [info-hover? (reagent/atom true)
-        desc        (util.content/lorem-ipsum 2)]
+        desc        nil #_(util.content/lorem-ipsum 2)]
     (reagent/create-class
      {:render
       (fn [c]
@@ -54,9 +55,7 @@
                                                      :compact? true}])
                                      uid->file)
               on-mobile?            (<sub [::ui.subs/on-mobile?])
-              show-info?            (if-not on-mobile?
-                                      @info-hover?
-                                      (not (<sub [::timeline.subs/playing? vims])))]
+              show-info?            (not (<sub [::timeline.subs/active? vims]))]
           [:div.info-and-editor-panel.dc
            {:class (when show-info? "show-info")
             :on-mouse-enter
@@ -68,7 +67,7 @@
             [:div.header.ac
              [user.views/avatar {:user owner}]
              [:div.title-and-creator
-              [:div.title.truncate title]
+              [:div.title.truncate (or title "Untitled")]
               [:div.creator.truncate (user-full-name owner)]]]
             (when desc
               [:div.desc desc])]

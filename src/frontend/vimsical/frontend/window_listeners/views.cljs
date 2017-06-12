@@ -6,13 +6,15 @@
             [vimsical.frontend.util.re-frame :refer [<sub]]
             [vimsical.frontend.app.handlers :as app.handlers]
             [vimsical.frontend.ui.subs :as ui.subs]
-            [vimsical.frontend.ui.handlers :as ui.handlers]))
+            [vimsical.frontend.ui.handlers :as ui.handlers]
+            [cljsjs.clipboard]
+            [re-frame.interop :as interop]))
 
 ;;
 ;; * Shortcuts
 ;;
 
-(def ^:const ^:private key-map
+(def ^:private key-map
   {220            :backslash
    191            :forwardslash
    #{:shift 32}   :shift-space
@@ -64,19 +66,22 @@
   (re-frame/dispatch [::ui.handlers/on-scroll]))
 
 (defn window-listeners []
-  (let [on-mobile? (<sub [::ui.subs/on-mobile?])
+  (let [state      (interop/ratom {:clipboard nil})
+        on-mobile? (<sub [::ui.subs/on-mobile?])
         listeners  (cond-> {"keydown" handle-shortcut
                             "resize"  handle-resize}
                      on-mobile? (assoc "scroll" handle-scroll))]
     (reagent/create-class
      {:component-did-mount
       (fn [_]
+        (swap! state assoc :clipboard (new js/Clipboard ".copy-to-clipboard"))
         (when on-mobile?
           (re-frame/dispatch [::ui.handlers/track-orientation]))
         (doseq [[event-type handler] listeners]
           (.addEventListener js/window event-type handler)))
       :component-will-unmount
       (fn []
+        (.destroy ^js/Clipboard (:clipboard @state))
         (when on-mobile?
           (re-frame/dispatch [::ui.handlers/untrack-orientation]))
         (doseq [[event-type handler] listeners]

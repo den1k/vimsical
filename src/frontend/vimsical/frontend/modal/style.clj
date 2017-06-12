@@ -1,5 +1,6 @@
 (ns vimsical.frontend.modal.style
-  (:require [vimsical.frontend.vims-list.style :refer [vims-list]]))
+  (:require [vimsical.frontend.vims-list.style :refer [vims-list]]
+            [vimsical.frontend.share.style :refer [share]]))
 
 (def overlay
   [:&.modal-overlay
@@ -12,11 +13,12 @@
      :left       0
      :height     :100%
      :width      :100%
-     :background "rgba(250,250,250,0.9)"}]])
+     :background "rgba(255,255,255,0.9)"}]])
 
 (def modal
   [:.modal-container
    vims-list
+   share
    {:position   :absolute
     :width      :100%
     :z-index    11

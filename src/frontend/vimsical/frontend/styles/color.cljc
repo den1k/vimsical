@@ -36,10 +36,12 @@
 (def colors
   (map-vals
    sketch-hsb->hsl
-   {:darkgrey  [0 0 29]
-    :grey      [0 0 60]
-    :lightgrey [0 0 93]
-    :darkblue  [226 15 25]
-    :beatwhite [0 0 98]
-    :facebook  [221 63 60]
-    :shadow    [0 0 50]}))
+   {:darkgrey        [0 0 29]
+    :darkgrey-trans  [0 0 29 0.1]
+    :grey            [0 0 60]
+    :lightgrey       [0 0 93]
+    :darkblue        [226 15 25]
+    :beatwhite       [0 0 98]
+    :beatwhite-trans [0 0 98 0.5]
+    :facebook        [221 63 60]
+    :shadow          [0 0 50]}))

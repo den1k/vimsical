@@ -56,8 +56,9 @@
     :class "divider-line"]])
 
 (defn explore []
-  ; can't go to vcr when on mobile, so don't show explore
-  (when-not (<sub [::ui.subs/on-mobile?])
+  ; no access to vcr to non creators initially, we want to guide traffic to the
+  ; waitlist.
+  (when-not true #_(<sub [::ui.subs/on-mobile?]) ; can't go to vcr when on mobile, so don't show explore
     [:div.explore.truncate
      "Explore"
      (when (= :landscape (<sub [::ui.subs/orientation]))

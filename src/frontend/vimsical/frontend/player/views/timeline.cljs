@@ -8,6 +8,7 @@
             [vimsical.frontend.player.handlers :as handlers]
             [vimsical.frontend.player.views.elems :as elems]
             [vimsical.common.util.core :as util]
+            [vimsical.frontend.ui.subs :as ui.subs]
             [re-com.core :as re-com]))
 
 (defn time->pct [duration playhead]
@@ -60,23 +61,28 @@
          :gap-width     60
          :border-radius 10}])]))
 
+(defn speed-control [{:keys [vims]}]
+  (let [speed-range (reagent/atom [1.0 1.5 1.75 2 2.25 2.5])]
+    (fn [{:keys [vims]}]
+      [:div.speed-control
+       {:on-click (e> (swap! speed-range util/rotate))}
+       (str (first @speed-range) "x")])))
+
 (defn time-or-speed-control [{:keys [vims]}]
   (let [show-speed? (reagent/atom false)
-        speed-range (reagent/atom [1.0 1.5 1.75 2 2.25 2.5])]
+        on-mobile?  (<sub [::ui.subs/on-mobile?])]
     (fn [{:keys [vims]}]
       (let [time (util/time-ms->fmt-time (<sub [::timeline.subs/time vims]))]
         [:div.time-or-speed-control.ac.jc
          {:on-mouse-enter (e> (reset! show-speed? true))
           :on-mouse-out   (e> (reset! show-speed? false))}
-         (if-not @show-speed?
+         (if (or on-mobile? (not @show-speed?))
            [:div.time time]
            [re-com/popover-tooltip
             :label "speed control"
             :position :above-left
             :showing? show-speed?
-            :anchor [:div.speed-control
-                     {:on-click (e> (swap! speed-range util/rotate))}
-                     (str (first @speed-range) "x")]])]))))
+            :anchor [speed-control {:vims vims}]])]))))
 
 (defn timeline []
   (reagent/create-class

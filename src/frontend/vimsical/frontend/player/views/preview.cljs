@@ -48,6 +48,6 @@
 
 (defn preview-panel [{:keys [vims]}]
   [:div.preview-panel.jsb.dc
-   [social-bar {:vims vims}]
+   ;[social-bar {:vims vims}]
    [preview-container {:vims vims}]
    [timeline-bar {:vims vims}]])

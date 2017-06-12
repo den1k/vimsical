@@ -85,7 +85,7 @@
      {:screen    true
       :min-width :1100px}
      [:.player
-      {:box-shadow ["0 10px 30px hsla(0,0%,0%,0.3)"]}])
+      {:box-shadow "0 10px 30px hsla(0,0%,0%,0.3)"}])
     [:.player
      {:margin  "0 auto"
       :width   :960px

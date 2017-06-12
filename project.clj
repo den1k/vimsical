@@ -87,7 +87,7 @@
     :env.backend/dev
     :backend-log-dev
     {:dependencies
-     [[criterium "0.4.4"]]
+                   [[criterium "0.4.4"]]
      ;; Get proper deps resolution for fixtures etc
      :source-paths ["dev/backend" "test/vcs" "test/backend" "test/common"]}]
 
@@ -115,6 +115,7 @@
                    [re-com "2.1.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async com.andrewmcveigh/cljs-time]]
                    [day8.re-frame/async-flow-fx "0.0.7-SNAPSHOT" :exclusions [re-frame org.clojure/clojurescript]]
                    [thi.ng/color "1.2.0"]
+                   [cljsjs/clipboard "1.6.1-1"]
                    [bidi "2.1.1"]
                    [kibu/pushy "0.3.7"]]}
 
@@ -150,7 +151,7 @@
    [:vcs :common :css-player :-frontend-config]
 
    :player-dev
-   [:player :-frontend-dev-config]
+   [:player :-frontend-dev-config :env.frontend/dev]
 
    :integration-dev
    [{:source-paths ["test/integration"]
@@ -177,7 +178,7 @@
     :dependencies [[garden "1.3.2"]
                    ;; Added this to fix a compilation issue with garden
                    [ns-tracker "0.3.1"]]
-                                        ;:prep-tasks   [["garden" "once"]]
+    ;:prep-tasks   [["garden" "once"]]
     }
 
    :css
@@ -291,6 +292,28 @@
                       :external-config      {:devtools/config
                                              {:features-to-install :all
                                               :fn-symbol           "λ"}}}}
+      {:id           "player-prod"
+       :jar          true
+       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs"]
+       :compiler     {:main            vimsical.frontend.player.core
+                      :asset-path      "/js"
+                      :externs         ["resources/externs/svg.js"]
+                      :output-to       "resources/public/js/compiled/vimsical-player.js"
+                      :output-dir      "resources/public/js/compiled/player/out-prod"
+                      :optimizations   :advanced
+                      :infer-externs   true
+
+                      :parallel-build  true
+                      :closure-defines {goog.DEBUG false}
+
+                      ;; debug
+                      ;; Determines whether readable names are emitted. This can
+                      ;; be useful when debugging issues in the optimized
+                      ;; JavaScript and can aid in finding missing
+                      ;; externs. Defaults to false.
+                      :pseudo-names    false
+                      :pretty-print    false
+                      :verbose         false}}
       {:id           "test"
        :source-paths ["checkouts/mapgraph/src"
                       "checkouts/re-frame-async-flow-fx/src"
