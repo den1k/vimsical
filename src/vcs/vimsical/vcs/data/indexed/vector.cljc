@@ -167,7 +167,7 @@
 
 (s/def ::index #(instance? Index %))
 
-(defn- index
+(defn- new-index
   ([] (Index. 0 (impl/index)))
   ([vals] (Index. 0 (impl/index identity vals)))
   ([f vals] (Index. 0 (impl/index f vals))))
@@ -231,7 +231,7 @@
 
      clojure.lang.IPersistentCollection
      (empty [_]
-       (vector f (index) (impl/vector)))
+       (vector f (new-index) (impl/vector)))
      (equiv [this other]
        (or (identical? this other)
            (if (instance? IndexedVector other)
@@ -351,7 +351,7 @@
          (vector f index' v')))
 
      IEmptyableCollection
-     (-empty [_] (vector f (index) (impl/vector)))
+     (-empty [_] (vector f (new-index) (impl/vector)))
 
      ISequential
      IEquiv
@@ -465,7 +465,7 @@
 (s/fdef vec :args (s/cat :v ::vector-like))
 
 (defn vec [v]
-  (IndexedVector. identity (index v) (impl/vec v)))
+  (IndexedVector. identity (new-index v) (impl/vec v)))
 
 (s/fdef vector
         :args (s/* (s/cat :f ifn? :index ::index :v ::impl/vector))
@@ -473,7 +473,7 @@
 
 (defn vector
   ([]
-   (IndexedVector. identity (index) (impl/vector)))
+   (IndexedVector. identity (new-index) (impl/vector)))
   ([f index v]
    (IndexedVector. f index (impl/vec v))))
 
@@ -484,12 +484,12 @@
 (s/fdef vec-by :args (s/cat :f ifn? :v ::vector-like))
 
 (defn vec-by [f v]
-  (vector f (index f v) (impl/vec v)))
+  (vector f (new-index f v) (impl/vec v)))
 
 (s/fdef vector-by :args (s/cat :f ifn?))
 
 (defn vector-by [f]
-  (vector f (index) (impl/vector)))
+  (vector f (new-index) (impl/vector)))
 
 (comment
   (orchestra.spec.test/unstrument)
