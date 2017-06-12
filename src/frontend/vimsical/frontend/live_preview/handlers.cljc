@@ -9,8 +9,8 @@
             [vimsical.frontend.live-preview.subs :as subs]
             [vimsical.common.util.core :as util :include-macros true]
             [vimsical.frontend.util.preprocess.core :as preprocess]
-            #?@(:cljs [[reagent.dom.server]
-                       [vimsical.frontend.util.dom :as util.dom]])))
+   #?@(:cljs [[reagent.dom.server]
+              [vimsical.frontend.util.dom :as util.dom]])))
 
 ;;
 ;; * Iframe dom helpers
@@ -55,14 +55,14 @@
       (swap-head-node! iframe sub-type attrs string))))
 
 (defn update-iframe-markup!
-  [ui-db key-entity markup]
+  [ui-db opts markup]
   #?(:cljs
-     (let [iframe        (ui-db/get-iframe ui-db key-entity)
-           prev-blob-url (ui-db/get-src-blob-url ui-db key-entity)
+     (let [iframe        (ui-db/get-iframe ui-db opts)
+           prev-blob-url (ui-db/get-src-blob-url ui-db opts)
            blob-url      (util.dom/blob-url markup "text/html")]
        (some-> prev-blob-url util.dom/revoke-blob-url)
        (aset iframe "src" blob-url)
-       (ui-db/set-src-blob-url ui-db key-entity blob-url))))
+       (ui-db/set-src-blob-url ui-db opts blob-url))))
 
 ;;
 ;; * IFrame registration
@@ -71,14 +71,14 @@
 (re-frame/reg-event-fx
  ::register-iframe
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ vims iframe]]
-   {:ui-db (ui-db/set-iframe ui-db vims iframe)}))
+ (fn [{:keys [ui-db]} [_ opts iframe]]
+   {:ui-db (ui-db/set-iframe ui-db opts iframe)}))
 
 (re-frame/reg-event-fx
  ::dispose-iframe
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ vims]]
-   {:ui-db (ui-db/remove-iframe ui-db vims)}))
+ (fn [{:keys [ui-db]} [_ opts]]
+   {:ui-db (ui-db/remove-iframe ui-db opts)}))
 
 ;;
 ;; * IFrame updates
@@ -94,23 +94,23 @@
  ::update-iframe-src
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub
-   (fn [[_ vims]]
+   (fn [[_ {:keys [vims]}]]
      {:pre [vims]}
      [::subs/vims-preprocessed-preview-markup vims]))]
  (fn [{:keys       [db ui-db]
        ::subs/keys [vims-preprocessed-preview-markup]}
-      [_ vims]]
-   {:ui-db (update-iframe-markup! ui-db vims vims-preprocessed-preview-markup)}))
+      [_ opts]]
+   {:ui-db (update-iframe-markup! ui-db opts vims-preprocessed-preview-markup)}))
 
 (re-frame/reg-event-fx
  ::update-iframe-snapshots
  [(re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/snapshots vims]))
-  (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/libs vims]))]
+  (util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::vcs.subs/snapshots vims]))
+  (util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::vcs.subs/libs vims]))]
  (fn [{:keys           [db ui-db]
-       ::vcs.subs/keys [snapshots libs]} [_ vims]]
+       ::vcs.subs/keys [snapshots libs]} [_ opts]]
    (let [preview-markup (subs/snapshots-markup snapshots libs)]
-     {:ui-db (update-iframe-markup! ui-db vims preview-markup)})))
+     {:ui-db (update-iframe-markup! ui-db opts preview-markup)})))
 
 ;;
 ;; * Updates coordination
@@ -120,35 +120,35 @@
  ::update-live-preview
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [db ui-db]}
-      [_ vims {::file/keys [sub-type] :as file} file-string file-lint-or-preprocessing-errors]]
+      [_ opts {::file/keys [sub-type] :as file} file-string file-lint-or-preprocessing-errors]]
    (if (file/javascript? file)
      (when (nil? file-lint-or-preprocessing-errors)
        {:debounce {:ms       500
-                   :dispatch [::update-iframe-src vims]}})
-     {:dispatch [::update-preview-node vims file file-string]})))
+                   :dispatch [::update-iframe-src opts]}})
+     {:dispatch [::update-preview-node opts file file-string]})))
 
 (re-frame/reg-event-fx
  ::update-preview-node
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [db ui-db]}
-      [_ vims {::file/keys [sub-type] :as file} string]]
-   (when-some [iframe (ui-db/get-iframe ui-db vims)]
-     (do (update-node! iframe file string) nil))))
+      [_ opts {::file/keys [sub-type] :as file} string]]
+   (let [iframe (ui-db/get-iframe ui-db opts)]
+     (update-node! iframe file string) nil)))
 
 (re-frame/reg-event-fx
  ::move-script-nodes
  [(re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/files vims]))]
+  (util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::vcs.subs/files vims]))]
  (fn [{:keys           [db ui-db]
        ::vcs.subs/keys [files]}
-      [_ vims]]
-   (when-some [iframe (ui-db/get-iframe ui-db vims)]
-     (let [doc          (.-contentDocument iframe)
-           head         (.-head doc)
-           js-files     (filter file/javascript? files)
-           script-nodes (keep (fn [{:keys [db/uid]}] (.getElementById doc uid)) js-files)]
-       (doseq [node script-nodes]
-         (.appendChild head node))))))
+      [_ opts]]
+   (let [iframe       (ui-db/get-iframe ui-db opts)
+         doc          (.-contentDocument iframe)
+         head         (.-head doc)
+         js-files     (filter file/javascript? files)
+         script-nodes (keep (fn [{:keys [db/uid]}] (.getElementById doc uid)) js-files)]
+     (doseq [node script-nodes]
+       (.appendChild head node)))))
 
 ;;
 ;; * Tracks
@@ -156,26 +156,26 @@
 
 (re-frame/reg-event-fx
  ::track-vims
- (fn [_ [_ {:keys [db/uid] :as vims}]]
-   {:pre [uid vims]}
+ (fn [_ [_ {:keys [vims] :as opts}]]
+   {:pre [vims]}
    {:track
     {:action       :register
-     :id           [::vims uid]
+     :id           (ui-db/path opts ::vims)
      :subscription [::vcs.subs/files vims]
      :val->event   (fn [files]
-                     [::track-files vims files])}}))
+                     [::track-files opts files])}}))
 
 (re-frame/reg-event-fx
  ::track-files
- (fn [_ [_ vims files]]
+ (fn [_ [_ {:keys [vims] :as opts} files]]
    {:track
     (for [{:keys [db/uid] :as file} files]
       {:action          :register
-       :id              [::file uid]
+       :id              (ui-db/path opts [::file uid])
        :subscription    [::subs/file-string+file-lint-or-preprocessing-errors vims file]
        :dispatch-first? false
        :val->event      (fn [[file-string file-lint-or-preprocessing-errors]]
-                          [::update-live-preview vims file file-string file-lint-or-preprocessing-errors])})}))
+                          [::update-live-preview opts file file-string file-lint-or-preprocessing-errors])})}))
 
 (re-frame/reg-event-fx
  ::stop-track-vims
@@ -189,4 +189,4 @@
  (fn [_ [_ opts files]]
    {:track
     (for [{:keys [db/uid]} files]
-      {:action :dispose :id [::file uid]})}))
+      {:action :dispose :id (ui-db/path opts [::file uid])})}))

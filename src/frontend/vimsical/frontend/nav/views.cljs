@@ -119,7 +119,7 @@
        :on-double-click (e> (re-frame/dispatch [::router.handlers/route ::router.routes/signup]))}
       [:span.logo icons/vimsical-logo]
       [:span.type icons/vimsical-type]]
-     (when app-vims
+     (when (routes/route-name= route :vims)
        [vims-info])
      (when-not (user/anon? user)
        [:div.new-and-my-vims.button-group

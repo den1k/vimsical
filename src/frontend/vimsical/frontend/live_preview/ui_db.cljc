@@ -1,15 +1,16 @@
 (ns vimsical.frontend.live-preview.ui-db
   (:require [vimsical.common.util.core :as util :include-macros true]))
 
-(defn path [{vims-uid :db/uid} k]
-  [vims-uid k])
+(defn path [{:keys [ui-key vims]} k]
+  {:pre [ui-key (:db/uid vims) k]}
+  [(:db/uid vims) ui-key k])
 
-(defn get-iframe [ui-db vims] (get-in ui-db (path vims ::elem)))
-(defn set-iframe [ui-db vims iframe] (assoc-in ui-db (path vims ::elem) iframe))
-(defn remove-iframe [ui-db vims] (util/dissoc-in ui-db (path vims ::elem)))
+(defn get-iframe [ui-db opts] (get-in ui-db (path opts ::elem)))
+(defn set-iframe [ui-db opts iframe] (assoc-in ui-db (path opts ::elem) iframe))
+(defn remove-iframe [ui-db opts] (util/dissoc-in ui-db (path opts ::elem)))
 
-(defn get-src-blob-url [ui-db vims] (get-in ui-db (path vims ::src-blob-url)))
-(defn set-src-blob-url [ui-db vims url] (assoc-in ui-db (path vims ::src-blob-url) url))
+(defn get-src-blob-url [ui-db opts] (get-in ui-db (path opts ::src-blob-url)))
+(defn set-src-blob-url [ui-db opts url] (assoc-in ui-db (path opts ::src-blob-url) url))
 
 
 (def error-catcher-id ::error-catcher)

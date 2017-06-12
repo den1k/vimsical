@@ -48,29 +48,25 @@
   [files]
   (remove file/javascript? files))
 
-(defn register [node {:keys [vims from-snapshot? static? error-catcher?]}]
+(defn register [node {:keys [vims from-snapshot? static? error-catcher?] :as opts}]
   {:pre [node vims]}
-  (re-frame/dispatch-sync [::handlers/register-iframe vims node])
+  (re-frame/dispatch [::handlers/register-iframe opts node])
   (if from-snapshot?
-    (re-frame/dispatch [::handlers/update-iframe-snapshots vims])
-    (re-frame/dispatch [::handlers/update-iframe-src vims]))
+    (re-frame/dispatch [::handlers/update-iframe-snapshots opts])
+    (re-frame/dispatch [::handlers/update-iframe-src opts]))
   (when-not static?
     (when error-catcher?
       (re-frame/dispatch [::error-catcher/init])
-      (re-frame/dispatch [::error-catcher/track-start vims]))
-    (re-frame/dispatch [::handlers/track-vims vims])))
+      (re-frame/dispatch [::error-catcher/track-start opts]))
+    (re-frame/dispatch [::handlers/track-vims opts])))
 
-(defn dispose [{:keys [vims from-snapshot? static? error-catcher?]}]
+(defn dispose [{:keys [vims from-snapshot? static? error-catcher?] :as opts}]
   (when-not static?
     (when error-catcher?
       (re-frame/dispatch [::error-catcher/track-stop])
       (re-frame/dispatch [::error-catcher/dispose]))
-    (re-frame/dispatch [::handlers/stop-track-vims vims]))
-  ;; if live-preview is used in other components with the same vims
-  ;; mount/unmount cycle can lead to race conditions which wrongly
-  ;; dispose the iframe of the mounting component.
-  ;; (re-frame/dispatch [::handlers/dispose-iframe vims])
-  )
+    (re-frame/dispatch [::handlers/stop-track-vims opts]))
+  (re-frame/dispatch [::handlers/dispose-iframe opts]))
 
 (defn recycle
   [node old-opts new-opts]
@@ -95,15 +91,17 @@
 
     :component-will-receive-props
     (fn [c [_ new-opts]]
-      (recycle (reagent/dom-node c) (reagent/props c) new-opts))
+      (let [old-opts (reagent/props c)]
+        (when (and old-opts (not (util/=by (comp :db/uid :vims) old-opts new-opts)))
+          (recycle (reagent/dom-node c) (reagent/props c) new-opts))))
 
     :reagent-render
-    (fn [{:keys [vims static?]}]
+    (fn [{:keys [static? vims] :as opts}]
       [:iframe.iframe
        (merge
         {:sandbox iframe-sandbox-opts}
         (when-not static?
-          {:on-load #(re-frame/dispatch [::handlers/move-script-nodes vims])}))])}))
+          {:on-load #(re-frame/dispatch [::handlers/move-script-nodes opts])}))])}))
 
 (defn live-preview [opts]
   [:div.live-preview

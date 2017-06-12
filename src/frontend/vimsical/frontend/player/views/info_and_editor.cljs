@@ -52,6 +52,7 @@
                                        ^{:key (:db/uid fl)}
                                        [code-editor {:vims     vims
                                                      :file     fl
+                                                     :ui-key   :player
                                                      :compact? true}])
                                      uid->file)
               on-mobile?            (<sub [::ui.subs/on-mobile?])
