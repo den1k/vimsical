@@ -5,7 +5,8 @@
    [re-frame.std-interceptors :as std-interceptors]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]
-   [vimsical.vims :as vims]))
+   [vimsical.vims :as vims]
+   [re-frame.loggers :as re-frame.loggers]))
 
 (declare path)
 
@@ -56,9 +57,9 @@
            [event-id vims-uid :as event] (interceptor/get-coeffect context :event)
            {::keys [state]}              (get-in db (path vims-uid))
            allowed-transitions           (get fsm state)]
-       (if-not (and allowed-transitions (contains? allowed-transitions (kw-name event-id)))
-         (throw (ex-info "Transition" {:current state :event event :allowed allowed-transitions}))
-         context)))))
+       (when-not (and allowed-transitions (contains? allowed-transitions (kw-name event-id)))
+         (re-frame.loggers/console :error "Transition" {:current state :event event :allowed allowed-transitions}))
+       context))))
 
 (def fsm-enrich-next-state-transition
   (std-interceptors/enrich
@@ -67,7 +68,9 @@
      (if-some [{::keys [state]} (get-in db (path vims-uid))]
        (if-some [next-state (get-in fsm [state (kw-name event-id)])]
          (assoc-in db (path vims-uid ::state) next-state)
-         (throw (ex-info "State transition not found" {:state state :event event})))
+         (do
+           (re-frame.loggers/console :error "State transition not found" {:state state :event event})
+           db))
        db))))
 
 (def fsm-interceptor
