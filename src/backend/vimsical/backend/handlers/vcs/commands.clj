@@ -39,7 +39,7 @@
     ::user/keys [uid]}
    [_ vims-uid deltas :as event]]
   (let [vims-session-path (session-store/vims-session-path vims-uid)
-        vims-session      (get-in session vims-session-path vims-uid)
+        vims-session      (get-in session vims-session-path)
         vims-session'     (delta-store/vims-session vims-session deltas)
         insert-chan       (delta-store.protocol/insert-deltas-chan delta-store vims-uid uid vims-session deltas)]
     (multi/async
