@@ -179,9 +179,9 @@
 
 (re-frame/reg-event-fx
  ::stop-track-vims
- [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/files vims]))]
- (fn [{::vcs.subs/keys [files]} [_ {:keys [db/uid]}]]
-   {:track    {:action :dispose :id [::vims uid]}
+ [(util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::vcs.subs/files vims]))]
+ (fn [{::vcs.subs/keys [files]} [_ opts]]
+   {:track    {:action :dispose :id (ui-db/path opts ::vims)}
     :dispatch [::stop-track-files files]}))
 
 (re-frame/reg-event-fx

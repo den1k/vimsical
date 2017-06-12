@@ -18,7 +18,7 @@
 (defmethod view-for ::routes/landing [_] [landing])
 
 (defmethod view-for ::routes/vims    [_]
-  (let [vims       (<sub [::app.subs/vims])
+  (let [vims       (<sub [::app.subs/vims [:db/uid]])
         on-moblie? (<sub [::ui.subs/on-mobile?])]
     (when vims
       [(if on-moblie? player vcr) {:vims vims}])))
