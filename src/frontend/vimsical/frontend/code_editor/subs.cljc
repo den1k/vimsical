@@ -52,7 +52,7 @@
    [(re-frame/subscribe [::ui-db/ui-db])
     (re-frame/subscribe [::vcs.subs/file-for-subtype vims sub-type])])
  (fn [[ui-db file] [_ vims]]
-   (code-editor.ui-db/get-editor ui-db vims file)))
+   (code-editor.ui-db/get-editor ui-db {:vims vims :file file})))
 
 (re-frame/reg-sub
  ::timeline-entry

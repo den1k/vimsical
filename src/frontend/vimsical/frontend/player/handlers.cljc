@@ -70,4 +70,6 @@
                     (timeline.ui-db/set-skimming vims false))]
      {:db       db'
       :ui-db    ui-db'
-      :dispatch [::code-editor.handlers/reset-all-editors-to-playhead vims]})))
+      :dispatch [::code-editor.handlers/reset-all-editors-to-playhead
+                 {:vims   vims
+                  :ui-key :player}]})))

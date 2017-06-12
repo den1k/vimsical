@@ -3,7 +3,6 @@
             [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
             [com.stuartsierra.mapgraph :as mg]
             [vimsical.frontend.vcs.subs :as vcs.subs]
-            [vimsical.vcs.branch :as branch]
             [vimsical.vcs.file :as file]
             [vimsical.frontend.live-preview.ui-db :as ui-db]
             [vimsical.vcs.lib :as lib]
@@ -180,14 +179,14 @@
 
 (re-frame/reg-event-fx
  ::stop-track-vims
- [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/branch vims]))]
- (fn [{::vcs.subs/keys [branch]} [_ {:keys [db/uid]}]]
+ [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/files vims]))]
+ (fn [{::vcs.subs/keys [files]} [_ {:keys [db/uid]}]]
    {:track    {:action :dispose :id [::vims uid]}
-    :dispatch [::stop-track-branch branch]}))
+    :dispatch [::stop-track-files files]}))
 
 (re-frame/reg-event-fx
- ::stop-track-branch
- (fn [_ [_ {::branch/keys [files]}]]
+ ::stop-track-files
+ (fn [_ [_ opts files]]
    {:track
     (for [{:keys [db/uid]} files]
       {:action :dispose :id [::file uid]})}))

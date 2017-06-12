@@ -8,8 +8,8 @@
 (defn embed-preview [{:keys [vims]}]
   [:div.embed-preview
    [player {:orientation :landscape
+            :ui-key      :share-player
             :vims        vims}]])
-
 
 (defn share []
   (let [copied? (interop/ratom false)]

@@ -21,37 +21,37 @@
 ;;
 
 ;; XXX use interceptors to parse events?
-(defn handle-content-change [vims model file e]
-  (re-frame/dispatch [::content-change vims file e]))
+(defn handle-content-change [opts model e]
+  (re-frame/dispatch [::content-change opts e]))
 
-(defn handle-cursor-change [vims model file e]
-  (re-frame/dispatch [::cursor-change vims file e]))
+(defn handle-cursor-change [opts model e]
+  (re-frame/dispatch [::cursor-change opts e]))
 
-(defn editor-focus-handler [vims file editor]
+(defn editor-focus-handler [opts editor]
   (fn [_]
-    (re-frame/dispatch [::focus vims file editor])))
+    (re-frame/dispatch [::focus opts editor])))
 
-(defn editor-blur-handler [vims file editor]
+(defn editor-blur-handler [opts editor]
   (fn [_]
-    (re-frame/dispatch [::blur vims file editor])))
+    (re-frame/dispatch [::blur opts editor])))
 
-(defn editor-mouse-down-handler [vims]
+(defn editor-mouse-down-handler [{:keys [vims]}]
   (fn [_]
     ;; fully qualified ns to avoid circular dep with vcr.handlers
     (re-frame/dispatch [:vimsical.frontend.vcr.handlers/pause vims])))
 
 (defn new-listeners
-  [vims file editor]
+  [{:keys [vims file] :as opts} editor]
   {:pre [vims file editor]}
   {:model->content-change-handler (fn model->content-change-handler [model]
                                     (fn [e]
-                                      (handle-content-change vims model file e)))
+                                      (handle-content-change opts model e)))
    :model->cursor-change-handler  (fn model->cursor-change-handler [model]
                                     (fn [e]
-                                      (handle-cursor-change vims model file e)))
-   :editor->focus-handler         (partial editor-focus-handler vims file)
-   :editor->blur-handler          (partial editor-blur-handler vims file)
-   :editor->mouse-down-handler    (editor-mouse-down-handler vims)})
+                                      (handle-cursor-change opts model e)))
+   :editor->focus-handler         (partial editor-focus-handler opts)
+   :editor->blur-handler          (partial editor-blur-handler opts)
+   :editor->mouse-down-handler    (editor-mouse-down-handler opts)})
 
 
 ;;
@@ -61,57 +61,53 @@
 (re-frame/reg-event-fx
  ::register
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ {:keys [vims file] :as opts} editor-instance]]
-   {:ui-db (ui-db/set-editor ui-db vims file editor-instance)}))
+ (fn [{:keys [ui-db]} [_ opts editor-instance]]
+   {:ui-db (ui-db/set-editor ui-db opts editor-instance)}))
 
 (re-frame/reg-event-fx
  ::init
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub
-   (fn [[_ {:keys [vims file]}]]
+   (fn [[_ {:keys [vims file] :as opts}]]
      ^:ignore-warnings [::subs/playhead-string vims file]))]
  (fn [{:keys       [ui-db]
        ::subs/keys [playhead-string]} [_ {:keys [vims file] :as opts}]]
-   (let [editor    (ui-db/get-editor ui-db vims file)
+   (let [editor    (ui-db/get-editor ui-db opts)
          _         (interop/set-model-language file editor)
-         listeners (new-listeners vims file editor)]
-     {:ui-db      (ui-db/set-listeners ui-db vims file listeners)
-      :dispatch-n [[::set-string vims nil file playhead-string]
-                   [::bind-listeners vims file]
-                   [::track-start vims file]]})))
+         listeners (new-listeners opts editor)]
+     {:ui-db      (ui-db/set-listeners ui-db opts listeners)
+      :dispatch-n [[::set-string opts playhead-string]
+                   [::bind-listeners opts]
+                   [::track-start opts]]})))
 
 (re-frame/reg-event-fx
  ::handover
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_
-                       {old-vims :vims old-file :file :as old-opts}
-                       {new-vims :vims new-file :file :as new-opts}]]
-   (let [editor-instance (ui-db/get-editor ui-db old-vims old-file)]
+ (fn [{:keys [ui-db]} [_ old-opts new-opts]]
+   (let [editor-instance (ui-db/get-editor ui-db old-opts)]
      {:ui-db (-> ui-db
-                 (ui-db/set-editor old-vims old-file nil)
-                 (ui-db/set-editor new-vims new-file editor-instance))})))
+                 (ui-db/set-editor old-opts nil)
+                 (ui-db/set-editor new-opts editor-instance))})))
 
 (re-frame/reg-event-fx
  ::recycle
- (fn [_ [_
-         {old-vims :vims old-file :file :as old-opts}
-         {new-vims :vims new-file :file :as new-opts}]]
+ (fn [_ [_ {old-vims :vims :as old-opts} {new-vims :vims :as new-opts}]]
    (when (and old-vims (not (util/=by :db/uid old-vims new-vims)))
      {:dispatch-n
-      [[::clear-disposables old-vims old-file]
-       [::track-stop old-vims old-file]
+      [[::clear-disposables old-opts]
+       [::track-stop old-opts]
        [::handover old-opts new-opts]
        [::init new-opts]]})))
 
 (re-frame/reg-event-fx
  ::dispose
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ {:keys [vims file]}]]
+ (fn [{:keys [ui-db]} [_ opts]]
    #?(:cljs
       (do
-        (interop/dispose-editor (ui-db/get-editor ui-db vims file))
-        {:dispatch-n [[::clear-disposables vims file]
-                      [::track-stop vims file]]}))))
+        (interop/dispose-editor (ui-db/get-editor ui-db opts))
+        {:dispatch-n [[::clear-disposables opts]
+                      [::track-stop opts]]}))))
 
 ;;
 ;; * Listeners lifecycle
@@ -120,24 +116,24 @@
 (re-frame/reg-event-fx
  ::clear-disposables
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ vims file]]
+ (fn [{:keys [ui-db]} [_ opts]]
    #?(:cljs
-      (if-some [disposables (ui-db/get-disposables ui-db vims file)]
+      (if-some [disposables (ui-db/get-disposables ui-db opts)]
         (do
           (interop/clear-disposables disposables)
-          {:ui-db (ui-db/set-disposables ui-db vims file nil)})
+          {:ui-db (ui-db/set-disposables ui-db opts nil)})
         (console :error "disposables not found")))))
 
 (re-frame/reg-event-fx
  ::bind-listeners
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ vims file]]
+ (fn [{:keys [ui-db]} [_ opts]]
    #?(:cljs
-      (when-some [editor (ui-db/get-editor ui-db vims file)]
-        (when-some [listeners (ui-db/get-listeners ui-db vims file)]
+      (when-some [editor (ui-db/get-editor ui-db opts)]
+        (when-some [listeners (ui-db/get-listeners ui-db opts)]
           ;; Create new disposables and update ui-db
           (let [listeners' (interop/bind-listeners editor listeners)]
-            {:ui-db (ui-db/set-disposables ui-db vims file listeners')}))))))
+            {:ui-db (ui-db/set-disposables ui-db opts listeners')}))))))
 
 ;;
 ;; * Linting
@@ -189,9 +185,9 @@
 (re-frame/reg-event-fx
  ::content-change
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ vims file e]]
+ (fn [{:keys [ui-db]} [_ {:keys [vims file] :as opts} e]]
    #?(:cljs
-      (let [editor     (ui-db/get-editor ui-db vims file)
+      (let [editor     (ui-db/get-editor ui-db opts)
             model      (.-model editor)
             edit-event (interop/parse-content-event model e)]
         {:dispatch [::vcs.handlers/add-edit-event vims file edit-event]}))))
@@ -199,9 +195,9 @@
 (re-frame/reg-event-fx
  ::cursor-change
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ vims file e]]
+ (fn [{:keys [ui-db]} [_ {:keys [vims file] :as opts} e]]
    #?(:cljs
-      (let [editor     (ui-db/get-editor ui-db vims file)
+      (let [editor     (ui-db/get-editor ui-db opts)
             model      (.-model editor)
             edit-event (interop/parse-selection-event model e)]
         {:dispatch [::vcs.handlers/add-edit-event vims file edit-event]}))))
@@ -221,9 +217,9 @@
 (re-frame/reg-event-fx
  ::paste
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ vims string]]
+ (fn [{:keys [ui-db]} [_ opts string]]
    #?(:cljs
-      (let [editor (ui-db/get-active-editor ui-db vims)
+      (let [editor (ui-db/get-active-editor ui-db opts)
             model  (.-model editor)
             sels   (.. editor -cursor getSelections)]
         (.pushEditOperations
@@ -245,9 +241,9 @@
  ::set-string
  [(re-frame/inject-cofx :ui-db)]
  (fn set-string
-   [{:keys [ui-db]} [_ vims read-only? file string]]
+   [{:keys [ui-db]} [_ opts string]]
    #?(:cljs
-      (if-some [editor (ui-db/get-editor ui-db vims file)]
+      (if-some [editor (ui-db/get-editor ui-db opts)]
         (do (interop/set-value editor string) nil)
         (console :error "editor not found")))))
 
@@ -255,9 +251,9 @@
  ::set-position
  [(re-frame/inject-cofx :ui-db)]
  (fn set-position
-   [{:keys [ui-db]} [_ vims file position]]
+   [{:keys [ui-db]} [_ opts position]]
    #?(:cljs
-      (if-some [editor (ui-db/get-editor ui-db vims file)]
+      (if-some [editor (ui-db/get-editor ui-db opts)]
         (when-some [js-pos (some-> position interop/pos->js-pos)]
           (interop/reveal-range editor js-pos)
           (interop/set-selection editor js-pos)
@@ -268,70 +264,77 @@
 (re-frame/reg-event-fx
  ::update-editor-string
  (fn update-editor
-   [_ [_ vims {file-uid :db/uid :as file} string]]
+   [_ [_ opts string]]
    (when (some? string)
      {:dispatch-n
-      [[::clear-disposables vims file]
-       [::set-string vims false file string]
-       [::bind-listeners vims file]]})))
+      [[::clear-disposables opts]
+       [::set-string opts string]
+       [::bind-listeners opts]]})))
 
 (re-frame/reg-event-fx
  ::update-editor-position
- [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/timeline-entry vims]))]
+ [(util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::vcs.subs/timeline-entry vims]))]
  (fn update-editor
    [{::vcs.subs/keys [timeline-entry]}
-    [_ vims {file-uid :db/uid :as file} position]]
-   (when (and (some? position) (= file-uid (:file-uid (second timeline-entry))))
-     {:dispatch-n
-      [[::clear-disposables vims file]
-       [::set-position vims file position]
-       [::bind-listeners vims file]]})))
+    [_ {:keys [file] :as opts} position]]
+   (let [file-uid (:db/uid file)]
+     (when (and (some? position) (= file-uid (:file-uid (second timeline-entry))))
+       {:dispatch-n
+        [[::clear-disposables opts]
+         [::set-position opts position]
+         [::bind-listeners opts]]}))))
 
 (re-frame/reg-event-fx
  ::track-start
- (fn [_ [_ vims {file-uid :db/uid :as file}]]
+ (fn [_ [_ {:keys [vims file] :as opts}]]
    {:track
-    [{:id           [::editor-str file-uid]
+    [{:id           (ui-db/path opts ::editor-str)
       :action       :register
       :subscription [::subs/string vims file]
-      :val->event   (fn [string] [::update-editor-string vims file string])}
-     {:id              [::editor-pos file-uid]
+      :val->event   (fn [string] [::update-editor-string opts string])}
+     {:id              (ui-db/path opts ::editor-pos)
       :action          :register
       ;; Prevents showing cursors on all editors when reloading
       :dispatch-first? false
       :subscription    [::subs/position vims file]
-      :val->event      (fn [position] [::update-editor-position vims file position])}]}))
+      :val->event      (fn [position] [::update-editor-position opts position])}]}))
 
 (re-frame/reg-event-fx
  ::track-stop
- (fn [_ [_ vims {file-uid :db/uid}]]
+ (fn [_ [_ opts]]
    {:track
-    [{:id [::editor-str file-uid] :action :dispose}
-     {:id [::editor-pos file-uid] :action :dispose}]}))
+    [{:id (ui-db/path opts ::editor-str) :action :dispose}
+     {:id (ui-db/path opts ::editor-pos) :action :dispose}]}))
 
 (re-frame/reg-event-fx
  ::reset-editor-to-playhead
  [(util.re-frame/inject-sub
-   (fn [[_ vims file]] ^:ignore-warnings [::subs/playhead-string vims file]))
+   (fn [[_ {:keys [vims file]}]] ^:ignore-warnings [::subs/playhead-string vims file]))
   (util.re-frame/inject-sub
-   (fn [[_ vims file]] ^:ignore-warnings [::subs/playhead-position vims file]))]
- (fn [{::subs/keys [playhead-string playhead-position]} [_ vims file set-position?]]
+   (fn [[_ {:keys [vims file]}]] ^:ignore-warnings [::subs/playhead-position vims file]))]
+ (fn [{::subs/keys [playhead-string playhead-position]}
+      [_ {:keys [vims file] :as opts} set-position?]]
    {:dispatch-n
-    (cond-> [[::clear-disposables vims file]
-             [::set-string vims nil file playhead-string]]
-      set-position? (conj [::set-position vims file playhead-position])
-      true (conj [::bind-listeners vims file]))}))
+    (cond-> [[::clear-disposables opts]
+             [::set-string opts playhead-string]]
+      set-position? (conj [::set-position opts playhead-position])
+      true (conj [::bind-listeners opts]))}))
 
 (re-frame/reg-event-fx
  ::reset-all-editors-to-playhead
  [(re-frame/inject-cofx :ui-db)
-  (util.re-frame/inject-sub ^:ignore-warnings (fn [[_ vims]] [::vcs.subs/files vims]))
-  (util.re-frame/inject-sub ^:ignore-warnings (fn [[_ vims]] [::vcs.subs/playhead-entry vims]))]
+  (util.re-frame/inject-sub
+   ^:ignore-warnings
+   (fn [[_ {:keys [vims]}]] [::vcs.subs/files vims]))
+  (util.re-frame/inject-sub
+   ^:ignore-warnings
+   (fn [[_ {:keys [vims]}]] [::vcs.subs/playhead-entry vims]))]
  (fn [{:keys           [ui-db]
-       ::vcs.subs/keys [files playhead-entry]} [_ vims]]
+       ::vcs.subs/keys [files playhead-entry]} [_ opts]]
    (let [[_ {:keys [file-uid]}] playhead-entry]
      {:dispatch-n
       (for [file files
-            :when (ui-db/get-editor ui-db vims file)
+            :let [opts (assoc opts :file file)]
+            :when (ui-db/get-editor ui-db opts)
             :let [set-pos? (= (:db/uid file) file-uid)]]
-        [::reset-editor-to-playhead vims file set-pos?])})))
+        [::reset-editor-to-playhead opts set-pos?])})))

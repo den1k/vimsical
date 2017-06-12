@@ -116,7 +116,7 @@
 
 (defn editors [vims files]
   (mapv (fn [{:as file sub-type ::file/sub-type}]
-          ^{:key sub-type} [code-editor {:vims vims :file file}])
+          ^{:key sub-type} [code-editor {:ui-key :vcr :vims vims :file file}])
         files))
 
 (defn vcr [{:keys [vims]}]
