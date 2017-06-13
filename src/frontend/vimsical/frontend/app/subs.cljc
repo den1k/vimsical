@@ -3,7 +3,9 @@
    [com.stuartsierra.mapgraph :as mg]
    [re-frame.core :as re-frame]
    [vimsical.user :as user]
-   [vimsical.vims :as vims]))
+   [vimsical.vims :as vims]
+   [vimsical.queries.user :as queries.user]
+   [vimsical.queries.vims :as queries.vims]))
 
 (re-frame/reg-sub
  ::modal
@@ -13,12 +15,12 @@
 (re-frame/reg-sub-raw
  ::user
  (fn [db [_ ?pattern]]
-   (re-frame/subscribe [:q [:app/user (or ?pattern '[*])]])))
+   (re-frame/subscribe [:q [:app/user (or ?pattern queries.user/pull-query)]])))
 
 (re-frame/reg-sub-raw
  ::vims
  (fn [db [_ ?pattern]]
-   (re-frame/subscribe [:q [:app/vims (or ?pattern '[*])]])))
+   (re-frame/subscribe [:q [:app/vims (or ?pattern queries.vims/pull-query)]])))
 
 (re-frame/reg-sub-raw
  ::libs
