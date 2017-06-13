@@ -14,6 +14,7 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.editor :as editor]
+   [vimsical.vcs.edit-event :as edit-event]
    [vimsical.vims :as vims]))
 
 ;;
@@ -22,20 +23,20 @@
 
 (defn init-event-fx
   [{:keys [db]} [_ vims deltas {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
-  (let [vims-ref                 (util.mg/->ref db vims)
+  (let [vims-ref   (util.mg/->ref db vims)
         {:as         vims
          ::vims/keys [branches]} (mg/pull db queries/vims vims-ref)
-        vcs                      (reduce
-                                  (fn [vcs delta]
-                                    (vcs/add-delta vcs uuid-fn delta))
-                                  (vcs/empty-vcs branches) deltas)
-        {branch-uid :db/uid}     (branch/master branches)
+        vcs        (reduce
+                    (fn [vcs delta]
+                      (vcs/add-delta vcs uuid-fn delta))
+                    (vcs/empty-vcs branches) deltas)
+        {branch-uid :db/uid} (branch/master branches)
         [_ {delta-uid :uid}
-         :as playhead-entry]     (vcs/timeline-last-entry vcs)
-        vcs-db                   {::vcs.db/branch-uid     branch-uid
-                                  ::vcs.db/delta-uid      delta-uid
-                                  ::vcs.db/playhead-entry playhead-entry}
-        vcs-entity               (merge {:db/uid (uuid-fn)} vcs vcs-db)]
+         :as playhead-entry] (vcs/timeline-last-entry vcs)
+        vcs-db     {::vcs.db/branch-uid     branch-uid
+                    ::vcs.db/delta-uid      delta-uid
+                    ::vcs.db/playhead-entry playhead-entry}
+        vcs-entity (merge {:db/uid (uuid-fn)} vcs vcs-db)]
     {:db (mg/add db (assoc vims ::vims/vcs vcs-entity))
      #?@(:cljs
          [:dispatch
@@ -87,10 +88,10 @@
   [{:keys [uuid-fn timestamp elapsed] :as context}]
   {:pre [uuid-fn timestamp elapsed]}
   (assoc context ::editor/effects
-         ;; NOTE all these fns take the edit-event
-         {::editor/uuid-fn      (fn [& _] (uuid-fn))
-          ::editor/timestamp-fn (fn [& _] timestamp)
-          ::editor/pad-fn       (new-pad-fn elapsed)}))
+                 ;; NOTE all these fns take the edit-event
+                 {::editor/uuid-fn      (fn [& _] (uuid-fn))
+                  ::editor/timestamp-fn (fn [& _] timestamp)
+                  ::editor/pad-fn       (new-pad-fn elapsed)}))
 
 (re-frame/reg-cofx :editor editor-cofx)
 
@@ -114,18 +115,27 @@
   (let [next-entry     (vcs/timeline-next-entry vcs playhead-entry)
         playhead-entry (or next-entry (vcs/timeline-first-entry vcs))
         pointers       (cond-> {::vcs.db/playhead-entry playhead-entry
-                                ::vcs.db/delta-uid delta-uid}
+                                ::vcs.db/delta-uid      delta-uid}
                          (some? branch) (assoc ::vcs.db/branch-uid branch-uid))]
     (merge vcs pointers)))
 
 (defmulti add-edit-event*
   (fn [{:as vcs ::vcs.db/keys [branch-uid playhead-entry]} effects file-uid edit-event]
-    (when (vcs/branching? vcs branch-uid playhead-entry) :branching)))
+    (let [branching?    (vcs/branching? vcs branch-uid playhead-entry)
+          cursor-event? (edit-event/cursor-event? edit-event)]
+      (cond
+        (and branching? cursor-event?) :no-op
+        branching? :branching
+        :else :default))))
 
 (defmethod add-edit-event* :default
   [{:as vcs ::vcs.db/keys [branch-uid playhead-entry]} effects file-uid edit-event]
   (let [[_ {current-delta-uid :uid}] playhead-entry]
     (vcs/add-edit-event vcs effects file-uid branch-uid current-delta-uid edit-event)))
+
+(defmethod add-edit-event* :no-op
+  [{:as vcs ::vcs.db/keys [branch-uid playhead-entry]} effects file-uid edit-event]
+  false)
 
 (defmethod add-edit-event* :branching
   [{:as vcs ::vcs.db/keys [branch-uid playhead-entry]} effects file-uid edit-event]
@@ -136,8 +146,9 @@
   "Update the vcs with the edit event and move the playhead-entry to the newly created timeline playhead-entry"
   [{:as vcs ::vcs.db/keys [branch-uid playhead-entry]} effects file-uid edit-event]
   ;; Use editor effects to create a branch id that we can reference in the deltas
-  (let [[_ deltas _ ?branch :as result] (add-edit-event* vcs effects file-uid edit-event)]
-    [(update-pointers result) deltas ?branch]))
+  (when-let [after-add-event (add-edit-event* vcs effects file-uid edit-event)]
+    (let [[_ deltas _ ?branch :as result] after-add-event]
+      [(update-pointers result) deltas ?branch])))
 
 (re-frame/reg-event-fx
  ::add-edit-event
@@ -150,11 +161,10 @@
        ::editor/keys   [effects]}
       [_ {vims-uid :db/uid :as vims} {file-uid :db/uid} edit-event]]
    {:pre [vims-uid effects file-uid]}
-   (letfn [(vcs->playhead [vcs] (-> vcs ::vcs.db/playhead-entry first))]
-     (let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)
-           playhead'             (vcs->playhead vcs')
-           db'                   (mg/add db vcs')
-           ui-db'                (timeline.ui-db/set-playhead ui-db vims playhead')]
+   (when-let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)]
+     (let [playhead' (-> vcs ::vcs.db/playhead-entry first)
+           db'       (mg/add db vcs')
+           ui-db'    (timeline.ui-db/set-playhead ui-db vims playhead')]
        (cond-> {:db         db'
                 :ui-db      ui-db'
                 :dispatch-n [[::sync.handlers/add-deltas vims-uid deltas]]}

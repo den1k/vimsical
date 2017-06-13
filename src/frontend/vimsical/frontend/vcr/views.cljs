@@ -50,20 +50,19 @@
 (def triangle-right (speed-triangle :right))
 
 (defn- speed-control []
-  (fn []
-    (let [{:as            settings
-           :settings/keys [playback-speed]
-           :or            {playback-speed 1}} (<sub [::user.subs/settings])]
-      [:div.control.speed
-       (triangle-left
-        {:class    "icon speed-triangle decrease"
-         :on-click (e> (re-frame/dispatch
-                        [::user.handlers/playback-speed settings :dec]))})
-       (str playback-speed "x")
-       (triangle-right
-        {:class    "icon speed-triangle increase"
-         :on-click (e> (re-frame/dispatch
-                        [::user.handlers/playback-speed settings :inc]))})])))
+  (let [{:as            settings
+         :settings/keys [playback-speed]
+         :or            {playback-speed 1}} (<sub [::user.subs/settings])]
+    [:div.control.speed
+     (triangle-left
+      {:class    "icon speed-triangle decrease"
+       :on-click (e> (re-frame/dispatch
+                      [::user.handlers/playback-speed settings :dec]))})
+     (str playback-speed "x")
+     (triangle-right
+      {:class    "icon speed-triangle increase"
+       :on-click (e> (re-frame/dispatch
+                      [::user.handlers/playback-speed settings :inc]))})]))
 
 (defn- playback-control [{:keys [vims]}]
   (let [playing? (<sub [::timeline.subs/playing? vims])]

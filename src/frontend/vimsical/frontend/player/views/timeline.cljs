@@ -9,10 +9,13 @@
             [vimsical.frontend.player.views.elems :as elems]
             [vimsical.common.util.core :as util]
             [vimsical.frontend.ui.subs :as ui.subs]
+            [vimsical.frontend.user.handlers :as user.handlers]
+            [vimsical.frontend.user.subs :as user.subs]
             [re-com.core :as re-com]))
 
 (defn time->pct [duration playhead]
-  (-> playhead (/ duration) (* 100)))
+  (util/clamp (-> playhead (/ duration) (* 100)) 0 100))
+
 
 (defn perc->time [duration perc]
   (-> perc (/ 100) (* duration)))
@@ -62,11 +65,13 @@
          :border-radius 10}])]))
 
 (defn speed-control [{:keys [vims]}]
-  (let [speed-range (reagent/atom [1.0 1.5 1.75 2 2.25 2.5])]
-    (fn [{:keys [vims]}]
-      [:div.speed-control
-       {:on-click (e> (swap! speed-range util/rotate))}
-       (str (first @speed-range) "x")])))
+  (let [{:as            settings
+         :settings/keys [playback-speed]
+         :or            {playback-speed 1}} (<sub [::user.subs/settings])]
+    [:div.speed-control
+     {:on-click (e> (re-frame/dispatch
+                     [::user.handlers/playback-speed settings :inc]))}
+     (str playback-speed "x")]))
 
 (defn time-or-speed-control [{:keys [vims]}]
   (let [show-speed? (reagent/atom false)

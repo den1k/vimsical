@@ -18,3 +18,6 @@
 (defmethod edit-event-spec :crsr/sel [_] (s/keys :req [::op ::range]))
 
 (s/def ::edit-event (s/multi-spec edit-event-spec ::op))
+
+(defn cursor-event? [{::keys [op]}]
+  (= "crsr" (namespace op)))
