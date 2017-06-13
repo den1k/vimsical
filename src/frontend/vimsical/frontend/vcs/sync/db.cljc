@@ -6,7 +6,8 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]
    [vimsical.vims :as vims]
-   [re-frame.loggers :as re-frame.loggers]))
+   [re-frame.loggers :as re-frame.loggers]
+   [vimsical.frontend.util.mapgraph :as util.mg]))
 
 (declare path)
 
@@ -53,10 +54,11 @@
    :before
    (fn fsm-check-allowed-transition-before
      [context]
-     (let [db                            (interceptor/get-coeffect context :db)
-           [event-id vims-uid :as event] (interceptor/get-coeffect context :event)
-           {::keys [state]}              (get-in db (path vims-uid))
-           allowed-transitions           (get fsm state)]
+     (let [db                        (interceptor/get-coeffect context :db)
+           [event-id vims-or-uid :as event] (interceptor/get-coeffect context :event)
+           vims-uid                  (util.mg/->uid db vims-or-uid)
+           {::keys [state]}          (get-in db (path vims-uid))
+           allowed-transitions       (get fsm state)]
        (when-not (and allowed-transitions (contains? allowed-transitions (kw-name event-id)))
          (re-frame.loggers/console :error "Transition" {:current state :event event :allowed allowed-transitions}))
        context))))
@@ -64,14 +66,15 @@
 (def fsm-enrich-next-state-transition
   (std-interceptors/enrich
    (fn fsm-enrich-next-state-transition-after
-     [db [event-id vims-uid :as event]]
-     (if-some [{::keys [state]} (get-in db (path vims-uid))]
-       (if-some [next-state (get-in fsm [state (kw-name event-id)])]
-         (assoc-in db (path vims-uid ::state) next-state)
-         (do
-           (re-frame.loggers/console :error "State transition not found" {:state state :event event})
-           db))
-       db))))
+     [db [event-id vims-or-uid :as event]]
+     (let [vims-uid (util.mg/->uid db vims-or-uid)]
+       (if-some [{::keys [state]} (get-in db (path vims-uid))]
+         (if-some [next-state (get-in fsm [state (kw-name event-id)])]
+           (assoc-in db (path vims-uid ::state) next-state)
+           (do
+             (re-frame.loggers/console :error "State transition not found" {:state state :event event})
+             db))
+         db)))))
 
 (def fsm-interceptor
   [fsm-check-allowed-transition
