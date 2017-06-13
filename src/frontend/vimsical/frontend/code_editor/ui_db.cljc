@@ -1,8 +1,20 @@
-(ns vimsical.frontend.code-editor.ui-db)
+(ns vimsical.frontend.code-editor.ui-db
+  (:require [clojure.spec.alpha :as s]))
 
 (defn path [{:keys [ui-key vims file]} k]
   {:pre [ui-key vims file]}
   [(:db/uid vims) (:db/uid file) ui-key k])
+
+(s/def :db/uid uuid?)
+(s/def ::entity (s/keys :req [:db/uid]))
+(s/def ::vims ::entity)
+(s/def ::file ::entity)
+(s/def ::ui-key keyword?)
+
+(s/fdef path
+        :args (s/cat :opts (s/keys :req-un [::vims ::file ::ui-key])
+                     :k keyword?)
+        :ret (every-pred vector? not-empty))
 
 ;;
 ;; * Editor Instance

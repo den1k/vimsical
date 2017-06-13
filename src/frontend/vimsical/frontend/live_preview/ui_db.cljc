@@ -1,9 +1,20 @@
 (ns vimsical.frontend.live-preview.ui-db
-  (:require [vimsical.common.util.core :as util :include-macros true]))
+  (:require [vimsical.common.util.core :as util :include-macros true]
+            [clojure.spec.alpha :as s]))
 
 (defn path [{:keys [ui-key vims]} k]
   {:pre [ui-key (:db/uid vims) k]}
   [(:db/uid vims) ui-key k])
+
+(s/def :db/uid uuid?)
+(s/def ::vims (s/keys :req [:db/uid]))
+(s/def ::ui-key keyword?)
+
+(s/fdef path
+        :args (s/cat :opts (s/keys :req-un [::vims ::ui-key])
+                     :k (s/or :keyword keyword?
+                              :tuple (s/tuple keyword? uuid?)))
+        :ret (every-pred vector? not-empty))
 
 (defn get-iframe [ui-db opts] (get-in ui-db (path opts ::elem)))
 (defn set-iframe [ui-db opts iframe] (assoc-in ui-db (path opts ::elem) iframe))
