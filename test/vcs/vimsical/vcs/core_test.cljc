@@ -127,8 +127,8 @@
         [(delta/new-delta {:uid (uuid :d0) :prev-uid nil,,,,,,, :branch-uid (uuid :master) :file-uid (uuid :html) :op [:str/ins nil        "a"] :pad 1 :timestamp 1})
          (delta/new-delta {:uid (uuid :d1) :prev-uid (uuid :d0) :branch-uid (uuid :master) :file-uid (uuid :html) :op [:str/ins (uuid :d0) "b"] :pad 1 :timestamp 1})
          (delta/new-delta {:uid (uuid :d2) :prev-uid (uuid :d1) :branch-uid (uuid :master) :file-uid (uuid :html) :op [:str/ins (uuid :d1) "c"] :pad 1 :timestamp 1})
-         (delta/new-delta {:uid (uuid :d3) :prev-uid (uuid :d2) :branch-uid (uuid :master) :file-uid (uuid :html) :op [:str/rem (uuid :d2) 1],, :pad 1 :timestamp 1})
-         (delta/new-delta {:uid (uuid :d4) :prev-uid (uuid :d3) :branch-uid (uuid :master) :file-uid (uuid :html) :op [:str/rem (uuid :d1) 1],, :pad 1 :timestamp 1})
+         (delta/new-delta {:uid (uuid :d3) :prev-uid (uuid :d2) :branch-uid (uuid :master) :file-uid (uuid :html) :op [:str/rem (uuid :d1) 1],, :pad 1 :timestamp 1})
+         (delta/new-delta {:uid (uuid :d4) :prev-uid (uuid :d3) :branch-uid (uuid :master) :file-uid (uuid :html) :op [:str/rem (uuid :d0) 1],, :pad 1 :timestamp 1})
          (delta/new-delta {:uid (uuid :d5) :prev-uid (uuid :d4) :branch-uid (uuid :master) :file-uid (uuid :html) :op [:str/ins (uuid :d0) "z"] :pad 1 :timestamp 1})]
         vcs                     (reduce #(sut/add-delta %1 uuid-fn %2) (sut/empty-vcs branches) html-deltas)
         actual-html             (sut/file-string vcs (uuid :html) (-> html-deltas last :uid))]

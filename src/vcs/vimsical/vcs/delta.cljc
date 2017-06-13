@@ -15,14 +15,15 @@
   [deltas]
   (letfn [(str-op? [delta] (= :str/ins (op-type delta)))]
     (let [str-deltas-by-id (->> deltas (filter str-op?) (group-by :uid))]
-      (reduce
-       (fn [_ delta]
-         (if-some [op-uid' (op-uid delta)]
-           (if (nil? (get str-deltas-by-id op-uid'))
-             (reduced false)
-             true)
-           true))
-       {} deltas))))
+      (letfn [(valid-op-uid? [op-uid]
+                (cond
+                  (vector? op-uid) (every? valid-op-uid? op-uid)
+                  (nil? op-uid)    true
+                  :else            (some? (get str-deltas-by-id op-uid))))]
+        (reduce
+         (fn [_ delta]
+           (or (valid-op-uid? (op-uid delta)) (reduced false)))
+         {} deltas)))))
 
 ;;
 ;; * Spec

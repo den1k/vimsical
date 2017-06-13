@@ -90,25 +90,3 @@
           (conj! ks-set (kfn delta))
           (reduced false)))
       (transient #{(kfn delta)}) deltas))))
-
-
-(s/fdef valid-ops?
-        :args (s/cat :deltas (s/every ::delta/delta))
-        :ref  boolean?)
-
-(defn valid-ops?
-  "Return true if every op in deltas points to a `:str/ins` delta-uid."
-  [[delta & deltas]]
-  (letfn [(seen? [ks-set delta*]
-            (if-some [op-uid (delta/op-uid delta*)]
-              (ks-set op-uid)
-              true))]
-    (boolean
-     (reduce
-      (fn [ks-set {:keys [uid] :as delta}]
-        (if (seen? ks-set delta)
-          (cond-> ks-set
-            (= :str/ins (delta/op-type delta))
-            (conj! uid))
-          (reduced false)))
-      (transient #{(:uid delta)}) deltas))))
