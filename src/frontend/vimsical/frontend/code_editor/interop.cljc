@@ -41,7 +41,10 @@
 (defn pos->js-pos
   "Creates a monaco range object given either one position for a cursor or two
   for a selection."
-  ([pos] (pos->js-pos pos pos))
+  ([pos]
+   (if (vector? pos)
+     (pos->js-pos (first pos) (second pos))
+     (pos->js-pos pos pos)))
   ([start-pos end-pos]
    {:pre [start-pos end-pos]}
    #?(:cljs #js {:startColumn     (:col start-pos)
@@ -52,24 +55,30 @@
 (defn idx->pos
   "Takes an idx and a string and computes a :line and :col hashmap."
   [idx string]
-  (let [str-len (count string)]
-    (cond
-      (zero? idx) {:line 1 :col 1}
-      (> idx str-len) nil               ; out of bounds
-      :else
-      (reduce
-       (fn [[cur-idx l c :as step] char]
-         (let [next-idx (inc cur-idx)]
-           (cond
-             (= cur-idx idx)      (reduced {:line l :col c})
-             ;; lookahead at last step of reduction
-             ;; this becomes true only when idx is at last char
-             (= next-idx str-len) (reduced {:line l :col (inc c)})
-             :else                (if (identical? \newline char)
-                                    [next-idx (inc l) 1]
-                                    [next-idx l (inc c)]))))
-       [0 1 1]
-       string))))
+  (cond
+    (vector? idx)
+    (mapv #(idx->pos % string) idx)
+
+    (number? idx)
+    (let [str-len (count string)]
+      (cond
+        (zero? idx) {:line 1 :col 1}
+        (> idx str-len) nil             ; out of bounds
+        :else
+        (reduce
+         (fn [[cur-idx l c :as step] char]
+           (let [next-idx (inc cur-idx)]
+             (cond
+               (= cur-idx idx)      (reduced {:line l :col c})
+               ;; lookahead at last step of reduction
+               ;; this becomes true only when idx is at last char
+               (= next-idx str-len) (reduced {:line l :col (inc c)})
+               :else                (if (identical? \newline char)
+                                      [next-idx (inc l) 1]
+                                      [next-idx l (inc c)]))))
+         [0 1 1]
+         string)))
+    :else (throw (ex-info "Expected vector or number" {:idx idx}))))
 
 ;;
 ;; * Change Parsing
@@ -98,10 +107,10 @@
    (defn parse-content-event [model e]
      (let [{:keys [diff idx added deleted]
             :as   e-state} (content-event-state model e)
-           event-type (content-event-type e-state)]
+           event-type      (content-event-type e-state)]
        (case event-type
-         :str/ins {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
-         :str/rem {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
+         :str/ins  {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
+         :str/rem  {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
          :str/rplc {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx ::edit-event/amt deleted}))))
 
 ;;
@@ -110,18 +119,22 @@
 
 #?(:cljs
    (defn- selection-event-state [^js/Object model ^js/Object e]
-     (let [sel          (.-selection e)
-           start-line   (.-startLineNumber sel)
-           start-column (.-startColumn sel)
-           end-line     (.-endLineNumber sel)
-           end-column   (.-endColumn sel)
-           lines        (.getLinesContent model)
-           selection?   (or (not (identical? start-column end-column))
-                            (not (identical? start-line end-line)))]
-       {:selection? selection?
-        :start-idx  (pos->str-idx start-line start-column lines)
-        :end-idx    (when selection? (pos->str-idx end-line end-column lines))
-        :lines      lines})))
+     (letfn [(reverse-sel [{:keys [start-idx end-idx] :as sel}]
+               (assoc sel :start-idx end-idx :end-idx start-idx))]
+       (let [sel            (.-selection e)
+             right-to-left? (== 1 (.getDirection sel))
+             start-line     (.-startLineNumber sel)
+             start-column   (.-startColumn sel)
+             end-line       (.-endLineNumber sel)
+             end-column     (.-endColumn sel)
+             lines          (.getLinesContent model)
+             selection?     (or (not (identical? start-column end-column))
+                                (not (identical? start-line end-line)))]
+         (cond-> {:selection? selection?
+                  :start-idx  (pos->str-idx start-line start-column lines)
+                  :end-idx    (when selection? (pos->str-idx end-line end-column lines))
+                  :lines      lines}
+           right-to-left? reverse-sel)))))
 
 #?(:cljs
    (defn parse-selection-event [model e]

@@ -322,7 +322,7 @@
   [state {:as editor-effects ::editor/keys [pad-fn uuid-fn timestamp-fn]} deltas file-uid branch-uid prev-delta-uid {:as edit-event [from-idx to-idx] ::edit-event/range}]
   (let [from-uid      (op-idx->op-uid state from-idx)
         to-uid        (op-idx->op-uid state to-idx)
-        op            [:crsr/sel from-uid to-uid]
+        op            [:crsr/sel [from-uid to-uid]]
         new-delta-uid (uuid-fn edit-event)
         pad           (pad-fn edit-event)
         timestamp     (timestamp-fn edit-event)
@@ -335,8 +335,8 @@
                         :pad        pad
                         :timestamp  timestamp})
         deltas'       (conj deltas delta)
-        state'        (update-state state [:crsr/sel from-idx to-idx] delta)]
-    [state' deltas' new-delta-uid]))
+        state'        (update-state state [:crsr/sel [from-idx to-idx]] delta)]
+    [state' deltas' prev-delta-uid]))
 
 ;;
 ;; * API
