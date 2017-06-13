@@ -21,6 +21,7 @@
       (e> (re-frame/dispatch [::app.handlers/open-vims vims]))}
      [live-preview.views/live-preview
       {:static?        true
+       :ui-key         :vims-list
        :from-snapshot? true
        :vims           vims}]
      [:div.vims-title-and-delete.jsb.ac

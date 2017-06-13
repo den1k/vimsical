@@ -27,7 +27,8 @@
 (defn preview-container [{:keys [vims]}]
   [:div.preview-container.f1
    [central-play-button {:vims vims}]
-   [live-preview {:vims vims}]])
+   [live-preview {:ui-key :player
+                  :vims   vims}]])
 
 (defn social-bar [{:keys [vims]}]
   (let [liked (reagent/atom false)]

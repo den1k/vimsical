@@ -175,9 +175,10 @@
      [:.logo-and-type
       {:width :60%}]
      [:.active-file-type
-      {:padding       "1px 13px"
+      {:padding       "1px 10px"
        :border        "1px solid"
-       :border-radius :15px}
+       :border-radius :15px
+       :font-size     :12px}
       ;; todo dry
       [:&.html
        {:color        (:html color/type->colors-editors)

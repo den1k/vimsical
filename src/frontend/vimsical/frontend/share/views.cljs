@@ -10,7 +10,6 @@
    [player {:orientation :landscape
             :vims        vims}]])
 
-
 (defn share []
   (let [copied? (interop/ratom false)]
     (fn [{:keys [vims]}]

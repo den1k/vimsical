@@ -1,29 +1,41 @@
-(ns vimsical.frontend.code-editor.ui-db)
+(ns vimsical.frontend.code-editor.ui-db
+  (:require [clojure.spec.alpha :as s]))
 
-(defn path [{vims-uid :db/uid} {file-uid :db/uid} k]
-  {:pre [vims-uid file-uid]}
-  [vims-uid file-uid k])
+(defn path [{:keys [ui-key vims file]} k]
+  {:pre [ui-key vims file]}
+  [(:db/uid vims) (:db/uid file) ui-key k])
+
+(s/def :db/uid uuid?)
+(s/def ::entity (s/keys :req [:db/uid]))
+(s/def ::vims ::entity)
+(s/def ::file ::entity)
+(s/def ::ui-key keyword?)
+
+(s/fdef path
+        :args (s/cat :opts (s/keys :req-un [::vims ::file ::ui-key])
+                     :k keyword?)
+        :ret (every-pred vector? not-empty))
 
 ;;
 ;; * Editor Instance
 ;;
 
-(defn get-editor [ui-db vims file] (get-in ui-db (path vims file ::editor)))
-(defn set-editor [ui-db vims file obj] (assoc-in ui-db (path vims file ::editor) obj))
+(defn get-editor [ui-db opts] (get-in ui-db (path opts ::editor)))
+(defn set-editor [ui-db opts obj] (assoc-in ui-db (path opts ::editor) obj))
 
 ;;
 ;; * Listeners
 ;;
 
-(defn get-listeners [ui-db vims file] (get-in ui-db (path vims file ::listeners)))
-(defn set-listeners [ui-db vims file obj] (assoc-in ui-db (path vims file ::listeners) obj))
+(defn get-listeners [ui-db opts] (get-in ui-db (path opts ::listeners)))
+(defn set-listeners [ui-db opts obj] (assoc-in ui-db (path opts ::listeners) obj))
 
 ;;
 ;; * Disposables
 ;;
 
-(defn get-disposables [ui-db vims file] (get-in ui-db (path vims file ::disposables)))
-(defn set-disposables [ui-db vims file obj] (assoc-in ui-db (path vims file ::disposables) obj))
+(defn get-disposables [ui-db opts] (get-in ui-db (path opts ::disposables)))
+(defn set-disposables [ui-db opts obj] (assoc-in ui-db (path opts ::disposables) obj))
 
 ;;
 ;; * Active editor
@@ -32,16 +44,7 @@
 (defn get-active-file [ui-db {vims-uid :db/uid}] (get-in ui-db [vims-uid ::active-file]))
 (defn set-active-file [ui-db {vims-uid :db/uid} file] (assoc-in ui-db [vims-uid ::active-file] file))
 
-;; When switching editors, the blur event of the old editor will happen after
-;; the focus event of the second, so we need to compare and swap before removing
-;; the active one
-
-(defn unset-active-file [ui-db vims file]
-  (if (= file (get-active-file ui-db vims))
-    (set-active-file ui-db vims nil)
-    ui-db))
-
-(defn get-active-editor [ui-db vims]
+(defn get-active-editor [ui-db {:keys [vims] :as opts}]
   (if-some [file (get-active-file ui-db vims)]
-    (get-editor ui-db vims file)
+    (get-editor ui-db opts)
     ui-db))

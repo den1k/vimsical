@@ -101,13 +101,13 @@
    [show-popup? (interop/ratom false)
     route       (<sub [::router.subs/route])
     modal       (<sub [::app.subs/modal])
-    {::user/keys [first-name last-name vimsae] :as user}
+    {::user/keys [vimsae] :as user}
     (<sub [:q [:app/user
                [:db/uid
                 ::user/first-name
                 ::user/last-name
                 ::user/email
-                {::user/vimsae [:db/uid ::vims/title]}]]])
+                {::user/vimsae [:db/uid]}]]])
 
     {::vims/keys [title] :as app-vims} (<sub [:q [:app/vims
                                                   [:db/uid
@@ -119,7 +119,7 @@
        :on-double-click (e> (re-frame/dispatch [::router.handlers/route ::router.routes/signup]))}
       [:span.logo icons/vimsical-logo]
       [:span.type icons/vimsical-type]]
-     (when app-vims
+     (when (routes/route-name= route :vims)
        [vims-info])
      (when-not (user/anon? user)
        [:div.new-and-my-vims.button-group
