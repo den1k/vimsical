@@ -162,7 +162,7 @@
       [_ {vims-uid :db/uid :as vims} {file-uid :db/uid} edit-event]]
    {:pre [vims-uid effects file-uid]}
    (when-let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)]
-     (let [playhead' (-> vcs ::vcs.db/playhead-entry first)
+     (let [playhead' (-> vcs' ::vcs.db/playhead-entry first)
            db'       (mg/add db vcs')
            ui-db'    (timeline.ui-db/set-playhead ui-db vims playhead')]
        (cond-> {:db         db'
