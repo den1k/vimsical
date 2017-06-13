@@ -162,8 +162,7 @@
     {:action       :register
      :id           (ui-db/path opts ::vims)
      :subscription [::vcs.subs/files vims]
-     :val->event   (fn [files]
-                     [::track-files opts files])}}))
+     :val->event   (fn [files] [::track-files opts files])}}))
 
 (re-frame/reg-event-fx
  ::track-files
@@ -182,7 +181,7 @@
  [(util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::vcs.subs/files vims]))]
  (fn [{::vcs.subs/keys [files]} [_ opts]]
    {:track    {:action :dispose :id (ui-db/path opts ::vims)}
-    :dispatch [::stop-track-files files]}))
+    :dispatch [::stop-track-files opts files]}))
 
 (re-frame/reg-event-fx
  ::stop-track-files

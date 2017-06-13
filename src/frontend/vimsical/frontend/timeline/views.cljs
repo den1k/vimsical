@@ -17,6 +17,7 @@
 (def timeline-vertical-center (/ timeline-height 2))
 (def master-branch-height (* 0.75 timeline-height))
 (def child-branch-height timeline-height)
+(def snap-threshold 10)
 
 ;;
 ;; * Mouse events helpers
@@ -49,16 +50,42 @@
     (first
      (scale-coords svg-node coords))))
 
+(defn snap-dir [chunk-node x-pos]
+  (let [{:keys [left right]} (util.dom/bounding-client-rect chunk-node)
+        l-threshold (+ left snap-threshold)
+        r-threshold (- right snap-threshold)]
+    (cond
+      (< x-pos l-threshold) :left
+      (> x-pos r-threshold) :right)))
+
+(defn- snap
+  "Snaps x coord when a boundary crosses snap-threshold. Keeps y the same."
+  [chunk-node [x y]]
+  (let [{:keys [left right]} (util.dom/bounding-client-rect chunk-node)
+        l-threshold (+ left snap-threshold)
+        r-threshold (- right snap-threshold)]
+    (cond
+      (< x l-threshold) [left y]
+      (> x r-threshold) [right y])))
+
+(defn snap-coords [{::chunk/keys [branch-end?]} e]
+  (let [[x y :as coords] (util.dom/e->mouse-coords e)
+        chunk-node (.-target e)
+        snap-dir   (snap-dir chunk-node x)]
+    (if (and (= :right snap-dir) branch-end?)
+      (snap chunk-node coords)
+      coords)))
+
 ;;
 ;; * Handlers
 ;;
 
-(defn on-mouse-enter [vims]
+(defn on-mouse-enter [vims chunk]
   (fn [e]
     (re-frame/dispatch
      [::handlers/on-mouse-enter
       vims
-      (util.dom/e->mouse-coords e)
+      (snap-coords chunk e)
       coords-and-svg-node->timeline-position])))
 
 (defn on-mouse-wheel [vims]
@@ -69,20 +96,20 @@
       vims
       (scroll-event->timeline-offset e)])))
 
-(defn on-mouse-move [vims]
+(defn on-mouse-move [vims chunk]
   (fn [e]
     (re-frame/dispatch
      [::handlers/on-mouse-move
       vims
-      (util.dom/e->mouse-coords e)
+      (snap-coords chunk e)
       coords-and-svg-node->timeline-position])))
 
-(defn on-click [vims]
+(defn on-click [vims chunk]
   (fn [e]
     (re-frame/dispatch
      [::handlers/on-click
       vims
-      (util.dom/e->mouse-coords e)
+      (snap-coords chunk e)
       coords-and-svg-node->timeline-position
       [::vcr.handlers/step]])))
 
@@ -90,9 +117,9 @@
   (fn [_]
     (re-frame/dispatch [::handlers/on-mouse-leave vims])))
 
-(defn on-touch-move [vims]
+(defn on-touch-move [vims chunk]
   (fn [e]
-    (on-click (util.dom/first-touch->e e))))
+    (on-click (util.dom/first-touch->e e) chunk)))
 
 ;;
 ;; * Components
@@ -105,7 +132,9 @@
   (get color/type-colors-timeline sub-type))
 
 (defn- chunk
-  [timeline-dur abs-time file {::chunk/keys [depth duration branch-start? branch-end?]}]
+  [timeline-dur abs-time file
+   {::chunk/keys [depth duration branch-start? branch-end?] :as chunk}
+   vims]
   (let [left               abs-time
         right              (+ left duration)
         height             (case depth 0 master-branch-height 1 child-branch-height)
@@ -121,44 +150,47 @@
         fill               (file-color file)]
 
     [:polygon
-     {:fill fill
-      :points
-      (cond
-        (and branch-start? branch-end?)
-        (util/space-join
-         left bottom-bezel
-         left top-bezel
-         left-padding top
-         right-padding top
-         right top-bezel
-         right bottom-bezel
-         right-padding bottom
-         left-padding bottom)
+     {:fill           fill
+      :on-click       (on-click vims chunk)
+      :on-mouse-enter (on-mouse-enter vims chunk)
+      :on-mouse-move  (on-mouse-move vims chunk)
+      :on-touch-move  (on-touch-move vims chunk)
+      :points         (cond
+                        (and branch-start? branch-end?)
+                        (util/space-join
+                         left bottom-bezel
+                         left top-bezel
+                         left-padding top
+                         right-padding top
+                         right top-bezel
+                         right bottom-bezel
+                         right-padding bottom
+                         left-padding bottom)
 
-        branch-start?
-        (util/space-join
-         left bottom-bezel
-         left top-bezel
-         left-padding top
-         right top
-         right bottom
-         left-padding bottom)
+                        branch-start?
+                        (util/space-join
+                         left bottom-bezel
+                         left top-bezel
+                         left-padding top
+                         right top
+                         right bottom
+                         left-padding bottom)
 
-        branch-end?
-        (util/space-join
-         left top
-         right-padding top
-         right top-bezel
-         right bottom-bezel
-         right-padding bottom
-         left bottom)
+                        branch-end?
+                        (util/space-join
+                         left top
+                         right-padding top
+                         right top-bezel
+                         right bottom-bezel
+                         right-padding bottom
+                         left bottom)
 
-        :else
-        (util/space-join
-         left top
-         right top
-         right bottom
-         left bottom))}]))
+                        :else
+                        (util/space-join
+                         left top
+                         right top
+                         right bottom
+                         left bottom))}]))
 
 (defn- skimhead-line [{:keys [vims]}]
   (when-some [skimhead (<sub [::subs/skimhead vims])]
@@ -186,12 +218,11 @@
 (defn chunks [{:keys [vims]}]
   (let [timeline-dur       (<sub [::subs/duration vims])
         chunks-by-abs-time (<sub [::subs/chunks-by-absolute-start-time vims])
-        chunks-html
-        (doall
-         (for [[abs-time {::chunk/keys [uid file-uid] :as c}] chunks-by-abs-time
-               :let                                           [file (<sub [::vcs.subs/file file-uid])]]
-           ^{:key uid}
-           [chunk timeline-dur abs-time file c]))]
+        chunks-html        (doall
+                            (for [[abs-time {::chunk/keys [uid file-uid] :as c}] chunks-by-abs-time
+                                  :let [file (<sub [::vcs.subs/file file-uid])]]
+                              ^{:key uid}
+                              [chunk timeline-dur abs-time file c vims]))]
     [:g [:defs [:clipPath {:id clip-path-id} chunks-html]]
      chunks-html]))
 
@@ -212,12 +243,8 @@
         :view-box              (util/space-join left right duration timeline-height)
         :preserve-aspect-ratio "none meet"
         :style                 {:width "100%" :height "100%"}
-        :on-mouse-enter        (on-mouse-enter vims)
         :on-wheel              (on-mouse-wheel vims)
-        :on-mouse-move         (on-mouse-move vims)
-        :on-click              (on-click vims)
-        :on-mouse-leave        (on-mouse-leave vims)
-        :on-touch-move         (on-touch-move vims)}
+        :on-mouse-leave        (on-mouse-leave vims)}
        [chunks {:vims vims}]
        [playhead-line {:vims vims}]
        [skimhead-line {:vims vims}]]]]))

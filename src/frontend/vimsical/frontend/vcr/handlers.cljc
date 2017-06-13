@@ -22,19 +22,21 @@
  ::play
  [(util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/vcs vims]))
   (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/playhead-entry vims]))
-  (util.re-frame/inject-sub (fn [[_ vims]] [::timeline.subs/playhead vims]))]
+  (util.re-frame/inject-sub (fn [[_ vims]] [::timeline.subs/playhead vims]))
+  (util.re-frame/inject-sub (fn [[_ vims]] [::timeline.subs/duration vims]))]
  (fn [{:keys                [db scheduler]
        ::vcs.subs/keys      [vcs playhead-entry]
-       ::timeline.subs/keys [playhead]} [_ vims]]
+       ::timeline.subs/keys [playhead duration]} [_ vims]]
    (cond
      ;; Start from beginning:
      ;; - set the scheduler at 0
      ;; - schedule ::step after the duration of the first pad
      ;; - let ::step figure out the vcs update
      (nil? playhead-entry)
-     (let [[t] (vcs/timeline-first-entry vcs)]
+     (let [[t] (vcs/timeline-first-entry vcs)
+           start-time (if (>= playhead duration) 0 playhead)]
        {:dispatch  [::timeline.handlers/set-playing vims true]
-        :scheduler [{:action :start :t 0 :tick (tick-fn vims)}
+        :scheduler [{:action :start :t start-time :tick (tick-fn vims)}
                     {:action :schedule :t t :event [::step vims]}]})
 
      ;; Reset and "recurse" so we'll start from beginning next time
@@ -65,7 +67,7 @@
        (let [vcs' (assoc vcs ::vcs.db/playhead-entry entry)
              db'  (mg/add db vcs')]
          {:db db' :scheduler {:action :schedule :t t :event [::step vims]}})
-       {:dispatch [::stop vims]}))))
+       {:dispatch [::pause vims]}))))
 
 (re-frame/reg-event-fx
  ::pause
