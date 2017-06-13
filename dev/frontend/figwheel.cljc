@@ -41,13 +41,17 @@
 #?(:clj
    (def figwheel-config
      (let [{:keys [build-id port]} config]
-       {:figwheel-options {:css-dirs          ["resources/public/css"]
-                           :reload-clj-files  {:clj false :cljc true}
-                           :server-port       port
-                           :ring-handler      'vimsical.frontend.figwheel-handler/handler
-                           :open-file-command open-file-command}
-        :build-ids        [build-id]
-        :all-builds       cljs-builds})))
+       {:figwheel-options
+        (cond->
+         {:css-dirs         ["resources/public/css"]
+          :reload-clj-files {:clj false :cljc true}
+          :server-port      port
+          :ring-handler     'vimsical.frontend.figwheel-handler/handler}
+          open-file-command (assoc :open-file-command open-file-command))
+        :build-ids
+        [build-id]
+        :all-builds
+        cljs-builds})))
 
 #?(:clj
    (defn start-dev
