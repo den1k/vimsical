@@ -30,7 +30,7 @@
 ;;
 
 (def mocked-service-map
-  (-> service/service-map
+  (-> (service/new-service-map)
       (assoc ::http/start-fn identity ::http/stop-fn identity)
       (interceptors.util/prepend-default-interceptors mock-session-store-interceptor)))
 

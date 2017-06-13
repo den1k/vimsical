@@ -5,7 +5,6 @@
    ;; HTTP server
    :http-host                    "localhost"
    :http-port                    "8080"
-   :csrf                         "false"
    ;; Datomic
    :datomic-protocol             "dev"
    :datomic-host                 "localhost"
@@ -21,12 +20,12 @@
    :redis-port                   "6379"}}
 
  :env.backend/test
- {:env
-  {:env "test"}}
+ {:env {:env "test"}}
 
  :env.frontend/dev
  {:env
-  {:csrf             "false"
+  {:env              "dev"
+   :csrf             "false"
    :backend-protocol "http"
    :backend-host     "localhost"
    :backend-path     "/events"

@@ -1,23 +1,18 @@
 .PHONY: clean test test-clj test-cljs test-cljs-advanced lein-deps deps
 
 #
-# TODO Deps
+# Deps
 #
 
-checkouts/mapgraph/:
-	exit 1 "Clone mapgraph and add a symlink at ./checkouts/mapgraph"
-
-lein-deps:
-	lein with-profile backend-test,frontend-test,dev,user deps
-
-deps: checkouts/mapgraph/
+deps:
+	bin/lein with-profiles +backend-test,+frontend-test,+dev,+user,+test deps
 
 #
 # Lein
 #
 
 clean:
-	lein clean
+	bin/lein clean
 
 #
 # Test
@@ -25,17 +20,26 @@ clean:
 
 test: test-clj test-integration test-cljs test-cljs-advanced
 
-test-clj: deps clean
-	lein with-profile backend-test test
+test-clj: clean
+	bin/lein with-profile backend-test test
 
-test-cljs: deps clean
-	lein with-profile +frontend-test,-css doo node test once
+test-cljs: clean
+	bin/lein with-profile +frontend-test,-css doo node test once
 
-test-cljs-advanced: deps clean
-	lein with-profile +frontend-test,-css doo node test-advanced once
+test-cljs-advanced: clean
+	bin/lein with-profile +frontend-test,-css doo node test-advanced once
 
-test-integration: deps clean
-	lein with-profile integration-test test
+test-integration: clean
+	bin/lein with-profile integration-test test
+
+#
+# CI
+#
+
+ci-image:
+	docker build -t	julienfantin/ci:$(tag) .circleci/images/primary/
+	docker login
+	docker push julienfantin/ci:$(tag)
 
 #
 # Build
@@ -43,44 +47,55 @@ test-integration: deps clean
 
 build: build-clj build-cljs
 
-build-clj: deps clean
-	lein with-profile backend uberjar
+build-clj: clean
+	bin/lein with-profile backend uberjar
 
-build-cljs: deps clean
-	lein with-profile frontend cljsbuild once prod
+build-cljs: clean
+	bin/lein with-profile frontend cljsbuild once prod
 
 #
 # Styles
 #
 
-dev-styles: deps
-	lein with-profile frontend-dev garden auto
+dev-styles:
+	bin/lein with-profile frontend-dev garden auto
 
 
-dev-styles-player: deps
-	lein with-profile player-dev garden auto
+dev-styles-player:
+	bin/lein with-profile player-dev garden auto
 
 #
-# Dev infra
+# Dev Infra
 #
 
 infra/.env:
-	exit 1 "Copy ./infra/env.template to ./infra/.env and add secrets"
+ifeq ($(DATOMIC_LOGIN),)
+	$(error DATOMIC_LOGIN is undefined)
+endif
+ifeq ($(DATOMIC_PASSWORD),)
+	$(error DATOMIC_PASSWORD is undefined)
+endif
+ifeq ($(DATOMIC_LICENSE_KEY),)
+	$(error DATOMIC_LICENSE_KEY is undefined)
+endif
+	echo "DATOMIC_LOGIN=${DATOMIC_LOGIN}" >> infra/.env
+	echo "DATOMIC_PASSWORD=${DATOMIC_PASSWORD}" >> infra/.env
+	echo "DATOMIC_LICENSE_KEY=${DATOMIC_LICENSE_KEY}" >> infra/.env
 
 infra-start: infra/.env
-	cd infra && \
-	docker-compose \
-	-f docker-compose.yml \
-	-f docker-compose.dev.yml up -d
+	cd infra && docker-compose up -d
 
-infra-logs: infra/.env
+infra-logs:
 	cd infra && docker-compose logs -f
 
-infra: infra-start infra-logs
-
 infra-stop:
-	cd infra \
-	&& docker-compose down -v --remove-orphans
+	cd infra && docker-compose down -v --remove-orphans
+
+infra-run: infra-start infra-logs
+
+#
+# Dev Backend
+#
 
 run: infra-start
-	lein with-profile backend-dev run
+	bin/lein with-profile backend-dev run

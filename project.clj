@@ -27,9 +27,10 @@
     {*assert* true *warn-on-reflection* false *unchecked-math* false}}
 
    :uberjar
-   {:aot          :all
+   {:aot          [vimsical.backend.core]
     :omit-source  true
-    :uberjar-name "vimsical.jar"}
+    :uberjar-name "vimsical.jar"
+    :main         vimsical.backend.core}
    ;;
    ;; Vcs
    ;;
@@ -67,6 +68,8 @@
                       [cc.qbits/alia-nippy "3.1.4"]
                       [cc.qbits/hayt "4.0.0"]
                       [com.datomic/datomic-pro "0.9.5544" :exclusions [commons-codec org.slf4j/slf4j-nop org.slf4j/slf4j-log4j12]]
+                      [com.amazonaws/aws-java-sdk-dynamodb "1.11.6"
+                       :exclusions [joda-time commons-logging]]
                       [ch.qos.logback/logback-classic "1.2.3"]
                       [org.clojure/tools.logging "0.3.1"]
                       ;; HTTP stack
@@ -87,7 +90,7 @@
     :env.backend/dev
     :backend-log-dev
     {:dependencies
-                   [[criterium "0.4.4"]]
+     [[criterium "0.4.4"]]
      ;; Get proper deps resolution for fixtures etc
      :source-paths ["dev/backend" "test/vcs" "test/backend" "test/common"]}]
 
@@ -106,14 +109,15 @@
    {:source-paths ["src/frontend"]
     :plugins      [[lein-cljsbuild "1.1.6"
                     :exclusions [org.apache.commons/commons-compress]]]
+    :repositories {"jitpack" {:url "https://jitpack.io"}}
     :dependencies [[org.clojure/clojurescript "1.9.562" :exclusions [org.clojure/tools.reader]]
                    ;; Our mapgraph fork. Must be be symlinked in checkouts.
-                   [com.stuartsierra/mapgraph "0.2.2-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
+                   [com.github.vimsical/mapgraph "parser-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
                    [reagent "0.6.2" :exclusions [org.clojure/clojurescript]]
                    [re-frame "0.9.4" :exclusions [org.clojure/clojurescript]]
                    [com.andrewmcveigh/cljs-time "0.5.0"] ; required re-com, but we need a newer version
                    [re-com "2.1.0" :exclusions [reagent org.clojure/clojurescript org.clojure/core.async com.andrewmcveigh/cljs-time]]
-                   [day8.re-frame/async-flow-fx "0.0.7-SNAPSHOT" :exclusions [re-frame org.clojure/clojurescript]]
+                   [com.github.vimsical/re-frame-async-flow-fx "-SNAPSHOT" :exclusions [re-frame org.clojure/clojurescript]]
                    [thi.ng/color "1.2.0"]
                    [cljsjs/clipboard "1.6.1-1"]
                    [bidi "2.1.1"]
@@ -174,12 +178,12 @@
    ;; Example: `lein with-profile frontend-dev garden auto`
 
    :-css-dev-config
-   {:plugins      [[lein-garden "0.2.8" :exclusions [org.clojure/clojure]]]
+
+   {:plugins      [[lein-garden "0.3.0" :exclusions [org.clojure/clojure]]]
+    ;;:prep-tasks   [["garden" "once"]]
     :dependencies [[garden "1.3.2"]
                    ;; Added this to fix a compilation issue with garden
-                   [ns-tracker "0.3.1"]]
-    ;:prep-tasks   [["garden" "once"]]
-    }
+                   [ns-tracker "0.3.1"]]}
 
    :css
    [:-css-dev-config
@@ -213,9 +217,9 @@
     {:builds
      [{:id           "prod"
        :jar          true
-       :source-paths ["checkouts/mapgraph/src"
-                      "checkouts/re-frame-async-flow-fx/src"
-                      "checkouts/re-frame-forward-events-fx/src"
+       :source-paths [;; "checkouts/mapgraph/src"
+                      ;; "checkouts/re-frame-async-flow-fx/src"
+                      ;; "checkouts/re-frame-forward-events-fx/src"
                       "src/frontend"
                       "src/common"
                       "src/vcs"]
@@ -240,9 +244,9 @@
                       :verbose         false}}
       {:id           "dev"
        :figwheel     {:on-jsload vimsical.frontend.dev/on-reload}
-       :source-paths ["checkouts/mapgraph/src"
-                      "checkouts/re-frame-async-flow-fx/src"
-                      "checkouts/re-frame-forward-events-fx/src"
+       :source-paths [;; "checkouts/mapgraph/src"
+                      ;; "checkouts/re-frame-async-flow-fx/src"
+                      ;; "checkouts/re-frame-forward-events-fx/src"
                       "dev/frontend"
                       "src/frontend"
                       "src/common"
@@ -267,9 +271,9 @@
                                               :fn-symbol           "λ"}}}}
       {:id           "player-dev"
        :figwheel     {:on-jsload vimsical.frontend.player.dev/on-reload}
-       :source-paths ["checkouts/mapgraph/src"
-                      "checkouts/re-frame-async-flow-fx/src"
-                      "checkouts/re-frame-forward-events-fx/src"
+       :source-paths [;; "checkouts/mapgraph/src"
+                      ;; "checkouts/re-frame-async-flow-fx/src"
+                      ;; "checkouts/re-frame-forward-events-fx/src"
                       "dev/frontend"
                       "src/frontend"
                       "src/common"
@@ -315,9 +319,9 @@
                       :pretty-print    false
                       :verbose         false}}
       {:id           "test"
-       :source-paths ["checkouts/mapgraph/src"
-                      "checkouts/re-frame-async-flow-fx/src"
-                      "checkouts/re-frame-forward-events-fx/src"
+       :source-paths [;; "checkouts/mapgraph/src"
+                      ;; "checkouts/re-frame-async-flow-fx/src"
+                      ;; "checkouts/re-frame-forward-events-fx/src"
                       "src/frontend"
                       "src/common"
                       "src/vcs"
@@ -332,9 +336,9 @@
                       :optimizations  :none
                       :parallel-build true}}
       {:id           "test-advanced"
-       :source-paths ["checkouts/mapgraph/src"
-                      "checkouts/re-frame-async-flow-fx/src"
-                      "checkouts/re-frame-forward-events-fx/src"
+       :source-paths [;; "checkouts/mapgraph/src"
+                      ;; "checkouts/re-frame-async-flow-fx/src"
+                      ;; "checkouts/re-frame-forward-events-fx/src"
                       "src/frontend"
                       "src/common"
                       "src/vcs"

@@ -18,7 +18,9 @@
   #{["/events"
      :post [interceptors.event-auth/event-auth
             interceptors.event/handle-event]
-     :route-name :events]})
+     :route-name :events]
+    ["/status" :get (constantly {:status 200 :body ""})
+     :route-name :status]})
 
 (def url-for
   (route/url-for-routes (route/expand-routes routes)))
@@ -37,7 +39,7 @@
 ;; * Service map
 ;;
 
-(def service-map
+(defn new-service-map []
   {:env                        (env/env)
    ::http/host                 (env/optional :http-host ::env/string)
    ::http/port                 (env/required :http-port ::env/int)

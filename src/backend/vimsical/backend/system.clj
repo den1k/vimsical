@@ -92,7 +92,7 @@
    ;; * Immutant <> Pedestal HTTP stack
    ;;
 
-   :service-map service/service-map
+   :service-map (service/new-service-map)
 
    :server
    (cp/using
