@@ -21,3 +21,8 @@
 
 (defn cursor-event? [{::keys [op]}]
   (= "crsr" (namespace op)))
+
+(defmulti prospective-idx-offset ::op)
+(defmethod prospective-idx-offset :str/ins [{::keys [diff]}] (count diff))
+;; We don't nee to offset because we delete left to right
+(defmethod prospective-idx-offset :str/rem [_] 0)

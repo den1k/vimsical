@@ -74,3 +74,12 @@
 (defn op-type [{[op] :op}] op)
 (defn op-diff [{[_ _ diff] :op}] (assert diff "Not a :str/ins") diff)
 (defn op-amt  [{[_ _ amt] :op}] (assert amt "Not :str/rem") amt)
+
+;;
+;; * Offsets
+;;
+
+(defmulti prospective-idx-offset op-type)
+(defmethod prospective-idx-offset :str/ins [delta] (count (op-diff delta)))
+;; We don't nee to offset because we delete left to right
+(defmethod prospective-idx-offset :str/rem [_] 0)
