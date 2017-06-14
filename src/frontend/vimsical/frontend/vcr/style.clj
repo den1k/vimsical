@@ -137,17 +137,25 @@
     :font-size      :12px
     :letter-spacing :0.3px
     :background     (:darkgrey colors)
-    :color          :white}
-   [:.save-indicator
-    [:.status-circle
-     {:width         :6px
-      :height        :6px
-      :background    :orange
-      :border-radius :50%
-      :flex-shrink   0}]
-    [:&.saved
+    :color          :whitesmoke}
+   [:.sync-status-wrapper
+    {:width :65px}
+    [:.sync-status
      [:.status-circle
-      {:background :limegreen}]]]])
+      {:width         :6px
+       :height        :6px
+       :background    :orange
+       :border-radius :50%
+       :flex-shrink   0}]
+     [:&.saved
+      [:.status-circle
+       {:background :limegreen}]]]]
+   [:.author-credit
+    {:letter-spacing :0.5px
+     :color          :white}]
+   [:.license-title
+    {:flex-basis :65px
+     :cursor     :pointer}]])
 
 (def vcr
   (media/not-on-mobile

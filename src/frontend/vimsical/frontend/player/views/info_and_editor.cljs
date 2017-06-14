@@ -30,9 +30,6 @@
      {:class title}
      (string/upper-case title)]))
 
-(defn user-full-name [{::user/keys [first-name last-name]}]
-  (util/space-join first-name last-name))
-
 (defn info-and-editor-container []
   (let [info-hover? (reagent/atom true)
         desc        nil #_(util.content/lorem-ipsum 2)]
@@ -69,7 +66,7 @@
              [user.views/avatar {:user owner}]
              [:div.title-and-creator
               [:div.title.truncate (or title "Untitled")]
-              [:div.creator.truncate (user-full-name owner)]]]
+              [:div.creator.truncate (user/full-name owner)]]]
             (when desc
               [:div.desc desc])]
            (get file-uid->code-editor active-file-uid)

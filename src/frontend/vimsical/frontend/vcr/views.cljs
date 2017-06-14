@@ -8,6 +8,7 @@
    [vimsical.frontend.timeline.views :refer [timeline]]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e>]]
    [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
+   [vimsical.frontend.app.subs :as app.subs]
    [vimsical.frontend.vcr.handlers :as handlers]
    [vimsical.frontend.vcr.subs :as subs]
    [vimsical.frontend.vcs.subs :as vcs.subs]
@@ -20,7 +21,10 @@
    [re-frame.interop :as interop]
    [vimsical.frontend.vcs.sync.handlers :as vcs.sync.handlers]
    [vimsical.frontend.vcs.sync.subs :as vcs.sync.subs]
-   [vimsical.frontend.app.handlers :as app.handlers]))
+   [vimsical.frontend.app.handlers :as app.handlers]
+   [vimsical.common.util.core :as util]
+   [vimsical.user :as user]
+   [vimsical.vims :as vims]))
 
 ;;
 ;; * Temp
@@ -122,11 +126,31 @@
           ^{:key sub-type} [code-editor {:ui-key :vcr :vims vims :file file}])
         files))
 
-(defn vims-sync-status [{:keys [vims]}]
-  (let [status (<sub [::vcs.sync.subs/vims-sync-status (:db/uid vims)])]
-    [:div
+(defn preview-and-editors [{:keys [vims]}]
+  (let [all-files      (<sub [::vcs.subs/files vims])
+        visi-files     (<sub [::subs/visible-files vims])
+        editor-headers (editor-headers visi-files)
+        editors        (editors vims visi-files)]
+    [splits/n-h-split
+     :class "live-preview-and-editors"
+     :panels [[live-preview {:ui-key :vcr :vims vims :error-catcher? false}]
+              [splits/n-v-split
+               :height "100%"
+               :splitter-size "31px"
+               :panels editors
+               :splitter-children editor-headers
+               :margin "0"]]
+     :splitter-child [editor-tabs all-files]
+     :splitter-size "34px"
+     :initial-split 60
+     :margin "0"]))
+
+(defn- vims-sync-status []
+  (let [vims-uid (:db/uid (<sub [::app.subs/vims [:db/uid]]))
+        status   (<sub [::vcs.sync.subs/vims-sync-status vims-uid])]
+    [:div.sync-status-wrapper
      (when-not (= :init status)
-       [:div.save-indicator.jsb.ac
+       [:div.sync-status.ac
         {:class (when (= status :success) "saved")}
         [:div.status-circle]
         (re-com/gap :size "8px")
@@ -136,33 +160,30 @@
            :waiting "saving..."
            nil)]])]))
 
+(defn- author-credit []
+  (let [{::vims/keys [owner]} (<sub [::app.subs/vims
+                                     [{::vims/owner [::user/first-name
+                                                     ::user/last-name]}]])]
+    [:div.author-credit
+     (util/space-join "by" (user/full-name owner))]))
+
+(defn license-title []
+  [:div.license
+   {:on-click (e> (.stopPropagation e)
+                  (re-frame/dispatch [::app.handlers/modal :modal/license]))}
+   [:div.license-title "MIT"]])
+
+(defn vcr-footer []
+  [:div.vcr-footer.jsb.ac
+   [vims-sync-status]
+   [author-credit]
+   [license-title]])
+
 (defn vcr [{:keys [vims]}]
-  (let [all-files      (<sub [::vcs.subs/files vims])
-        visi-files     (<sub [::subs/visible-files vims])
-        editor-headers (editor-headers visi-files)
-        editors        (editors vims visi-files)]
-    [re-com/v-box
-     :class "vcr"
-     :size "100%"
-     :children
-     [[playback {:vims vims}]
-      [splits/n-h-split
-       :class "live-preview-and-editors"
-       :panels [[live-preview {:ui-key :vcr :vims vims :error-catcher? false}]
-                [splits/n-v-split
-                 :height "100%"
-                 :splitter-size "31px"
-                 :panels editors
-                 :splitter-children editor-headers
-                 :margin "0"]]
-       :splitter-child [editor-tabs all-files]
-       :splitter-size "34px"
-       :initial-split 60
-       :margin "0"]
-      [:div.vcr-footer.jsb.ac
-       [vims-sync-status {:vims vims}]
-       [:div.license
-        {:on-click (e>
-                    (.stopPropagation e)
-                    (re-frame/dispatch [::app.handlers/modal :modal/license]))}
-        "MIT"]]]]))
+  [re-com/v-box
+   :class "vcr"
+   :size "100%"
+   :children
+   [[playback {:vims vims}]
+    [preview-and-editors {:vims vims}]
+    [vcr-footer]]])
