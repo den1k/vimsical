@@ -4,11 +4,14 @@
             [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e->> e>]]
             [vimsical.frontend.quick-search.handlers :as quick-search.handlers]
             [vimsical.frontend.util.re-frame :refer [<sub]]
+            [vimsical.frontend.app.subs :as app.subs]
             [vimsical.frontend.app.handlers :as app.handlers]
             [vimsical.frontend.ui.subs :as ui.subs]
             [vimsical.frontend.ui.handlers :as ui.handlers]
+            [vimsical.frontend.vcs.sync.handlers :as vcs.sync.handlers]
             [cljsjs.clipboard]
-            [re-frame.interop :as interop]))
+            [re-frame.interop :as interop]
+            [vimsical.frontend.remotes.fx :as frontend.remotes.fx]))
 
 ;;
 ;; * Shortcuts
@@ -65,11 +68,21 @@
 (defn handle-scroll [_]
   (re-frame/dispatch [::ui.handlers/on-scroll]))
 
+(defn handle-before-unload [e]
+  ;; subs cached in event handler will not be GC'd
+  (when-let [vims-uid (:db/uid (<sub [::app.subs/vims [:db/uid]]))]
+    (let [dispatch-vec [::vcs.sync.handlers/sync vims-uid]
+          _            (re-frame/dispatch-sync dispatch-vec)
+          status       (<sub [::frontend.remotes.fx/status :backend dispatch-vec])]
+      (when (= status ::frontend.remotes.fx/pending)
+        (set! (.-returnValue e) true)))))
+
 (defn window-listeners []
   (let [state      (interop/ratom {:clipboard nil})
         on-mobile? (<sub [::ui.subs/on-mobile?])
-        listeners  (cond-> {"keydown" handle-shortcut
-                            "resize"  handle-resize}
+        listeners  (cond-> {"keydown"      handle-shortcut
+                            "resize"       handle-resize
+                            "beforeunload" handle-before-unload}
                      on-mobile? (assoc "scroll" handle-scroll))]
     (reagent/create-class
      {:component-did-mount

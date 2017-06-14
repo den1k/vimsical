@@ -13,11 +13,11 @@
 
 (s/def ::id keyword?)
 (s/def ::event ::event/event)
-(s/def ::disptach-success (s/or :disabled false? :handler-id keyword?))
-(s/def ::disptach-error keyword?)
+(s/def ::dispatch-success (s/or :disabled false? :handler-id keyword?))
+(s/def ::dispatch-error keyword?)
 (s/def ::status-key any?)
 (s/def ::fx (s/keys :req-un [::id ::event/event]
-                    :opt-un [::status-key ::dispatch-success ::disptach-error]))
+                    :opt-un [::status-key ::dispatch-success ::dispatch-error]))
 
 ;;
 ;; * Remotes registry

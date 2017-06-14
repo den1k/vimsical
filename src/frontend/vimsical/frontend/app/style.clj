@@ -116,8 +116,7 @@
      :border-radius   :5px
      :padding         "5px 10px"
      :outline         :none
-     :white-space     :nowrap
-     :align-self      :baseline}
+     :white-space     :nowrap}
     [:&:hover
      {:color  (str (:darkgrey colors) " !important")
       :border (str "1px solid " (:grey colors))}]]

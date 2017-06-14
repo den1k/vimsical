@@ -26,11 +26,11 @@
  (fn [{:keys [db]} [_ vims-uid status-key]]
    {:db (assoc-in db (db/path vims-uid) (db/new-sync vims-uid))
     :remote
-    {:id               :backend
-     :event            [::queries/delta-by-branch-uid vims-uid]
-     :dispatch-success (->dispatch ::init-success vims-uid)
-     :dispatch-error   (->dispatch ::init-error vims-uid)
-     :status-key       status-key}}))
+        {:id               :backend
+         :event            [::queries/delta-by-branch-uid vims-uid]
+         :dispatch-success (->dispatch ::init-success vims-uid)
+         :dispatch-error   (->dispatch ::init-error vims-uid)
+         :status-key       status-key}}))
 
 (re-frame/reg-event-fx
  ::stop
@@ -62,18 +62,21 @@
  ::sync
  [db/fsm-interceptor
   (util.re-frame/inject-sub (fn [[_ vims-uid]] [::vcs.subs/vcs {:db/uid vims-uid}]))]
- (fn [{:keys [db] ::vcs.subs/keys [vcs]} [_ vims-uid]]
+ (fn [{:keys [db] ::vcs.subs/keys [vcs]} [d-key vims-uid]]
    ;; Get the current sync state
-   (let [delta-by-branch-uid (get-in db (db/path vims-uid ::db/delta-by-branch-uid))]
+   (let [delta-by-branch-uid (get-in db (db/path vims-uid ::db/delta-by-branch-uid))
+         status-key          [d-key vims-uid]]
      ;; Diff it against the current state of the vcs
      (if-some [deltas (vcs.sync/diff-deltas vcs delta-by-branch-uid)]
        ;; If we have some diffed deltas, send them to the backend
-       (do (re-frame.loggers/console :log "Syncing " (count deltas) " deltas...")
-           {:remote
-            {:id               :backend
-             :event            [::commands/add-deltas vims-uid deltas]
-             :dispatch-success (->dispatch ::sync-success vims-uid deltas)
-             :dispatch-error   (->dispatch ::sync-error vims-uid deltas)}})
+       (do
+         (re-frame.loggers/console :log "Syncing " (count deltas) " deltas...")
+         {:remote
+          {:id               :backend
+           :status-key       status-key
+           :event            [::commands/add-deltas vims-uid deltas]
+           :dispatch-success (->dispatch ::sync-success vims-uid deltas)
+           :dispatch-error   (->dispatch ::sync-error vims-uid deltas)}})
        ;; If not we'll just signal a success with not deltas
        {:dispatch [::sync-success vims-uid]}))))
 
@@ -86,7 +89,9 @@
    (when (seq ?deltas)
      (re-frame.loggers/console :log "Sync success")
      (let [path (db/path vims-uid ::db/delta-by-branch-uid)]
-       {:db (update-in db path vcs.validation/update-delta-by-branch-uid ?deltas)}))))
+       {:db (-> db
+                (assoc ::add-deltas-debouncing? false)
+                (update-in path vcs.validation/update-delta-by-branch-uid ?deltas))}))))
 
 (re-frame/reg-event-fx
  ::sync-error
@@ -102,8 +107,9 @@
  ::add-deltas
  [db/fsm-interceptor]
  (fn [{:keys [db]} [_ vims-uid deltas]]
-   {:debounce
-    {:id       ::add-deltas
+   {:db (assoc db ::add-deltas-debouncing? true)
+    :debounce
+        {:id       ::add-deltas
      :ms       2e3
      :dispatch [::sync vims-uid]}}))
 

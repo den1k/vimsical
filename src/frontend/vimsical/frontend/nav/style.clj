@@ -6,13 +6,6 @@
   [[:.route-landing :route-signup
     [:.main-nav
      {:border :none}]]
-   (garden/at-media
-    {:screen    true
-     :max-width :800px}
-    [:.main-nav
-     [:.user
-      [:.name
-       [:.last-name {:display :none}]]]])
    ;; bootstrap clear-fix breaks styles for .nav class
    [:.main-nav
     {:border-bottom "solid 2px #eceff3"
@@ -21,7 +14,19 @@
      :z-index       15}
     [:&.no-border
      {:border :none}]
+    (garden/at-media
+     {:screen    true
+      :max-width :800px}
+     [:.vimsical-type
+      {:display :none}])
+    (garden/at-media
+     {:screen    true
+      :max-width :900px}
+     [:.user
+      [:.name
+       [:.last-name {:display :none}]]])
     [:.vims-info
+     {:flex-shrink 0}
      [:* {:white-space :nowrap}]
      [:.title {:font-size      :1rem
                :font-weight    :500
@@ -30,6 +35,7 @@
                :outline        :none
                :position       :relative
                :color          (:darkblue colors)
+
                ;; shrink title space when not editing
                :overflow       :hidden
                :text-overflow  :ellipsis

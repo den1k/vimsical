@@ -2,7 +2,6 @@
   (:require
    [re-com.core :as re-com]
    [re-frame.core :as re-frame]
-   [reagent.core :as reagent]
    [vimsical.frontend.code-editor.views :refer [code-editor]]
    [vimsical.frontend.live-preview.views :refer [live-preview]]
    [vimsical.frontend.timeline.subs :as timeline.subs]
@@ -16,7 +15,12 @@
    [vimsical.frontend.views.shapes :as shapes]
    [vimsical.frontend.views.splits :as splits]
    [vimsical.frontend.user.handlers :as user.handlers]
-   [vimsical.vcs.file :as file]))
+   [vimsical.vcs.file :as file]
+   [vimsical.frontend.remotes.fx :as frontend.remotes.fx]
+   [re-frame.interop :as interop]
+   [vimsical.frontend.vcs.sync.handlers :as vcs.sync.handlers]
+   [vimsical.frontend.vcs.sync.subs :as vcs.sync.subs]
+   [vimsical.frontend.app.handlers :as app.handlers]))
 
 ;;
 ;; * Temp
@@ -118,6 +122,20 @@
           ^{:key sub-type} [code-editor {:ui-key :vcr :vims vims :file file}])
         files))
 
+(defn vims-sync-status [{:keys [vims]}]
+  (let [status (<sub [::vcs.sync.subs/vims-sync-status (:db/uid vims)])]
+    [:div
+     (when-not (= :init status)
+       [:div.save-indicator.jsb.ac
+        {:class (when (= status :success) "saved")}
+        [:div.status-circle]
+        (re-com/gap :size "8px")
+        [:div.status-message
+         (case status
+           :success "saved"
+           :waiting "saving..."
+           nil)]])]))
+
 (defn vcr [{:keys [vims]}]
   (let [all-files      (<sub [::vcs.subs/files vims])
         visi-files     (<sub [::subs/visible-files vims])
@@ -140,4 +158,11 @@
        :splitter-child [editor-tabs all-files]
        :splitter-size "34px"
        :initial-split 60
-       :margin "0"]]]))
+       :margin "0"]
+      [:div.vcr-footer.jsb.ac
+       [vims-sync-status {:vims vims}]
+       [:div.license
+        {:on-click (e>
+                    (.stopPropagation e)
+                    (re-frame/dispatch [::app.handlers/modal :modal/license]))}
+        "MIT"]]]]))
