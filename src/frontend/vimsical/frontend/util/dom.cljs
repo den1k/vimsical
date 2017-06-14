@@ -65,6 +65,9 @@
          (str (gensym))
          (str/join ", " (map util/lisp-case opts))))
 
+(defn set-title [title-str]
+  (set! (.-title js/document) title-str))
+
 ;;
 ;; * UI Actions
 ;;
