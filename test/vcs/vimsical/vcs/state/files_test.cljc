@@ -204,7 +204,7 @@
                  sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                  (diff/diffs->edit-events "" "abc"))))
       (testing "Spliced Delete"
-        (state= "a" 1                   ; not sure why this isn't 1?
+        (state= "a" 1
                 (sut/add-edit-events
                  sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                  (diff/diffs->edit-events "" ["abc"] ["a"])))

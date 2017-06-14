@@ -25,6 +25,7 @@ services:
       - "cassandra_data:/var/lib/cassandra"
     ports:
       - "9042:9042"
+    mem_limit: 1024M
 
   datomic:
     build:
