@@ -23,6 +23,7 @@
               modal      [::subs/modal]
               height     [::ui.subs/height]
               on-mobile? [::ui.subs/on-mobile?]]
+    (router.views/title-for route)
     [:div.app
      {:class    (route->class route)
       :on-click (e> (re-frame/dispatch [::handlers/close-modal]))
