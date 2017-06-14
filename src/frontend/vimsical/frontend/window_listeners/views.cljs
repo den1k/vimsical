@@ -71,9 +71,9 @@
 (defn handle-before-unload [e]
   ;; subs cached in event handler will not be GC'd
   (when-let [vims-uid (:db/uid (<sub [::app.subs/vims [:db/uid]]))]
-    (let [status-key [:sync-status vims-uid]
-          _          (re-frame/dispatch-sync [::vcs.sync.handlers/sync vims-uid status-key])
-          status     (<sub [::frontend.remotes.fx/status :backend status-key])]
+    (let [dispatch-vec [::vcs.sync.handlers/sync vims-uid]
+          _            (re-frame/dispatch-sync dispatch-vec)
+          status       (<sub [::frontend.remotes.fx/status :backend dispatch-vec])]
       (when (= status ::frontend.remotes.fx/pending)
         (set! (.-returnValue e) true)))))
 

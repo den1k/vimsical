@@ -18,7 +18,23 @@
    [vimsical.frontend.router.subs :as router.subs]
    [vimsical.frontend.router.handlers :as router.handlers]
    [vimsical.frontend.router.routes :as router.routes]
-   [vimsical.frontend.router.routes :as routes]))
+   [vimsical.frontend.router.routes :as routes]
+   [vimsical.frontend.remotes.fx :as frontend.remotes.fx]
+   [vimsical.frontend.vcs.sync.handlers :as vcs.sync.handlers]
+   [vimsical.frontend.vcs.sync.subs :as vcs.sync.subs]))
+
+(defn vims-saved-indicator []
+  (let [show-tooltip? (interop/ratom false)]
+    (fn [{:keys [vims]}]
+      (let [vims-saved? (<sub [::vcs.sync.subs/vims-saved? (:db/uid vims)])]
+        [re-com/popover-tooltip
+         :label (if vims-saved? "saved" "saving...")
+         :position :below-center
+         :showing? show-tooltip?
+         :anchor [:div.save-status
+                  {:on-mouse-enter (e> (reset! show-tooltip? true))
+                   :on-mouse-leave (e> (reset! show-tooltip? false))
+                   :class          (when vims-saved? "saved")}]]))))
 
 (defn limit-title-length? [e]
   (let [txt             (-> e .-target .-innerHTML)
@@ -94,7 +110,9 @@
             :label (if title-too-long? "Title is too long!" "Click to edit")
             :position :below-center
             :showing? show-tooltip?
-            :anchor title-html])]))))
+            :anchor title-html])
+         (re-com/gap :size "10px")
+         [vims-saved-indicator {:vims vims}]]))))
 
 (defn nav []
   (let
