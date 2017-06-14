@@ -122,14 +122,19 @@
           ^{:key sub-type} [code-editor {:ui-key :vcr :vims vims :file file}])
         files))
 
-(defn vims-saved-indicator [{:keys [vims]}]
-  (let [vims-saved? (<sub [::vcs.sync.subs/vims-saved? (:db/uid vims)])]
-    [:div.save-indicator.jsb.ac
-     {:class (when vims-saved? "saved")}
-     [:div.status-circle]
-     (re-com/gap :size "8px")
-     [:div.status-message
-      (if vims-saved? "saved" "saving...")]]))
+(defn vims-sync-status [{:keys [vims]}]
+  (let [status (<sub [::vcs.sync.subs/vims-sync-status (:db/uid vims)])]
+    [:div
+     (when-not (= :init status)
+       [:div.save-indicator.jsb.ac
+        {:class (when (= status :success) "saved")}
+        [:div.status-circle]
+        (re-com/gap :size "8px")
+        [:div.status-message
+         (case status
+           :success "saved"
+           :waiting "saving..."
+           nil)]])]))
 
 (defn vcr [{:keys [vims]}]
   (let [all-files      (<sub [::vcs.subs/files vims])
@@ -155,7 +160,7 @@
        :initial-split 60
        :margin "0"]
       [:div.vcr-footer.jsb.ac
-       [vims-saved-indicator {:vims vims}]
+       [vims-sync-status {:vims vims}]
        [:div.license
         {:on-click (e>
                     (.stopPropagation e)
