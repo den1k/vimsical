@@ -25,3 +25,6 @@
 (defn anon? [{::keys [email]}] (nil? email))
 
 (def logged-in? (complement anon?))
+
+(defn full-name [{::keys [first-name last-name]}]
+  (str first-name " " last-name))
