@@ -131,6 +131,24 @@
    editor-header
    code-editor])
 
+(def vcr-footer
+  [:.vcr-footer
+   {:padding        "2px 10px"
+    :font-size      :12px
+    :letter-spacing :0.3px
+    :background     (:darkgrey colors)
+    :color          :white}
+   [:.save-indicator
+    [:.status-circle
+     {:width         :6px
+      :height        :6px
+      :background    :orange
+      :border-radius :50%
+      :flex-shrink   0}]
+    [:&.saved
+     [:.status-circle
+      {:background :limegreen}]]]])
+
 (def vcr
   (media/not-on-mobile
    [:.route-vims
@@ -141,4 +159,5 @@
     {:position :relative
      :overflow "hidden"}
     playback
-    live-preview-and-editors]))
+    live-preview-and-editors
+    vcr-footer]))

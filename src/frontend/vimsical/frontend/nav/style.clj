@@ -46,14 +46,7 @@
        ;; preserves spaces in innerHTML (avoids non-breaking-space)
        {:white-space :pre-wrap
         :overflow    :visible}]
-      [:&.untitled {:color (:grey colors)}]]
-     [:.save-status
-      {:width         :6px
-       :height        :6px
-       :background    :orange
-       :border-radius :50%}
-      [:&.saved
-       {:background :limegreen}]]]
+      [:&.untitled {:color (:grey colors)}]]]
     [:.new-and-my-vims.button-group
      {:display       :flex
       :flex-shrink   0
