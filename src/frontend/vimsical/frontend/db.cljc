@@ -58,3 +58,14 @@
 
 (re-frame/reg-event-db ::init (constantly default-db))
 (re-frame/reg-sub ::db (fn [db _] db))
+
+;;
+;; * State predicates
+;;
+
+(defn current-vims?
+  [{:keys [app/vims] :as db} vims-ref-ent-or-uid]
+  (when vims-ref-ent-or-uid
+    (let [vims-uid (util.mg/->uid db vims-ref-ent-or-uid)
+          app-uid  (util.mg/->uid db vims-ref-ent-or-uid)]
+      (= app-uid vims-uid))))

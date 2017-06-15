@@ -3,6 +3,7 @@
   (:require
    [day8.re-frame.async-flow-fx]
    [re-frame.core :as re-frame]
+   [vimsical.frontend.db :as db]
    [re-frame.interceptor :as interceptor]
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.router.handlers :as router.handlers]
@@ -11,8 +12,10 @@
    [vimsical.frontend.vcs.handlers :as vcs.handlers]
    [vimsical.frontend.vcs.sync.handlers :as vcs.sync.handlers]
    [vimsical.frontend.vims.db :as vims.db]
+
    [vimsical.frontend.vims.handlers :as vims.handlers]
-   [vimsical.vims :as vims]))
+   [vimsical.vims :as vims]
+   [vimsical.frontend.util.re-frame :as util.re-frame]))
 
 ;;
 ;; * Modal
@@ -111,22 +114,23 @@
 ;; * Open
 ;;
 
-(defmethod router.handlers/route-dispatch ::router.routes/vims
-  [{::router.routes/keys [args]} {:keys [db]}]
-  (when args
-    {:dispatch [::open-vims args]}))
+(defmethod router.handlers/route-fx ::router.routes/vims
+  [{:keys [db]} {::router.routes/keys [args]}]
+  ;; `::set-vims` changes the route, which causes this handler to be invoked.
+  ;; Short-circuit it if we've already set that vims
+  {:dispatch [::open-vims args]})
 
 (re-frame/reg-event-fx
  ::open-vims
- (fn [{:keys [db]} [_ {::vims/keys [vcs] :as vims} {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
+ (fn [{:keys [db]} [_ vims {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
    {:pre [vims]}
    (when vims
-     (let [[_ vims-uid] (util.mg/->ref db vims)
-           async-load?  (nil? vcs)]
+     (let [[_ vims-uid] (util.mg/->ref db vims)]
        (cond-> {:dispatch-n
                 [[::set-vims vims]
                  [::close-modal]]}
-         async-load? (assoc :async-flow (open-vims-async-flow vims-uid options)))))))
+         (not (vims.db/loaded? db vims))
+         (assoc :async-flow (open-vims-async-flow vims-uid options)))))))
 
 ;;
 ;; * Close

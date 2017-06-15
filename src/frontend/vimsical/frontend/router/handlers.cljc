@@ -2,6 +2,7 @@
   (:require
    [bidi.bidi :as bidi]
    [re-frame.core :as re-frame]
+   [re-frame.interceptor :as interceptor]
    [vimsical.frontend.router.interop :as interop]
    [vimsical.frontend.router.routes :as routes]))
 
@@ -12,7 +13,7 @@
 (defonce history
   (interop/new-history
    (fn [{:keys [handler route-params] :as v}]
-     (re-frame/dispatch [::route handler route-params]))
+     (re-frame/dispatch [::history-route handler route-params]))
    routes/routes))
 
 (defn- args-seq
@@ -38,13 +39,13 @@
 (re-frame/reg-fx :history (comp history-fx routes/encode-route))
 
 ;;
-;; * Route dispatches
+;; * Route interceptor
 ;;
 
-(defmulti route-dispatch
-  (fn [{::routes/keys [route-handler] :as route} coeffects] route-handler))
+(defmulti route-fx
+  (fn [coeffects {::routes/keys [route-handler] :as route}] route-handler))
 
-(defmethod route-dispatch :default [_ coeffects])
+(defmethod route-fx :default [_ _])
 
 ;;
 ;; * Handlers
@@ -60,7 +61,15 @@
    (let [app-route (:app/route db)
          new-route (routes/decode-route (routes/new-route route-handler route-params))]
      (when-not (routes/route= app-route new-route)
-       (let [coeffects  {:history new-route
-                         :db      (assoc db :app/route new-route)}
-             coeffects' (route-dispatch new-route coeffects)]
-         (merge coeffects coeffects'))))))
+       {:history new-route
+        :db      (assoc db :app/route new-route)}))))
+
+(re-frame/reg-event-fx
+ ::history-route
+ (fn [{:keys [db]} [_ route-handler route-params]]
+   (let [app-route (:app/route db)
+         new-route (routes/decode-route (routes/new-route route-handler route-params))]
+     (when-not (routes/route= app-route new-route)
+       (let [coeffects {:db (assoc db :app/route new-route)}
+             effects   (route-fx coeffects new-route)]
+         (merge coeffects effects))))))
