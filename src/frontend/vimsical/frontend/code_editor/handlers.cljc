@@ -181,6 +181,17 @@
 ;; ** User actions
 ;;
 
+;; NOTE we can filter out the :crsr/mv events that directly follow a :str/ins or
+;; a :str/rem because the vcs builds up a "prospective" cursor value and the
+;; cursor value of those deltas accounts for their diff, making the discrete
+;; :crsr/mv event that follows redundant.
+
+(defn moved-since?
+  [prev-edit-event new-edit-event]
+  (or (nil? prev-edit-event)
+      (not= (+ (::edit-event/idx prev-edit-event)
+               (edit-event/prospective-idx-offset prev-edit-event))
+            (::edit-event/idx new-edit-event))))
 
 (re-frame/reg-event-fx
  ::content-change
@@ -190,7 +201,8 @@
       (let [editor     (ui-db/get-editor ui-db opts)
             model      (.-model editor)
             edit-event (interop/parse-content-event model e)]
-        {:dispatch [::vcs.handlers/add-edit-event vims file edit-event]}))))
+        {:ui-db    (ui-db/set-last-edit-event ui-db vims file edit-event)
+         :dispatch [::vcs.handlers/add-edit-event vims file edit-event]}))))
 
 (re-frame/reg-event-fx
  ::cursor-change
@@ -199,8 +211,11 @@
    #?(:cljs
       (let [editor     (ui-db/get-editor ui-db opts)
             model      (.-model editor)
-            edit-event (interop/parse-selection-event model e)]
-        {:dispatch [::vcs.handlers/add-edit-event vims file edit-event]}))))
+            edit-event (interop/parse-selection-event model e)
+            prev-event (ui-db/get-last-edit-event ui-db vims file)]
+        (when (moved-since? prev-event edit-event)
+          {:ui-db    (ui-db/set-last-edit-event ui-db vims file edit-event)
+           :dispatch [::vcs.handlers/add-edit-event vims file edit-event]})))))
 
 (re-frame/reg-event-fx
  ::focus

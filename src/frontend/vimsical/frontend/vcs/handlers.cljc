@@ -15,7 +15,8 @@
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.editor :as editor]
    [vimsical.vcs.edit-event :as edit-event]
-   [vimsical.vims :as vims]))
+   [vimsical.vims :as vims]
+   [vimsical.vcs.data.splittable :as splittable]))
 
 ;;
 ;; * VCS Vims init-event-fx
@@ -109,14 +110,26 @@
 ;; * Edit events
 ;;
 
+(defn print-vcs-state
+  [{:as vcs ::vcs.db/keys [playhead-entry]} file-uid]
+  (let [delta-uid (:uid (second playhead-entry))
+        string    (vcs/file-string vcs file-uid delta-uid)
+        cursor    (vcs/file-cursor vcs file-uid delta-uid)]
+    (println string)
+    (if (number? cursor)
+      (println (str (apply str (repeat cursor " "))  "_"))
+      (let [left  (apply min cursor)
+            right (apply max cursor)
+            span  (- right left 2)]
+        (println (str (apply str (repeat left " ")) "[" (apply str (repeat span " ")) "]"))))))
+
 (defn- update-pointers
-  [[{:as vcs ::vcs.db/keys [playhead-entry]} _ delta-uid {branch-uid :db/uid :as branch}]]
+  [[{:as vcs ::vcs.db/keys [playhead-entry branch-uid]} _ delta-uid {new-branch-uid :db/uid :as branch}]]
   {:post [::vcs.db/playhead-entry]}
-  (let [next-entry     (vcs/timeline-next-entry vcs playhead-entry)
-        playhead-entry (or next-entry (vcs/timeline-first-entry vcs))
+  (let [playhead-entry (vcs/timeline-last-branch-entry vcs (or new-branch-uid branch-uid))
         pointers       (cond-> {::vcs.db/playhead-entry playhead-entry
                                 ::vcs.db/delta-uid      delta-uid}
-                         (some? branch) (assoc ::vcs.db/branch-uid branch-uid))]
+                         (some? branch) (assoc ::vcs.db/branch-uid new-branch-uid))]
     (merge vcs pointers)))
 
 (defmulti add-edit-event*
@@ -125,8 +138,8 @@
           cursor-event? (edit-event/cursor-event? edit-event)]
       (cond
         (and branching? cursor-event?) :no-op
-        branching? :branching
-        :else :default))))
+        branching?                     :branching
+        :else                          :default))))
 
 (defmethod add-edit-event* :default
   [{:as vcs ::vcs.db/keys [branch-uid playhead-entry]} effects file-uid edit-event]
@@ -171,4 +184,4 @@
          ;; NOTE branch is already in ::vcs/branches, don't need to mg/add it
          (some? ?branch)
          (-> (update :db util.mg/add-join* :app/vims ::vims/branches ?branch)
-             (update :dispatch-n conj [::sync.handlers/add-branch ?branch])))))))
+             (update :dispatch-n conj [::sync.handlers/add-branch vims-uid ?branch])))))))

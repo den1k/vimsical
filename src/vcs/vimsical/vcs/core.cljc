@@ -301,3 +301,11 @@
 
 (defn timeline-last-entry [{::keys [timeline]}] (state.timeline/last-entry timeline))
 
+
+(s/fdef timeline-last-branch-entry
+        :args (s/cat :vcs ::vcs :branch-uid ::branch/uid)
+        :ret ::state.timeline/entry)
+
+(defn timeline-last-branch-entry
+  [{::keys [timeline]} branch-uid]
+  (state.timeline/last-branch-entry timeline branch-uid))

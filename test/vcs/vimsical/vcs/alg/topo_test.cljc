@@ -29,9 +29,7 @@
            {:branch-uid (uuid :child11) :uid (uuid :9) :prev-uid (uuid :8) :pad 0 :op [:str/ins (uuid :8) "a"] :file-uid (uuid :file)}]
           nsorted (shuffle sorted)]
       (is (sut/sorted? sorted))
-      (is (sut/valid-ops? sorted))
-      (is (not (sut/sorted? nsorted)))
-      (is (not (sut/valid-ops? nsorted)))))
+      (is (not (sut/sorted? nsorted)))))
   (testing "sort across branches"
     (let [deltas
           [{:branch-uid (uuid :master) :uid (uuid :0), :prev-uid nil :pad 0 :op,,,,,, [:str/ins nil       "a"] :file-uid (uuid :file)}
@@ -47,6 +45,4 @@
           nsorted (shuffle deltas)
           sorted  (sut/sort (shuffle deltas))]
       (is (sut/sorted? sorted))
-      (is (sut/valid-ops? sorted))
-      (is (not (sut/sorted? nsorted)))
-      (is (not (sut/valid-ops? nsorted))))))
+      (is (not (sut/sorted? nsorted))))))

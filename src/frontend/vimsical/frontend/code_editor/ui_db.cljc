@@ -48,3 +48,10 @@
   (if-some [file (get-active-file ui-db vims)]
     (get-editor ui-db opts)
     ui-db))
+
+;;
+;; * Last edit event
+;;
+
+(defn get-last-edit-event [ui-db {vims-uid :db/uid} {file-uid :db/uid}] (get-in ui-db [::last-edit-event vims-uid file-uid]))
+(defn set-last-edit-event [ui-db {vims-uid :db/uid} {file-uid :db/uid} edit-event] (assoc-in ui-db [::last-edit-event vims-uid file-uid] edit-event))

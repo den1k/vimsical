@@ -40,7 +40,6 @@
   [{::vcs/keys [timeline] :as vcs} delta-by-branch-uid]
   (diff-timeline timeline delta-by-branch-uid))
 
-
 (defn diff-deltas
   [vcs delta-by-branch-uid]
   (not-empty

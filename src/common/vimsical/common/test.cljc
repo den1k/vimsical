@@ -86,4 +86,4 @@
   ([uuid-fn]
    (let [n (atom -1)
          s (uuid-seq uuid-fn)]
-     {:seq s :f (fn [& _] (nth s (swap! n inc)))})))
+     {:seq s :f (fn [& _] (nth s (swap! n inc))) :reset #(reset! n -1)})))

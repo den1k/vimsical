@@ -9,6 +9,7 @@
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as db]
    [vimsical.frontend.vcs.queries :as queries]
+   [vimsical.queries.snapshot :as queries.snapshot]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.file :as file]
@@ -130,7 +131,7 @@
  ::snapshots
  (fn [[_ {:keys [db/uid] :as vims}]]
    (re-frame/subscribe
-    [:q [{::vims/snapshots ['*]}] [:db/uid uid]]))
+    [:q [{::vims/snapshots queries.snapshot/pull-query}] [:db/uid uid]]))
  (fn [vims-snapshots _]
    (::vims/snapshots vims-snapshots)))
 

@@ -15,14 +15,15 @@
   [deltas]
   (letfn [(str-op? [delta] (= :str/ins (op-type delta)))]
     (let [str-deltas-by-id (->> deltas (filter str-op?) (group-by :uid))]
-      (reduce
-       (fn [_ delta]
-         (if-some [op-uid' (op-uid delta)]
-           (if (nil? (get str-deltas-by-id op-uid'))
-             (reduced false)
-             true)
-           true))
-       {} deltas))))
+      (letfn [(valid-op-uid? [op-uid]
+                (cond
+                  (vector? op-uid) (every? valid-op-uid? op-uid)
+                  (nil? op-uid)    true
+                  :else            (some? (get str-deltas-by-id op-uid))))]
+        (reduce
+         (fn [_ delta]
+           (or (valid-op-uid? (op-uid delta)) (reduced false)))
+         {} deltas)))))
 
 ;;
 ;; * Spec
@@ -73,3 +74,14 @@
 (defn op-type [{[op] :op}] op)
 (defn op-diff [{[_ _ diff] :op}] (assert diff "Not a :str/ins") diff)
 (defn op-amt  [{[_ _ amt] :op}] (assert amt "Not :str/rem") amt)
+
+;;
+;; * Offsets
+;;
+
+(defmulti prospective-idx-offset op-type)
+(defmethod prospective-idx-offset :str/ins [delta] (count (op-diff delta)))
+;; Deletions in the VCS's internal data structures happen left to right, with
+;; the cursor sitting left of the char(s) to be deleted. This means that the
+;; cursor position should remain the same after performing the delete operation
+(defmethod prospective-idx-offset :str/rem [_] 0)

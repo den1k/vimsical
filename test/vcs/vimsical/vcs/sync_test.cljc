@@ -78,3 +78,12 @@
                 (uuid :b1-1) deltas2
                 (uuid :b1-2) (drop 2 deltas3)} (sut/diff vcs3 {(uuid :b0)   (nth deltas1 0)
                                                                (uuid :b1-2) (nth deltas3 1)})))))))
+
+(deftest diff-deltas-test
+  (is (= (concat (drop 1 deltas1)
+                 deltas2
+                 (drop 2 deltas3)))
+      (sut/diff-deltas
+       vcs3
+       {(uuid :b0)   (nth deltas1 0)
+        (uuid :b1-2) (nth deltas3 1)})))

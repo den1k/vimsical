@@ -1,31 +1,20 @@
 (ns vimsical.frontend.vcs.queries
-  ;; TODO remove these and user vimsical.queries/...
   (:require
    [vimsical.vims :as vims]
-   [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.file :as file]
-   [vimsical.vcs.core :as vcs]))
+   [vimsical.vcs.core :as vcs]
+   [vimsical.queries.branch :as branch]
+   [vimsical.queries.file :as file]))
 
-(def file
-  ['* {::file/compiler ['*]}])
-
-(def branch
-  ['*
-   {::branch/files file}
-   {::branch/libs ['*]}
-   {::branch/owner [:db/uid]}
-   ;; XXX need recursive queries implemented in mapgraph
-   {::branch/parent ['*
-                     {::branch/files file}
-                     {::branch/libs ['*]}]}])
+(def file file/pull-query)
 
 (def vims
   [:db/uid
    {::vims/owner [:db/uid]}
-   {::vims/branches branch}])
+   {::vims/branches branch/pull-query}])
 
 (def vcs
-  ['* {::vcs/branches branch}])
+  ['* {::vcs/branches branch/pull-query}])
 
 (def vims-vcs
+
   [:db/uid {::vims/vcs vcs}])

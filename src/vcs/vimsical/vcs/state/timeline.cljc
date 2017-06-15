@@ -393,3 +393,7 @@
 (defn delta-at-absolute-time
   [timeline expect-abs-time]
   (second (entry-at-absolute-time timeline expect-abs-time)))
+
+(defn last-branch-entry
+  [{::keys [chunks-by-branch-uid]} branch-uid]
+  (chunk/last-entry (peek (get chunks-by-branch-uid branch-uid))))

@@ -15,9 +15,9 @@
 (defmethod multi/context-spec ::queries/vims [_] (s/keys :req-un [::datomic/datomic]))
 (defmethod multi/handle-event ::queries/vims
   [{:keys [datomic] :as context} [_ vims-uid]]
-  (multi/set-response
-   context
-   (datomic/pull datomic queries.vims/pull-query [:db/uid vims-uid])))
+  (if-some [vims (datomic/pull datomic queries.vims/pull-query [:db/uid vims-uid])]
+    (multi/set-response context vims)
+    (multi/set-response context 404 nil)))
 
 ;;
 ;; * Deltas
