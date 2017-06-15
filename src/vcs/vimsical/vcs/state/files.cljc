@@ -34,7 +34,8 @@
 
 (defn deltas<->string-equivalence
   [{::keys [deltas string]}]
-  (= string (apply str (map (comp #(nth % 2) :op) deltas))))
+  (let [xf (comp (map :op) (map #(nth % 2)))]
+    (= string (transduce xf str "" deltas))))
 
 (s/def ::state
   (s/and
