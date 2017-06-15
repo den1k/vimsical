@@ -116,8 +116,6 @@
 
 (defmethod router.handlers/route-fx ::router.routes/vims
   [{:keys [db]} {::router.routes/keys [args]}]
-  ;; `::set-vims` changes the route, which causes this handler to be invoked.
-  ;; Short-circuit it if we've already set that vims
   {:dispatch [::open-vims args]})
 
 (re-frame/reg-event-fx
