@@ -24,7 +24,7 @@
 
 (defn uuid->str [uuid]
   #?(:clj (assert false "Not implemented")
-     :cljs (.-s uuid)))
+     :cljs (str uuid)))
 
 (defn str->uuid [s]
   #?(:clj  (assert false "Not implemented")
