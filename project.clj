@@ -27,10 +27,11 @@
     {*assert* true *warn-on-reflection* false *unchecked-math* false}}
 
    :uberjar
-   {:aot          [vimsical.backend.core]
-    :omit-source  true
-    :uberjar-name "vimsical.jar"
-    :main         vimsical.backend.core}
+   [:backend-log-prod
+    {:aot          [vimsical.backend.core]
+     :omit-source  true
+     :uberjar-name "vimsical.jar"
+     :main         vimsical.backend.core}]
    ;;
    ;; Vcs
    ;;
@@ -78,6 +79,9 @@
                       [buddy/buddy-hashers "1.2.0"]]
      :global-vars    {*assert* true *warn-on-reflection* true *unchecked-math* :warn-on-boxed}}
     :vcs :common]
+
+   :backend-log-prod
+   {:resource-paths ["resources/backend/logback/prod"]}
 
    :backend-log-dev
    {:resource-paths ["resources/backend/logback/dev"]}
@@ -217,19 +221,19 @@
     {:builds
      [{:id           "prod"
        :jar          true
-       :source-paths [;; "checkouts/mapgraph/src"
+       :source-paths [ ;; "checkouts/mapgraph/src"
                       ;; "checkouts/re-frame-async-flow-fx/src"
                       ;; "checkouts/re-frame-forward-events-fx/src"
                       "src/frontend"
                       "src/common"
                       "src/vcs"]
-       :compiler     {:main            vimsical.frontend.core
-                      :asset-path      "/js"
-                      :externs         ["resources/externs/svg.js"]
-                      :output-to       "resources/public/js/compiled/vimsical.js"
-                      :output-dir      "resources/public/js/compiled/out-prod"
-                      :optimizations   :advanced
-                      :infer-externs   true
+       :compiler     {:main          vimsical.frontend.core
+                      :asset-path    "/js"
+                      :externs       ["resources/externs/svg.js"]
+                      :output-to     "resources/public/js/compiled/vimsical.js"
+                      :output-dir    "resources/public/js/compiled/out-prod"
+                      :optimizations :advanced
+                      :infer-externs true
 
                       :parallel-build  true
                       :closure-defines {goog.DEBUG false}
@@ -239,12 +243,12 @@
                       ;; be useful when debugging issues in the optimized
                       ;; JavaScript and can aid in finding missing
                       ;; externs. Defaults to false.
-                      :pseudo-names    false
-                      :pretty-print    false
-                      :verbose         false}}
+                      :pseudo-names false
+                      :pretty-print false
+                      :verbose      false}}
       {:id           "dev"
        :figwheel     {:on-jsload vimsical.frontend.dev/on-reload}
-       :source-paths [;; "checkouts/mapgraph/src"
+       :source-paths [ ;; "checkouts/mapgraph/src"
                       ;; "checkouts/re-frame-async-flow-fx/src"
                       ;; "checkouts/re-frame-forward-events-fx/src"
                       "dev/frontend"
@@ -271,7 +275,7 @@
                                               :fn-symbol           "λ"}}}}
       {:id           "player-dev"
        :figwheel     {:on-jsload vimsical.frontend.player.dev/on-reload}
-       :source-paths [;; "checkouts/mapgraph/src"
+       :source-paths [ ;; "checkouts/mapgraph/src"
                       ;; "checkouts/re-frame-async-flow-fx/src"
                       ;; "checkouts/re-frame-forward-events-fx/src"
                       "dev/frontend"
@@ -299,13 +303,13 @@
       {:id           "player-prod"
        :jar          true
        :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs"]
-       :compiler     {:main            vimsical.frontend.player.core
-                      :asset-path      "/js"
-                      :externs         ["resources/externs/svg.js"]
-                      :output-to       "resources/public/js/compiled/vimsical-player.js"
-                      :output-dir      "resources/public/js/compiled/player/out-prod"
-                      :optimizations   :advanced
-                      :infer-externs   true
+       :compiler     {:main          vimsical.frontend.player.core
+                      :asset-path    "/js"
+                      :externs       ["resources/externs/svg.js"]
+                      :output-to     "resources/public/js/compiled/vimsical-player.js"
+                      :output-dir    "resources/public/js/compiled/player/out-prod"
+                      :optimizations :advanced
+                      :infer-externs true
 
                       :parallel-build  true
                       :closure-defines {goog.DEBUG false}
@@ -315,11 +319,11 @@
                       ;; be useful when debugging issues in the optimized
                       ;; JavaScript and can aid in finding missing
                       ;; externs. Defaults to false.
-                      :pseudo-names    false
-                      :pretty-print    false
-                      :verbose         false}}
+                      :pseudo-names false
+                      :pretty-print false
+                      :verbose      false}}
       {:id           "test"
-       :source-paths [;; "checkouts/mapgraph/src"
+       :source-paths [ ;; "checkouts/mapgraph/src"
                       ;; "checkouts/re-frame-async-flow-fx/src"
                       ;; "checkouts/re-frame-forward-events-fx/src"
                       "src/frontend"
@@ -336,7 +340,7 @@
                       :optimizations  :none
                       :parallel-build true}}
       {:id           "test-advanced"
-       :source-paths [;; "checkouts/mapgraph/src"
+       :source-paths [ ;; "checkouts/mapgraph/src"
                       ;; "checkouts/re-frame-async-flow-fx/src"
                       ;; "checkouts/re-frame-forward-events-fx/src"
                       "src/frontend"
