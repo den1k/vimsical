@@ -12,6 +12,7 @@
 (s/def ::password string?)
 (s/def ::vimsae (s/every ::vims/vims))
 (s/def ::settings (s/every ::settings/settings))
+(s/def ::token string?)
 
 (s/def ::user
   (s/keys :opt [:db/uid

@@ -19,10 +19,11 @@
 
 (def routes
   ["/"
-   {["vims/" :db/uid] ::vims
-    "signup"          ::signup
-    "emoji"           ::emoji
-    true              ::landing}])
+   {["vims/" :db/uid]  ::vims
+    "signup"           ::signup
+    ["invite/" :token] ::invite
+    "emoji"            ::emoji
+    true               ::landing}])
 
 ;;
 ;; * Coercion
@@ -63,7 +64,6 @@
    (cond-> {::route-handler route-handler}
      (some? args) (assoc ::args args))))
 
-
 ;;
 ;; * Equality
 ;;
@@ -89,6 +89,11 @@
    (util/=by ::route-handler a b)
    (args= (::args a) (::args b))))
 
+;;
+;; * Accessors
+;;
+
+(defn get-arg [route arg] (get-in route [::args arg]))
 
 ;;
 ;; * URI

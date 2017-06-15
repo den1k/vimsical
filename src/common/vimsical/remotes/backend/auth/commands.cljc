@@ -14,6 +14,13 @@
 (defmethod event/result-spec ::signup [_] (s/cat :id any? :user ::user/user))
 
 ;;
+;; * Invite signup
+;;
+
+(defmethod event/event-spec  ::invite-signup [_] (s/cat :id any? :token ::user/token :user ::signup-user))
+(defmethod event/result-spec ::invite-signup [_] (s/cat :id any? :user ::user/user))
+
+;;
 ;; * Login
 ;;
 

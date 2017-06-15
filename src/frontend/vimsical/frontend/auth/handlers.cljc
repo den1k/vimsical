@@ -3,8 +3,52 @@
    [re-frame.core :as re-frame]
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.remotes.backend.auth.commands :as auth.commands]
+   [vimsical.remotes.backend.auth.queries :as auth.queries]
    [vimsical.frontend.router.handlers :as router.handlers]
    [vimsical.frontend.router.routes :as router.routes]))
+
+;;
+;; * Invite
+;;
+
+(def signup-success-route ::router.routes/landing)
+
+
+;; Reading the invite
+
+(defmethod router.handlers/route-fx ::router.routes/invite
+  [_ route]
+  (if-some [token (router.routes/get-arg route :token)]
+    {:remote
+     {:id               :backend
+      :event            [::auth.queries/invite token]
+      :dispatch-success ::invite-success}}
+    (throw (ex-info "Missing token" {:route route}))))
+
+(defn invite-success-handler
+  [{:keys [db]} [_ invite-user]]
+  {:db (util.mg/add-linked-entities db {:app/user invite-user})})
+
+(re-frame/reg-event-fx ::invite-success invite-success-handler)
+
+;; Submitting the signup
+
+(defn invite-signup-handler
+  [_ [_ token user status-key]]
+  {:remote
+   {:id               :backend
+    :event            [::auth.commands/invite-signup token user]
+    :dispatch-success ::invite-signup-success
+    :status-key       status-key}})
+
+(defn invite-signup-success-handler
+  [{:keys [db]} [_ user]]
+  {:db (util.mg/add-linked-entities db {:app/user user})
+   :dispatch
+   [::router.handlers/route signup-success-route]})
+
+(re-frame/reg-event-fx ::invite-signup         invite-signup-handler)
+(re-frame/reg-event-fx ::invite-signup-success invite-signup-success-handler)
 
 ;;
 ;; * Signup
@@ -18,12 +62,11 @@
     :dispatch-success ::signup-success
     :status-key       status-key}})
 
-
 (defn signup-success-handler
   [{:keys [db]} [_ user]]
   {:db (util.mg/add-linked-entities db {:app/user user})
    :dispatch
-   [::router.handlers/route ::router.routes/landing]})
+   [::router.handlers/route signup-success-route]})
 
 (re-frame/reg-event-fx ::signup         signup-handler)
 (re-frame/reg-event-fx ::signup-success signup-success-handler)

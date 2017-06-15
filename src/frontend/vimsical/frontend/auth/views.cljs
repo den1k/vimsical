@@ -5,6 +5,7 @@
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.auth.handlers :as handlers]
    [vimsical.frontend.remotes.fx :as frontend.remotes.fx]
+   [vimsical.frontend.auth.subs :as subs]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]
    [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
    [vimsical.frontend.views.popovers :as popovers]
@@ -67,6 +68,70 @@
             [:input.input-button.signup-button.asc
              {:type  "submit"
               :value (status-msg status)}]]])))))
+;;
+;; * Invite
+;;
+
+(defn invite-signup
+  ([token user]
+   [invite-signup token user (reagent/atom user)])
+  ([token user state]
+   (let [status-key (reagent/current-component)
+         status     (<sub [::frontend.remotes.fx/status :backend status-key])]
+     (letfn [(on-change [k]
+               (e> (swap! state assoc k value)))
+             (dispatch! [e]
+               (.preventDefault e)
+               (when (.. e -target checkValidity)
+                 (re-frame/dispatch [::handlers/invite-signup token @state status-key])))
+             (status-msg [status]
+               (case status
+                 nil                           "Sign up"
+                 ::frontend.remotes.fx/pending "Signing you up..."
+                 ::frontend.remotes.fx/success "Success!"))]
+       [:div.auth.signup.dc.ac
+        [:div.beta-signup "Private Beta Signup"]
+        [:form.form.jsb.dc
+         {:on-submit dispatch!}
+         [:div.first-last.jsb
+          [:input.first
+           {:class         "first"
+            :type          "text"
+            :name          "name"
+            :placeholder   "First Name"
+            :auto-complete "given-name"
+            :on-change     (on-change ::user/first-name)
+            :value         (::user/first-name @state)}]
+          [:input.last
+           {:type          "text"
+            :name          "name"
+            :placeholder   "Last Name"
+            :auto-complete "family-name"
+            :on-change     (on-change ::user/last-name)
+            :value         (::user/last-name @state)}]]
+         [:input
+          {:type          "email"
+           :name          "email"
+           :placeholder   "Email"
+           :auto-complete "email"
+           :on-change     (on-change ::user/email)
+           :value         (::user/email @state)}]
+         [:input
+          {:type          "password"
+           :name          "password"
+           :placeholder   "Password"
+           :auto-complete "new-password"
+           :min-length    8
+           :on-change     (on-change ::user/password)
+           :value         (::user/password @state)}]
+         [:input.input-button.signup-button.asc
+          {:type  "submit"
+           :value (status-msg status)}]]]))))
+
+(defn invite
+  [token]
+  (when-some [user (<sub [::subs/user])]
+    [invite-signup token user]))
 
 ;;
 ;; * Login

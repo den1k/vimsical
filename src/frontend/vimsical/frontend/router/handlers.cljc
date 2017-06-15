@@ -2,7 +2,6 @@
   (:require
    [bidi.bidi :as bidi]
    [re-frame.core :as re-frame]
-   [re-frame.interceptor :as interceptor]
    [vimsical.frontend.router.interop :as interop]
    [vimsical.frontend.router.routes :as routes]))
 
@@ -39,7 +38,7 @@
 (re-frame/reg-fx :history (comp history-fx routes/encode-route))
 
 ;;
-;; * Route interceptor
+;; * Route fx
 ;;
 
 (defmulti route-fx
