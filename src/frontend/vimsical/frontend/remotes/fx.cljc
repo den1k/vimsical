@@ -13,8 +13,9 @@
 
 (s/def ::id keyword?)
 (s/def ::event ::event/event)
-(s/def ::dispatch-success (s/or :disabled false? :handler-id keyword?))
-(s/def ::dispatch-error keyword?)
+(s/def ::result-dispatch (s/or :event-id true? :hanlder-id keyword? :result->dispatch ifn?))
+(s/def ::dispatch-success ::result-dispatch)
+(s/def ::dispatch-error ::result-dispatch)
 (s/def ::status-key any?)
 (s/def ::fx (s/keys :req-un [::id ::event/event]
                     :opt-un [::status-key ::dispatch-success ::dispatch-error]))
@@ -138,7 +139,7 @@
 
   - `true?` will dispatch    `[<event-id> <result-or-error>]``
   - `keyword?` will dispatch `[<keyword> <result-or-error>]`
-  - `ifn?` will be invoked with `event` and `result` or `error`, should return
+  - `ifn?` will be invoked with `result` or `error`, and should return
     an event vector to dispatch.
 
   `dispatch-success` defaults to true.
