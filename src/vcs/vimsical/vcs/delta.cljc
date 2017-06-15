@@ -81,5 +81,7 @@
 
 (defmulti prospective-idx-offset op-type)
 (defmethod prospective-idx-offset :str/ins [delta] (count (op-diff delta)))
-;; We don't nee to offset because we delete left to right
+;; Deletions in the VCS's internal data structures happen left to right, with
+;; the cursor sitting left of the char(s) to be deleted. This means that the
+;; cursor position should remain the same after performing the delete operation
 (defmethod prospective-idx-offset :str/rem [_] 0)
