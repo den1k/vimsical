@@ -80,8 +80,7 @@
    (doto (interop/make-reaction
           #(get-status @status-registry remote-id status-key))
      (interop/add-on-dispose!
-      #(do (re-frame.loggers/console :log "Disposing status" status-key)
-           (swap! status-registry dissoc status-key))))))
+      #(swap! status-registry dissoc status-key)))))
 
 ;;
 ;; * Event status dispatches

@@ -55,6 +55,14 @@
 ;; * XHR helpers
 ;;
 
+(defn response-status
+  [response-event]
+  (.getStatus (.-target response-event)))
+
+(defn disconnected?
+  [response-event]
+  (zero? (response-status response-event)))
+
 (defn response-text
   [response-event]
   (let [text (.getResponseText (.-target response-event))]

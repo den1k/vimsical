@@ -29,12 +29,13 @@
    "Accept"       "application/transit+json"})
 
 (defn- response-result [_ resp]
-  (try
-    (some-> resp (xhr/response-text) (transit/read-transit))
-    (catch :default _
-
-      (.error js/console "ERROR Reading transit" (xhr/response-text resp))
-      (xhr/response-text resp))))
+  (if (xhr/disconnected? resp)
+    {:reason :disconnected}
+    (try
+      (some-> resp (xhr/response-text) (transit/read-transit))
+      (catch :default _
+        (.error js/console "ERROR Reading transit" (xhr/response-text resp))
+        (xhr/response-text resp)))))
 
 (defn- request-data [event]
   (transit/write-transit event))
