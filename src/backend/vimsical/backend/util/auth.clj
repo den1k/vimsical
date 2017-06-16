@@ -18,7 +18,7 @@
   [password]
   (hashers/derive password {:alg hash-algorithm}))
 
-(s/fdef check-password :args (s/cat :password ::user/password :hash ::hash) :ret boolean)
+(s/fdef check-password :args (s/cat :password ::user/password :hash (s/nilable ::hash)) :ret boolean)
 
 (defn check-password
   [password hashed-password]

@@ -83,7 +83,8 @@
               (case status
                 nil                           "Log in"
                 ::frontend.remotes.fx/pending "Logging you in..."
-                ::frontend.remotes.fx/success "Success!"))]
+                ::frontend.remotes.fx/success "Success!"
+                (:reason status)))]
       (fn []
         (let [status (<sub [::frontend.remotes.fx/status :backend status-key])]
           [:div.auth.login
