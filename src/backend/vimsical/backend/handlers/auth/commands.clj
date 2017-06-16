@@ -73,16 +73,16 @@
   [{:keys [datomic] :as context} [_ login-user]]
   (letfn [(user-uid-chan [{:keys [conn]} {::user/keys [email password]}]
             (async/thread-try
-             (let [[[uid password-hash]] (vec (datomic/q datomic authenticate-user-query email))]
-               (or (and (util.auth/check-password password password-hash) uid)
-                   (throw (ex-info "Wrong credentials" {}))))))]
+             (when-let [[[uid password-hash]] (vec (datomic/q datomic authenticate-user-query email))]
+               (and (util.auth/check-password password password-hash) uid))))]
     (multi/async
      context
-     (let [uid  (async/<? (user-uid-chan datomic login-user))
-           user (async/<? (user.queries/user+snapshots-chan context uid))]
-       (-> context
-           (create-user-session uid)
-           (multi/set-response user))))))
+     (if-let [uid  (async/<? (user-uid-chan datomic login-user))]
+       (let [user (async/<? (user.queries/user+snapshots-chan context uid))]
+         (-> context
+             (create-user-session uid)
+             (multi/set-response user)))
+       (multi/set-response context 401 {:reason ::commands/invalid-credentials})))))
 
 (defmethod multi/handle-event ::commands/logout
   [context _]

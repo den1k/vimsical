@@ -4,11 +4,18 @@
    [reagent.core :as reagent]
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.auth.handlers :as handlers]
+   [vimsical.remotes.backend.auth.commands :as auth.commands]
    [vimsical.frontend.remotes.fx :as frontend.remotes.fx]
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]
    [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
    [vimsical.frontend.views.popovers :as popovers]
    [vimsical.user :as user]))
+
+(defmethod frontend.remotes.fx/error-message ::auth.commands/duplicate-email
+  [_] "Email already registered")
+
+(defmethod frontend.remotes.fx/error-message ::auth.commands/invalid-credentials
+  [_] "Invalid email or password")
 
 ;;
 ;; * Signup
@@ -30,7 +37,8 @@
                 (case status
                   nil                           "Sign up"
                   ::frontend.remotes.fx/pending "Signing you up..."
-                  ::frontend.remotes.fx/success "Success!"))]
+                  ::frontend.remotes.fx/success "Success!"
+                  (frontend.remotes.fx/error-message status)))]
         (let [status (<sub [::frontend.remotes.fx/status :backend status-key])]
           [:div.auth.signup.dc.ac
            [:div.beta-signup "Private Beta Signup"]
@@ -83,7 +91,8 @@
               (case status
                 nil                           "Log in"
                 ::frontend.remotes.fx/pending "Logging you in..."
-                ::frontend.remotes.fx/success "Success!"))]
+                ::frontend.remotes.fx/success "Success!"
+                (frontend.remotes.fx/error-message status)))]
       (fn []
         (let [status (<sub [::frontend.remotes.fx/status :backend status-key])]
           [:div.auth.login

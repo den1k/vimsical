@@ -29,13 +29,20 @@
    "Accept"       "application/transit+json"})
 
 (defn- response-result [_ resp]
-  (if (xhr/disconnected? resp)
-    {:reason :disconnected}
-    (try
-      (some-> resp (xhr/response-text) (transit/read-transit))
-      (catch :default _
-        (.error js/console "ERROR Reading transit" (xhr/response-text resp))
-        (xhr/response-text resp)))))
+  (try
+    (some-> resp (xhr/response-text) (transit/read-transit))
+    (catch :default _
+      (.error js/console "ERROR Reading transit" (xhr/response-text resp))
+      (xhr/response-text resp))))
+
+(defn- response-error [_ resp]
+  (or
+   ;; Try to read a remote error
+   (try
+     (some-> resp (xhr/response-text) (transit/read-transit))
+     (catch :default _))
+   ;; Fallback to xhrio debug messages
+   (xhr/response-error resp)))
 
 (defn- request-data [event]
   (transit/write-transit event))
@@ -66,7 +73,7 @@
               ;; config/debug? (debug-resp event)
               true          (result-cb)))
           (xhr-error-cb [resp]
-            (cond-> (response-result fx resp)
+            (cond-> (response-error fx resp)
               config/debug? (debug-resp event)
               true          (error-cb)))]
     (do (xhr/new-post-request

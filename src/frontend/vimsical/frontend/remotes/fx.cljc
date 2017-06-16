@@ -165,3 +165,10 @@
     (remote-fx fx)))
 
 (re-frame/reg-fx :remote remote-fx-or-fxs)
+
+;;
+;; * Error messages
+;;
+
+(defmulti error-message :reason)
+(defmethod error-message :default [_] "Something went wrong!")

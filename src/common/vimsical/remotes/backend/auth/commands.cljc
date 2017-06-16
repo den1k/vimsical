@@ -12,6 +12,7 @@
 
 (defmethod event/event-spec  ::signup [_] (s/cat :id any? :user ::signup-user))
 (defmethod event/result-spec ::signup [_] (s/cat :id any? :user ::user/user))
+(defmethod event/error-spec  ::signup [_] (s/cat :id any? :error #{{:reason ::duplicated-email}}))
 
 ;;
 ;; * Login
@@ -21,6 +22,7 @@
 
 (defmethod event/event-spec  ::login [_] (s/cat :id any? :user ::login-user))
 (defmethod event/result-spec ::login [_] (s/cat :id any? :user ::user/user))
+(defmethod event/error-spec  ::login [_] (s/cat :id any? :error #{{:reason ::invalid-credentials}}))
 
 ;;
 ;; * Logout

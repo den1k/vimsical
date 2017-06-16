@@ -8,8 +8,9 @@
    [goog.net.EventType :as EventType])
   (:require-macros
    [vimsical.common.env-cljs :as env :refer [optional]])
-  (:import goog.Uri
-           [goog.net XhrIo]))
+  (:import
+   goog.Uri
+   [goog.net XhrIo ErrorCode]))
 
 ;;
 ;; * HTTP Helpers
@@ -55,18 +56,30 @@
 ;; * XHR helpers
 ;;
 
+(defn response-error?
+  [response-event]
+  (pos? (.getLastErrorCode (.-target response-event))))
+
+(defn response-error
+  [response-event]
+  (let [xhr        (.-target response-event)
+        error-code (.getLastErrorCode xhr)
+        error-msg  (ErrorCode.getDebugMessage error-code)]
+    {:reason error-msg}))
+
 (defn response-status
   [response-event]
   (.getStatus (.-target response-event)))
-
-(defn disconnected?
-  [response-event]
-  (zero? (response-status response-event)))
 
 (defn response-text
   [response-event]
   (let [text (.getResponseText (.-target response-event))]
     (when-not (str/blank? text) text)))
+
+(defn offline?
+  [response-event]
+  (and (response-error? response-event)
+       (zero? (response-status response-event))))
 
 (defn new-post-request
   [uri post-body headers success-cb error-cb]
