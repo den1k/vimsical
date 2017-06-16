@@ -44,4 +44,4 @@
    (if-some [invite-user (async/<? (invite-chan datomic token))]
      (multi/set-response context invite-user)
      ;; HTTP 410 GONE
-     (multi/set-response context 410 {:reason :expired}))))
+     (multi/set-response context 410 {:reason :token-expired}))))

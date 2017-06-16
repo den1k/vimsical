@@ -78,11 +78,14 @@
                (deref (datomic/transact datomic tx)))))]
     (multi/async
      context
-     (let [_    (async/<? (invite-user-tx-chan signup-user))
-           user (async/<? (user.queries/user+snapshots-chan context uid))]
-       (-> context
-           (create-user-session uid)
-           (multi/set-response user))))))
+     (try
+       (let [_    (async/<? (invite-user-tx-chan signup-user))
+             user (async/<? (user.queries/user+snapshots-chan context uid))]
+         (-> context
+             (create-user-session uid)
+             (multi/set-response user)))
+       (catch Throwable t
+         (multi/set-response 410 {:reason :token-expired}))))))
 
 ;;
 ;; * Create invite

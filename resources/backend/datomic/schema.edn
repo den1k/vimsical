@@ -207,4 +207,4 @@
                     (if e
                       [user
                        [:db/retract e :vimsical.user/invite-token token]]
-                      (throw (ex-info "No entity with that token exists" token))))}}]
+                      (throw (ex-info "Token expired" {}))))}}]
