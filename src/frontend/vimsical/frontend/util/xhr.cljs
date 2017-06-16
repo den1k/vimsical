@@ -76,6 +76,11 @@
   (let [text (.getResponseText (.-target response-event))]
     (when-not (str/blank? text) text)))
 
+(defn offline?
+  [response-event]
+  (and (response-error? response-event)
+       (zero? (response-status response-event))))
+
 (defn new-post-request
   [uri post-body headers success-cb error-cb]
   (doto (XhrIo.)
