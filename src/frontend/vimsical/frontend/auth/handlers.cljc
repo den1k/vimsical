@@ -22,7 +22,8 @@
     {:remote
      {:id               :backend
       :event            [::auth.queries/invite token]
-      :dispatch-success ::invite-success}}
+      :dispatch-success ::invite-success
+      :status-key       ::invite}}
     (throw (ex-info "Missing token" {:route route}))))
 
 (defn invite-success-handler

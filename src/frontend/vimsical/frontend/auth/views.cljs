@@ -15,8 +15,6 @@
 ;; * Signup
 ;;
 
-;; XXX make status subs with [status messages]
-
 (defn signup []
   (let [status-key (reagent/current-component)
         state      (reagent/atom {:db/uid (uuid)})]
@@ -130,8 +128,16 @@
 
 (defn invite
   [token]
-  (when-some [user (<sub [::subs/user])]
-    [invite-signup token user]))
+  (let [status (<sub [::frontend.remotes.fx/status :backend ::handlers/invite])]
+    (println status)
+    (case status
+      (nil ::frontend.remotes.fx/pending)
+      [:h3 "loading"]
+
+      ::frontend.remotes.fx/success
+      [invite-signup token (<sub [::subs/user])]
+
+      [:h3 "Invite expired"])))
 
 ;;
 ;; * Login
