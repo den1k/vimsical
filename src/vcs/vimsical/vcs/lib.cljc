@@ -5,8 +5,7 @@
 ;; * Spec
 
 (s/def ::lib
-  (s/keys :req [::src ::type ::sub-type]
-          :opt [::title]))              ; libs have titles, files have names
+  (s/keys :req [::src ::type ::sub-type] :opt [::name]))
 
 
 ;; ** Attributes
@@ -16,7 +15,7 @@
 (s/def ::src string?)
 (s/def ::type #{:text})
 (s/def ::sub-type sub-types)
-(s/def ::title string?)
+(s/def ::name string?)
 
 
 ;;
@@ -30,6 +29,10 @@
 ;; * Constructor
 ;;
 
+(s/fdef new-lib
+        :args (s/cat :sub-type ::sub-type :src ::src :name (s/? ::name))
+        :ret ::lib)
+
 (defn new-lib
-  ([src] {::src src ::type :text ::sub-type :javascript})
-  ([name src] {::name name ::src src ::type :text ::sub-type :javascript}))
+  ([sub-type src] {::src src ::type :text ::sub-type sub-type})
+  ([sub-type src name] {::name name ::src src ::type :text ::sub-type sub-type}))

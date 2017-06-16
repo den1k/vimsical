@@ -11,7 +11,7 @@
    [vimsical.frontend.router.routes :as router.routes]))
 
 (def js-libs
-  [(lib/new-lib "jQuery" "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js")])
+  [(lib/new-lib :javascript "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js" "jQuery")])
 
 (def compilers
   [{:db/uid                (uuid :babel-compiler)
