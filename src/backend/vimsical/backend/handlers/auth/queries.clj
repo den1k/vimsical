@@ -41,6 +41,7 @@
   [{:keys [datomic] :as context} [_ token]]
   (multi/async
    context
-   (multi/set-response
-    context
-    (async/<? (invite-chan datomic token)))))
+   (if-some [invite-user (async/<? (invite-chan datomic token))]
+     (multi/set-response context invite-user)
+     ;; HTTP 410 GONE
+     (multi/set-response context 410 {:reason :expired}))))
