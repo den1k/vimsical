@@ -14,6 +14,7 @@
 
 (def frontend-pull-query
   [:db/uid
+   ::vims/created-at
    ::vims/title
    ::vims/cast
    {::vims/vcs   ['* {::vcs/branches branch/pull-query}]}

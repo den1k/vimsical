@@ -23,7 +23,7 @@
 (s/def ::branches (s/every ::branch))
 (s/def ::snapshots (s/every ::vcs.snapshot/frontend-snapshot))
 (s/def ::vims (s/keys :req [:db/uid ::owner ::branches] :opt [::title ::cast ::snapshots]))
-
+(s/def ::create-at inst?)
 ;;
 ;; * Helpers
 ;;
@@ -35,8 +35,7 @@
 ;;
 
 (s/def ::branch-uid ::uid)
-(s/def ::created-at ::vcs.branch/created-at)
-(s/def ::new-vims-opts (s/keys :opt-un [::uid ::branch-uid ::created-at]))
+(s/def ::new-vims-opts (s/keys :opt-un [::uid ::branch-uid ::vcs.branch/created-at]))
 
 (defn default-files
   ([] (default-files (uuid) (uuid) (uuid)))
@@ -65,7 +64,8 @@
                  (assoc ::vcs.branch/owner owner)
                  (vector)))]
      (let [branches (new-branches owner)]
-       (-> {:db/uid    uid
-            ::owner    owner
-            ::branches branches}
+       (-> {:db/uid      uid
+            ::owner      owner
+            ::branches   branches
+            ::created-at created-at}
            (util/assoc-some ::title title))))))

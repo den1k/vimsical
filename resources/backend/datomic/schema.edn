@@ -72,7 +72,11 @@
   :db/ident       :vimsical.vims/branches
   :db/valueType   :db.type/ref
   :db/cardinality :db.cardinality/many
-  :db/isComponent true}]
+  :db/isComponent true}
+ {:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vims/created-at
+  :db/valueType   :db.type/long
+  :db/cardinality :db.cardinality/one}]
 
 ;;
 ;; * Compilers
