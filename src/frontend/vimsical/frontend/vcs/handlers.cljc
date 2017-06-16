@@ -126,7 +126,8 @@
 (defn- update-pointers
   [[{:as vcs ::vcs.db/keys [playhead-entry branch-uid]} _ delta-uid {new-branch-uid :db/uid :as branch}]]
   {:post [::vcs.db/playhead-entry]}
-  (let [playhead-entry (vcs/timeline-last-branch-entry vcs (or new-branch-uid branch-uid))
+  (let [next-entry     (vcs/timeline-next-entry vcs playhead-entry)
+        playhead-entry (or next-entry (vcs/timeline-first-entry vcs))
         pointers       (cond-> {::vcs.db/playhead-entry playhead-entry
                                 ::vcs.db/delta-uid      delta-uid}
                          (some? branch) (assoc ::vcs.db/branch-uid new-branch-uid))]
