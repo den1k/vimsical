@@ -82,7 +82,7 @@
          (-> context
              (create-user-session uid)
              (multi/set-response user)))
-       (multi/set-response context 401 {:reason "Invalid email or password"})))))
+       (multi/set-response context 401 {:reason ::commands/invalid-credentials})))))
 
 (defmethod multi/handle-event ::commands/logout
   [context _]
