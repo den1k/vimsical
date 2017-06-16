@@ -9,7 +9,8 @@
    [vimsical.backend.handlers.multi :as multi]
    [vimsical.backend.util.async :refer [<?]]
    [vimsical.remotes.backend.vcs.commands :as commands]
-   [vimsical.user :as user]))
+   [vimsical.user :as user]
+   [vimsical.vcs.branch :as branch]))
 
 ;;
 ;; * Context specs
@@ -47,3 +48,15 @@
      (-> context
          (multi/set-response (<? insert-chan))
          (multi/assoc-in-session vims-session-path vims-session')))))
+
+;;
+;; * Libs
+;;
+
+(defmethod event-auth/require-auth? ::commands/add-deltas [_] true)
+(defmethod multi/handle-event ::commands/add-lib
+  [{:as context :keys [datomic]} [_ branch-uid lib :as event]]
+  (let [tx {:db/uid branch-uid ::branch/libs [lib]}]
+    (multi/async
+     context
+     (multi/set-response context (<? (datomic/transact-chan datomic tx))))))

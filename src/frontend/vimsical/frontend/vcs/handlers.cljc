@@ -8,6 +8,7 @@
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as vcs.db]
+   [vimsical.remotes.backend.vcs.commands :as vcs.commands]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.frontend.vcs.subs :as subs]
    [vimsical.frontend.vcs.sync.handlers :as sync.handlers]
@@ -186,3 +187,23 @@
          (some? ?branch)
          (-> (update :db util.mg/add-join* :app/vims ::vims/branches ?branch)
              (update :dispatch-n conj [::sync.handlers/add-branch vims-uid ?branch])))))))
+
+;;
+;; * Libs
+;;
+
+(re-frame/reg-event-fx
+ ::add-lib
+ [(util.re-frame/inject-sub [::subs/branch])]
+ (fn [{:keys [db] ::subs/keys [branch]} [_ lib]]
+   (let [branch-ref (util.mg/->ref db branch)
+         branch-uid (util.mg/->uid db branch)]
+     {:db (util.mg/add-join* db branch-ref ::branch/libs lib)
+      :remote
+      {:id               :backend
+       :event            [::vcs.commands/add-lib branch-uid lib]
+       :dispatch-success ::add-lib-success
+       :dispatch-error   ::add-lib-error}})))
+
+(re-frame/reg-event-fx ::add-lib-success (fn [{:keys [db]} _] (println "Lib sucess")))
+(re-frame/reg-event-fx ::add-lib-error   (fn [{:keys [db]} e] (println "Lib error" e)))
