@@ -1,7 +1,13 @@
 (ns vimsical.frontend.router.routes
-  (:require
-   [clojure.spec.alpha :as s]
-   [vimsical.common.util.core :as util]))
+  #?@(:clj
+      [(:require
+        [clojure.spec.alpha :as s]
+        [vimsical.common.util.core :as util])]
+      :cljs
+      [(:require
+        [bidi.bidi :as bidi]
+        [clojure.spec.alpha :as s]
+        [vimsical.common.util.core :as util])]))
 
 ;;
 ;; * Spec
@@ -82,3 +88,18 @@
   (and
    (util/=by ::route-handler a b)
    (args= (::args a) (::args b))))
+
+
+;;
+;; * URI
+;;
+
+(defn uri-for
+  [route-handler & args]
+  #?(:clj (assert false "Not implemented, use env...")
+     :cljs (let [origin (.-origin (.-location js/window))
+                 path   (apply bidi/path-for routes route-handler args)]
+             (str origin path))))
+
+(defn vims-uri [{:keys [db/uid] :as vims}]
+  (uri-for ::vims :db/uid uid))
