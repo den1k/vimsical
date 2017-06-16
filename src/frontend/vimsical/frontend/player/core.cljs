@@ -1,15 +1,15 @@
 (ns vimsical.frontend.player.core
   "Core namespace for standalone player."
-  (:require [re-frame.core :as re-frame]
-            [reagent.core :as reagent]
-            [vimsical.frontend.code-editor.core :as code-editor.core]
-            [vimsical.frontend.player.views.player :refer [player]]
-            [vimsical.frontend.player.embed :as player.embed]
-            [vimsical.frontend.db :as db]
-            [vimsical.frontend.ui.handlers :as ui.handlers]
-            [vimsical.frontend.util.re-frame :refer [<sub]]
-            [vimsical.frontend.app.subs :as app.subs]
-            [vimsical.frontend.app.handlers :as app.handlers])
+  (:require
+   [re-frame.core :as re-frame]
+   [reagent.core :as reagent]
+   [vimsical.frontend.remotes.fx]      ;; side-effects
+   [vimsical.frontend.remotes.backend] ;; side-effects
+   [vimsical.frontend.code-editor.core :as code-editor.core]
+   [vimsical.frontend.db :as db]
+   [vimsical.frontend.player.views.player :refer [player]]
+   [vimsical.frontend.router.handlers :as router.handlers]
+   [vimsical.frontend.ui.handlers :as ui.handlers])
   (:refer-clojure :exclude [uuid]))
 
 (defn mount-root []
@@ -24,7 +24,6 @@
    #(do
       (re-frame/dispatch-sync [::db/init])
       (re-frame/dispatch-sync [::ui.handlers/init])
-      ;; fixme temp vims creation
-      (re-frame/dispatch-sync [::app.handlers/new-vims (<sub [::app.subs/user])])
-      ;; (re-frame/dispatch-sync [::db/init])
+      (re-frame/dispatch-sync [::router.handlers/init])
+      ;; (re-frame/dispatch-sync [::app.handlers/new-vims (<sub [::app.subs/user])])
       (mount-root))))

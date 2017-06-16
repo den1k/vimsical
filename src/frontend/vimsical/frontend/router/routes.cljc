@@ -20,6 +20,7 @@
 (def routes
   ["/"
    {["vims/" :db/uid]  ::vims
+    ["embed/" :db/uid] ::vims
     "signup"           ::signup
     ["invite/" :token] ::invite
     "emoji"            ::emoji
