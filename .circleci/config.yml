@@ -100,7 +100,9 @@ workflows:
       - test-cljs-advanced:
           requires:
             - deps
+            - test-cljs
 
       - test-integration:
           requires:
             - deps
+            - test-clj
