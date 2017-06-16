@@ -18,7 +18,8 @@
    [vimsical.frontend.router.subs :as router.subs]
    [vimsical.frontend.router.handlers :as router.handlers]
    [vimsical.frontend.router.routes :as router.routes]
-   [vimsical.frontend.router.routes :as routes]))
+   [vimsical.frontend.router.routes :as routes]
+   [vimsical.frontend.config :as config]))
 
 (defn limit-title-length? [e]
   (let [txt             (-> e .-target .-innerHTML)
@@ -98,25 +99,25 @@
 
 (defn nav []
   (let
-   [show-popup? (interop/ratom false)
-    route       (<sub [::router.subs/route])
-    modal       (<sub [::app.subs/modal])
-    {::user/keys [vimsae] :as user}
-    (<sub [:q [:app/user
-               [:db/uid
-                ::user/first-name
-                ::user/last-name
-                ::user/email
-                {::user/vimsae [:db/uid]}]]])
+      [show-popup? (interop/ratom false)
+       route       (<sub [::router.subs/route])
+       modal       (<sub [::app.subs/modal])
+       {::user/keys [vimsae] :as user}
+       (<sub [:q [:app/user
+                  [:db/uid
+                   ::user/first-name
+                   ::user/last-name
+                   ::user/email
+                   {::user/vimsae [:db/uid]}]]])
 
-    {::vims/keys [title] :as app-vims} (<sub [:q [:app/vims
-                                                  [:db/uid
-                                                   ::vims/title]]])]
+       {::vims/keys [title] :as app-vims} (<sub [:q [:app/vims
+                                                     [:db/uid
+                                                      ::vims/title]]])]
     [:div.main-nav.ac.jsb
      {:class (when modal "no-border")}
      [:div.logo-and-type
-      {:on-click        (e> (re-frame/dispatch [::router.handlers/route ::router.routes/landing]))
-       :on-double-click (e> (re-frame/dispatch [::router.handlers/route ::router.routes/signup]))}
+      (cond-> {:on-click (e> (re-frame/dispatch [::router.handlers/route ::router.routes/landing]))}
+        config/debug? (assoc :on-double-click (e> (re-frame/dispatch [::router.handlers/route ::router.routes/signup]))))
       [:span.logo icons/vimsical-logo]
       [:span.type icons/vimsical-type]]
      (when (routes/route-name= route :vims)
