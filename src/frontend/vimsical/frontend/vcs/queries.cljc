@@ -16,5 +16,4 @@
   ['* {::vcs/branches branch/pull-query}])
 
 (def vims-vcs
-
   [:db/uid {::vims/vcs vcs}])
