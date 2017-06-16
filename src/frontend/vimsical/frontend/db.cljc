@@ -11,11 +11,7 @@
    [vimsical.frontend.router.routes :as router.routes]))
 
 (def js-libs
-  [{:db/uid        (uuid :lib-js-jquery)
-    ::lib/name    "jQuery"
-    ::lib/type     :text
-    ::lib/sub-type :javascript
-    ::lib/src      "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"}])
+  [(lib/new-lib "jQuery" "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js")])
 
 (def compilers
   [{:db/uid                (uuid :babel-compiler)
@@ -47,7 +43,7 @@
 (defn new-db
   [state]
   (-> (mg/new-db)
-      (mg/add-id-attr :db/uid)
+      (mg/add-id-attr :db/uid ::lib/src)
       (util.mg/add-linked-entities state)))
 
 (def default-db (new-db state))

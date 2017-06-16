@@ -185,7 +185,7 @@
                 :dispatch-n [[::sync.handlers/add-deltas vims-uid deltas]]}
          ;; NOTE branch is already in ::vcs/branches, don't need to mg/add it
          (some? ?branch)
-         (-> (update :db util.mg/add-join* :app/vims ::vims/branches ?branch)
+         (-> (update :db util.mg/add-join :app/vims ::vims/branches ?branch)
              (update :dispatch-n conj [::sync.handlers/add-branch vims-uid ?branch])))))))
 
 ;;
@@ -194,11 +194,10 @@
 
 (re-frame/reg-event-fx
  ::add-lib
- [(util.re-frame/inject-sub [::subs/branch])]
- (fn [{:keys [db] ::subs/keys [branch]} [_ lib]]
+ (fn [{:keys [db]} [_ branch lib]]
    (let [branch-ref (util.mg/->ref db branch)
          branch-uid (util.mg/->uid db branch)]
-     {:db (util.mg/add-join* db branch-ref ::branch/libs lib)
+     {:db (util.mg/add-join db branch-ref ::branch/libs lib)
       :remote
       {:id               :backend
        :event            [::vcs.commands/add-lib branch-uid lib]

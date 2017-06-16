@@ -23,33 +23,41 @@
 
 (defn ref->entity [[k id]] {k id})
 
+(defn ent->id-attr [db entity]
+  (some ::mg/id-attrs (keys entity)))
+
 (defn ->entity
   ([db x] (->entity db :db/uid x))
-  ([db id-key x]
+  ([db id-attr x]
    {:post [(mg/ref-to db %)]}
    (cond
-     (map? x)       (select-keys x [id-key])
+     (map? x)       (select-keys x [id-attr])
      (mg/ref? db x) (apply hash-map x)
-     (uuid? x)      {id-key x})))
+     (uuid? x)      {id-attr x})))
 
 (defn ->ref
   ([db x] (->ref db :db/uid x))
-  ([db id-key x]
+  ([db id-attr x]
    {:post [(mg/ref? db %)]}
    (cond
      (mg/ref? db x) x
-     (map? x) (mg/ref-to db x)
-     (uuid? x) [id-key x]
-     (keyword? x) (->ref db id-key (get db x)))))
+     (map? x)       (mg/ref-to db x)
+     (uuid? x)      [id-attr x]
+     (keyword? x)   (->ref db id-key (get db x)))))
+
+(defn ->ref-maybe
+  ([db x] (->ref-maybe db :db/uid x))
+  ([db id-attr x]
+   (try (->ref db id-attr x) (catch #?(:clj Throwable :cljs :default) _))))
 
 (defn ->uid
   ([db x] (->uid db :db/uid x))
-  ([db id-key x]
+  ([db id-attr x]
    {:post [(uuid? %)]}
    (cond
      (uuid? x) x
      (mg/ref? db x) (second x)
-     (map? x) (get x id-key))))
+     (map? x) (get x id-attr))))
 ;;
 ;; * Add
 ;;

@@ -5,7 +5,7 @@
 ;; * Spec
 
 (s/def ::lib
-  (s/keys :req [:db/uid ::src ::type ::sub-type]
+  (s/keys :req [::src ::type ::sub-type]
           :opt [::title]))              ; libs have titles, files have names
 
 
@@ -13,8 +13,6 @@
 
 (def sub-types #{:css :javascript})
 
-(s/def ::uid uuid?)
-(s/def :db/uid ::uid)
 (s/def ::src string?)
 (s/def ::type #{:text})
 (s/def ::sub-type sub-types)
@@ -27,3 +25,11 @@
 
 (defn sub-type= [{::keys [sub-type]} sb-type] (= sub-type sb-type))
 (defn javascript? [lib] (sub-type= lib :javascript))
+
+;;
+;; * Constructor
+;;
+
+(defn new-lib
+  ([src] {::src src ::type :text ::sub-type :javascript})
+  ([name src] {::name name ::src src ::type :text ::sub-type :javascript}))
