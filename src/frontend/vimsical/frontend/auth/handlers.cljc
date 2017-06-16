@@ -63,6 +63,8 @@
   {:db (util.mg/remove-links db :app/user)
    :remote
    {:id               :backend
-    :event            [::auth.commands/logout]}})
+    :event            [::auth.commands/logout]}
+   :dispatch
+   [::router.handlers/route ::router.routes/landing]})
 
 (re-frame/reg-event-fx ::logout logout-handler)
