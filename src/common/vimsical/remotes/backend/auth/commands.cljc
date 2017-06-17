@@ -15,6 +15,13 @@
 (defmethod event/error-spec  ::signup [_] (s/cat :id any? :error #{{:reason ::duplicated-email}}))
 
 ;;
+;; * Invite signup
+;;
+
+(defmethod event/event-spec  ::invite-signup [_] (s/cat :id any? :token ::user/token :user ::signup-user))
+(defmethod event/result-spec ::invite-signup [_] (s/cat :id any? :user ::user/user))
+
+;;
 ;; * Login
 ;;
 

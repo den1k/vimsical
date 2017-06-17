@@ -1,7 +1,7 @@
 (ns vimsical.frontend.router.views
   (:require
    [vimsical.frontend.app.subs :as app.subs]
-   [vimsical.frontend.auth.views :as auth.views :refer [signup]]
+   [vimsical.frontend.auth.views :as auth.views :refer [signup invite]]
    [vimsical.frontend.landing.views :refer [landing]]
    [vimsical.frontend.player.views.player :refer [player]]
    [vimsical.frontend.router.routes :as routes]
@@ -22,6 +22,8 @@
 (defmethod view-for :default [route] (throw (ex-info "No view defined for route" {:route route})))
 
 (defmethod view-for ::routes/signup [_] [signup])
+(defmethod view-for ::routes/invite [route]
+  [invite (routes/get-arg route :token)])
 
 (defmethod view-for ::routes/landing [_] [landing])
 

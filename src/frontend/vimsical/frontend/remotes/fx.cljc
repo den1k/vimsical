@@ -43,11 +43,13 @@
 ;; ** Spec
 ;;
 
+(s/def ::error ::event/error)
+
 (s/def ::status
   (s/nilable
    (s/or :pending #{::pending}
          :success #{::success}
-         :error     ::event/error)))
+         :error   ::error)))
 
 (s/fdef get-status
         :args (s/cat :registry map?

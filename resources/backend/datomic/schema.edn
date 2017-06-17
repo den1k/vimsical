@@ -182,3 +182,29 @@
   :db/ident       :vimsical.vcs.file/compiler
   :db/valueType   :db.type/ref
   :db/cardinality :db.cardinality/one}]
+
+;;
+;; * Auth
+;;
+
+[{:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.user/invite-token
+  :db/valueType   :db.type/string
+  :db/unique      :db.unique/value
+  :db/cardinality :db.cardinality/one}
+ {:db/id    #db/id [:db.part/db]
+  :db/ident :db.fn/invite-signup
+  :db/doc   "Look up entity by token, set attr and value, and retract token"
+  :db/fn
+  #db/fn {:lang   "clojure"
+          :params [db token user]
+          :code   (let [e (datomic.api/q
+                           '[:find ?e .
+                             :in $ ?token
+                             :where
+                             [?e :vimsical.user/invite-token ?token]]
+                           db token)]
+                    (if e
+                      [user
+                       [:db/retract e :vimsical.user/invite-token token]]
+                      (throw (ex-info "Token expired" {}))))}}]

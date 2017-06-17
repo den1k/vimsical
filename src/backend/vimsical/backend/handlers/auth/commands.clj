@@ -43,19 +43,20 @@
   [{:keys [datomic]} user-uid]
   (datomic/pull-chan datomic queries.user/datomic-pull-query [:db/uid user-uid]))
 
+(defn- hash-user
+  [user]
+  (update user ::user/password util.auth/hash-password))
+
 ;;
-;; * Registration
+;; * Signup
 ;;
 
 (defmethod multi/context-spec ::commands/signup [_] ::context-deps)
 (defmethod multi/handle-event ::commands/signup
   [{:keys [datomic] :as context} [_ {:keys [db/uid] :as signup-user :or {uid (uuid)}}]]
-  (assert uid)
-  (letfn [(hash-user-password [user]
-            (update user ::user/password util.auth/hash-password))
-          (user-tx-chan [user]
+  (letfn [(user-tx-chan [user]
             (async/thread-try
-             (deref (datomic/transact datomic (hash-user-password user)))))]
+             (deref (datomic/transact datomic (hash-user user)))))]
     (multi/async
      context
      (let [_    (async/<? (user-tx-chan signup-user))
@@ -63,6 +64,45 @@
        (-> context
            (create-user-session uid)
            (multi/set-response user))))))
+
+;;
+;; * Invite signup
+;;
+
+(defmethod multi/context-spec ::commands/invite-signup [_] ::context-deps)
+(defmethod multi/handle-event ::commands/invite-signup
+  [{:keys [datomic] :as context} [_ token {:keys [db/uid] :as signup-user :or {uid (uuid)}}]]
+  (letfn [(invite-user-tx-chan [user]
+            (async/thread-try
+             (let [tx [[:db.fn/invite-signup token (hash-user user)]]]
+               (deref (datomic/transact datomic tx)))))]
+    (multi/async
+     context
+     (try
+       (let [_    (async/<? (invite-user-tx-chan signup-user))
+             user (async/<? (user.queries/user+snapshots-chan context uid))]
+         (-> context
+             (create-user-session uid)
+             (multi/set-response user)))
+       (catch Throwable t
+         (multi/set-response 410 {:reason :token-expired}))))))
+
+;;
+;; * Create invite
+;;
+
+(defn create-invite!
+  [datomic first-name last-name]
+  (let [uid   (uuid)
+        token (str (uuid))
+        user  {:db/uid             uid
+               ::user/invite-token token
+               ::user/first-name   first-name
+               ::user/last-name    last-name}
+        tx    (datomic/transact datomic user)]
+    (do (deref tx)
+        (println "Create invite:" token)
+        token)))
 
 ;;
 ;; * Login

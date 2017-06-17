@@ -10,14 +10,18 @@
     <encoder>
       <pattern>%-5level %logger{36} - %msg%n</pattern>
     </encoder>
+    <logger name="org.apache.zookeeper" level="WARN"/>
     <!-- Only log level INFO and above -->
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>INFO</level>
     </filter>
   </appender>
 
-  <root level="INFO">
-    <appender-ref ref="FILE" />
+  <logger name="vimsical" level="INFO">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+
+  <root level="WARN">
     <appender-ref ref="STDOUT" />
   </root>
 
