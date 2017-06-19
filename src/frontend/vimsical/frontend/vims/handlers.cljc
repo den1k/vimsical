@@ -47,7 +47,27 @@
 
 (re-frame/reg-event-fx ::new new-event-fx)
 (re-frame/reg-event-fx ::new-success (fn [_ _] (re-frame.loggers/console :log "New vims success")))
-(re-frame/reg-event-fx ::new-error (fn [_ e] (re-frame.loggers/console :log "Vims error" e)))
+(re-frame/reg-event-fx ::new-error   (fn [_ e] (re-frame.loggers/console :log "Vims error" e)))
+
+;;
+;; * Delete vims
+;;
+
+(defn delete-event-fx
+  [{:keys [db]} [_ vims status-key]]
+  (let [vims-uid (util.mg/->uid db vims)
+        db'      (util.mg/remove db vims)]
+    {:db db'
+     :remote
+     {:id               :backend
+      :event            [::vims.commands/delete vims-uid]
+      :dispatch-success (fn [_] [::delete-success vims-uid])
+      :dispatch-error   (fn [_] [::delete-error vims-uid])
+      :status-key       status-key}}))
+
+(re-frame/reg-event-fx ::delete delete-event-fx)
+(re-frame/reg-event-fx ::delete-success (fn [_ _] (re-frame.loggers/console :log "Delete success")))
+(re-frame/reg-event-fx ::delete-error   (fn [_ e] (re-frame.loggers/console :log "Delete error" e)))
 
 ;;
 ;; * Title

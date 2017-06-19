@@ -1,16 +1,16 @@
 (ns vimsical.frontend.vims-list.views
   (:require
+   [re-com.core :as re-com]
    [re-frame.core :as re-frame]
+   [re-frame.interop :as interop]
    [vimsical.frontend.app.handlers :as app.handlers]
    [vimsical.frontend.live-preview.views :as live-preview.views]
    [vimsical.frontend.util.dom :refer-macros [e>]]
-   [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.views.popovers :as popovers]
    [vimsical.frontend.vims-list.subs :as subs]
-   [re-frame.interop :as interop]
-   [vimsical.vims :as vims]
-   [re-com.core :as re-com]))
+   [vimsical.frontend.vims.handlers :as vims.handlers]
+   [vimsical.vims :as vims]))
 
 (defn vims-list-item
   [{::vims/keys [title] :as vims}]
@@ -28,7 +28,8 @@
       [:div.vims-title (or title "Untitled")]
       [:div.delete-button
        {:on-mouse-enter (e> (reset! show-delete-tooltip? true))
-        :on-mouse-leave (e> (reset! show-delete-tooltip? false))}
+        :on-mouse-leave (e> (reset! show-delete-tooltip? false))
+        :on-click       (e> (.stopPropagation e) (re-frame/dispatch [::vims.handlers/delete vims]))}
        [popovers/tooltip
         {:showing? show-delete-tooltip?
          :label    :delete

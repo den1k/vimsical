@@ -104,7 +104,7 @@
 
 (defn logout-handler
   [{:keys [db]} _]
-  {:db (util.mg/remove-links db :app/user)
+  {:db (util.mg/remove db :app/user)
    :remote
    {:id               :backend
     :event            [::auth.commands/logout]}

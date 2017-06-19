@@ -14,6 +14,13 @@
 (defmethod event/result-spec ::new [_] (s/cat :id any? :result ::event/command-success))
 
 ;;
+;; * Delete
+;;
+
+(defmethod event/event-spec  ::delete [_] (s/cat :id any? :vims-uid ::vims/uid))
+(defmethod event/result-spec ::delete [_] (s/cat :id any? :result ::event/command-success))
+
+;;
 ;; * Title
 ;;
 

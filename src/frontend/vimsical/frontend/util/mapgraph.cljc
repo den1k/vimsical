@@ -1,4 +1,5 @@
 (ns vimsical.frontend.util.mapgraph
+  (:refer-clojure :exclude [remove])
   (:require
    [com.stuartsierra.mapgraph :as mg]
    [com.stuartsierra.subgraph :as sg]
@@ -38,7 +39,8 @@
    (cond
      (mg/ref? db x) x
      (map? x) (mg/ref-to db x)
-     (uuid? x) [id-key x])))
+     (uuid? x) [id-key x]
+     (keyword? x) (->ref db id-key (get db x)))))
 
 (defn ->uid
   ([db x] (->uid db :db/uid x))
@@ -106,20 +108,9 @@
 ;; * Remove
 ;;
 
-(defn- remove-ref [db ref]
-  (reduce-kv
-   (fn [db k v]
-     (cond
-       (mg/ref? db v) (remove-ref db v)
-       (coll? v) (reduce remove-ref db v)
-       :else db))
-   (dissoc db ref) (get db ref)))
-
-(defn remove-entity [db entity]
-  (remove-ref db (mg/ref-to db entity)))
-
-(defn remove-links [db & keywords]
-  (reduce remove-ref db (map (partial get db) keywords)))
+(defn remove
+  [db x]
+  (dissoc db (->ref db x)))
 
 ;;
 ;; * Shorthand link syntax
