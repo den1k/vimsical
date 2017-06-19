@@ -383,12 +383,11 @@
 (s/fdef last-entry :args (s/cat :timeline ::timeline) :ret (s/nilable ::entry))
 
 (defn last-entry
-  [{::keys [chunks-by-absolute-start-time]}]
-  ;; Faster than last on AVL
-  (let [[_ chunk] (avl/nearest
-                   chunks-by-absolute-start-time
-                   <= #?(:clj  Integer/MAX_VALUE :cljs js/Number.MAX_SAFE_INTEGER))]
-    (some-> chunk chunk/last-entry)))
+  [timeline]
+  (let [t #?(:clj  Integer/MAX_VALUE :cljs js/Number.MAX_SAFE_INTEGER)]
+    (some-> timeline
+            (nearest-chunk-entry < t)
+            (nearest-delta-entry < t))))
 
 (defn delta-at-absolute-time
   [timeline expect-abs-time]
