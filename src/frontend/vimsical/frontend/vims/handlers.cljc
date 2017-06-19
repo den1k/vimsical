@@ -82,7 +82,7 @@
      :remote
      {:id               :backend
       :event            [::vims.commands/title remote]
-      :dispatch-success (fn [_] [::title-success vims])
+      :dispatch-success (fn [_] [::title-success vims'])
       :dispatch-error   (fn [error] [::title-error vims error])
       :status-key       status-key}}))
 

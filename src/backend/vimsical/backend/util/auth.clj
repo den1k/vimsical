@@ -22,5 +22,4 @@
 
 (defn check-password
   [password hashed-password]
-  (when (and password hashed-password)
-    (hashers/check password hashed-password)))
+  (and password hashed-password (hashers/check password hashed-password)))
