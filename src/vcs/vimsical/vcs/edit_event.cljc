@@ -24,7 +24,10 @@
 
 (defmulti prospective-idx-offset ::op)
 (defmethod prospective-idx-offset :str/ins [{::keys [diff]}] (count diff))
-;; Deletions in the VCS's internal datastructures happened left to right, with
-;; the cursor sitting left of the char(s) to be deleted. This means that the
-;; cursor position should remain the same after performing the delete operation
+;; Deletion in the VCS's internals happens left to right, with the cursor
+;; sitting left of the char(s) to be deleted. This means that the cursor
+;; position should remain the same after performing the delete operation
 (defmethod prospective-idx-offset :str/rem [_] 0)
+(defmethod prospective-idx-offset :str/rplc [{::keys [diff amt] :or {amt 0}}] (- (count diff) amt))
+(defmethod prospective-idx-offset :crsr/mv [_] 0)
+(defmethod prospective-idx-offset :crsr/sel [{[from to] ::range}] (- to from))
