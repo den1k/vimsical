@@ -194,9 +194,8 @@
 
 (re-frame/reg-event-fx
  ::add-lib
- (fn [{:keys [db]} [_ branch lib]]
-   (let [branch-ref (util.mg/->ref db branch)
-         branch-uid (util.mg/->uid db branch)]
+ (fn [{:keys [db]} [_ lib {:keys [branch-uid] :as opts} :as ev]]
+   (let [branch-ref (util.mg/->ref db branch-uid)]
      {:db (util.mg/add-join db branch-ref ::branch/libs lib)
       :remote
       {:id               :backend
