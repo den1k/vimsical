@@ -1,132 +1,145 @@
 (ns vimsical.frontend.landing.style
-  (:require [garden.stylesheet :refer [at-media]]))
+  (:require [garden.stylesheet :refer [at-media]]
+            [vimsical.frontend.styles.color :refer [colors]]))
+
+(def credit
+  [:.credit-wrapper
+   {:display :inline-block}
+   [:.credit
+    {:text-align :right
+     :font-size  :12px
+     :color      (:grey colors)}
+    [:.title :.author
+     {:cursor :pointer}
+     [:&:hover
+      {:color :black}]]]])
+
+(def headers
+  [[:.header
+    {:font-size   :40px
+     :font-weight :600}]
+   [:.subheader
+    {:margin-top     :0
+     :font-size      :20px
+     :font-weight    :400
+     :line-height    :1.2
+     :letter-spacing :0.02em}]])
+
+(def vimsical-stmt
+  [:.vimsical-stmt
+   {:margin         "180px 0 100px"
+    :letter-spacing :.004em}
+   [:.header
+    {:font-size :65px}]
+   [:.subheader
+    {:font-size :28px}]
+   [:.join
+    {:cursor :pointer}]])
+
+(def explore-and-create
+  [:.explore
+   {:text-align :right}])
+
+(def player
+  [:.player-section
+   [:.player
+    {:margin-top :20px}]
+   [:.embed-stmt
+    {:font-weight    200
+     :letter-spacing :.4px
+     :font-size      :25px
+     :margin-top     :120px
+     :text-align     :center}
+    [:.bold
+     {:font-weight 400}]]
+
+   [:.desc
+    {:margin-top :50px
+     :text-align :center
+     :width      :400px
+     :font-size  :20px}]])
+
+(def mission
+  [:.mission-section
+   {:text-align :center}
+   [:.visibility
+    [:.logo-and-slogan
+     {:width      :420px
+      :transition "width 1s ease"}
+     [:.learnable
+      {:margin      0
+       :font-size   :26px
+       :font-weight 400}]
+     [:.logo-and-type
+      {:transform "scale(1.4)"}]]
+    [:&.visible
+     [:.logo-and-slogan
+      {:width :520px}]]]
+   [:.stmt
+    {:font-size   :22px
+     :margin-top  :50px
+     :line-height 1.4
+     :font-weight 300}]
+   [:.act
+    {:margin-top :100px}]])
+
+(def waitlist
+  [[:.bottom-waitlist
+    {:margin-bottom :200px}
+    [:.join
+     {:font-size      :60px
+      :letter-spacing :.02em
+      :font-weight    :400}]]
+   [:.waitlist
+    {:margin-top :1em}
+
+    [:.form
+     [:.email
+      {:height :50px
+       :border "1px solid hsl(0, 0%, 93%)"}]
+     [:.button
+      {:margin-left :20px
+       :height      :50px}]]
+    [:.result
+     {:font-size   :1rem
+      :margin-top  :20px
+      :line-height :20px
+      :text-align  :center}]]])
+
+(def footer
+  [:.footer-logo
+   {:margin "15px auto"}
+   [:.vimsical-logo
+    {:height :45px
+     :width  :45px}]
+   [:.vimsical-type
+    {:width       :140px
+     :margin-left :23px
+     :fill        :black}]])
 
 (def landing
   [:.landing
    {:min-width :960px
     :max-width (str (* 1.5 960) "px")}
-   [:.container
-    ["> div"
+   [:.wrapper
+    [:.section
      {:margin-top :200px}]
-    [:.codecasts-easy-stmt
-     [:.codecasts
-      {:font-weight :500}]
-     {:font-weight    :200
-      :font-size      :80px
-      :text-align     :center
-      :margin         "180px 0 100px"
-      :letter-spacing :.004em}]
-    [:.waitlist
-     {:margin-top :1em}
-     [:.form
-      [:.email
-       {:height :50px
-        :border "1px solid hsl(0, 0%, 93%)"}]
-      [:.button
-       {:margin-left :20px
-        :height      :50px}]]
-     [:.result
-      {:font-size   :1rem
-       :margin-top  :20px
-       :line-height :20px
-       :text-align  :center}]]
-    [:.video-and-waitlist
-     {:padding "0 40px"}
-     [:.demo-video-wrapper
-      {:flex       :0.7
-       :height     :100%
-       :box-shadow "0 5px 30px hsla(0,0%,0%,0.3)"}
-      [:video.demo-video
-       {:width   :100%
-        :display :block}]]
-     [:.text-and-waitlist
-      {:flex            :0.3
-       :justify-content :space-around
-       :margin-left     :60px}
-      [:.text
-       {:font-size      :20px
-        :letter-spacing :.004em}
-       [:.just-code
-        {:font-weight :bold
-         :font-size   :50px}]
-       [:.auto-rec
-        {:margin-top :1em}]]
-      [:.top-waitlist
-       [:.join-prompt
-        {:font-size      :25px
-         :margin-top     :1rem
-         :letter-spacing :.02em
-         :font-weight    :400}]]]]
-    [:.community-codecasts-stmt
-     [:.community-created
-      {:font-weight :500}]
-     {:font-weight :200
-      :font-size   :50px
-      :text-align  :center}]
-    [:.platform
-     [:.text
-      {:flex    :0.4
-       :padding "0 20px"}
-      [:.title
-       {:font-size :50px}]
-      [:.desc
-       {:margin-top  :20px
-        :font-weight :300
-        :font-size   :24px}]]
-     [:.img-wrapper
-      {:height     :100%
-       :display    :flex
-       :flex       :0.6
-       :overflow   :hidden
-       :box-shadow "0 5px 15px hsla(0,0%,0%,0.3)"}
-      [:.img
-       {:width :152%}]]]
-    (at-media
-     {:screen    true
-      :min-width :1100px}
-     [:.player
-      {:box-shadow "0 10px 30px hsla(0,0%,0%,0.3)"}])
-    [:.player
-     {:margin  "0 auto"
-      :width   :960px
-      :padding "30px 40px"}
-     [:&:after
-      {:margin-bottom :-70px
-       :content       "''"
-       :width         :1020px
-       :height        :150px
-       :background    "linear-gradient(to bottom,
-                        hsla(0,0%,100%,0) 10%,
-                        white 70%,
-                        white 100%)"}]
-     [:.text
-      [:.title
-       {:font-size :50px}]
-      [:.desc
-       {:margin-top  :20px
-        :font-size   :24px
-        :font-weight :300}
-       [:&.summary
-        {:margin-top :30px}]]]
-     [:.img
-      {:margin-top :25px
-       :width      :100%
-       :border     "1px solid hsla(0, 0%, 0%, 0.1)"}]]
-    [:.bottom-waitlist
-     {:margin-top    :80px
-      :margin-bottom :200px}
-     [:.join-prompt
-      {:font-size      :60px
-       :letter-spacing :.02em
-       :font-weight    :400}]
-     [:.waitlist
-      {:margin-top :1.5rem}]]
-    [:.footer-logo
-     {:margin "15px auto"}
-     [:.vimsical-logo
-      {:height :45px
-       :width  :45px}]
-     [:.vimsical-type
-      {:width       :140px
-       :margin-left :23px
-       :fill        :black}]]]])
+
+    ;; temp
+    [:.lp-vims
+     {:width      :400px
+      :height     :300px
+      :background :tomato}]
+    [:.lp-vims-lg
+     {:width      :700px
+      :height     :400px
+      :background :lightgreen}]
+    credit
+    headers
+    vimsical-stmt
+    explore-and-create
+    player
+    mission
+    waitlist]
+
+   footer])

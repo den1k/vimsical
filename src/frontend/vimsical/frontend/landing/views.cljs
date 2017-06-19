@@ -1,8 +1,12 @@
 (ns vimsical.frontend.landing.views
   (:require [vimsical.frontend.views.icons :as icons]
+            [vimsical.frontend.ui.views :as ui.views]
             [vimsical.frontend.util.dom :refer-macros [e>]]
             [goog.net.XhrIo]
-            [reagent.core :as reagent]))
+            [reagent.core :as reagent]
+            [vimsical.common.util.core :as util]
+            [re-frame.interop :as interop]
+            [vimsical.frontend.util.dom :as util.dom]))
 
 ;;
 ;; * Waitlist Form
@@ -30,12 +34,89 @@
       (goog.events.listen goog.net.EventType.ERROR (partial handle-success state))
       (.send endpoint "POST" data headers))))
 
+(def ^:private waitlist-signup-id "waitlist")
+
+(defn scroll-to-waitlist []
+  (-> (.getElementById js/document waitlist-signup-id)
+      (util.dom/scroll-to)))
+
+(defn credit [title author content opts]
+  [:div.credit-wrapper
+   opts
+   content
+   [:div.credit
+    "Adapted from " [:span.title title] " by " [:span.author author]]])
+
+(defn page-header []
+  [:div.stmt-wrapper.jsb.ac.section
+   [:div.vimsical-stmt
+    [:h1.header "Vimsical"]
+    [:h2.subheader
+     "Your educational playground"
+     [:br]
+     "To explore and create."]
+    [:div.join
+     {:on-click (e> (scroll-to-waitlist))}
+     "Join our Journey"]]
+   [:div.lp-vims]])
+
+(defn create []
+  [:div.create.section
+   [:h2.header "Create"]
+   [:h3.subheader
+    "Vimsical turns your coding process into an interactive tutorial. Automatically."]
+   [credit
+    "Trail"
+    "Lee Hamsmith"
+    [:div.lp-vims-lg]]])
+
+(defn explore []
+  [:div.explore.section
+   [:h2.header "Explore"]
+   [:h3.subheader
+    "See your favorite projects take shape. And make edits with one click."]
+   [credit
+    "The Bug"
+    "Ana Tudor"
+    [:div.lp-vims-lg]]])
+
+(defn mission-section []
+  [:div.mission-section.dc.ac.section
+   [ui.views/visibility
+    {:once? true
+     :child
+            [:div.logo-and-slogan.jsb.ac
+             [icons/logo-and-type]
+             [:h2.learnable "make it learnable."]]}]
+   [:p.stmt
+    "Our mission is to nurture understanding, accelerate learning and ease teaching"
+    [:br]
+    "By providing tools to record, share and explore our process."]])
+
+(defn player-section []
+  (let [viewport-pct (interop/ratom 0)]
+    (fn []
+      [:div.player-section.dc.ac.section
+       [ui.views/viewport-ratio viewport-pct [:h2.header "Player"]]
+       [:h3.subheader "Take your creations places."]
+       [credit
+        "Wormhole"
+        "Jack Aniperdo"
+        [:div.lp-vims-lg.player]
+        {:style {:margin-right (* 20 @viewport-pct)}}]
+       [:p.embed-stmt
+        "Empower others with an immersive learning experience"
+        [:br]
+        "Embed"
+        [:span.bold " Player "]
+        "on your website, Twitter or use it in your classroom."]])))
 
 (defn waitlist []
   (let [state (reagent/atom {:success nil :error nil :email ""})]
     (fn []
       (let [{:keys [success error email]} @state]
-        [:div.waitlist
+        [:div.waitlist.section
+         {:id waitlist-signup-id}
          [:div.form.ac
           [:input.email {:type        "email"
                          :name        "email"
@@ -49,9 +130,9 @@
                     "Thank You!"
                     [:br]
                     "We'll let you know as soon as we're live!"]
-           error   [:div.result.error
-                    "Oh no!"
-                    [:br] "Something went wrong. Please try again."])]))))
+           error [:div.result.error
+                  "Oh no!"
+                  [:br] "Something went wrong. Please try again."])]))))
 
 ;;
 ;; * Component
@@ -59,77 +140,20 @@
 
 (defn landing []
   [:div.landing.asc.dc.ac
-   [:div.container
-    [:div.codecasts-easy-stmt
-     [:span.codecasts
-      "Codecasts. "]
-     "Finally easy."]
-    [:div.video-and-waitlist.f1
-     [:div.demo-video-wrapper.ac
-      [:video.demo-video
-       {:controls  false
-        :auto-play true
-        ;; necessary to autoplay on iOS
-        :muted     true
-        ;; necesssary to not enter full-screen mode in iOS
-        ;; but seeming not currently supported in react
-                                        ;:plays-inline true
-        :loop      true
-        :preload   "auto"
-        :src       "/video/watch-and-interact.m4v"}]]
-     [:div.text-and-waitlist.dc.ac
-      [:div.text
-       [:span.just-code
-        "Code & Interact."]
-       [:br]
-       [:div.auto-rec
-        "Vimsical automatically records as you speak or type."]]
-      [:div.top-waitlist.dc.ac
-       [:div.join-prompt
-        "Join the waitlist"]
-       [waitlist]]]]
-    [:div.community-codecasts-stmt
-     [:span.community-created
-      "Community-Created "]
-     "Interactive Codecasts"]
-    [:div.platform.ac
-     [:div.text
-      [:div.title
-       "Platform"]
-      [:div.desc
-       "The web is full of amazing projects made by amazing people."
-       [:br]
-       [:br]
-       "But how did they get from A → B?"
-       [:br]
-       [:br]
-       "Join a community of coders who empower each other by talking "
-       [:i "with"]
-       " code."]]
-     [:div.img-wrapper.dc.jc
-      [:img.img
-       {:src "/img/platform-crop.png"}]]]
-    [:div.process-control-stmt]
-    [:div.player.dc.ac
-     [:div.text
-      [:div.title
-       "Player"]
-      [:div.desc.embed
-       "Embed on any website with a simple script tag. Also, we’re adding
-       support for Twitter, Medium, Reddit and blogs."]]
-     [:img.img
-      {:src "/img/ep.png"}]
-     [:div.text.summary
-      [:div.desc
-       "Under the hood Vimsical is powered by a full-fledged version control
-        system that records every change you make. "
-       "And more. Stay tuned for integrations to watch and record in your
-        favorite editor."]]]
+   [:div.wrapper
+    [page-header]
+    [create]
+    [explore]
+    [player-section]
+    [:div.section
+     [:h3 "TODO Creations here"]]
+    [mission-section]
+
+    [:div.section
+     [:h3 "TODO Creations here"]]
+
     [:div.bottom-waitlist.dc.ac
-     [:div.join-prompt
-      "Join the waitlist"]
+     [:h1.join "Join our Journey"]
      [waitlist]]
     [icons/logo-and-type
      {:class "footer-logo jc ac"}]]])
-
-
