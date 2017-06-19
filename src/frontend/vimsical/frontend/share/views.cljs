@@ -16,11 +16,8 @@
 (defn share []
   (let [copied? (interop/ratom false)]
     (fn []
-      (let [embed-markup (player.embed/player-iframe-markup
-                          {:src   "http://localhost:3449/player.html"
-                           :style {:border :none
-                                   :width  "100%"
-                                   :height 400}})]
+      (let [vims         (<sub [::app.subs/vims])
+            embed-markup (player.embed/player-iframe-markup vims)]
         [:div.share.dc.ac
          [:div.share-options
           {:on-click (e> (.stopPropagation e))}
