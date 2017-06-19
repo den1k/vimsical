@@ -81,7 +81,10 @@
        ::vcs.subs/keys [files]}
       [_ vims status-key]]
    ;; XXX passed vims doesn't have an owner
-   (let [vims' (mg/pull db [:db/uid {::vims/owner [:db/uid]}] (util.mg/->ref db vims))]
+   (let [vims' (mg/pull db [:db/uid
+                            {::vims/owner [:db/uid]}
+                            {::vims/snapshots ['*]}]
+                        (util.mg/->ref db vims))]
      ;; Dispatch an event per file to update their state, then upload
      {:dispatch-n
       (conj
@@ -101,7 +104,7 @@
        file]]
    (when preprocessed-file-string
      (let [snapshot (vcs.snapshot/new-frontend-snapshot (uuid) user-uid vims-uid file preprocessed-file-string)
-           vims'    (update vims ::vims/snapshots util/replace-by-or-conj ::vcs.snapshot/file-uid snapshot)]
+           vims'    (update vims ::vims/snapshots (fnil util/replace-by-or-conj []) ::vcs.snapshot/file-uid snapshot)]
        {:db (util.mg/add db vims')}))))
 
 (re-frame/reg-event-fx
@@ -109,9 +112,9 @@
  (fn upload-snapshots-event-fx
    [{:keys [db]} [_ vims status-key]]
    ;; Pull the vims again since we know it is now stale
-   (let [vims-ref         (util.mg/->ref db vims)
+   (let [vims-ref                  (util.mg/->ref db vims)
          {::vims/keys [snapshots]} (mg/pull db [{::vims/snapshots ['*]}] vims-ref)
-         remote-snapshots (mapv vcs.snapshot/->remote-snapshot snapshots)]
+         remote-snapshots          (mapv vcs.snapshot/->remote-snapshot snapshots)]
      (when (seq remote-snapshots)
        {:remote
         {:id               :backend
