@@ -16,8 +16,8 @@
 (defn id [x]
   (cond
     (keyword? x) x
-    (vector? x)  (first x)
-    :else        (assert false)))
+    (seq x)      (first x)
+    :else        (throw (ex-info "Invalid event, expected keyword or vector" {:event x}))))
 
 (defn id-append
   "Given qualified `kw`, append `segment` to its namespace."
