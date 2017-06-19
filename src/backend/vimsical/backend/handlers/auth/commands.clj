@@ -79,13 +79,13 @@
     (multi/async
      context
      (try
-       (let [_    (async/<? (invite-user-tx-chan signup-user))
-             user (async/<? (user.queries/user+snapshots-chan context uid))]
-         (-> context
-             (create-user-session uid)
-             (multi/set-response user)))
+       ( let [_    (async/<? (invite-user-tx-chan signup-user))
+              user (async/<? (user.queries/user+snapshots-chan context uid))]
+        (-> context
+            (create-user-session uid)
+            (multi/set-response user)))
        (catch Throwable t
-         (multi/set-response 410 {:reason :token-expired}))))))
+         (multi/set-response context 410 {:reason ::commands/token-expired}))))))
 
 ;;
 ;; * Create invite

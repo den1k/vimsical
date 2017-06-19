@@ -43,7 +43,9 @@
 ;; ** Spec
 ;;
 
-(s/def ::error ::event/error)
+
+(s/def ::reason keyword?)
+(s/def ::error (s/keys :req-ui [::reason]))
 
 (s/def ::status
   (s/nilable
@@ -64,7 +66,7 @@
         :args (s/cat :registry map?
                      :remote-id ::id
                      :status-key ::status-key
-                     :status ::status)
+                     :status any?)
         :ret map?)
 
 (defn- set-status [status-registry remote-id status-key status]
