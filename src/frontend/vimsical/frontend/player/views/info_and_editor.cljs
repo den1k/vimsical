@@ -37,7 +37,7 @@
     (reagent/create-class
      {:render
       (fn [c]
-        (let [{:keys [vims]} (reagent/props c)
+        (let [{:keys [vims show-info? orientation] :as opts} (reagent/props c)
               {::vims/keys [title owner]} (<sub [::app.subs/vims-info vims])
               files                 (<sub [::vcs.subs/files vims])
               temp-first-file       (first files)
@@ -54,7 +54,8 @@
                                                      :compact? true}])
                                      uid->file)
               on-mobile?            (<sub [::ui.subs/on-mobile?])
-              show-info?            (not (<sub [::timeline.subs/active? vims]))]
+              show-info?            (and show-info?
+                                         (not (<sub [::timeline.subs/active? vims])))]
           [:div.info-and-editor-panel.dc
            {:class (when show-info? "show-info")
             :on-mouse-enter
@@ -72,7 +73,7 @@
               [:div.desc desc])]
            (get file-uid->code-editor active-file-uid)
            [:div.logo-and-file-type.bar
-            (case (<sub [::ui.subs/orientation])
+            (case orientation
               :landscape [icons/logo-and-type]
-              :portrait [elems/explore])
+              :portrait [elems/explore opts])
             (active-file-badge {:file active-file})]]))})))

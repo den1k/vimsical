@@ -171,7 +171,8 @@
       :position   :absolute
       :width      :100%
       :bottom     0
-      :background :white}
+      :background :white
+      :box-shadow "0 -2px 6px 0 rgba(143, 144, 150, 0.2)"}
      [:.logo-and-type
       {:width :60%}]
      [:.active-file-type
@@ -231,24 +232,27 @@
       {:display :flex}]]]])
 
 (def player
-  [:.vimsical-frontend-player
-   {:background :white
-    :height     :100%}
-   [:&.landscape
-    {:display   :flex
-     :min-width :700px
-     :max-width :1200px}
-    landscape-split
-    [:.explore
-     {:margin-left :18px}]]
-   [:&.portrait
-    {:display        :flex
-     :flex-direction :column
-     :width          :100%}
-    portrait-split]
-   bar
-   preview
-   editor-panel])
+  [(media/not-on-mobile
+    [:.vimsical-frontend-player.landscape
+     {:height :400px}])
+   [:.vimsical-frontend-player
+    {:background :white
+     :height     :100%}
+    [:&.landscape
+     {:display   :flex
+      :min-width :700px
+      :max-width :1200px}
+     landscape-split
+     [:.explore
+      {:margin-left :18px}]]
+    [:&.portrait
+     {:display        :flex
+      :flex-direction :column
+      :width          :100%}
+     portrait-split]
+    bar
+    preview
+    editor-panel]])
 
 (def embed-styles
   "Standalone styles for the embedded version of Player.

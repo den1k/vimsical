@@ -7,6 +7,7 @@
     [:.monaco-editor-background
      {:background :white}]
     [:.scrollbar.vertical
+     {:margin-right :1px}
      [:.slider
       {:border-radius :5px}]]
     [:.monaco-editor-hover-content

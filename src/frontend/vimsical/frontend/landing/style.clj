@@ -3,8 +3,7 @@
             [vimsical.frontend.styles.color :refer [colors]]))
 
 (def credit
-  [:.credit-wrapper
-   {:display :inline-block}
+  [[:.credit-wrapper {:display :inline-block}]
    [:.credit
     {:text-align :right
      :font-size  :12px
@@ -43,7 +42,8 @@
 (def player
   [:.player-section
    [:.player
-    {:margin-top :20px}]
+    {:margin-top :20px}
+    {:border (str "1px solid " (:lightgrey colors))}]
    [:.embed-stmt
     {:font-weight    200
      :letter-spacing :.4px

@@ -55,11 +55,11 @@
    [re-com/line
     :class "divider-line"]])
 
-(defn explore []
+(defn explore [{:keys [orientation]}]
   ; no access to vcr to non creators initially, we want to guide traffic to the
   ; waitlist.
   (when-not true #_(<sub [::ui.subs/on-mobile?]) ; can't go to vcr when on mobile, so don't show explore
     [:div.explore.truncate
      "Explore"
-     (when (= :landscape (<sub [::ui.subs/orientation]))
+     (when (= :landscape orientation)
        " on Vimsical")]))

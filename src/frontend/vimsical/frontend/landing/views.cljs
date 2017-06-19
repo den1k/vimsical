@@ -6,7 +6,20 @@
             [reagent.core :as reagent]
             [vimsical.common.util.core :as util]
             [re-frame.interop :as interop]
-            [vimsical.frontend.util.dom :as util.dom]))
+            [vimsical.frontend.util.dom :as util.dom]
+            [vimsical.frontend.util.re-frame :refer [<sub]]
+            [vimsical.frontend.vims.subs :as vims.subs]
+            [vimsical.frontend.live-preview.views :as live-preview.views]
+            [vimsical.frontend.player.views.player :as player]
+            [vimsical.frontend.vims.handlers :as vims.handlers]
+            [re-frame.core :as re-frame]))
+
+(def landing-vims->uid
+  {:bug (uuid "5947d83b-602f-4c0a-83e5-88c03281c0a0")})
+
+(defn load-landing-vims []
+  (doseq [[_ uid] landing-vims->uid]
+    (re-frame/dispatch [::vims.handlers/load-vims uid])))
 
 ;;
 ;; * Waitlist Form
@@ -40,15 +53,26 @@
   (-> (.getElementById js/document waitlist-signup-id)
       (util.dom/scroll-to)))
 
-(defn credit [title author content opts]
+(defn credit [title author]
+  [:div.credit
+   "Adapted from " [:span.title title] " by " [:span.author author]])
+
+(defn credit-wrapper [title author content {:keys [above?]}]
   [:div.credit-wrapper
-   opts
+   (when above? [credit title author])
    content
-   [:div.credit
-    "Adapted from " [:span.title title] " by " [:span.author author]]])
+   (when-not above? [credit title author])])
+
+(defn- vims-preview [{:keys [vims-uid]}]
+  (when-let [vims (<sub [::vims.subs/vcs-vims vims-uid])]
+    [live-preview.views/live-preview
+     {:ui-key  ::page-header
+      :static? true
+      ;:from-snapshot? true
+      :vims    vims}]))
 
 (defn page-header []
-  [:div.stmt-wrapper.jsb.ac.section
+  [:div.stmt-wrapper.jsb.ac
    [:div.vimsical-stmt
     [:h1.header "Vimsical"]
     [:h2.subheader
@@ -58,14 +82,14 @@
     [:div.join
      {:on-click (e> (scroll-to-waitlist))}
      "Join our Journey"]]
-   [:div.lp-vims]])
+   [vims-preview {:vims-uid (:bug landing-vims->uid)}]])
 
 (defn create []
   [:div.create.section
    [:h2.header "Create"]
    [:h3.subheader
     "Vimsical turns your coding process into an interactive tutorial. Automatically."]
-   [credit
+   [credit-wrapper
     "Trail"
     "Lee Hamsmith"
     [:div.lp-vims-lg]]])
@@ -75,7 +99,7 @@
    [:h2.header "Explore"]
    [:h3.subheader
     "See your favorite projects take shape. And make edits with one click."]
-   [credit
+   [credit-wrapper
     "The Bug"
     "Ana Tudor"
     [:div.lp-vims-lg]]])
@@ -94,22 +118,20 @@
     "By providing tools to record, share and explore our process."]])
 
 (defn player-section []
-  (let [viewport-pct (interop/ratom 0)]
-    (fn []
-      [:div.player-section.dc.ac.section
-       [ui.views/viewport-ratio viewport-pct [:h2.header "Player"]]
-       [:h3.subheader "Take your creations places."]
-       [credit
-        "Wormhole"
-        "Jack Aniperdo"
-        [:div.lp-vims-lg.player]
-        {:style {:margin-right (* 20 @viewport-pct)}}]
-       [:p.embed-stmt
-        "Empower others with an immersive learning experience"
-        [:br]
-        "Embed"
-        [:span.bold " Player "]
-        "on your website, Twitter or use it in your classroom."]])))
+  ;; todo skim vims by scrolling
+  [:div.player-section.dc.ac.section
+   [:h2.header "Player"]
+   [:h3.subheader "Take your creations places."]
+   [credit-wrapper "Wormhole" "Jack Aniperdo"
+    (when-let [vims (<sub [::vims.subs/vcs-vims (:bug landing-vims->uid)])]
+      [player/player {:vims       vims :orientation :landscape
+                      :show-info? false}])]
+   [:p.embed-stmt
+    "Empower others with an immersive learning experience"
+    [:br]
+    "Embed"
+    [:span.bold " Player "]
+    "on your website, Twitter or use it in your classroom."]])
 
 (defn waitlist []
   (let [state (reagent/atom {:success nil :error nil :email ""})]
@@ -139,21 +161,23 @@
 ;;
 
 (defn landing []
-  [:div.landing.asc.dc.ac
-   [:div.wrapper
-    [page-header]
-    [create]
-    [explore]
-    [player-section]
-    [:div.section
-     [:h3 "TODO Creations here"]]
-    [mission-section]
+  (load-landing-vims)
+  (fn []
+    [:div.landing.asc.dc.ac
+     [:div.wrapper
+      [page-header]
+      [create]
+      [explore]
+      [player-section]
+      [:div.section
+       [:h3 "TODO Creations here"]]
+      [mission-section]
 
-    [:div.section
-     [:h3 "TODO Creations here"]]
+      [:div.section
+       [:h3 "TODO Creations here"]]
 
-    [:div.bottom-waitlist.dc.ac
-     [:h1.join "Join our Journey"]
-     [waitlist]]
-    [icons/logo-and-type
-     {:class "footer-logo jc ac"}]]])
+      [:div.bottom-waitlist.dc.ac
+       [:h1.join "Join our Journey"]
+       [waitlist]]
+      [icons/logo-and-type
+       {:class "footer-logo jc ac"}]]]))
