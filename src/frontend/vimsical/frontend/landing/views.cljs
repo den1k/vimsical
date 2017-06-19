@@ -125,7 +125,8 @@
    [credit-wrapper "Wormhole" "Jack Aniperdo"
     (when-let [vims (<sub [::vims.subs/vcs-vims (:bug landing-vims->uid)])]
       [player/player {:vims       vims :orientation :landscape
-                      :show-info? false}])]
+                      :show-info? false
+                      :read-only? true}])]
    [:p.embed-stmt
     "Empower others with an immersive learning experience"
     [:br]
