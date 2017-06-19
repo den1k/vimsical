@@ -7,6 +7,8 @@
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.frontend.vcs.handlers :as vcs.handlers]
+   [vimsical.frontend.vcs.sync.handlers :as vcs.sync.handlers]
    [vimsical.frontend.vims.db :as db]
    [vimsical.remotes.backend.vims.commands :as vims.commands]
    [vimsical.remotes.backend.vims.queries :as vims.queries]
@@ -15,7 +17,8 @@
    [vimsical.vcs.file :as vcs.file]
    [vimsical.vcs.snapshot :as vcs.snapshot]
    [vimsical.vims :as vims]
-   [vimsical.user :as user]))
+   [vimsical.user :as user]
+   [vimsical.frontend.vims.db :as vims.db]))
 
 ;;
 ;; * New vims
@@ -49,7 +52,7 @@
 
 (re-frame/reg-event-fx ::new new-event-fx)
 (re-frame/reg-event-fx ::new-success (fn [_ _] (re-frame.loggers/console :log "New vims success")))
-(re-frame/reg-event-fx ::new-error   (fn [_ e] (re-frame.loggers/console :log "Vims error" e)))
+(re-frame/reg-event-fx ::new-error (fn [_ e] (re-frame.loggers/console :log "Vims error" e)))
 
 ;;
 ;; * Delete vims
@@ -165,6 +168,47 @@
 (re-frame/reg-event-fx ::vims         vims-handler)
 (re-frame/reg-event-fx ::vims-success vims-success-event-fx)
 (re-frame/reg-event-fx ::vims-error   vims-error-event-fx)
+
+;;
+;; * Async loading flow
+;;
+
+(defn load-vims-async-flow
+  [vims-uid {:keys [uuid-fn first-dispatch] :or {uuid-fn uuid} :as options}]
+  {:pre [(uuid? vims-uid)]}
+  (letfn [(event+uuid [[id uuid]] [id uuid])]
+    {:id                [::load-vims-async vims-uid]
+     :first-dispatch    [::load-vims-async-did-start vims-uid]
+     :event-id->seen-fn {::deltas-success event+uuid
+                         ::vims-success   event+uuid}
+     :rules             [{:when     :seen-all-of?
+                          :events   [[::deltas-success vims-uid]
+                                     [::vims-success vims-uid]]
+                          :dispatch [::load-vims-async-did-complete vims-uid options]}]
+     :halt?             true}))
+
+(re-frame/reg-event-fx
+ ::load-vims-async-did-start
+ (fn [{:keys [db]} [_ vims-uid]]
+   {:dispatch-n
+    [[::vims vims-uid]
+     [::deltas vims-uid]]}))
+
+(re-frame/reg-event-fx
+ ::load-vims-async-did-complete
+ (fn [{:keys [db]} [_ vims-uid deltas {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
+   (let [deltas (or deltas (vims.db/get-deltas db vims-uid))]
+     {:dispatch-n
+      [[::vcs.handlers/init vims-uid deltas options]]})))
+
+(re-frame/reg-event-fx
+ ::load-vims
+ (fn [{:keys [db]} [_ vims {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
+   {:pre [vims]}
+   (when vims
+     (let [[_ vims-uid] (util.mg/->ref db vims)]
+       (when (not (vims.db/loaded? db vims))
+         {:async-flow (load-vims-async-flow vims-uid options)})))))
 
 ;;
 ;; ** Deltas
