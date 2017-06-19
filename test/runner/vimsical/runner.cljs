@@ -12,6 +12,7 @@
    [vimsical.common.test-test]
    [vimsical.common.util.transit-test]
    [vimsical.frontend.code-editor.interop-test]
+   [vimsical.vcs.edit-event-test]
    [vimsical.remotes.event-test]
    [vimsical.vcs.alg.topo-test]
    [vimsical.vcs.alg.traversal-test]
