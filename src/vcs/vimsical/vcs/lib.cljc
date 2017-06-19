@@ -1,6 +1,7 @@
 (ns vimsical.vcs.lib
   (:require
-   [clojure.spec.alpha :as s]))
+   [clojure.spec.alpha :as s]
+   [clojure.string :as str]))
 
 ;; * Spec
 
@@ -16,7 +17,7 @@
 (s/def ::type #{:text})
 (s/def ::sub-type sub-types)
 (s/def ::name string?)
-
+(s/def ::version string?)
 
 ;;
 ;; * Helpers
@@ -30,9 +31,10 @@
 ;;
 
 (s/fdef new-lib
-        :args (s/cat :sub-type ::sub-type :src ::src :name (s/? ::name))
+        :args (s/or :custom  (s/cat :sub-type ::sub-type :src ::src)
+                    :catalog (s/cat :name ::name :version ::version :sub-type ::sub-type :src ::src))
         :ret ::lib)
 
 (defn new-lib
   ([sub-type src] {::src src ::type :text ::sub-type sub-type})
-  ([sub-type src name] {::name name ::src src ::type :text ::sub-type sub-type}))
+  ([name version sub-type src] {::name name ::version version ::src src ::type :text ::sub-type sub-type}))
