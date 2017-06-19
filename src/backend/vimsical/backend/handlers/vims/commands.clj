@@ -34,6 +34,23 @@
       (<? (datomic/transact-chan datomic tx))))))
 
 ;;
+;; * Delete
+;;
+
+(defmethod event-auth/require-auth? ::commands/delete [_] true)
+(defmethod multi/context-spec ::commands/delete [_] ::datomic-context)
+(defmethod multi/handle-event ::commands/delete
+  [{::user/keys [uid]
+    :keys       [datomic] :as context} [_ vims-uid]]
+  (let [tx [[:db.fn/retractEntity [:db/uid vims-uid]]]]
+    (multi/async
+     context
+     (multi/set-response
+      context
+      (<? (datomic/transact-chan datomic tx))))))
+
+
+;;
 ;; * Title
 ;;
 
