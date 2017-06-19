@@ -53,10 +53,6 @@ jobs:
       - checkout
       - restore_cache:
           key: lein-{{ checksum "project.clj" }}
-      - run:
-          name: wait for cassandra
-          command: |
-            /usr/bin/wait-for-command.sh -c 'nc -z localhost 9042' -t 30
       - run: make test-cljs
 
   test-cljs-advanced:
@@ -65,10 +61,6 @@ jobs:
       - checkout
       - restore_cache:
           key: lein-{{ checksum "project.clj" }}
-      - run:
-          name: wait for cassandra
-          command: |
-            /usr/bin/wait-for-command.sh -c 'nc -z localhost 9042' -t 30
       - run: make test-cljs-advanced
 
   test-integration:
