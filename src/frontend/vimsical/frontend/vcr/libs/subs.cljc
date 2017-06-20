@@ -9,7 +9,7 @@
   (group-by ::vcs.lib/sub-type libs))
 
 (defn annotate-libs [libs added-libs]
-  (let [src->added-libs (util/project ::src added-libs)
+  (let [src->added-libs (util/project ::vcs.lib/src added-libs)
         mark-added      (map (fn [{::vcs.lib/keys [src] :as lib}]
                                (cond-> lib
                                  (get src->added-libs src)
@@ -21,10 +21,6 @@
  :<- [::app.subs/libs]
  :<- [::app.vims.subs/added-libs]
  (fn [[libs added-libs]]
-
-
    (-> (annotate-libs libs added-libs)
-       (by-sub-type))
-
-   ))
+       (by-sub-type))))
 

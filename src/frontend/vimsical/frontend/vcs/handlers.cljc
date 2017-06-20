@@ -17,7 +17,9 @@
    [vimsical.vcs.editor :as editor]
    [vimsical.vcs.edit-event :as edit-event]
    [vimsical.vims :as vims]
-   [vimsical.vcs.data.splittable :as splittable]))
+   [vimsical.vcs.data.splittable :as splittable]
+   [vimsical.common.util.core :as util]
+   [vimsical.vcs.lib :as vcs.lib]))
 
 ;;
 ;; * VCS Vims init-event-fx
@@ -118,7 +120,7 @@
         cursor    (vcs/file-cursor vcs file-uid delta-uid)]
     (println string)
     (if (number? cursor)
-      (println (str (apply str (repeat cursor " "))  "_"))
+      (println (str (apply str (repeat cursor " ")) "_"))
       (let [left  (apply min cursor)
             right (apply max cursor)
             span  (- right left 2)]
@@ -140,8 +142,8 @@
           cursor-event? (edit-event/cursor-event? edit-event)]
       (cond
         (and branching? cursor-event?) :no-op
-        branching?                     :branching
-        :else                          :default))))
+        branching? :branching
+        :else :default))))
 
 (defmethod add-edit-event* :default
   [{:as vcs ::vcs.db/keys [branch-uid playhead-entry]} effects file-uid edit-event]
@@ -194,14 +196,42 @@
 
 (re-frame/reg-event-fx
  ::add-lib
- (fn [{:keys [db]} [_ lib {:keys [branch-uid] :as opts} :as ev]]
-   (let [branch-ref (util.mg/->ref db branch-uid)]
+ [(util.re-frame/inject-sub (fn [[_ vims _]] [::subs/branch vims]))]
+ (fn [{:keys  [db]
+       branch ::subs/branch} [_ vims lib]]
+   (let [branch-ref (util.mg/->ref db branch)
+         branch-uid (:db/uid branch)]
      {:db (util.mg/add-join db branch-ref ::branch/libs lib)
       :remote
-      {:id               :backend
-       :event            [::vcs.commands/add-lib branch-uid lib]
-       :dispatch-success ::add-lib-success
-       :dispatch-error   ::add-lib-error}})))
+          {:id               :backend
+           :event            [::vcs.commands/add-lib branch-uid lib]
+           :dispatch-success ::add-lib-success
+           :dispatch-error   ::add-lib-error}})))
 
-(re-frame/reg-event-fx ::add-lib-success (fn [{:keys [db]} _] (println "Lib sucess")))
-(re-frame/reg-event-fx ::add-lib-error   (fn [{:keys [db]} e] (println "Lib error" e)))
+;; temp
+(re-frame/reg-event-fx ::add-lib-success (fn [{:keys [db]} _] (println "Lib add sucess")))
+(re-frame/reg-event-fx ::add-lib-error (fn [{:keys [db]} e] (println "Lib add error" e)))
+
+(re-frame/reg-event-fx
+ ::remove-lib
+ [(util.re-frame/inject-sub (fn [[_ vims _]] [::subs/branch vims]))]
+ (fn [{:keys  [db]
+       branch ::subs/branch}
+      [_ vims lib]]
+   (let [lib-branch (util/ffilter
+                     (comp (fn [libs]
+                             (util/ffilter (fn [lib] (util/=by ::vcs.lib/src lib)) libs))
+                           ::branch/libs)
+                     (branch/lineage branch))
+         branch-ref (util.mg/->ref db lib-branch)
+         branch-uid (:db/uid lib-branch)]
+     {:db (util.mg/remove-join db branch-ref ::branch/libs lib)
+      :remote
+          {:id               :backend
+           :event            [::vcs.commands/remove-lib branch-uid lib]
+           :dispatch-success ::add-lib-success
+           :dispatch-error   ::add-lib-error}})))
+
+;; temp
+(re-frame/reg-event-fx ::remove-lib-success (fn [{:keys [db]} _] (println "Lib remove sucess")))
+(re-frame/reg-event-fx ::remove-lib-error (fn [{:keys [db]} e] (println "Lib remove error" e)))

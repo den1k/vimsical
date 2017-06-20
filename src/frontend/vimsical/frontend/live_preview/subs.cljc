@@ -107,9 +107,11 @@
  ::file-string+file-lint-or-preprocessing-errors
  (fn [[_ vims file]]
    [(re-frame/subscribe [::vcs.subs/file-string vims file])
-    (re-frame/subscribe [::vcs.subs/file-lint-or-preprocessing-errors vims file])])
- (fn [file-string+file-lint-or-preprocessing-errors _]
-   (vec file-string+file-lint-or-preprocessing-errors)))
+    (re-frame/subscribe [::vcs.subs/file-lint-or-preprocessing-errors vims file])
+    ; sub libs to trigger tracker in live-preview
+    (re-frame/subscribe [::vcs.subs/libs vims])])
+ (fn [file-string+file-lint-or-preprocessing-errors+libs _]
+   (vec file-string+file-lint-or-preprocessing-errors+libs)))
 
 (re-frame/reg-sub
  ::error-catcher-branch-libs

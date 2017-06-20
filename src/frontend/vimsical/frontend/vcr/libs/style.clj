@@ -41,7 +41,7 @@
         [:.res-row
          {:display :table-row
           :cursor  :pointer}
-         [:&:hover
+         [:&:hover :&.selected
           {:background (:darkgrey-trans colors)}]
          [:.cell
           {:display        :table-cell
@@ -61,4 +61,6 @@
           [:&.cell
            {:width :20px}]
           [:.icon
-           {:font-size :20px}]]])]]))
+           {:height      0              ; avoid padding
+            :line-height 0
+            :font-size   :20px}]]])]]))

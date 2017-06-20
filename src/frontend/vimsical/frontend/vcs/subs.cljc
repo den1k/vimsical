@@ -144,8 +144,7 @@
  (fn [[_ vims]]
    (re-frame/subscribe [::branch vims]))
  (fn [branch _]
-   (let [xf (comp (map ::branch/libs) cat)]
-     (into #{} xf (branch/lineage branch)))))
+   (into #{} (mapcat ::branch/libs) (branch/lineage branch))))
 
 ;;
 ;; * Pre-processors

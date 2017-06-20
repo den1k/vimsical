@@ -52,7 +52,7 @@
 
 (deftest libs-test
   (let [lib (lib/new-lib :javascript "https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js")]
-    (re-frame/dispatch [::vcs.handlers/add-lib lib {:branch-uid (:db/uid (first data/branches))}])
+    (re-frame/dispatch [::vcs.handlers/add-lib data/vims lib])
     (let [libs (<sub [::vcs.subs/libs data/vims])]
       (is (some (partial = lib) libs)))))
 
