@@ -72,8 +72,8 @@
 
 (defn op-uid  [{[_ uid] :op}] uid)
 (defn op-type [{[op] :op}] op)
-(defn op-diff [{[_ _ diff] :op}] (assert diff "Not a :str/ins") diff)
-(defn op-amt  [{[_ _ amt] :op}] (assert amt "Not :str/rem") amt)
+(defn op-diff [{[_ _ diff] :op}] diff)
+(defn op-amt  [{[_ _ amt] :op}] amt)
 
 ;;
 ;; * Offsets
