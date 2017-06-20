@@ -33,6 +33,8 @@
 ;; * API
 ;;
 
+(def ^:private conj-deltas (fnil conj (new-vector)))
+
 (s/fdef add-delta
         :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas ::delta/delta)
         :ret ::deltas-by-branch-uid)
@@ -40,7 +42,7 @@
 (defn add-delta
   [deltas-by-branch-uid {:keys [branch-uid] :as delta}]
   {:pre [branch-uid]}
-  (update deltas-by-branch-uid branch-uid (fnil conj (new-vector)) delta))
+  (update deltas-by-branch-uid branch-uid conj-deltas delta))
 
 (s/fdef add-deltas
         :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas (s/every ::delta/delta))

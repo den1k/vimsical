@@ -334,13 +334,17 @@
 ;; *** Adding deltas -- reading a vims
 ;;
 
+(def ^:private add-delta-rf* (fnil add-delta-rf empty-state))
+
 (s/fdef add-delta
         :args (s/cat :state ::state-by-file-uid :delta ::delta/delta)
         :ret ::state-by-file-uid)
 
 (defn add-delta
   [state-by-file-uid {:keys [file-uid] :as delta}]
-  (update state-by-file-uid file-uid (fnil add-delta-rf empty-state) delta))
+  (update state-by-file-uid file-uid add-delta-rf* delta))
+
+(def ^:private add-delta* (fnil add-delta empty-state-by-file-uid))
 
 (s/fdef add-deltas
         :args (s/cat :state-by-file-uid ::state-by-file-uid :deltas (s/every ::delta/delta))
@@ -348,18 +352,20 @@
 
 (defn add-deltas
   [state-by-file-uid deltas]
-  (reduce (fnil add-delta empty-state-by-file-uid) state-by-file-uid deltas))
+  (reduce add-delta* state-by-file-uid deltas))
 
 ;;
 ;; *** Adding editing events -- editing a vims
 ;;
 
+(def ^:private add-edit-event-rf* (fnil add-edit-event-rf empty-state))
+
 ;; Private version with internal deltas accumulator
 (defn- add-edit-event*
   [state-by-file-uid editor-effects deltas file-uid branch-uid prev-delta-uid edit-event]
   (let [state                            (get state-by-file-uid file-uid)
-        rf                               (fnil add-edit-event-rf empty-state)
-        [state' deltas' prev-delta-uid'] (rf state editor-effects deltas file-uid branch-uid prev-delta-uid edit-event)
+
+        [state' deltas' prev-delta-uid'] (add-edit-event-rf* state editor-effects deltas file-uid branch-uid prev-delta-uid edit-event)
         state-by-file-uid'               (assoc state-by-file-uid file-uid state')]
     [state-by-file-uid' deltas' prev-delta-uid']))
 

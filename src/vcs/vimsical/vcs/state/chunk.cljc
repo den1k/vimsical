@@ -110,6 +110,9 @@
    (util/=by ::branch-uid :branch-uid chunk delta)))
 
 
+(def ^:private assoc-deltas-by-relative-time
+  (fnil assoc (avl/sorted-map)))
+
 (s/fdef add-delta
         :args (s/cat :chunk ::chunk :delta ::delta/delta)
         :ret  ::chunk)
@@ -126,7 +129,7 @@
           (assoc  ::delta-end-uid uid ::duration t)
           (update ::count inc)
           (update ::delta-start-uid (fnil identity uid))
-          (update ::deltas-by-relative-time (fnil assoc (avl/sorted-map)) t delta)))))
+          (update ::deltas-by-relative-time assoc-deltas-by-relative-time t delta)))))
 
 (defn with-bounds [chunk start? end?]
   (when chunk

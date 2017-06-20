@@ -38,6 +38,8 @@
 ;; * API
 ;;
 
+(def ^:private conj-chunk (fnil conj []))
+
 ;; XXX more efficient way to get the depth
 (defn add-delta
   [chunks-by-branch-uid
@@ -60,9 +62,8 @@
                 (conj-onto-last-chunk? chunks delta) (conj-onto-last-chunk chunks delta)
                 :else
                 (let [branch-start? (first-chunk-in-branch? chunks-by-branch-uid delta)
-                      chunk'        (chunk/new-chunk (uuid-fn) depth [delta] branch-start?)
-                      f             (fnil conj [])]
-                  (f chunks chunk'))))
+                      chunk'        (chunk/new-chunk (uuid-fn) depth [delta] branch-start?)]
+                  (conj-chunk chunks chunk'))))
             (annotate-branch-start-and-end [chunks]
               (case (count chunks)
                 0 chunks
