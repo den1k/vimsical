@@ -125,7 +125,7 @@
     (assoc state ::cursor [from-op-idx to-op-idx])))
 
 (defmethod add-delta-rf :str/ins
-  [{::keys [deltas] :as state} {:keys [prev-uid] :as delta}]
+  [{::keys [deltas string cursor] :as state} {:keys [prev-uid] :as delta}]
   (let [op-uid  (delta/op-uid delta)
         op-diff (delta/op-diff delta)
         op-idx  (op-uid->op-idx state op-uid)]
@@ -140,28 +140,28 @@
       ;;
       ;;  Append
       (== op-idx (count deltas))
-      (-> state
-          (assoc ::cursor (+ op-idx (delta/prospective-idx-offset delta)))
-          (update ::deltas conj delta)
-          (update ::string str op-diff))
+      (assoc state
+             ::cursor (+ op-idx (delta/prospective-idx-offset delta))
+             ::deltas (conj deltas delta)
+             ::string (str string op-diff))
       ;;
       ;; Splice
       :else
-      (-> state
-          (assoc ::cursor (+ op-idx (delta/prospective-idx-offset delta)))
-          (update ::deltas splittable/splice op-idx (indexed/vec-by :uid [delta]))
-          (update ::string splittable/splice op-idx op-diff)))))
+      (assoc state
+             ::cursor (+ op-idx (delta/prospective-idx-offset delta))
+             ::deltas (splittable/splice deltas op-idx (indexed/vec-by :uid [delta]))
+             ::string (splittable/splice string op-idx op-diff)))))
 
 (defmethod add-delta-rf :str/rem
   [{::keys [deltas string] :as state} delta]
   (let [op-uid (delta/op-uid delta)
         op-amt (delta/op-amt delta)
         op-idx (op-uid->op-idx state op-uid)]
-    (-> state
-        ;; Delete left to-right, so we don't move
-        (assoc ::cursor (+ op-idx (delta/prospective-idx-offset delta)))
-        (update ::deltas splittable/omit op-idx op-amt)
-        (update ::string splittable/omit op-idx op-amt))))
+    ;; Delete left to-right, so we don't move
+    (assoc state
+           ::cursor (+ op-idx (delta/prospective-idx-offset delta))
+           ::deltas (splittable/omit deltas op-idx op-amt)
+           ::string (splittable/omit string op-idx op-amt))))
 
 ;;
 ;; ** Editor API internals -- adding edit-events
