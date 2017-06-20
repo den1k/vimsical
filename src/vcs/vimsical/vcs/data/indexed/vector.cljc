@@ -207,7 +207,7 @@
                old-val-key (f old-val)
                index'      (dissoc index old-val-key)
                v'          (impl/vec nv)]
-           (vector f index' v'))))
+           (IndexedVector. f index' v'))))
      (more [this]
        (or (.next this) (empty this)))
      (cons [this val]
@@ -219,7 +219,7 @@
                                  (throw (ex-info "index already assigned" {:i i}))
                                  i)))
              v'      (conj v val)]
-         (vector f index' v')))
+         (IndexedVector. f index' v')))
 
      clojure.lang.IPersistentStack
      (peek [_] (.peek v))
@@ -231,7 +231,7 @@
 
      clojure.lang.IPersistentCollection
      (empty [_]
-       (vector f (new-index) (impl/vector)))
+       (IndexedVector. f (new-index) (impl/vector)))
      (equiv [this other]
        (or (identical? this other)
            (if (instance? IndexedVector other)
@@ -256,7 +256,7 @@
        (let [val-key (f val)
              index'  (assoc index val-key i)
              v'      (assoc v i val)]
-         (vector f index' v')))
+         (IndexedVector. f index' v')))
 
      clojure.lang.Indexed
      (nth [_ idx] (nth v idx))
@@ -286,8 +286,8 @@
      (split [_ idx]
        (let [[index-a index-b] (splittable/split index idx)
              [v-a v-b]         (splittable/split v idx)]
-         [(vector f index-a v-a)
-          (vector f index-b v-b)]))
+         [(IndexedVector. f index-a v-a)
+          (IndexedVector. f index-b v-b)]))
      (omit [this idx cnt]
        (let [[l tmp] (splittable/split this idx)
              [_ r]   (splittable/split tmp cnt)]
@@ -304,14 +304,14 @@
          (splittable/append this other)
          (let [index' (splittable/splice index idx (.index ^IndexedVector other))
                v'     (splittable/splice v idx (.v ^IndexedVector other))]
-           (vector f index' v'))))
+           (IndexedVector. f index' v'))))
      (append [this other]
        (when other (assert (vector? other)))
        (if (nil? other)
          this
          (let [index' (splittable/append index (.index ^IndexedVector other))
                v'     (splittable/append v (.v ^IndexedVector other))]
-           (vector f index' v'))))))
+           (IndexedVector. f index' v'))))))
 
 #?(:cljs
    (deftype IndexedVector [f ^Index index v]
@@ -337,7 +337,7 @@
                old-val-key (f old-val)
                index'      (dissoc index old-val-key)
                v'          (impl/vec nv)]
-           (vector f index' v'))))
+           (IndexedVector. f index' v'))))
 
      IReduce
      (-reduce [_ f] (-reduce v f))
@@ -353,10 +353,10 @@
                                  (throw (ex-info "index already assigned" {:i i}))
                                  i)))
              v'      (conj v val)]
-         (vector f index' v')))
+         (IndexedVector. f index' v')))
 
      IEmptyableCollection
-     (-empty [_] (vector f (new-index) (impl/vector)))
+     (-empty [_] (IndexedVector. f (new-index) (impl/vector)))
 
      ISequential
      IEquiv
@@ -385,7 +385,7 @@
        (let [val-key (f val)
              index'  (assoc index val-key i)
              v'      (assoc v i val)]
-         (vector f index' v')))
+         (IndexedVector. f index' v')))
 
      IIndexed
      (-nth [_ idx] (nth v idx))
@@ -415,8 +415,8 @@
      (split [_ idx]
        (let [[index-a index-b] (splittable/split index idx)
              [v-a v-b]         (splittable/split v idx)]
-         [(vector f index-a v-a)
-          (vector f index-b v-b)]))
+         [(IndexedVector. f index-a v-a)
+          (IndexedVector. f index-b v-b)]))
      (omit [this idx cnt]
        (let [[l tmp] (splittable/split this idx)
              [_ r]   (splittable/split tmp cnt)]
@@ -432,14 +432,14 @@
          (splittable/append this other)
          (let [index' (splittable/splice index idx (.-index other))
                v'     (splittable/splice v idx (.-v other))]
-           (vector f index' v'))))
+           (IndexedVector. f index' v'))))
      (append [this other]
        (when other (assert (vector? other)))
        (if (empty? other)
          this
          (let [index' (splittable/append index (.-index other))
                v'     (splittable/append v (.-v other))]
-           (vector f index' v'))))))
+           (IndexedVector. f index' v'))))))
 
 ;;
 ;; ** Printing
