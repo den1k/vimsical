@@ -248,7 +248,7 @@
 
      clojure.lang.IPersistentVector
      (assocN [_ i val]
-       (when (and (= identity f) (not= i (count v)))
+       (when (and (= identity f) (not (== i (count v))))
          ;; Unsupported for now...
          (throw
           (ex-info
@@ -270,7 +270,7 @@
      IIndexedInternal
      (-consistent? [this]
        (doseq [[i val] (map-indexed clojure.core/vector v)]
-         (when-not (= i (index-of this (f val)))
+         (when-not (== i (index-of this (f val)))
            (throw
             (ex-info
              "Inconsistent indexed vector state"
@@ -377,7 +377,7 @@
 
      IVector
      (-assoc-n [_ i val]
-       (when (and (= identity f) (not= i (count v)))
+       (when (and (= identity f) (not (== i (count v))))
          ;; Unsupported for now...
          (throw
           (ex-info
@@ -399,7 +399,7 @@
      IIndexedInternal
      (-consistent? [this]
        (doseq [[i val] (map-indexed clojure.core/vector v)]
-         (when-not (= i (index-of this (f val)))
+         (when-not (== i (index-of this (f val)))
            (throw
             (ex-info
              "Inconsistent indexed vector state"
