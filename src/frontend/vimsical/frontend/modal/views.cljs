@@ -4,6 +4,7 @@
             [vimsical.frontend.vims-list.views :refer [vims-list]]
             [vimsical.frontend.share.views :refer [share]]
             [vimsical.frontend.license.views :refer [license]]
+            [vimsical.frontend.vcr.libs.views :refer [libs]]
             [vimsical.user :as user]
             [vimsical.vims :as vims]))
 
@@ -14,4 +15,5 @@
       (case modal
         :modal/vims-list [vims-list]
         :modal/share [share]
-        :modal/license [license])]]))
+        :modal/license [license]
+        :modal/libs [libs])]]))
