@@ -70,10 +70,10 @@
 ;; * Accessors
 ;;
 
-(defn op-uid  [{[_ uid] :op}] uid)
-(defn op-type [{[op] :op}] op)
-(defn op-diff [{[_ _ diff] :op}] diff)
-(defn op-amt  [{[_ _ amt] :op}] amt)
+(defn op-uid  [delta] (get-in delta [:op 1]))
+(defn op-type [delta] (get-in delta [:op 0]))
+(defn op-diff [delta] (get-in delta [:op 2]))
+(defn op-amt  [delta] (get-in delta [:op 2]))
 
 ;;
 ;; * Offsets
