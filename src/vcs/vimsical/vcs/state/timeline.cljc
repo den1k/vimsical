@@ -310,11 +310,16 @@
         :ret ::timeline)
 
 (defn add-deltas
-  [timeline branches uuid-fn deltas]
-  (reduce
-   (fn [timeline delta]
-     (add-delta timeline branches uuid-fn delta))
-   timeline deltas))
+  [{:as timeline ::keys [deltas-by-branch-uid chunks-by-branch-uid duration]} branches uuid-fn deltas]
+  (let [deltas-by-branch-uid'          (state.branches/add-deltas deltas-by-branch-uid deltas)
+        chunks-by-branch-uid'          (state.chunks/add-deltas chunks-by-branch-uid branches uuid-fn deltas)
+        inlined-chunks                 (inline-chunks deltas-by-branch-uid' chunks-by-branch-uid' branches uuid-fn)
+        chunks-by-absolute-start-time' (new-chunks-by-absolute-start-time inlined-chunks)]
+    (assoc timeline
+           ::deltas-by-branch-uid deltas-by-branch-uid'
+           ::chunks-by-branch-uid chunks-by-branch-uid'
+           ::chunks-by-absolute-start-time chunks-by-absolute-start-time'
+           ::duration (reduce + (long duration) (map :pad deltas)))))
 
 ;;
 ;; ** Queries

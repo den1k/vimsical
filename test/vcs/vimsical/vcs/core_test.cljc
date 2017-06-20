@@ -151,7 +151,7 @@
          (delta/new-delta {:uid (uuid :d3) :prev-uid (uuid :d2) :branch-uid (uuid :master) :file-uid (uuid :html) :op [:str/rem (uuid :d1) 1],, :pad 1 :timestamp 1})
          (delta/new-delta {:uid (uuid :d4) :prev-uid (uuid :d3) :branch-uid (uuid :master) :file-uid (uuid :html) :op [:str/rem (uuid :d0) 1],, :pad 1 :timestamp 1})
          (delta/new-delta {:uid (uuid :d5) :prev-uid (uuid :d4) :branch-uid (uuid :master) :file-uid (uuid :html) :op [:str/ins (uuid :d0) "z"] :pad 1 :timestamp 1})]
-        vcs                     (reduce #(sut/add-delta %1 uuid-fn %2) (sut/empty-vcs branches) html-deltas)
+        vcs                     (sut/add-deltas (sut/empty-vcs branches) uuid-fn html-deltas)
         actual-html             (sut/file-string vcs (uuid :html) (-> html-deltas last :uid))]
     (testing "files"
       (is (= expect-html actual-html)))

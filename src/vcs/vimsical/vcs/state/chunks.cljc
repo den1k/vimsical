@@ -80,3 +80,10 @@
       (-> chunks-by-branch-uid
           (update branch-uid update-chunks uuid-fn delta)
           (update branch-uid annotate-branch-start-and-end)))))
+
+(defn add-deltas
+  [chunks-by-branch-uid branches uuid-fn deltas]
+  (reduce
+   (fn [chunks-by-branch-uid delta]
+     (add-delta chunks-by-branch-uid branches uuid-fn delta))
+   chunks-by-branch-uid deltas))

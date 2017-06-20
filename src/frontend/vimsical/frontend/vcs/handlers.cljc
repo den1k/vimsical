@@ -92,10 +92,10 @@
   [{:keys [uuid-fn timestamp elapsed] :as context}]
   {:pre [uuid-fn timestamp elapsed]}
   (assoc context ::editor/effects
-                 ;; NOTE all these fns take the edit-event
-                 {::editor/uuid-fn      (fn [& _] (uuid-fn))
-                  ::editor/timestamp-fn (fn [& _] timestamp)
-                  ::editor/pad-fn       (new-pad-fn elapsed)}))
+         ;; NOTE all these fns take the edit-event
+         {::editor/uuid-fn      (fn [& _] (uuid-fn))
+          ::editor/timestamp-fn (fn [& _] timestamp)
+          ::editor/pad-fn       (new-pad-fn elapsed)}))
 
 (re-frame/reg-cofx :editor editor-cofx)
 

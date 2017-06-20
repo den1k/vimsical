@@ -98,6 +98,27 @@
      (add-delta vcs uuid-fn delta))
    vcs deltas))
 
+(s/fdef add-deltas
+        :args (s/cat :vcs ::vcs
+                     :uuid-fn ::editor/uuid-fn
+                     :deltas (s/every ::delta/delta))
+        :ret  ::vcs)
+
+(defn add-deltas
+  [{::keys [timeline branches] :as vcs} uuid-fn deltas]
+  (-> (reduce
+       (fn [{:as vcs ::keys [branches state-by-delta-uid timeline]} {:keys [prev-uid branch-uid uid] :as delta}]
+         (let [state                    (get state-by-delta-uid prev-uid)
+               all-deltas               (get state ::state.deltas/deltas state.deltas/empty-deltas)
+               all-deltas'              (state.deltas/add-delta all-deltas delta)
+               files-state-by-file-uid  (get state ::state.files/state-by-file-uid state.files/empty-state-by-file-uid)
+               files-state-by-file-uid' (state.files/add-delta files-state-by-file-uid delta)]
+           (-> vcs
+               (assoc-in [::state-by-delta-uid uid ::state.deltas/deltas] all-deltas')
+               (assoc-in [::state-by-delta-uid uid ::state.files/state-by-file-uid] files-state-by-file-uid'))))
+       vcs deltas)
+      (assoc ::timeline (state.timeline/add-deltas timeline branches uuid-fn deltas))))
+
 ;;
 ;; ** Writing (events from the editor)
 ;;
