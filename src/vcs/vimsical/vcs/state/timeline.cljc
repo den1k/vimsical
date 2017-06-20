@@ -102,8 +102,6 @@
    ::chunks-by-absolute-start-time (avl/sorted-map)
    ::duration                      0})
 
-(s/assert* ::timeline empty-timeline)
-
 ;;
 ;; * Transient state - denormalizations used during inlining
 ;;

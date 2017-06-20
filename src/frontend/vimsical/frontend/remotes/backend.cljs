@@ -67,7 +67,6 @@
 
 (defmethod remote/send! :backend
   [{:keys [event] :as fx} state result-cb error-cb]
-  (s/assert ::event/event event)
   (letfn [(xhr-success-cb [resp]
             (cond-> (response-result fx resp)
               ;; config/debug? (debug-resp event)
