@@ -11,6 +11,9 @@
   (split [_ idx] "Return a tuple of splittables, from 0 to idx exclusive, and from index to end.")
   (omit  [_ idx cnt] "Remove `cnt` values starting at `idx`."))
 
+(defprotocol SplittablePerf
+  (split-vec [_ idx]))
+
 ;;
 ;; * Merge
 ;;

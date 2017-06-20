@@ -293,6 +293,11 @@
              [_ r]   (splittable/split tmp cnt)]
          (splittable/append l r)))
 
+     splittable/SplittablePerf
+     (split-vec [_ idx]
+       (splittable/split v idx))
+
+
      splittable/Mergeable
      (splice [this idx other]
        (if (== (count this) (long idx))
@@ -416,6 +421,10 @@
        (let [[l tmp] (splittable/split this idx)
              [_ r]   (splittable/split tmp cnt)]
          (splittable/append l r)))
+
+     splittable/SplittablePerf
+     (split-vec [_ idx]
+       (splittable/split v idx))
 
      splittable/Mergeable
      (splice [this idx other]
