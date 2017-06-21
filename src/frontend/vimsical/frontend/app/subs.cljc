@@ -5,7 +5,8 @@
    [vimsical.user :as user]
    [vimsical.vims :as vims]
    [vimsical.queries.user :as queries.user]
-   [vimsical.queries.vims :as queries.vims]))
+   [vimsical.queries.vims :as queries.vims]
+   [vimsical.frontend.vcs.subs :as vcs.subs]))
 
 (re-frame/reg-sub
  ::modal
@@ -21,6 +22,11 @@
  ::vims
  (fn [db [_ ?pattern]]
    (re-frame/subscribe [:q [:app/vims (or ?pattern queries.vims/pull-query)]])))
+
+(re-frame/reg-sub-raw
+ ::vims-branch-uid
+ (fn [db _]
+    (re-frame/subscribe [::vcs.subs/branch-uid (:app/vims @db)])))
 
 (re-frame/reg-sub-raw
  ::libs

@@ -167,17 +167,22 @@
     [:div.author-credit
      (util/space-join "by" (user/full-name owner))]))
 
-(defn license-title []
-  [:div.license
-   {:on-click (e> (.stopPropagation e)
-                  (re-frame/dispatch [::app.handlers/modal :modal/license]))}
-   [:div.license-title "MIT"]])
+(defn- options []
+  [:div.options.jsb
+   [:div.option
+    {:on-click (e> (.stopPropagation e)
+                   (re-frame/dispatch [::app.handlers/modal :modal/libs]))}
+    "libs"]
+   [:div.license.option
+    {:on-click (e> (.stopPropagation e)
+                   (re-frame/dispatch [::app.handlers/modal :modal/license]))}
+    [:div.license-title "license"]]])
 
 (defn vcr-footer []
   [:div.vcr-footer.jsb.ac
    [vims-sync-status]
    [author-credit]
-   [license-title]])
+   [options]])
 
 (defn vcr [{:keys [vims]}]
   [re-com/v-box

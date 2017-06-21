@@ -72,7 +72,6 @@
             {:class         (when selected? "selected")
              :on-mouse-down (e>
                              ;; needed to for quick search to close
-                             ;; don't ask why
                              (.preventDefault e)
                              (re-frame/dispatch [::handlers/run-cmd res]))
              :on-mouse-move (e> (re-frame/dispatch [::handlers/update-result-idx

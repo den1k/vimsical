@@ -1,7 +1,8 @@
 (ns vimsical.frontend.modal.style
   (:require [vimsical.frontend.vims-list.style :refer [vims-list]]
             [vimsical.frontend.share.style :refer [share]]
-            [vimsical.frontend.license.style :refer [license]]))
+            [vimsical.frontend.license.style :refer [license]]
+            [vimsical.frontend.vcr.libs.style :refer [libs]]))
 
 (def overlay
   [:&.modal-overlay
@@ -21,6 +22,7 @@
    vims-list
    share
    license
+   libs
    {:position   :absolute
     :width      :100%
     :z-index    11

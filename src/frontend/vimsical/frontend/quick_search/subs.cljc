@@ -7,6 +7,7 @@
             [vimsical.frontend.app.subs :as app.subs]
             [vimsical.common.util.core :as util :include-macros true]
             [vimsical.vcs.lib :as lib]
+            [vimsical.frontend.vcs.handlers :as vcs.handlers]
             [vimsical.vcs.compiler :as compiler]))
 
 (re-frame/reg-sub
@@ -49,7 +50,7 @@
   [m]
   (sort-by (comp sort-subtypes key) m))
 
-(defn filters->categories* [group-key title-key dispatch-key filters]
+(defn filters->categories* [group-key title-key dispatch-key filters opts]
   (some->> (group-by group-key filters)
            not-empty
            (util/map-vals
@@ -58,36 +59,30 @@
                     (map (fn [filter]
                            (let [title (title-key filter)]
                              [[title] {:title    title
-                                       :dispatch [dispatch-key filter]}])))
+                                       :dispatch [dispatch-key filter opts]}])))
                     filters)))
            ordered-by-subtype
            vec))
 
 (defmethod filters->categories :libs
-  [[type libs]]
-  (filters->categories* ::lib/sub-type ::lib/name :TODO/toggle-lib libs))
+  [[type libs] opts]
+  (filters->categories* ::lib/sub-type ::lib/name ::vcs.handlers/add-lib libs opts))
 
-(defmethod filters->categories :compilers
-  [[_ compilers]]
-  (filters->categories*
-   ::compiler/to-sub-type ::compiler/name :TODO/toggle-compiler compilers))
-
-(defn filters [types-filters]
+(defn filters [types-filters opts]
   (vec
    (not-empty
     (for [[type filters :as type-filters] types-filters
-          :let [categories (filters->categories type-filters)]
+          :let [categories (filters->categories type-filters opts)]
           :when categories]
       [{:title (name type)} categories]))))
 
 (re-frame/reg-sub
  ::filters
  :<- [::quick-search [:quick-search/filter-idx]]
+ :<- [::app.subs/vims-branch-uid]
  :<- [::app.subs/libs]
- :<- [::app.subs/compilers]
- (fn [[{:quick-search/keys [filter-idx]} libs compilers] _]
-   (cond-> (filters [[:libs libs]
-                     [:compilers compilers]])
+ (fn [[{:quick-search/keys [filter-idx]} branch-uid libs] _]
+   (cond-> (filters [[:libs libs]] {:branch-uid branch-uid})
      filter-idx (assoc-in [filter-idx 0 :selected?] true))))
 
 (re-frame/reg-sub

@@ -1,9 +1,8 @@
 (ns vimsical.frontend.vcs.sync.subs
-  (:require [re-frame.core :as re-frame]
-            [vimsical.frontend.vcs.sync.handlers :as handlers]
-            [re-frame.interop :as interop]
-            [vimsical.frontend.util.re-frame :refer [<sub]]
-            [vimsical.frontend.remotes.fx :as remotes.fx]))
+  (:require
+   [re-frame.core :as re-frame]
+   [vimsical.frontend.remotes.fx :as remotes.fx]
+   [vimsical.frontend.vcs.sync.handlers :as handlers]))
 
 (re-frame/reg-sub
  ::add-deltas-debouncing?

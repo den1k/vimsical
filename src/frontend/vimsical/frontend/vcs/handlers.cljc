@@ -8,6 +8,7 @@
    [vimsical.frontend.util.mapgraph :as util.mg]
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as vcs.db]
+   [vimsical.remotes.backend.vcs.commands :as vcs.commands]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.frontend.vcs.subs :as subs]
    [vimsical.frontend.vcs.sync.handlers :as sync.handlers]
@@ -16,7 +17,9 @@
    [vimsical.vcs.editor :as editor]
    [vimsical.vcs.edit-event :as edit-event]
    [vimsical.vims :as vims]
-   [vimsical.vcs.data.splittable :as splittable]))
+   [vimsical.vcs.data.splittable :as splittable]
+   [vimsical.common.util.core :as util]
+   [vimsical.vcs.lib :as vcs.lib]))
 
 ;;
 ;; * VCS Vims init-event-fx
@@ -24,20 +27,23 @@
 
 (defn init-event-fx
   [{:keys [db]} [_ vims deltas {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
-  (let [vims-ref   (util.mg/->ref db vims)
+  (let [vims-ref                 (util.mg/->ref db vims)
         {:as         vims
          ::vims/keys [branches]} (mg/pull db queries/vims vims-ref)
-        vcs        (reduce
-                    (fn [vcs delta]
-                      (vcs/add-delta vcs uuid-fn delta))
-                    (vcs/empty-vcs branches) deltas)
+
+        vcs (reduce
+             (fn [vcs delta]
+               (vcs/add-delta vcs uuid-fn delta))
+             (vcs/empty-vcs branches) deltas)
+
         {branch-uid :db/uid} (branch/master branches)
+
         [_ {delta-uid :uid}
          :as playhead-entry] (vcs/timeline-last-entry vcs)
-        vcs-db     {::vcs.db/branch-uid     branch-uid
-                    ::vcs.db/delta-uid      delta-uid
-                    ::vcs.db/playhead-entry playhead-entry}
-        vcs-entity (merge {:db/uid (uuid-fn)} vcs vcs-db)]
+        vcs-db               {::vcs.db/branch-uid     branch-uid
+                              ::vcs.db/delta-uid      delta-uid
+                              ::vcs.db/playhead-entry playhead-entry}
+        vcs-entity           (merge {:db/uid (uuid-fn)} vcs vcs-db)]
     {:db (mg/add db (assoc vims ::vims/vcs vcs-entity))
      #?@(:cljs
          [:dispatch
@@ -117,7 +123,7 @@
         cursor    (vcs/file-cursor vcs file-uid delta-uid)]
     (println string)
     (if (number? cursor)
-      (println (str (apply str (repeat cursor " "))  "_"))
+      (println (str (apply str (repeat cursor " ")) "_"))
       (let [left  (apply min cursor)
             right (apply max cursor)
             span  (- right left 2)]
@@ -139,8 +145,8 @@
           cursor-event? (edit-event/cursor-event? edit-event)]
       (cond
         (and branching? cursor-event?) :no-op
-        branching?                     :branching
-        :else                          :default))))
+        branching? :branching
+        :else :default))))
 
 (defmethod add-edit-event* :default
   [{:as vcs ::vcs.db/keys [branch-uid playhead-entry]} effects file-uid edit-event]
@@ -184,5 +190,42 @@
                 :dispatch-n [[::sync.handlers/add-deltas vims-uid deltas]]}
          ;; NOTE branch is already in ::vcs/branches, don't need to mg/add it
          (some? ?branch)
-         (-> (update :db util.mg/add-join* :app/vims ::vims/branches ?branch)
+         (-> (update :db util.mg/add-join :app/vims ::vims/branches ?branch)
              (update :dispatch-n conj [::sync.handlers/add-branch vims-uid ?branch])))))))
+
+;;
+;; * Libs
+;;
+
+(re-frame/reg-event-fx
+ ::add-lib
+ [(util.re-frame/inject-sub (fn [[_ vims _]] [::subs/branch vims]))]
+ (fn [{:keys [db] branch ::subs/branch} [_ _ lib]]
+   (let [[_ branch-uid :as branch-ref] (util.mg/->ref db branch)]
+     {:db (util.mg/add-join db branch-ref ::branch/libs lib)
+      :remote
+      {:id               :backend
+       :event            [::vcs.commands/add-lib branch-uid lib]
+       :dispatch-success ::add-lib-success
+       :dispatch-error   ::add-lib-error}})))
+
+;; temp
+(re-frame/reg-event-fx ::add-lib-success (fn [{:keys [db]} _] (println "Lib add sucess")))
+(re-frame/reg-event-fx ::add-lib-error   (fn [{:keys [db]} e] (println "Lib add error" e)))
+
+(re-frame/reg-event-fx
+ ::remove-lib
+ [(util.re-frame/inject-sub (fn [[_ vims _]] [::subs/branch vims]))]
+ (fn [{:keys [db] branch ::subs/branch} [_ _ lib]]
+   (let [[_ branch-uid :as branch-ref] (util.mg/->ref db branch)]
+     (println lib)
+     {:db (util.mg/remove-join db branch-ref ::branch/libs lib)
+      :remote
+      {:id               :backend
+       :event            [::vcs.commands/remove-lib branch-uid lib]
+       :dispatch-success ::remove-lib-success
+       :dispatch-error   ::remove-lib-error}})))
+
+;; temp
+(re-frame/reg-event-fx ::remove-lib-success (fn [{:keys [db]} _] (println "Lib remove sucess")))
+(re-frame/reg-event-fx ::remove-lib-error   (fn [{:keys [db]} e] (println "Lib remove error" e)))

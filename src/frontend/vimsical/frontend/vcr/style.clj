@@ -1,6 +1,7 @@
 (ns vimsical.frontend.vcr.style
   (:require [vimsical.frontend.timeline.style :refer [timeline]]
             [vimsical.frontend.code-editor.style :refer [code-editor]]
+            [vimsical.frontend.vcr.libs.style :refer [libs]]
             [vimsical.frontend.styles.color :as color :refer [colors]]
             [vimsical.frontend.styles.media :as media]))
 
@@ -131,15 +132,22 @@
    editor-header
    code-editor])
 
+(def footer-options
+  [:.options
+   {:flex-basis :70px}
+   [:.option
+    {:cursor :pointer}]])
+
 (def vcr-footer
   [:.vcr-footer
+   footer-options
    {:padding        "2px 10px"
     :font-size      :12px
     :letter-spacing :0.3px
     :background     (:darkgrey colors)
     :color          :whitesmoke}
    [:.sync-status-wrapper
-    {:width :65px}
+    {:width :70px}
     [:.sync-status
      [:.status-circle
       {:width         :6px
@@ -152,10 +160,7 @@
        {:background :limegreen}]]]]
    [:.author-credit
     {:letter-spacing :0.5px
-     :color          :white}]
-   [:.license-title
-    {:flex-basis :65px
-     :cursor     :pointer}]])
+     :color          :white}]])
 
 (def vcr
   (media/not-on-mobile

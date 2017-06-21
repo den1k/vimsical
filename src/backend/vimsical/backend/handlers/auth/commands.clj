@@ -117,7 +117,7 @@
                (and (util.auth/check-password password password-hash) uid))))]
     (multi/async
      context
-     (if-let [uid  (async/<? (user-uid-chan datomic login-user))]
+     (if-some [uid  (async/<? (user-uid-chan datomic login-user))]
        (let [user (async/<? (user.queries/user+snapshots-chan context uid))]
          (-> context
              (create-user-session uid)
@@ -127,4 +127,3 @@
 (defmethod multi/handle-event ::commands/logout
   [context _]
   (multi/delete-session context))
-

@@ -11,7 +11,7 @@
         [vimsical.frontend.util.mapgraph :as sut])]))
 
 (def db
-  (-> {}
+  (-> (mg/new-db)
       (mg/add-id-attr :id)
       (mg/add {:id 1 :children [{:id 2 :children [{:id 3}]}]})))
 
@@ -21,7 +21,16 @@
   (t/is (= (mg/add-id-attr {} :id) (sut/remove-entity db {:id 1 :children [{:id 2 :children [{:id 3}]}]}))))
 
 (t/deftest add-join-test
-  (let [db'   (-> {}
-                  (mg/add-id-attr :id)
-                  (mg/add {:id 1 :children [{:id 2}]}))]
-    (t/is (= db (sut/add-join db' {:id 2} :children {:id 3})))))
+  (t/testing "Single id-attr"
+    (let [db'   (-> (mg/new-db)
+                    (mg/add-id-attr :id)
+                    (mg/add {:id 1 :children [{:id 2}]}))]
+      (t/is (= db (sut/add-join db' {:id 2} :children {:id 3})))))
+  (t/testing "Multiple id-attrs"
+    (let [db   (-> (mg/new-db)
+                   (mg/add-id-attr :id :id2)
+                   (mg/add {:id 1 :children [{:id 2 :children [{:id2 3}]}]}))
+          db'   (-> (mg/new-db)
+                    (mg/add-id-attr :id :id2)
+                    (mg/add {:id 1 :children [{:id 2}]}))]
+      (t/is (= db (sut/add-join db' {:id 2} :children {:id2 3}))))))

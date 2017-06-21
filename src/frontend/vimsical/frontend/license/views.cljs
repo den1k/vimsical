@@ -34,4 +34,5 @@
   (let [vims (<sub [::app.subs/vims vims-query])]
     [:div.license
      {:on-click (e> (.stopPropagation e))}
+     [:h3 "MIT License"]
      [mit-license vims]]))
