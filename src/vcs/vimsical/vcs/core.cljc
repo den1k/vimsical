@@ -104,6 +104,9 @@
                      :deltas (s/every ::delta/delta))
         :ret  ::vcs)
 
+;; NOTE the only optimization here -- compared to  (reduce add-delta deltas) is
+;; to prevent building the timeline for every single delta
+
 (defn add-deltas
   [{::keys [timeline branches] :as vcs} uuid-fn deltas]
   (-> (reduce
