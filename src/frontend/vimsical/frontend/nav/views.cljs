@@ -46,40 +46,41 @@
                                          (util/norm-str inner-html))
                                    (util.dom/blur))}))))
 
-        show-tooltip? (interop/make-reaction
-                       #(let [{:keys [editing?
-                                      title-too-long?
-                                      hovering?]} @state]
-                          (if editing?
-                            title-too-long?
-                            hovering?)))]
+        show-tooltip?     (interop/make-reaction
+                           #(let [{:keys [editing?
+                                          title-too-long?
+                                          hovering?]} @state]
+                              (if editing?
+                                title-too-long?
+                                hovering?)))]
     (fn []
       (let
-          [user (<sub [:q [:app/user [:db/uid]]])
+       [user            (<sub [:q [:app/user [:db/uid]]])
 
-           {::vims/keys [title owner] :as vims}
-           (<sub [:q [:app/vims
-                      [:db/uid
-                       ::vims/title
-                       {::vims/owner [:db/uid]}]]])
+        {::vims/keys [title owner] :as vims}
+        (<sub [:q [:app/vims
+                   [:db/uid
+                    ::vims/title
+                    {::vims/owner [:db/uid]}]]])
 
-           {:keys [editing? title-too-long?]} @state
+        {:keys [editing? title-too-long?]} @state
 
-           editable-title? (=by :db/uid user owner)
-           title-html      [:div.title
-                            (when editable-title?
-                              {:class                             (when (nil? title) "untitled")
-                               :content-editable                  true
-                               :suppress-content-editable-warning true
-                               :on-mouse-enter                    #(swap! state assoc :hovering? true)
-                               :on-mouse-leave                    #(swap! state assoc :hovering? false)
-                               :on-key-down                       (e-> keydown-handler)
-                               :on-click                          #(swap! state assoc :editing? true)
-                               :on-blur                           (e>
-                                                                   (swap! state assoc :editing? false)
-                                                                   (re-frame/dispatch
-                                                                    [::vims.handlers/title vims (util/norm-str inner-html)]))})
-                            (or title (if editing? "" title-placeholder))]]
+        editable-title? (=by :db/uid user owner)
+        title-html      [:div.title
+                         (when editable-title?
+                           {:class                             (when (nil? title) "untitled")
+                            :spell-check                       false
+                            :content-editable                  true
+                            :suppress-content-editable-warning true
+                            :on-mouse-enter                    #(swap! state assoc :hovering? true)
+                            :on-mouse-leave                    #(swap! state assoc :hovering? false)
+                            :on-key-down                       (e-> keydown-handler)
+                            :on-click                          #(swap! state assoc :editing? true)
+                            :on-blur                           (e>
+                                                                (swap! state assoc :editing? false)
+                                                                (re-frame/dispatch
+                                                                 [::vims.handlers/title vims (util/norm-str inner-html)]))})
+                         (or title (if editing? "" title-placeholder))]]
         [:div.vims-info.jc.ac
          (if-not editable-title?
            title-html
@@ -91,20 +92,20 @@
 
 (defn nav []
   (let
-      [show-popup? (interop/ratom false)
-       route       (<sub [::router.subs/route])
-       modal       (<sub [::app.subs/modal])
-       {::user/keys [vimsae] :as user}
-       (<sub [:q [:app/user
-                  [:db/uid
-                   ::user/first-name
-                   ::user/last-name
-                   ::user/email
-                   {::user/vimsae [:db/uid]}]]])
+   [show-popup? (interop/ratom false)
+    route       (<sub [::router.subs/route])
+    modal       (<sub [::app.subs/modal])
+    {::user/keys [vimsae] :as user}
+    (<sub [:q [:app/user
+               [:db/uid
+                ::user/first-name
+                ::user/last-name
+                ::user/email
+                {::user/vimsae [:db/uid]}]]])
 
-       {::vims/keys [title] :as app-vims} (<sub [:q [:app/vims
-                                                     [:db/uid
-                                                      ::vims/title]]])]
+    {::vims/keys [title] :as app-vims} (<sub [:q [:app/vims
+                                                  [:db/uid
+                                                   ::vims/title]]])]
     [:div.main-nav.ac.jsb
      {:class (when modal "no-border")}
      [:div.logo-and-type

@@ -3,6 +3,7 @@
             [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
             [com.stuartsierra.mapgraph :as mg]
             [vimsical.frontend.vcs.subs :as vcs.subs]
+            [vimsical.frontend.license.subs :as license.subs]
             [vimsical.vcs.file :as file]
             [vimsical.frontend.live-preview.ui-db :as ui-db]
             [vimsical.vcs.lib :as lib]
@@ -106,10 +107,13 @@
  ::update-iframe-snapshots
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::vcs.subs/snapshots vims]))
-  (util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::vcs.subs/libs vims]))]
+  (util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::vcs.subs/libs vims]))
+  (util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::license.subs/license-string-html-comment vims]))]
  (fn [{:keys           [db ui-db]
-       ::vcs.subs/keys [snapshots libs]} [_ opts]]
-   (let [preview-markup (subs/snapshots-markup snapshots libs)]
+       ::vcs.subs/keys [snapshots libs]
+       license-string  ::license.subs/license-string-html-comment}
+      [_ opts]]
+   (let [preview-markup (subs/snapshots-markup snapshots libs license-string)]
      {:ui-db (update-iframe-markup! ui-db opts preview-markup)})))
 
 ;;
