@@ -25,6 +25,7 @@
    (lib/new-lib "jQuery UI" "1.12.1" :javascript "https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js")
    (lib/new-lib "Lodash" "4.17.4" :javascript "https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js")
    (lib/new-lib "Modernizr" "2.8.3" :javascript "https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js")
+   (lib/new-lib "P5" "0.5.11" :javascript "https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/p5.min.js")
    (lib/new-lib "Polyfill.io" "2" :javascript "https://cdn.polyfill.io/v2/polyfill.min.js")
    (lib/new-lib "Polymer" "0.5.6" :javascript "https://cdnjs.cloudflare.com/ajax/libs/polymer/0.5.6/polymer.min.js")
    (lib/new-lib "React" "15.4.2" :javascript "https://cdnjs.cloudflare.com/ajax/libs/react/15.4.2/react.min.js")
@@ -35,7 +36,6 @@
    (lib/new-lib "Vue" "2.1.10" :javascript "https://cdnjs.cloudflare.com/ajax/libs/vue/2.1.10/vue.min.js")
    (lib/new-lib "Zepto" "1.2.0" :javascript "https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js")
    (lib/new-lib "Zingchart" "latest" :javascript "https://cdn.zingchart.com/zingchart.min.js")
-   (lib/new-lib "P5" "0.5.11" :javascript "https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.11/p5.min.js")
    ;; CSS
    (lib/new-lib "Bootstrap" "4.0.0-alpha.6" :css "https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/css/bootstrap.min.css")
    (lib/new-lib "Bootstrap" "3.3.7" :css "https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css")

@@ -9,6 +9,18 @@
             [vimsical.common.util.core :as util]))
 
 (re-frame/reg-event-fx
+ ::add-lib
+ [(util.re-frame/inject-sub [::app.subs/vims])]
+ (fn [{:keys [db] vims ::app.subs/vims} [_ lib]]
+   {:dispatch [::vcs.handlers/add-lib vims lib]}))
+
+(re-frame/reg-event-fx
+ ::remove-lib
+ [(util.re-frame/inject-sub [::app.subs/vims])]
+ (fn [{:keys [db] vims ::app.subs/vims} [_ lib]]
+   {:dispatch [::vcs.handlers/remove-lib vims lib]}))
+
+(re-frame/reg-event-fx
  ::toggle-lib
  [(util.re-frame/inject-sub [::app.vims.subs/added-libs])
   (util.re-frame/inject-sub [::app.subs/vims])]

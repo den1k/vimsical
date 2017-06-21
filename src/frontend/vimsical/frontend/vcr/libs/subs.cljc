@@ -24,3 +24,8 @@
    (-> (annotate-libs libs added-libs)
        (by-sub-type))))
 
+(re-frame/reg-sub
+ ::added-anon-libs
+ :<- [::app.vims.subs/added-libs]
+ (fn [libs]
+   (vec (remove ::vcs.lib/name libs))))
