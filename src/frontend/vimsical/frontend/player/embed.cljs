@@ -2,12 +2,10 @@
   (:require
    [reagent.dom.server]))
 
-(def embed-version "0.0.1")
-
 (def ^:private player-embed-src
   "URL of the javascript embed script"
   (let [host (.-host (.-location js/window))]
-    (str "//" host "/embed/" embed-version "/embed.js")))
+    (str "//" host  "/embed-vims.js")))
 
 (defn player-iframe-markup [{:keys [db/uid] :as vims}]
   {:pre [uid]}
