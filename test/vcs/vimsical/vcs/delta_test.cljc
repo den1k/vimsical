@@ -24,3 +24,16 @@
         :op         [:str/ins (uuid :op-uid) "a"]
         :pad        1
         :timestamp  1})))
+
+(deftest accessors-test
+  (let [delta (sut/new-delta
+               {:branch-uid (uuid :branch-uid)
+                :file-uid   (uuid :file-uid)
+                :prev-uid   (uuid :delta-uid)
+                :uid        (uuid :delta-uid')
+                :op         [:str/ins (uuid :op-uid) "a"]
+                :pad        1
+                :timestamp  1})]
+    (is (= (uuid :op-uid) (sut/op-uid delta)))
+    (is (= :str/ins (sut/op-type delta)))
+    (is (= "a" (sut/op-diff delta)))))

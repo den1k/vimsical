@@ -86,11 +86,10 @@
         (is (some? last-html-delta))
         (is (some? last-css-delta))
         (testing "files"
-          ;; NOTE test with prev-uid because the last id is a crsr mv
-          (is (= expect-html (sut/file-string vcs (uuid :html) (:prev-uid last-html-delta))))
+          (is (= expect-html (sut/file-string vcs (uuid :html) (:uid last-html-delta))))
           (is (nil? (sut/file-string vcs (uuid :css) (:prev-uid last-html-delta))))
-          (is (= expect-html (sut/file-string vcs (uuid :html) (:prev-uid last-css-delta))))
-          (is (= expect-css (sut/file-string vcs (uuid :css) (:prev-uid last-css-delta)))))))))
+          (is (= expect-html (sut/file-string vcs (uuid :html) (:uid last-css-delta))))
+          (is (= expect-css (sut/file-string vcs (uuid :css) (:uid last-css-delta)))))))))
 
 (deftest add-edit-event-and-add-deltas-equivalence-test
   (are [string cursor edit-events] (let [{uuid-fn :f} (uuid-gen)
