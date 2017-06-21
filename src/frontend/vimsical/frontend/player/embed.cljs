@@ -1,25 +1,16 @@
 (ns vimsical.frontend.player.embed
-  (:require [reagent.dom.server]
-            [vimsical.common.util.core :as util :include-macros true]))
+  (:require
+   [reagent.dom.server]))
 
-(def iframe-sandbox-opts
-  "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe"
-  (util/space-join "allow-forms"
-                   "allow-pointer-lock"
-                   "allow-popups"
-                   "allow-same-origin"
-                   "allow-scripts"))
+(def ^:private player-embed-src
+  "URL of the javascript embed script"
+  (let [host (.-host (.-location js/window))]
+    (str "//" host  "/embed-vims.js")))
 
-(defn player-iframe [opts]
-  {:pre [(:src opts)]}
-  [:iframe (merge {:sandbox iframe-sandbox-opts} opts)])
-
-(defn player-script [opts]
-  {:pre [(:src opts)]}
-  [:script (merge {:async "async"} opts)])
-
-(defn player-iframe-markup [opts]
-  (reagent.dom.server/render-to-static-markup [player-iframe opts]))
-
-(defn player-script-markup [opts]
-  (reagent.dom.server/render-to-static-markup [player-script opts]))
+(defn player-iframe-markup [{:keys [db/uid] :as vims}]
+  {:pre [uid]}
+  (reagent.dom.server/render-to-static-markup
+   [:script
+    {:src           player-embed-src
+     :async         true
+     :data-vims-uid uid}]))
