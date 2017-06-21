@@ -15,10 +15,17 @@
     {:content  "''"
      :position :absolute
      :cursor   :pointer
+     :z-index  1
      :width    :100%
      :height   :100%}]
    ;["&:hover:before"] ; for overlay
-   ])
+   ;; scale iframe contents for preview
+   [:.iframe
+    {:position         :absolute
+     :width            :200%
+     :height           :200%
+     :transform        "scale(0.5)"
+     :transform-origin "top left"}]])
 
 (def vims-list-item
   [:.vims-list-item

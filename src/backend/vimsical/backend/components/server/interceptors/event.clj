@@ -6,6 +6,7 @@
    ;; * Event handler methods (required for side-effects)
    ;;
    [vimsical.backend.handlers.auth.commands]
+   [vimsical.backend.handlers.auth.queries]
    [vimsical.backend.handlers.user.queries]
    [vimsical.backend.handlers.status]
    [vimsical.backend.handlers.vcs.commands]

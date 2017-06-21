@@ -6,6 +6,8 @@
 (def app-font-family
   "-apple-system, BlinkMacSystemFont, \".SFNSText-Regular\", \"San Francisco\", \"Roboto\", \"Segoe UI\", \"Helvetica Neue\", \"Lucida Grande\", sans-serif")
 
+(def app-text-color :#4c4f59)
+
 (def defaults
   [#_["@font-face"
       {:font-family "FiraCode-Retina"
@@ -37,7 +39,7 @@
 
    [:.app
     {:font-family     app-font-family
-     :color           :#4c4f59
+     :color           app-text-color
      :display         :flex
      :flex-direction  :column
      :justify-content :flex-start
@@ -92,14 +94,25 @@
 
    [:input
     {:border-radius  :5px
-     ;:border-width  0
+     :background     :#F8F8F8
+     :border-bottom  "1px solid #E6E6E6"
      :border-style   :none
      :border-image   :none
-     :border         (str "1px solid " (:grey colors))
+
      :font-weight    :300
      :letter-spacing :0.5px
      :font-size      :18px
-     :padding        "11px 15px"}]
+     :padding        "11px 15px"}
+    ["&::placeholder"
+     {:color (:grey colors)}]
+    ["&:focus"
+     {:outline :none}]]
+
+   ;; disable autofill styles in webkit browsers
+   ["input:-webkit-autofill" "input:-webkit-autofill:hover" "input:-webkit-autofill:focus"
+    {:box-shadow              "0 0 0px 1000px #F8F8F8 inset" ; like :background
+     :-webkit-text-fill-color app-text-color ; like :color
+     }]
 
    [:.popover
     {:font-family (str app-font-family " !important")}]
@@ -109,6 +122,7 @@
      :cursor          :pointer
      :background      :white
      :border          (str "1px solid " (:lightgrey colors))
+     :box-shadow      :none
      :display         :flex
      :flex-shrink     0
      :justify-content :center
@@ -119,6 +133,4 @@
      :white-space     :nowrap}
     [:&:hover
      {:color  (str (:darkgrey colors) " !important")
-      :border (str "1px solid " (:grey colors))}]]
-   ["input:-webkit-autofill"
-    {:box-shadow "0 0 0px 1000px white inset"}]])
+      :border (str "1px solid " (:grey colors))}]]])

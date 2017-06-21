@@ -15,7 +15,7 @@
        [:.checkbox
         {:margin "0 5px 0 0"}]]]
      [:.login-button
-      {:height :50px}]]
+      {:height :45px}]]
     [:.closed-beta
      {:margin-top :40px}
      [:.title
@@ -45,6 +45,6 @@
       [:.first :.last
        {:width :48%}]]
      [:.signup-button
-      {:height     :50px
-       :width      :130px
+      {:height     :45px
+       :padding    "0 20px"
        :margin-top :10px}]]]])

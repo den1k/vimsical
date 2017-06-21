@@ -10,7 +10,8 @@
    [vimsical.frontend.util.dom :as util.dom :refer-macros [e-> e>]]
    [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
    [vimsical.frontend.views.popovers :as popovers]
-   [vimsical.user :as user]))
+   [vimsical.user :as user]
+   [re-frame.interop :as interop]))
 
 (defmethod frontend.remotes.fx/error-message ::auth.commands/duplicate-email
   [_] "Email already registered")
@@ -22,130 +23,90 @@
 ;; * Signup
 ;;
 
+(defn- signup-form [{:keys [invite? state submit-dispatch status invite-status]}]
+  (letfn [(on-change [k] (e> (swap! state assoc k value)))
+          (dispatch! [e]
+            (.preventDefault e)
+            (when (.. e -target checkValidity)
+              (re-frame/dispatch submit-dispatch)))
+          (status-msg [status]
+            (case status
+              nil "Sign up"
+              ::frontend.remotes.fx/pending "Signing you up..."
+              ::frontend.remotes.fx/success "Success!"
+              (frontend.remotes.fx/error-message status)))]
+    [:div.auth.signup.dc.ac
+     [:div.beta-signup "Private Beta Signup"]
+     (let [form [:form.form.jsb.dc
+                 {:on-submit dispatch!}
+                 [:div.first-last.jsb
+                  [:input.first
+                   {:class         "first"
+                    :type          "text"
+                    :name          "name"
+                    :placeholder   "First Name"
+                    :auto-complete "given-name"
+                    :on-change     (on-change ::user/first-name)
+                    :value         (::user/first-name @state)}]
+                  [:input.last
+                   {:type          "text"
+                    :name          "name"
+                    :placeholder   "Last Name"
+                    :auto-complete "family-name"
+                    :on-change     (on-change ::user/last-name)
+                    :value         (::user/last-name @state)}]]
+                 [:input
+                  {:type          "email"
+                   :name          "email"
+                   :placeholder   "Email"
+                   :auto-complete "email"
+                   :on-change     (on-change ::user/email)
+                   :value         (::user/email @state)}]
+                 [:input
+                  {:type          "password"
+                   :name          "password"
+                   :placeholder   "Password"
+                   :auto-complete "new-password"
+                   :min-length    8
+                   :on-change     (on-change ::user/password)
+                   :value         (::user/password @state)}]
+                 [:input.input-button.signup-button.asc
+                  {:type  "submit"
+                   :value (status-msg status)}]]]
+
+       (if-not invite?
+         form
+         (case invite-status
+           (nil ::frontend.remotes.fx/pending) nil
+
+           ::frontend.remotes.fx/success form
+
+           [:h3 "This invite link has expired."])))]))
+
 (defn signup []
-  (let [status-key (reagent/current-component)
-        state      (reagent/atom {:db/uid (uuid)})]
+  (let [state (reagent/atom {:db/uid (uuid)})]
     (fn []
-      (letfn [(on-change [k]
-                (e> (swap! state assoc k value)))
-              (dispatch! [e]
-                (.preventDefault e)
-                (when (.. e -target checkValidity)
-                  (re-frame/dispatch [::handlers/signup @state status-key])))
-              (status-msg [status]
-                (case status
-                  nil                           "Sign up"
-                  ::frontend.remotes.fx/pending "Signing you up..."
-                  ::frontend.remotes.fx/success "Success!"
-                  (frontend.remotes.fx/error-message status)))]
-        (let [status (<sub [::frontend.remotes.fx/status :backend status-key])]
-          [:div.auth.signup.dc.ac
-           [:div.beta-signup "Private Beta Signup"]
-           [:form.form.jsb.dc
-            {:on-submit dispatch!}
-            [:div.first-last.jsb
-             [:input.first
-              {:class         "first"
-               :type          "text"
-               :name          "name"
-               :placeholder   "First Name"
-               :auto-complete "given-name"
-               :auto-focus    true
-               :on-change     (on-change ::user/first-name)}]
-             [:input.last
-              {:type          "text"
-               :name          "name"
-               :placeholder   "Last Name"
-               :auto-complete "family-name"
-               :on-change     (on-change ::user/last-name)}]]
-            [:input
-             {:type          "email"
-              :name          "email"
-              :placeholder   "Email"
-              :auto-complete "email"
-              :on-change     (on-change ::user/email)}]
-            [:input
-             {:type          "password"
-              :name          "password"
-              :placeholder   "Password"
-              :auto-complete "new-password"
-              :min-length    8
-              :on-change     (on-change ::user/password)}]
-            [:input.input-button.signup-button.asc
-             {:type  "submit"
-              :value (status-msg status)}]]])))))
+      (let [status-key (reagent/current-component)
+            status     (<sub [::frontend.remotes.fx/status :backend status-key])]
+        [signup-form {:invite?         false
+                      :state           state
+                      :status          status
+                      :submit-dispatch [::handlers/signup @state status-key]}]))))
 ;;
-;; * Invite
+;; * Invite Signup
 ;;
 
 (defn invite-signup
-  ([token user]
-   [invite-signup token user (reagent/atom user)])
-  ([token user state]
-   (let [status-key (reagent/current-component)
-         status     (<sub [::frontend.remotes.fx/status :backend status-key])]
-     (letfn [(on-change [k]
-               (e> (swap! state assoc k value)))
-             (dispatch! [e]
-               (.preventDefault e)
-               (when (.. e -target checkValidity)
-                 (re-frame/dispatch [::handlers/invite-signup token @state status-key])))
-             (status-msg [status]
-               (case status
-                 nil                           "Sign up"
-                 ::frontend.remotes.fx/pending "Signing you up..."
-                 ::frontend.remotes.fx/success "Success!"))]
-       [:div.auth.signup.dc.ac
-        [:div.beta-signup "Private Beta Signup"]
-        [:form.form.jsb.dc
-         {:on-submit dispatch!}
-         [:div.first-last.jsb
-          [:input.first
-           {:class         "first"
-            :type          "text"
-            :name          "name"
-            :placeholder   "First Name"
-            :auto-complete "given-name"
-            :on-change     (on-change ::user/first-name)
-            :value         (::user/first-name @state)}]
-          [:input.last
-           {:type          "text"
-            :name          "name"
-            :placeholder   "Last Name"
-            :auto-complete "family-name"
-            :on-change     (on-change ::user/last-name)
-            :value         (::user/last-name @state)}]]
-         [:input
-          {:type          "email"
-           :name          "email"
-           :placeholder   "Email"
-           :auto-complete "email"
-           :on-change     (on-change ::user/email)
-           :value         (::user/email @state)}]
-         [:input
-          {:type          "password"
-           :name          "password"
-           :placeholder   "Password"
-           :auto-complete "new-password"
-           :min-length    8
-           :on-change     (on-change ::user/password)
-           :value         (::user/password @state)}]
-         [:input.input-button.signup-button.asc
-          {:type  "submit"
-           :value (status-msg status)}]]]))))
-
-(defn invite
-  [token]
-  (let [status (<sub [::frontend.remotes.fx/status :backend ::handlers/invite])]
-    (println status)
-    (case status
-      (nil ::frontend.remotes.fx/pending)
-      [:h3 "loading"]
-
-      ::frontend.remotes.fx/success
-      [invite-signup token (<sub [::subs/user])]
-
-      [:h3 "Invite expired"])))
+  ([token] [invite-signup token (reagent/atom (<sub [::subs/user]))])
+  ([token state]
+   (let [invite-status (<sub [::frontend.remotes.fx/status :backend ::handlers/invite])
+         status-key    (reagent/current-component)
+         status        (<sub [::frontend.remotes.fx/status :backend status-key])]
+     [signup-form {:invite?         true
+                   :state           state
+                   :submit-dispatch [::handlers/invite-signup token @state status-key]
+                   :status          status
+                   :invite-status   invite-status}])))
 
 ;;
 ;; * Login
@@ -160,7 +121,7 @@
               (re-frame/dispatch [::handlers/login @state status-key]))
             (status-msg [status]
               (case status
-                nil                           "Log in"
+                nil "Log in"
                 ::frontend.remotes.fx/pending "Logging you in..."
                 ::frontend.remotes.fx/success "Success!"
                 (frontend.remotes.fx/error-message status)))]
