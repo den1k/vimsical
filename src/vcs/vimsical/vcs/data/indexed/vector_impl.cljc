@@ -60,22 +60,35 @@
              (assoc! m v (+ ^long offset ^long i)))
            (transient (empty m)) m))))))
 
+(defn- split-map
+  [m idx]
+  (reduce-kv
+   (fn [[l r] val index]
+     (if (< index idx)
+       [(assoc l val index) r]
+       [l (assoc r val index)]))
+   [(empty m) (empty m)] m))
+
+(defn- split-map-transient
+  [m idx]
+  (mapv persistent!
+        (reduce-kv
+         (fn [[l r] val index]
+           (if (< index idx)
+             [(assoc! l val index) r]
+             [l (assoc! r val index)]))
+         [(transient {}) (transient {})] m)))
+
 (extend-protocol splittable/Splittable
   #?(:clj clojure.lang.IPersistentMap :cljs PersistentArrayMap)
   (split [m idx]
-    (->> (seq m)
-         (sort-by second)
-         (split-at idx)
-         (mapv (partial into (empty m))))))
+    (split-map-transient m idx)))
 
 #?(:cljs
    (extend-protocol splittable/Splittable
      PersistentHashMap
      (split [m idx]
-       (->> (seq m)
-            (sort-by second)
-            (split-at idx)
-            (mapv (partial into (empty m)))))))
+       (split-map-transient m idx))))
 
 ;;
 ;; * Vector
