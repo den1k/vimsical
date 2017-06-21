@@ -24,15 +24,19 @@
 ;; * Re-frame
 ;;
 
-(def test-db (db/new-db {:app/user data/user :app/vims data/vims}))
+(def test-db
+  (-> (db/new-db {:app/user data/user :app/vims data/vims})
+      (mg/add data/vims2)))
 
 (defn re-frame-fixture
   [f]
+  (re-frame/clear-subscription-cache!)
   (re-frame.test/with-temp-re-frame-state
     (re-frame.test/run-test-sync
      (re-frame/reg-event-db ::test-db-init (constantly test-db))
      (re-frame/dispatch [::test-db-init])
      (re-frame/dispatch-sync [::vcs.handlers/init (uuid ::data/vims) nil])
+     (re-frame/dispatch-sync [::vcs.handlers/init (uuid ::data/vims2) nil])
      (f))))
 
 ;;
@@ -47,15 +51,24 @@
   re-frame-fixture)
 
 ;;
-;; * Adding libs
+;; * Libs
 ;;
 
 (deftest libs-test
-  (let [lib (lib/new-lib :javascript "https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js")]
-    (re-frame/dispatch [::vcs.handlers/add-lib data/vims lib])
-    (let [libs (<sub [::vcs.subs/libs data/vims])]
-      (is (some (partial = lib) libs)))))
-
+  (let [lib1 (lib/new-lib :javascript "https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js")
+        lib2 (lib/new-lib :javascript "https://cdnjs.cloudflare.com/ajax/libs/three.js/85/three.min.js")]
+    (re-frame/dispatch [::vcs.handlers/add-lib data/vims lib1])
+    (re-frame/dispatch [::vcs.handlers/add-lib {:db/uid (uuid ::data/vims2)} lib1])
+    (re-frame/dispatch [::vcs.handlers/add-lib {:db/uid (uuid ::data/vims2)} lib2])
+    (let [libs1 (<sub [::vcs.subs/libs data/vims])
+          libs2 (<sub [::vcs.subs/libs {:db/uid (uuid ::data/vims2)}])]
+      (is (= #{lib1} libs1))
+      (is (= #{lib1 lib2} libs2)))
+    (re-frame/dispatch [::vcs.handlers/remove-lib {:db/uid (uuid ::data/vims2)} lib1])
+    (let [libs1 (<sub [::vcs.subs/libs data/vims])
+          libs2 (<sub [::vcs.subs/libs {:db/uid (uuid ::data/vims2)}])]
+      (is (= #{lib1} libs1))
+      (is (= #{lib2} libs2)))))
 
 ;;
 ;; * Deltas by branch-uid

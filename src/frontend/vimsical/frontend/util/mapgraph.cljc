@@ -43,7 +43,7 @@
      (mg/ref? db x) x
      (map? x)       (mg/ref-to db x)
      (uuid? x)      [id-attr x]
-     (keyword? x)   (->ref db id-key (get db x)))))
+     (keyword? x)   (->ref db id-attr (get db x)))))
 
 (defn ->ref-maybe
   ([db x] (->ref-maybe db :db/uid x))
@@ -90,14 +90,11 @@
   (reduce-kv add-to db state))
 
 (defn add-join*
-  [db
-   target-ref-or-link-or-entity
-   key
-   join-ref-or-entity]
-  (let [path     (if (keyword? target-ref-or-link-or-entity)
-                   [(get db target-ref-or-link-or-entity) key]
-                   [(->ref db target-ref-or-link-or-entity) key])
-        join-ref (->ref db join-ref-or-entity)]
+  [db entity key join]
+  (let [path     (if (keyword? entity)
+                   [(get db entity) key]
+                   [(->ref db entity) key])
+        join-ref (->ref db join)]
     (update-in db path (fnil conj []) join-ref)))
 
 (defn add-join
@@ -119,6 +116,19 @@
 (defn remove
   [db x]
   (dissoc db (->ref db x)))
+
+(defn remove-join*
+  [db entity key join]
+  (let [path     [(->ref db entity) key]
+        join-ref (->ref db join)
+        pred     (fn [ref] (when-not (= ref join-ref) ref))]
+    (update-in db path (partial #'mg/keept pred))))
+
+(defn remove-join
+  "Remove `join` to the from the `join-key` on `entity`. Expects a vector of
+  refs at join-key.  Does not remove join-entity from `db`"
+  [db entity join-key join]
+  (-> db (remove-join* entity join-key join)))
 
 ;;
 ;; * Shorthand link syntax

@@ -10,7 +10,8 @@
    [vimsical.backend.util.async :refer [<?]]
    [vimsical.remotes.backend.vcs.commands :as commands]
    [vimsical.user :as user]
-   [vimsical.vcs.branch :as branch]))
+   [vimsical.vcs.branch :as branch]
+   [vimsical.vcs.lib :as lib]))
 
 ;;
 ;; * Context specs
@@ -53,10 +54,21 @@
 ;; * Libs
 ;;
 
-(defmethod event-auth/require-auth? ::commands/add-deltas [_] true)
+(defmethod event-auth/require-auth? ::commands/add-lib [_] true)
 (defmethod multi/handle-event ::commands/add-lib
   [{:as context :keys [datomic]} [_ branch-uid lib :as event]]
   (let [tx {:db/uid branch-uid ::branch/libs [lib]}]
+    (multi/async
+     context
+     (multi/set-response context (<? (datomic/transact-chan datomic tx))))))
+
+(defmethod event-auth/require-auth? ::commands/remove-lib [_] true)
+(defmethod multi/handle-event ::commands/remove-lib
+  [{:as context :keys [datomic]} [_ branch-uid {::lib/keys [src] :as lib} :as event]]
+  (let [tx [[:db/retract
+             [:db/uid branch-uid]
+             ::branch/libs
+             [::lib/src src]]]]
     (multi/async
      context
      (multi/set-response context (<? (datomic/transact-chan datomic tx))))))

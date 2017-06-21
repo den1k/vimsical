@@ -68,11 +68,28 @@
 (def branches
   [(new-branch (uuid ::master) (uuid ::user) "master" files (:javascript js-libs))])
 
+
+(def html-file2 (new-file (uuid ::html2) :text :html))
+(def css-file2 (new-file (uuid ::css2) :text :css))
+(def javascript-file2 (new-file (uuid ::js2) :text :javascript "5" compilers))
+
+(def files2
+  [html-file2 css-file2 javascript-file2])
+
+(def branches2
+  [(new-branch (uuid ::master2) (uuid ::user) "master" files2 (:javascript js-libs))])
+
 (def vims
   {:db/uid         (uuid ::vims)
    ::vims/owner    {:db/uid (uuid ::user)}
    ::vims/title    "Title"
    ::vims/branches branches})
+
+(def vims2
+  {:db/uid         (uuid ::vims2)
+   ::vims/owner    {:db/uid (uuid ::user)}
+   ::vims/title    "Title"
+   ::vims/branches branches2})
 
 (s/assert ::vims/vims vims)
 
