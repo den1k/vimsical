@@ -12,9 +12,6 @@
 ;; * Spec
 ;;
 
-(defn ops-point-to-str-id
-  [deltas-by-branch-uid ])
-
 (s/def ::deltas (s/and ::indexed/vector (s/every ::delta/delta) topo/sorted?))
 
 (s/def ::deltas-by-branch-uid (s/every-kv ::branch/uid ::deltas))
