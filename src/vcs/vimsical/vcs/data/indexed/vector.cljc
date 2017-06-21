@@ -306,7 +306,6 @@
                v'     (splittable/splice v idx (.v ^IndexedVector other))]
            (IndexedVector. f index' v'))))
      (append [this other]
-       (when other (assert (vector? other)))
        (if (nil? other)
          this
          (let [index' (splittable/append index (.index ^IndexedVector other))
@@ -434,7 +433,6 @@
                v'     (splittable/splice v idx (.-v other))]
            (IndexedVector. f index' v'))))
      (append [this other]
-       (when other (assert (vector? other)))
        (if (empty? other)
          this
          (let [index' (splittable/append index (.-index other))
