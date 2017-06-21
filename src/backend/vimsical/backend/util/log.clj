@@ -12,14 +12,14 @@
 ;;
 
 (defn reload-logback!
-  ([] (reload-logback! (io/resource "logback.xml")))
+  ([] (reload-logback! (io/file (io/resource "logback.xml"))))
   ([config]
    (let [context      ^LoggerContext (LoggerFactory/getILoggerFactory)
-         configurator (JoranConfigurator.)]
+         ^JoranConfigurator configurator (JoranConfigurator.)]
      (assert config)
      (.reset context)
      (.setContext configurator context)
-     (.doConfigure configurator config))))
+     (.doConfigure configurator ^java.io.File config))))
 
 ;;
 ;; * API
