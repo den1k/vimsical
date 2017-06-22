@@ -101,7 +101,7 @@
 (s/fdef add-deltas
         :args (s/cat :vcs ::vcs
                      :uuid-fn ::editor/uuid-fn
-                     :deltas (s/every ::delta/delta))
+                     :deltas (s/nilable (s/every ::delta/delta)))
         :ret  ::vcs)
 
 ;; NOTE the only optimization here -- compared to  (reduce add-delta deltas) is
