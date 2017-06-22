@@ -36,26 +36,27 @@
 
 (deftest add-edit-events-manual-test
   (letfn [(do-test [{:keys [f seq reset] :as gen} expect-string expect-cursor expect-deltas events]
-            (do (reset)
-                (letfn [(test-pad-fn [_] 1)
-                        (test-uuid-fn [e] (f))
-                        (test-timestamp-fn [_] 123)]
-                  (let [branch-uid                         (uuid :<branch>)
-                        file-uid                           (uuid :<file>)
-                        test-effects                       {::editor/pad-fn       test-pad-fn
-                                                            ::editor/uuid-fn      test-uuid-fn
-                                                            ::editor/timestamp-fn test-timestamp-fn}
-                        [states deltas]                    (sut/add-edit-events
-                                                            sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
-                                                            events)
-                        states'                            (sut/add-deltas sut/empty-state-by-file-uid deltas)
-                        delta-uid                          (-> deltas last :uid)
-                        {::sut/keys [files string cursor]} (get states file-uid)]
-                    (diff= states states')
-                    (is (topo/sorted? deltas))
-                    (diff= expect-deltas deltas)
-                    (is (= expect-string string))
-                    (is (= expect-cursor cursor))))))]
+            (do
+              (reset)
+              (letfn [(test-pad-fn [_] 1)
+                      (test-uuid-fn [e] (f))
+                      (test-timestamp-fn [_] 123)]
+                (let [branch-uid                         (uuid :<branch>)
+                      file-uid                           (uuid :<file>)
+                      test-effects                       {::editor/pad-fn       test-pad-fn
+                                                          ::editor/uuid-fn      test-uuid-fn
+                                                          ::editor/timestamp-fn test-timestamp-fn}
+                      [states deltas]                    (sut/add-edit-events
+                                                          sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
+                                                          events)
+                      states'                            (sut/add-deltas sut/empty-state-by-file-uid deltas)
+                      delta-uid                          (-> deltas last :uid)
+                      {::sut/keys [files string cursor]} (get states file-uid)]
+                  (is (topo/sorted? deltas))
+                  (diff= states states')
+                  (diff= expect-deltas deltas)
+                  (is (= expect-string string))
+                  (is (= expect-cursor cursor))))))]
     (let [{:keys [f seq] :as gen}                                 (uuid-gen uuid "delta")
           [d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15] seq]
 

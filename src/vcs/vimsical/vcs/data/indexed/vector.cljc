@@ -87,8 +87,8 @@
 
      splittable/Splittable
      (split [_ idx]
-       (let [[l r] (splittable/split m idx)]
-         [(Index. offset l) (Index. (- offset ^int idx) r)]))
+       (let [[l r] (splittable/split m idx (- offset))]
+         [(Index. offset l) (Index. (- offset ^long idx) r)]))
 
      splittable/Mergeable
      (append [_ other]
@@ -148,7 +148,7 @@
 
      splittable/Splittable
      (split [_ idx]
-       (let [[l r] (splittable/split m idx)]
+       (let [[l r] (splittable/split m idx (- offset))]
          [(Index. offset l) (Index. (- offset idx) r)]))
 
      splittable/Mergeable
@@ -270,16 +270,19 @@
      IIndexedInternal
      (-consistent? [this]
        (doseq [[i val] (map-indexed clojure.core/vector v)]
-         (when-not (== i (index-of this (f val)))
-           (throw
-            (ex-info
-             "Inconsistent indexed vector state"
-             {:val          val
-              :fval         (f val)
-              :index-pos    (index-of this (f val))
-              :index-vector i
-              :index        index
-              :v            v}))))
+         (try
+           (when-not (== i (index-of this (f val)))
+             (throw
+              (ex-info
+               "Inconsistent indexed vector state"
+               {:val          val
+                :fval         (f val)
+                :index-pos    (index-of this (f val))
+                :index-vector i
+                :index        index
+                :v            v})))
+           (catch Throwable t
+             (throw (ex-info "Index impl error" {:i i :val val :fval (f val) :index index :v v})))))
        this)
 
      splittable/Splittable
