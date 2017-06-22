@@ -1,4 +1,4 @@
-.PHONY: clean test test-clj test-cljs test-cljs-advanced lein-deps deps
+.PHONY: clean test test-clj test-cljs test-cljs-advanced lein-deps deps bench
 
 #
 # Deps
@@ -99,3 +99,6 @@ infra-run: infra-start infra-logs
 
 run: infra-start
 	bin/lein with-profile backend-dev run
+
+bench: clean
+	bin/lein with-profile bench run
