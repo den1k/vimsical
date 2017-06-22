@@ -71,7 +71,7 @@
   [m idx]
   (reduce-kv
    (fn [[l r] val index]
-     (if (< index idx)
+     (if (< ^long index ^long idx)
        [(assoc l val index) r]
        [l (assoc r val index)]))
    [(empty m) (empty m)] m))
@@ -81,7 +81,7 @@
   (mapv persistent!
         (reduce-kv
          (fn [[l r] val index]
-           (if (< index idx)
+           (if (< ^long index ^long idx)
              [(assoc! l val index) r]
              [l (assoc! r val index)]))
          [(transient (empty m))
@@ -93,13 +93,13 @@
   (split [m idx]
     (split-map-at-idx m idx))
   (split [m idx offset]
-    (split-map-at-value-transient m (+ offset idx))))
+    (split-map-at-value-transient m (+ ^long offset ^long idx))))
 
 #?(:cljs
    (extend-protocol splittable/Splittable
      PersistentHashMap
      (split [m idx]
-       (split-map-at-value-transient m idx))
+       (split-map-at-idx m idx))
      (split [m idx offset]
        (split-map-at-value-transient m (+ offset idx)))))
 
