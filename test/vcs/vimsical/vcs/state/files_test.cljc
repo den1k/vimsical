@@ -274,9 +274,15 @@ Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia
 Pellentesque pulvinar nulla in urna consequat, nec malesuada sapien vulputate. Praesent et urna sagittis, mattis nisl sed, rhoncus nulla. Ut ipsum quam, suscipit eget nulla convallis, semper interdum lacus. Vivamus mattis aliquam mauris, sed dignissim magna sodales quis. Curabitur in nibh a nulla finibus congue viverra quis massa. Pellentesque viverra lectus porttitor arcu mollis euismod. Cras sit amet nibh fringilla, tristique massa vitae, pulvinar ipsum. Suspendisse commodo dapibus fringilla. In hac habitasse platea dictumst. Donec nec eros et neque lacinia viverra id at velit. Nam eu enim et metus luctus maximus auctor at metus. Etiam eu lectus a est placerat vulputate non sed lectus. Etiam at augue mollis, lacinia diam sit amet, dictum mi. Vivamus ante eros, placerat ut viverra at, faucibus vitae odio. Maecenas ultrices suscipit ligula in volutpat.
 
 Suspendisse consequat ac mauris nec vestibulum. Nullam at odio bibendum metus posuere malesuada at et turpis. Nunc cursus semper molestie. Quisque mollis libero in eros eleifend eleifend. Mauris sollicitudin lorem vitae eros vehicula, sit amet facilisis dui mattis. Suspendisse sed est enim. Duis lorem leo, elementum at diam a, blandit dignissim sem. Donec id sodales tortor, sit amet faucibus mauris. Nunc eget consequat metus. Vestibulum molestie mauris sed libero euismod, vitae porta felis sagittis. "]
-          (state= ipsum 3703
+          (state= ipsum (count ipsum)
                   (sut/add-edit-events
                    sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
                    [{:vimsical.vcs.edit-event/op :str/ins, :vimsical.vcs.edit-event/diff ipsum :vimsical.vcs.edit-event/idx 0}
-                    {:vimsical.vcs.edit-event/op :crsr/sel, :vimsical.vcs.edit-event/range [0 3703]}
-                    {:vimsical.vcs.edit-event/op :str/rplc, :vimsical.vcs.edit-event/diff  ipsum :vimsical.vcs.edit-event/idx 0, :vimsical.vcs.edit-event/amt 3703}])))))))
+                    {:vimsical.vcs.edit-event/op :crsr/sel, :vimsical.vcs.edit-event/range [0 (count ipsum)]}
+                    {:vimsical.vcs.edit-event/op :str/rplc, :vimsical.vcs.edit-event/diff  ipsum :vimsical.vcs.edit-event/idx 0, :vimsical.vcs.edit-event/amt (count ipsum)}]))
+          (state= (str ipsum ipsum) (count ipsum)
+                  (sut/add-edit-events
+                   sut/empty-state-by-file-uid test-effects file-uid branch-uid nil
+                   [{:vimsical.vcs.edit-event/op :str/ins, :vimsical.vcs.edit-event/diff ipsum :vimsical.vcs.edit-event/idx 0}
+                    {:vimsical.vcs.edit-event/op :str/rplc, :vimsical.vcs.edit-event/diff ipsum :vimsical.vcs.edit-event/idx 0 , :vimsical.vcs.edit-event/amt (count ipsum)}
+                    {:vimsical.vcs.edit-event/op :str/ins, :vimsical.vcs.edit-event/diff ipsum :vimsical.vcs.edit-event/idx 0}])))))))
