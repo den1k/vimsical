@@ -85,6 +85,18 @@
         (assoc-in [::state-by-delta-uid uid ::state.files/state-by-file-uid] files-state-by-file-uid')
         (assoc ::timeline timeline'))))
 
+(s/fdef add-deltas
+        :args (s/cat :vcs ::vcs
+                     :uuid-fn ::editor/uuid-fn
+                     :deltas (s/nilable (s/every ::delta/delta)))
+        :ret  ::vcs)
+
+(defn add-deltas
+  [vcs uuid-fn deltas]
+  (reduce
+   (fn [vcs delta]
+     (add-delta vcs uuid-fn delta))
+   vcs deltas))
 
 ;;
 ;; ** Writing (events from the editor)

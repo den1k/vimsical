@@ -31,10 +31,7 @@
         {:as         vims
          ::vims/keys [branches]} (mg/pull db queries/vims vims-ref)
 
-        vcs (reduce
-             (fn [vcs delta]
-               (vcs/add-delta vcs uuid-fn delta))
-             (vcs/empty-vcs branches) deltas)
+        vcs (vcs/add-deltas (vcs/empty-vcs branches) uuid-fn deltas)
 
         {branch-uid :db/uid} (branch/master branches)
 
