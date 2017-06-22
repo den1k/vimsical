@@ -33,8 +33,9 @@
   [vcs effects file-uid branch-uid delta-uid edit-events]
   (reduce
    (fn [[vcs deltas delta-uid] edit-event]
-     (sut/add-edit-event vcs effects file-uid branch-uid (or (-> deltas last :uid) delta-uid) edit-event))
-   [vcs nil delta-uid] edit-events))
+     (let [[vcs' deltas' delta-uid'] (sut/add-edit-event vcs effects file-uid branch-uid (or (-> deltas last :uid) delta-uid) edit-event)]
+       [vcs' (into deltas deltas') delta-uid']))
+   [vcs [] delta-uid] edit-events))
 
 (deftest add-edit-event-test
   (let [{uuid-fn :f}           (uuid-gen)
@@ -90,6 +91,26 @@
           (is (nil? (sut/file-string vcs (uuid :css) (:prev-uid last-html-delta))))
           (is (= expect-html (sut/file-string vcs (uuid :html) (:prev-uid last-css-delta))))
           (is (= expect-css (sut/file-string vcs (uuid :css) (:prev-uid last-css-delta)))))))))
+
+(deftest add-edit-event-and-add-deltas-equivalence-test
+  (are [string cursor edit-events] (let [{uuid-fn :f} (uuid-gen)
+                                         branches     [examples/master]
+                                         effects      {::editor/pad-fn       (constantly 1)
+                                                       ::editor/uuid-fn      (fn [& _] (uuid-fn))
+                                                       ::editor/timestamp-fn (constantly 1)}
+                                         [vcs deltas delta-uid] (-> (sut/empty-vcs branches)
+                                                                    (add-edit-events effects (uuid :html) (uuid :master) nil edit-events))
+                                         vcs2                   (-> (sut/empty-vcs branches)
+                                                                    (sut/add-deltas uuid-fn deltas))]
+                                     (is (= string
+                                            (sut/file-string vcs (uuid :html) delta-uid)
+                                            (sut/file-string vcs2 (uuid :html) delta-uid)))
+                                     (is (= cursor
+                                            (sut/file-cursor vcs (uuid :html) delta-uid)
+                                            (sut/file-cursor vcs2 (uuid :html) delta-uid))))
+    "cb" 1 [{:vimsical.vcs.edit-event/op :str/ins, :vimsical.vcs.edit-event/diff "a" :vimsical.vcs.edit-event/idx 0}
+            {:vimsical.vcs.edit-event/op :str/rplc, :vimsical.vcs.edit-event/diff "b" :vimsical.vcs.edit-event/idx 0, :vimsical.vcs.edit-event/amt 1}
+            {:vimsical.vcs.edit-event/op :str/ins, :vimsical.vcs.edit-event/diff "c" :vimsical.vcs.edit-event/idx 0}]))
 
 (deftest add-deltas-gen-test
   (let [{uuids   :seq
