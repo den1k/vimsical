@@ -12,10 +12,12 @@
             [vimsical.frontend.live-preview.views :as live-preview.views]
             [vimsical.frontend.player.views.player :as player]
             [vimsical.frontend.vims.handlers :as vims.handlers]
-            [re-frame.core :as re-frame]))
+            [re-frame.core :as re-frame]
+            [re-com.core :as re-com]))
 
 (def landing-vims->uid
-  {:bug (uuid "5947d83b-602f-4c0a-83e5-88c03281c0a0")})
+  {:bug         (uuid "5947d83b-602f-4c0a-83e5-88c03281c0a0")
+   :hello-world (uuid "594b29e0-f21c-4753-9836-d9d45b4b4809")})
 
 (defn load-landing-vims []
   (doseq [[_ uid] landing-vims->uid]
@@ -82,9 +84,9 @@
     [:div.join
      {:on-click (e> (scroll-to-waitlist))}
      "Join our Journey"]]
-   [vims-preview {:vims-uid (:bug landing-vims->uid)}]])
+   [vims-preview {:vims-uid (:hello-world landing-vims->uid)}]])
 
-(defn create []
+(defn create-section []
   [:div.create.section
    [:h2.header "Create"]
    [:h3.subheader
@@ -102,7 +104,17 @@
    [credit-wrapper
     "The Bug"
     "Ana Tudor"
-    [:div.lp-vims-lg]]])
+    [:video.explore-video
+     {:controls  false
+      :auto-play true
+      ;; necessary to autoplay on iOS
+      :muted     true
+      ;; necesssary to not enter full-screen mode in iOS
+      ;; but seeming not currently supported in react
+      ;:plays-inline true
+      :loop      true
+      :preload   "auto"
+      :src       "video/explore.m4v"}]]])
 
 (defn mission-section []
   [:div.mission-section.dc.ac.section
@@ -120,10 +132,10 @@
 (defn player-section []
   ;; todo skim vims by scrolling
   [:div.player-section.dc.ac.section
-   [:h2.header "Player"]
+   [:h2.header "Play"]
    [:h3.subheader "Take your creations places."]
    [credit-wrapper "Wormhole" "Jack Aniperdo"
-    (when-let [vims (<sub [::vims.subs/vcs-vims (:bug landing-vims->uid)])]
+    (when-let [vims (<sub [::vims.subs/vcs-vims (:hello-world landing-vims->uid)])]
       [player/player {:vims       vims :orientation :landscape
                       :show-info? false
                       :read-only? true}])]
@@ -164,10 +176,10 @@
 (defn landing []
   (load-landing-vims)
   (fn []
-    [:div.landing.asc.dc.ac
+    [:div.landing.asc.dc.ac.ais
      [:div.wrapper
       [page-header]
-      [create]
+      [create-section]
       [explore]
       [player-section]
       [:div.section

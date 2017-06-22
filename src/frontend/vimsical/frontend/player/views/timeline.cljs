@@ -16,7 +16,6 @@
 (defn time->pct [duration playhead]
   (util/clamp (-> playhead (/ duration) (* 100)) 0 100))
 
-
 (defn perc->time [duration perc]
   (-> perc (/ 100) (* duration)))
 
@@ -83,11 +82,7 @@
           :on-mouse-out   (e> (reset! show-speed? false))}
          (if (or on-mobile? (not @show-speed?))
            [:div.time time]
-           [re-com/popover-tooltip
-            :label "speed control"
-            :position :above-left
-            :showing? show-speed?
-            :anchor [speed-control opts]])]))))
+           [speed-control opts])]))))
 
 (defn timeline []
   (reagent/create-class

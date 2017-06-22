@@ -3,7 +3,8 @@
             [vimsical.frontend.styles.color :refer [colors]]))
 
 (def credit
-  [[:.credit-wrapper {:display :inline-block}]
+  [[:.credit-wrapper
+    {:display :inline-block}]
    [:.credit
     {:text-align :right
      :font-size  :12px
@@ -25,25 +26,34 @@
      :letter-spacing :0.02em}]])
 
 (def vimsical-stmt
-  [:.vimsical-stmt
-   {:margin         "180px 0 100px"
-    :letter-spacing :.004em}
-   [:.header
-    {:font-size :65px}]
-   [:.subheader
-    {:font-size :28px}]
-   [:.join
-    {:cursor :pointer}]])
+  [:.stmt-wrapper
+   {:margin "180px 0 100px"}
+   [:.vimsical-stmt
+    {:letter-spacing :.004em
+     :flex           0.5}
+    [:.header
+     {:font-size :65px}]
+    [:.subheader
+     {:font-size :28px}]
+    [:.join
+     {:cursor :pointer}]]
+   [:.live-preview
+    {:flex 0.4}]])
 
 (def explore-and-create
-  [:.explore
-   {:text-align :right}])
+  [[:.explore
+    {:text-align :right}]
+   [:.explore-video
+    {:border "1px solid hsl(0, 0%, 93%)"
+     :width  :700px}]])
 
 (def player
   [:.player-section
    [:.player
-    {:margin-top :20px}
-    {:border (str "1px solid " (:lightgrey colors))}]
+    {:margin-top :10px}
+    {:border (str "1px solid " (:lightgrey colors))
+     :width  :750px
+     :height :450px}]
    [:.embed-stmt
     {:font-weight    200
      :letter-spacing :.4px
@@ -122,6 +132,8 @@
    {:min-width :960px
     :max-width (str (* 1.5 960) "px")}
    [:.wrapper
+    {:width      :90%
+     :align-self :center}
     [:.section
      {:margin-top :200px}]
 

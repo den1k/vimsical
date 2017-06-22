@@ -76,6 +76,10 @@
     {:display     :flex
      :align-items :center}]
 
+   [:.ais
+    {:display     :flex
+     :align-items :stretch}]
+
    [:.asc
     {:display    :flex
      :align-self :center}]
