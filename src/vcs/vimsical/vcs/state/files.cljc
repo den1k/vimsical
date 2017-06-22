@@ -319,7 +319,7 @@
                                          [deltas!' new-delta-uid new-delta-uid]))
                                      [(transient []) (op-idx->op-uid state idx) prev-delta-uid] (splice-edit-event edit-event))
         deltas' (persistent! deltas'!)]
-    [(update-state-with-splice-deltas state deltas' edit-event) (into deltas deltas') (-> deltas' last :uid)]))
+    [(update-state-with-splice-deltas state deltas' edit-event) (into deltas deltas') last-delta-uid]))
 
 (defmethod add-simple-edit-event :str/rem
   [state {:as editor-effects ::editor/keys [pad-fn uuid-fn timestamp-fn]} deltas file-uid branch-uid prev-delta-uid {:as edit-event ::edit-event/keys [idx amt]}]
@@ -339,30 +339,6 @@
         deltas'       (conj deltas delta)
         state'        (update-state-with-delta state delta)]
     [state' deltas' new-delta-uid]))
-
-(defmethod add-splice-edit-event :str/rem
-  [state {:as editor-effects ::editor/keys [pad-fn uuid-fn timestamp-fn]} deltas file-uid branch-uid prev-delta-uid {::edit-event/keys [idx diff] :as edit-event}]
-  (let [[deltas'! _ last-delta-uid]
-        (reduce
-         (fn spliced-add-edit-event-str-ins-rf
-           [[deltas! op-uid prev-delta-uid] {:as edit-event ::edit-event/keys [amt]}]
-           (let [op            [:str/rem op-uid amt]
-                 new-delta-uid (uuid-fn edit-event)
-                 pad           (pad-fn edit-event)
-                 timestamp     (timestamp-fn edit-event)
-                 delta         (delta/new-delta
-                                {:branch-uid branch-uid
-                                 :file-uid   file-uid
-                                 :prev-uid   prev-delta-uid
-                                 :uid        new-delta-uid
-                                 :op         op
-                                 :pad        pad
-                                 :timestamp  timestamp})
-                 deltas!'      (conj! deltas! delta)]
-             [deltas!' new-delta-uid new-delta-uid]))
-         [(transient []) (op-idx->op-uid state idx) prev-delta-uid] (splice-edit-event edit-event))
-        deltas' (persistent! deltas'!)]
-    [(update-state-with-splice-deltas state deltas' edit-event) (into deltas deltas') (-> deltas' last :uid)]))
 
 (declare add-edit-event-internal*)
 
@@ -391,7 +367,7 @@
                         :timestamp  timestamp})
         deltas'       (conj deltas delta)
         state'        (update-state-with-delta state delta)]
-    [state' deltas' prev-delta-uid]))
+    [state' deltas' new-delta-uid]))
 
 (defmethod add-simple-edit-event :crsr/sel
   [state {:as editor-effects ::editor/keys [pad-fn uuid-fn timestamp-fn]} deltas file-uid branch-uid prev-delta-uid {:as edit-event [from-idx to-idx] ::edit-event/range}]
@@ -411,7 +387,7 @@
                         :timestamp  timestamp})
         deltas'       (conj deltas delta)
         state'        (update-state-with-delta state delta)]
-    [state' deltas' prev-delta-uid]))
+    [state' deltas' new-delta-uid]))
 
 ;;
 ;; * API
@@ -438,7 +414,7 @@
 (def ^:private add-delta* (fnil add-delta empty-state-by-file-uid))
 
 (s/fdef add-deltas
-        :args (s/cat :state-by-file-uid ::state-by-file-uid :deltas (s/every ::delta/delta))
+        :args (s/cat :state-by-file-uid ::state-by-file-uid :deltas (s/nilable (s/every ::delta/delta)))
         :ret ::state-by-file-uid)
 
 (defn add-deltas

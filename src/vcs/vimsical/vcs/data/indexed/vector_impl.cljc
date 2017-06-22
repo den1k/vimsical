@@ -90,18 +90,20 @@
 
 (extend-protocol splittable/Splittable
   #?(:clj clojure.lang.IPersistentMap :cljs PersistentArrayMap)
-  (split [m idx]
-    (split-map-at-idx m idx))
-  (split [m idx offset]
-    (split-map-at-value-transient m (+ ^long offset ^long idx))))
+  (split
+    ([m idx]
+     (split-map-at-idx m idx))
+    ([m idx offset]
+     (split-map-at-value-transient m (+ ^long offset ^long idx)))))
 
 #?(:cljs
    (extend-protocol splittable/Splittable
      PersistentHashMap
-     (split [m idx]
-       (split-map-at-idx m idx))
-     (split [m idx offset]
-       (split-map-at-value-transient m (+ offset idx)))))
+     (split
+       ([m idx]
+        (split-map-at-idx m idx))
+       ([m idx offset]
+        (split-map-at-value-transient m (+ offset idx))))))
 
 
 ;;

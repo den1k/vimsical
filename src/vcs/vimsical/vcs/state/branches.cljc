@@ -42,7 +42,7 @@
   (update deltas-by-branch-uid branch-uid conj-deltas delta))
 
 (s/fdef add-deltas
-        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas (s/every ::delta/delta))
+        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas (s/nilable (s/every ::delta/delta)))
         :ret ::deltas-by-branch-uid)
 
 (defn add-deltas

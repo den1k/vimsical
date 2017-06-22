@@ -36,7 +36,7 @@
 
 (deftest add-edit-events-manual-test
   (letfn [(do-test [{:keys [f seq reset] :as gen} expect-string expect-cursor expect-deltas events]
-            (do
+            (testing expect-string
               (reset)
               (letfn [(test-pad-fn [_] 1)
                       (test-uuid-fn [e] (f))
@@ -64,7 +64,7 @@
        gen "ab" 2
        [{:uid d0 :prev-uid nil :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins nil "a"] :meta {:timestamp 123 :version 0.3}}
         {:uid d1 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d0] :meta {:timestamp 123 :version 0.3}}
-        {:uid d2 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d2 :prev-uid d1 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
         {:uid d3 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d2] :meta {:timestamp 123 :version 0.3}}]
        [{::edit-event/op :str/ins, ::edit-event/diff "a", ::edit-event/idx 0}
         {::edit-event/op :crsr/mv, ::edit-event/idx 1}
@@ -75,10 +75,10 @@
        gen "zab" 1
        [{:uid d0 :prev-uid nil :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins nil "a"] :meta {:timestamp 123 :version 0.3}}
         {:uid d1 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d0] :meta {:timestamp 123 :version 0.3}}
-        {:uid d2 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d2 :prev-uid d1 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
         {:uid d3 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d2] :meta {:timestamp 123 :version 0.3}}
-        {:uid d4 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv nil] :meta {:timestamp 123 :version 0.3}}
-        {:uid d5 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins nil "z"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d4 :prev-uid d3 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv nil] :meta {:timestamp 123 :version 0.3}}
+        {:uid d5 :prev-uid d4 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins nil "z"] :meta {:timestamp 123 :version 0.3}}
         {:uid d6 :prev-uid d5 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d5] :meta {:timestamp 123 :version 0.3}}]
        [{::edit-event/op :str/ins, ::edit-event/diff "a", ::edit-event/idx 0}
         {::edit-event/op :crsr/mv, ::edit-event/idx 1}
@@ -92,9 +92,9 @@
        gen "abc" 3
        [{:uid d0 :prev-uid nil :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins nil "a"] :meta {:timestamp 123 :version 0.3}}
         {:uid d1 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d0] :meta {:timestamp 123 :version 0.3}}
-        {:uid d2 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d2 :prev-uid d1 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
         {:uid d3 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d2] :meta {:timestamp 123 :version 0.3}}
-        {:uid d4 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "c"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d4 :prev-uid d3 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "c"] :meta {:timestamp 123 :version 0.3}}
         {:uid d5 :prev-uid d4 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d4] :meta {:timestamp 123 :version 0.3}}]
        [{::edit-event/op :str/ins, ::edit-event/diff "a", ::edit-event/idx 0}
         {::edit-event/op :crsr/mv, ::edit-event/idx 1}
@@ -107,11 +107,11 @@
        gen "ab" 2
        [{:uid d0 :prev-uid nil :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins nil "a"] :meta {:timestamp 123 :version 0.3}}
         {:uid d1 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d0] :meta {:timestamp 123 :version 0.3}}
-        {:uid d2 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d2 :prev-uid d1 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
         {:uid d3 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d2] :meta {:timestamp 123 :version 0.3}}
-        {:uid d4 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "c"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d4 :prev-uid d3 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "c"] :meta {:timestamp 123 :version 0.3}}
         {:uid d5 :prev-uid d4 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d4] :meta {:timestamp 123 :version 0.3}}
-        {:uid d6 :prev-uid d4 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/rem d2 1] :meta {:timestamp 123 :version 0.3}}
+        {:uid d6 :prev-uid d5 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/rem d2 1] :meta {:timestamp 123 :version 0.3}}
         {:uid d7 :prev-uid d6 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d2] :meta {:timestamp 123 :version 0.3}}]
        [{::edit-event/op :str/ins, ::edit-event/diff "a", ::edit-event/idx 0}
         {::edit-event/op :crsr/mv, ::edit-event/idx 1}
@@ -126,13 +126,13 @@
        gen "abd" 3
        [{:uid d0 :prev-uid nil :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins nil "a"] :meta {:timestamp 123 :version 0.3}}
         {:uid d1 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d0] :meta {:timestamp 123 :version 0.3}}
-        {:uid d2 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d2 :prev-uid d1 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
         {:uid d3 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d2] :meta {:timestamp 123 :version 0.3}}
-        {:uid d4 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "c"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d4 :prev-uid d3 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "c"] :meta {:timestamp 123 :version 0.3}}
         {:uid d5 :prev-uid d4 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d4] :meta {:timestamp 123 :version 0.3}}
-        {:uid d6 :prev-uid d4 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/rem d2 1] :meta {:timestamp 123 :version 0.3}}
+        {:uid d6 :prev-uid d5 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/rem d2 1] :meta {:timestamp 123 :version 0.3}}
         {:uid d7 :prev-uid d6 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d2] :meta {:timestamp 123 :version 0.3}}
-        {:uid d8 :prev-uid d6 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "d"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d8 :prev-uid d7 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "d"] :meta {:timestamp 123 :version 0.3}}
         {:uid d9 :prev-uid d8 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d8] :meta {:timestamp 123 :version 0.3}}]
        [{::edit-event/op :str/ins, ::edit-event/diff "a", ::edit-event/idx 0}
         {::edit-event/op :crsr/mv, ::edit-event/idx 1}
@@ -149,17 +149,17 @@
        gen "az" 2
        [{:uid d0 :prev-uid nil :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins nil "a"] :meta {:timestamp 123 :version 0.3}}
         {:uid d1 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d0] :meta {:timestamp 123 :version 0.3}}
-        {:uid d2 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d2 :prev-uid d1 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
         {:uid d3 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d2] :meta {:timestamp 123 :version 0.3}}
-        {:uid d4 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "c"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d4 :prev-uid d3 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "c"] :meta {:timestamp 123 :version 0.3}}
         {:uid d5 :prev-uid d4 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d4] :meta {:timestamp 123 :version 0.3}}
-        {:uid d6 :prev-uid d4 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/rem d2 1] :meta {:timestamp 123 :version 0.3}}
+        {:uid d6 :prev-uid d5 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/rem d2 1] :meta {:timestamp 123 :version 0.3}}
         {:uid d7 :prev-uid d6 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d2] :meta {:timestamp 123 :version 0.3}}
-        {:uid d8 :prev-uid d6 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "d"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d8 :prev-uid d7 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "d"] :meta {:timestamp 123 :version 0.3}}
         {:uid d9 :prev-uid d8 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d8] :meta {:timestamp 123 :version 0.3}}
-        {:uid d10 :prev-uid d8 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/sel [d8 d2]] :meta {:timestamp 123 :version 0.3}}
-        {:uid d11 :prev-uid d8 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/sel [d8 d0]] :meta {:timestamp 123 :version 0.3}}
-        {:uid d12 :prev-uid d8 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/rem  d0 2] :meta {:timestamp 123 :version 0.3}}
+        {:uid d10 :prev-uid d9 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/sel [d8 d2]] :meta {:timestamp 123 :version 0.3}}
+        {:uid d11 :prev-uid d10 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/sel [d8 d0]] :meta {:timestamp 123 :version 0.3}}
+        {:uid d12 :prev-uid d11 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/rem  d0 2] :meta {:timestamp 123 :version 0.3}}
         {:uid d13 :prev-uid d12 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "z"] :meta {:timestamp 123 :version 0.3}}
         {:uid d14 :prev-uid d13 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d13] :meta {:timestamp 123 :version 0.3}}]
        [{::edit-event/op :str/ins, ::edit-event/diff "a", ::edit-event/idx 0}
@@ -181,17 +181,17 @@
        gen "xyz" 3
        [{:uid d0 :prev-uid nil :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins nil "a"] :meta {:timestamp 123 :version 0.3}}
         {:uid d1 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d0] :meta {:timestamp 123 :version 0.3}}
-        {:uid d2 :prev-uid d0 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d2 :prev-uid d1 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d0 "b"] :meta {:timestamp 123 :version 0.3}}
         {:uid d3 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d2] :meta {:timestamp 123 :version 0.3}}
-        {:uid d4 :prev-uid d2 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "c"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d4 :prev-uid d3 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "c"] :meta {:timestamp 123 :version 0.3}}
         {:uid d5 :prev-uid d4 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d4] :meta {:timestamp 123 :version 0.3}}
-        {:uid d6 :prev-uid d4 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/rem d2 1] :meta {:timestamp 123 :version 0.3}}
+        {:uid d6 :prev-uid d5 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/rem d2 1] :meta {:timestamp 123 :version 0.3}}
         {:uid d7 :prev-uid d6 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d2] :meta {:timestamp 123 :version 0.3}}
-        {:uid d8 :prev-uid d6 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "d"] :meta {:timestamp 123 :version 0.3}}
+        {:uid d8 :prev-uid d7 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d2 "d"] :meta {:timestamp 123 :version 0.3}}
         {:uid d9 :prev-uid d8 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/mv d8] :meta {:timestamp 123 :version 0.3}}
-        {:uid d10 :prev-uid d8 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/sel [d8 d2]] :meta {:timestamp 123 :version 0.3}}
-        {:uid d11 :prev-uid d8 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/sel [d8 nil]] :meta {:timestamp 123 :version 0.3}}
-        {:uid d12 :prev-uid d8 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/rem  nil 3] :meta {:timestamp 123 :version 0.3}}
+        {:uid d10 :prev-uid d9 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/sel [d8 d2]] :meta {:timestamp 123 :version 0.3}}
+        {:uid d11 :prev-uid d10 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:crsr/sel [d8 nil]] :meta {:timestamp 123 :version 0.3}}
+        {:uid d12 :prev-uid d11 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/rem  nil 3] :meta {:timestamp 123 :version 0.3}}
         {:uid d13 :prev-uid d12 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins nil "x"] :meta {:timestamp 123 :version 0.3}}
         {:uid d14 :prev-uid d13 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d13 "y"] :meta {:timestamp 123 :version 0.3}}
         {:uid d15 :prev-uid d14 :branch-uid (uuid :<branch>) :file-uid (uuid :<file>) :pad 1 :op [:str/ins d14 "z"] :meta {:timestamp 123 :version 0.3}}]

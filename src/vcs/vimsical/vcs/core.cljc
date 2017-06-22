@@ -91,19 +91,6 @@
                      :deltas (s/nilable (s/every ::delta/delta)))
         :ret  ::vcs)
 
-(defn add-deltas
-  [vcs uuid-fn deltas]
-  (reduce
-   (fn [vcs delta]
-     (add-delta vcs uuid-fn delta))
-   vcs deltas))
-
-(s/fdef add-deltas
-        :args (s/cat :vcs ::vcs
-                     :uuid-fn ::editor/uuid-fn
-                     :deltas (s/nilable (s/every ::delta/delta)))
-        :ret  ::vcs)
-
 ;; NOTE the only optimization here -- compared to  (reduce add-delta deltas) is
 ;; to prevent building the timeline for every single delta
 
@@ -151,8 +138,8 @@
         all-deltas'             (state.deltas/add-deltas all-deltas deltas')
         timeline'               (state.timeline/add-deltas timeline branches uuid-fn deltas')
         vcs'                    (-> vcs
-                                    (assoc-in [::state-by-delta-uid (-> deltas' peek :uid) ::state.deltas/deltas] all-deltas')
-                                    (assoc-in [::state-by-delta-uid (-> deltas' peek :uid) ::state.files/state-by-file-uid] files-state-by-file-uid')
+                                    (assoc-in [::state-by-delta-uid delta-uid' ::state.deltas/deltas] all-deltas')
+                                    (assoc-in [::state-by-delta-uid delta-uid' ::state.files/state-by-file-uid] files-state-by-file-uid')
                                     (assoc ::timeline timeline'))]
     [vcs' deltas' delta-uid']))
 

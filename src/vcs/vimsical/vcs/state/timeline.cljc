@@ -220,7 +220,7 @@
          branch-children-chunks-by-delta-branch-off-index))))))
 
 (s/fdef new-chunks-by-absolute-start-time
-        :args (s/cat :chunks (s/every ::chunk/chunk))
+        :args (s/cat :chunks (s/nilable (s/every ::chunk/chunk)))
         :ret  ::chunks-by-absolute-start-time)
 
 (defn- new-chunks-by-absolute-start-time
@@ -241,7 +241,7 @@
                      :chunks-by-branch-uid ::chunks-by-branch-uid
                      :branches (s/every ::branch/branch)
                      :uuid-fn ::uuid-fn)
-        :ret  (s/every ::chunk/chunk))
+        :ret (s/nilable (s/every ::chunk/chunk)))
 
 (defn inline-chunks
   "Perform a depth-first walk over the branch tree and splices the children's
@@ -306,7 +306,7 @@
         :args (s/cat :timeline ::timeline
                      :branches (s/every ::branch/branch)
                      :uuid-fn ::uuid-fn
-                     :deltas (s/every ::delta/delta))
+                     :deltas (s/nilable (s/every ::delta/delta)))
         :ret ::timeline)
 
 (defn add-deltas
