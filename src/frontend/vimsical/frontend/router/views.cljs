@@ -1,7 +1,7 @@
 (ns vimsical.frontend.router.views
   (:require
    [vimsical.frontend.app.subs :as app.subs]
-   [vimsical.frontend.auth.views :as auth.views :refer [signup invite]]
+   [vimsical.frontend.auth.views :as auth.views :refer [signup invite-signup]]
    [vimsical.frontend.landing.views :refer [landing]]
    [vimsical.frontend.player.views.player :refer [player]]
    [vimsical.frontend.router.routes :as routes]
@@ -23,7 +23,7 @@
 
 (defmethod view-for ::routes/signup [_] [signup])
 (defmethod view-for ::routes/invite [route]
-  [invite (routes/get-arg route :token)])
+  [invite-signup (routes/get-arg route :token)])
 
 (defmethod view-for ::routes/landing [_] [landing])
 
