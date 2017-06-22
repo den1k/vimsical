@@ -32,6 +32,13 @@
      :omit-source  true
      :uberjar-name "vimsical.jar"
      :main         vimsical.backend.core}]
+
+   :bench
+   [:common :vcs :dev
+    {:main         vimsical.vcs.bench
+     :source-paths ["bench/vcs"]
+     :dependencies [[criterium "0.4.4"]]}]
+
    ;;
    ;; Vcs
    ;;
