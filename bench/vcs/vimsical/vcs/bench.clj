@@ -99,7 +99,8 @@
 ;;
 
 (defn sep [s]
-  (str \newline \newline (apply str (repeat (- 80 (count s)))) \space s))
+  (println
+   (str \newline (apply str (repeat (- 80 (count s)) "-")) \space s \newline)))
 
 (defn -main [& _]
   (sep "1. Spliced events")
