@@ -34,7 +34,7 @@
   the beginning."
   [line col lines]
   (let [xf (comp (take (dec line))
-                 (map #(inc (.-length %))))]
+                 (map #(inc ^long (.-length %))))]
     ;; dec the col because monaco counts from 1
     (transduce xf + (dec col) lines)))
 
@@ -52,9 +52,10 @@
                  :endColumn       (:col end-pos)
                  :endLineNumber   (:line end-pos)})))
 
+;; TODO optimize this further takes about 10ms on a large file
 (defn idx->pos
   "Takes an idx and a string and computes a :line and :col hashmap."
-  [idx string]
+  [^long idx string]
   (cond
     (vector? idx)
     (mapv #(idx->pos % string) idx)
@@ -62,20 +63,20 @@
     (number? idx)
     (let [str-len (count string)]
       (cond
-        (zero? idx) {:line 1 :col 1}
+        (zero? idx)     {:line 1 :col 1}
         (> idx str-len) nil             ; out of bounds
         :else
         (reduce
          (fn [[cur-idx l c :as step] char]
-           (let [next-idx (inc cur-idx)]
+           (let [next-idx (inc ^long cur-idx)]
              (cond
-               (= cur-idx idx)      (reduced {:line l :col c})
+               (== cur-idx idx)      (reduced {:line l :col c})
                ;; lookahead at last step of reduction
                ;; this becomes true only when idx is at last char
-               (= next-idx str-len) (reduced {:line l :col (inc c)})
-               :else                (if (identical? \newline char)
-                                      [next-idx (inc l) 1]
-                                      [next-idx l (inc c)]))))
+               (== next-idx str-len) (reduced {:line l :col (inc c)})
+               :else                 (if (identical? \newline char)
+                                       [next-idx (inc ^long l) 1]
+                                       [next-idx l (inc ^long c)]))))
          [0 1 1]
          string)))
     :else (throw (ex-info "Expected vector or number" {:idx idx}))))
@@ -108,6 +109,7 @@
      (let [{:keys [diff idx added deleted]
             :as   e-state} (content-event-state model e)
            event-type      (content-event-type e-state)]
+       (.log js/console e)
        (case event-type
          :str/ins  {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
          :str/rem  {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
