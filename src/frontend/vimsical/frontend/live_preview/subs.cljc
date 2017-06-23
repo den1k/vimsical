@@ -2,6 +2,7 @@
   (:require
    [re-frame.core :as re-frame]
    [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.frontend.license.subs :as license.subs]
    [vimsical.vcs.file :as file]
    [vimsical.vcs.lib :as lib]
    [vimsical.vcs.branch :as branch]
@@ -48,19 +49,21 @@
   [vims {::branch/keys [files libs]}]
   #?(:cljs
      (reagent.dom.server/render-to-static-markup
-      (let [by-subtype  (group-by ::file/sub-type files)
-            libs-string (transduce (map lib-node-markup) str libs)
-            head-string (transduce (map #(<sub [::preprocessed-file-markup vims %]))
-                                   str
-                                   libs-string
-                                   (:css by-subtype))
-            html-file   (-> by-subtype :html first)
-            body-string (transduce
-                         (map #(<sub [::preprocessed-file-markup vims %]))
-                         str
-                         (when html-file
-                           (<sub [::preprocessed-file-markup vims html-file]))
-                         (:javascript by-subtype))]
+      (let [by-subtype     (group-by ::file/sub-type files)
+            libs-string    (transduce (map lib-node-markup) str libs)
+            license-string (<sub [::license.subs/license-string-html-comment vims])
+            license+libs   (str license-string libs-string)
+            head-string    (transduce (map #(<sub [::preprocessed-file-markup vims %]))
+                                      str
+                                      license+libs
+                                      (:css by-subtype))
+            html-file      (-> by-subtype :html first)
+            body-string    (transduce
+                            (map #(<sub [::preprocessed-file-markup vims %]))
+                            str
+                            (when html-file
+                              (<sub [::preprocessed-file-markup vims html-file]))
+                            (:javascript by-subtype))]
         [:html
          [:head
           {:dangerouslySetInnerHTML
@@ -70,17 +73,18 @@
            :dangerouslySetInnerHTML {:__html body-string}}]]))))
 
 (defn snapshots-markup
-  [snapshots libs]
+  [snapshots libs license-string]
   #?(:cljs
      (reagent.dom.server/render-to-static-markup
       (let [{:keys
              [html
               css
               javascript]} (group-by ::snapshot/sub-type snapshots)
-            libs-string    (transduce (map lib-node-markup) str libs)
-            head-string    (transduce (map snapshot-node-markup) str libs-string css)
-            body-string    (transduce (map snapshot-node-markup) str (concat html javascript))
-            body-id        (-> html first ::snapshot/file-uid)]
+            libs-string  (transduce (map lib-node-markup) str libs)
+            license+libs (str license-string libs-string)
+            head-string  (transduce (map snapshot-node-markup) str license+libs css)
+            body-string  (transduce (map snapshot-node-markup) str (concat html javascript))
+            body-id      (-> html first ::snapshot/file-uid)]
         [:html
          [:head
           {:dangerouslySetInnerHTML
