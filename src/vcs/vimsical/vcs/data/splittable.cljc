@@ -20,6 +20,7 @@
 
 (defprotocol Mergeable
   (splice [_ idx other] "Insert `other` at idx. NOTE that for performance reasons, implementations should inline their implementations of `append` when `idx` is `(count this)`")
+  (insert [_ idx element] "Insert `elemt` at idx.")
   (append [_ other] "An alternative to `concat` for mergrables that doesn't require implementing lazy-seq."))
 
 ;;

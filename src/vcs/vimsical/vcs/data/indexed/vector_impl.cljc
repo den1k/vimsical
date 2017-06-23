@@ -11,7 +11,7 @@
 
 (defprotocol IIndex
   (-init [this f vals])
-  (-normalize [this offset]))
+  (-normalize [this offset] [this offset other]))
 
 (s/def ::index map?)
 
@@ -35,15 +35,25 @@
          (fn [m [i val]]
            (assoc! m (f val) i))
          (transient (empty m)) (map-indexed clojure.core/vector vals)))))
-  (-normalize [m offset]
-    (p ::normalize-map
-       (if (zero? ^long offset)
-         m
-         (persistent!
-          (reduce-kv
-           (fn [m v i]
-             (assoc! m v (+ ^long offset ^long i)))
-           (transient (empty m)) m))))))
+  (-normalize
+    ([m offset]
+     (p ::normalize-map
+        (if (zero? ^long offset)
+          m
+          (persistent!
+           (reduce-kv
+            (fn [m v i]
+              (assoc! m v (+ ^long offset ^long i)))
+            (transient (empty m)) m)))))
+    ([m offset other]
+     (p ::normalize-map-offset
+        (if (zero? ^long offset)
+          (merge m other)
+          (persistent!
+           (reduce-kv
+            (fn [m v i]
+              (assoc! m v (+ ^long offset ^long i)))
+            (transient m) other)))))))
 
 #?(:cljs
    (extend-protocol IIndex
@@ -54,14 +64,24 @@
          (fn [m [i val]]
            (assoc! m (f val) i))
          (transient (empty m)) (map-indexed clojure.core/vector vals))))
-     (-normalize [m offset]
-       (if (zero? ^long offset)
-         m
-         (persistent!
-          (reduce-kv
-           (fn [m v i]
-             (assoc! m v (+ ^long offset ^long i)))
-           (transient (empty m)) m))))))
+     (-normalize
+       ([m offset]
+        (if (zero? ^long offset)
+          m
+          (persistent!
+           (reduce-kv
+            (fn [m v i]
+              (assoc! m v (+ ^long offset ^long i)))
+            (transient (empty m)) m))))
+       ([m offset other]
+        (p ::normalize-map-offset
+           (if (zero? ^long offset)
+             (merge m other)
+             (persistent!
+              (reduce-kv
+               (fn [m v i]
+                 (assoc! m v (+ ^long offset ^long i)))
+               (transient m) other))))))))
 
 (defn- split-map-at-idx
   [m idx]

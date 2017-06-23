@@ -15,7 +15,7 @@
         [vimsical.vcs.state.chunk :as chunk]
         [vimsical.vcs.state.chunks :as sut])]))
 
-(st/instrument)
+#?(:clj (st/instrument))
 
 (def deltas
   [{:branch-uid (uuid :b0),,, :file-uid (uuid :f0), :uid (uuid :d0) :prev-uid nil,,,,,,,, :op [:str/ins nil "h"],,,,,,,, :pad 1, :meta {:timestamp 1, :version 1.0}}

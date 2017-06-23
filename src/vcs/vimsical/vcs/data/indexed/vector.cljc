@@ -96,8 +96,15 @@
      (append [_ other]
        (p ::append-index
           (let [other-offset (+ (count m) (- (.offset ^Index other) offset))
-                m-other      (impl/-normalize (.m ^Index other) other-offset)]
-            (Index. offset (merge m m-other)))))
+                m-other      (.m ^Index other)]
+            (Index. offset (impl/-normalize m other-offset m-other)))))
+
+     (insert [this idx element]
+       (p ::insert-index
+          (if (== (count m) (long idx))
+            (conj this element)
+            (let [[left right] (splittable/split this idx)]
+              (splittable/append (conj left element) right)))))
 
      (splice [this idx other]
        (p ::splice-index
@@ -145,6 +152,10 @@
        ;; to shift right by one
        (Index. (dec offset) (dissoc m key)))
 
+     IReduce
+     (-reduce [_ f] (-reduce m f))
+     (-reduce [_ f start] (-reduce m f start))
+
      ILookup
      (-lookup [_ key]
        (when-some [i (get m key)]
@@ -158,8 +169,15 @@
      splittable/Mergeable
      (append [_ other]
        (let [other-offset (+ (count m) (- (.-offset other) offset))
-             m-other      (impl/-normalize (.-m other) other-offset)]
-         (Index. offset (merge m m-other))))
+             m-other      (.-m other)]
+         (Index. offset (impl/-normalize m other-offset m-other))))
+
+     (insert [this idx element]
+       (p ::insert-index
+          (if (== (count m) (long idx))
+            (conj this element)
+            (let [[left right] (splittable/split this idx)]
+              (splittable/append (conj left element) right)))))
 
      (splice [this idx other]
        (if (== (count m) (long idx))
@@ -308,6 +326,13 @@
 
 
      splittable/Mergeable
+     (insert [this idx element]
+       (p ::insert-vector
+          (if (== (count this) (long idx))
+            (conj this element)
+            (let [[left right] (splittable/split this idx)]
+              (splittable/append (conj left element) right)))))
+
      (splice [this idx other]
        (p ::splice-vector
           (if (== (count this) (long idx))
@@ -315,6 +340,7 @@
             (let [index' (splittable/splice index idx (.index ^IndexedVector other))
                   v'     (splittable/splice v idx (.v ^IndexedVector other))]
               (IndexedVector. f index' v')))))
+
      (append [this other]
        (when other (assert (vector? other)))
        (p ::append-vector
@@ -438,6 +464,13 @@
        (splittable/split v idx))
 
      splittable/Mergeable
+     (insert [this idx element]
+       (p ::insert-vector
+          (if (== (count this) (long idx))
+            (conj this element)
+            (let [[left right] (splittable/split this idx)]
+              (splittable/append (conj left element) right)))))
+
      (splice [this idx other]
        (if (== (count this) (long idx))
          (splittable/append this other)

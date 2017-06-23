@@ -156,7 +156,7 @@
          (p :update-state-with-delta/str-ins-splice
             (assoc state
                    ::cursor (+ op-idx (delta/prospective-idx-offset delta))
-                   ::deltas (p :update-state-with-delta/str-ins-splice-deltas (splittable/splice deltas op-idx (indexed/vec-by :uid [delta])))
+                   ::deltas (p :update-state-with-delta/str-ins-splice-deltas (splittable/insert deltas op-idx delta))
                    ::string (p :update-state-with-delta/str-ins-splice-string (splittable/splice string op-idx op-diff))))))))
 
 (defmethod update-state-with-delta :str/rem
