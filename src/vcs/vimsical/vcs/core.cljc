@@ -23,6 +23,7 @@
   events?
   "
   (:require
+   [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
    [clojure.spec.alpha :as s]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]
@@ -72,7 +73,7 @@
                      :delta ::delta/delta)
         :ret  ::vcs)
 
-(defn add-delta
+(defnp add-delta
   [{:as vcs ::keys [branches state-by-delta-uid timeline]} uuid-fn {:keys [prev-uid branch-uid uid] :as delta}]
   (let [state                    (get state-by-delta-uid prev-uid)
         all-deltas               (get state ::state.deltas/deltas state.deltas/empty-deltas)
@@ -95,7 +96,7 @@
 ;; NOTE the only optimization here -- compared to  (reduce add-delta deltas) is
 ;; to prevent building the timeline for every single delta
 
-(defn add-deltas
+(defnp add-deltas
   [{::keys [timeline branches] :as vcs} uuid-fn deltas]
   (-> (reduce
        (fn [{:as vcs ::keys [branches state-by-delta-uid timeline]} {:keys [prev-uid branch-uid uid] :as delta}]
@@ -124,7 +125,7 @@
                      :edit-event ::edit-event/edit-event)
         :ret (s/tuple ::vcs (s/every ::delta/delta) ::delta/uid))
 
-(defn add-edit-event
+(defnp add-edit-event
   [{:as vcs ::keys [branches state-by-delta-uid timeline]}
    {:as effects ::editor/keys [uuid-fn]}
    file-uid
@@ -155,7 +156,7 @@
                      :edit-event ::edit-event/edit-event)
         :ret (s/tuple ::vcs (s/every ::delta/delta) ::delta/uid))
 
-(defn add-edit-event-branching
+(defnp add-edit-event-branching
   [{:as vcs ::keys [branches state-by-delta-uid timeline]}
    {:as effects ::editor/keys [uuid-fn timestamp-fn]}
    file-uid
@@ -183,6 +184,38 @@
     [vcs' deltas' delta-uid' branch]))
 
 ;;
+
+(defnp add-edit-events
+  [{:as vcs ::keys [branches state-by-delta-uid timeline]}
+   {:as effects ::editor/keys [uuid-fn]}
+   file-uid branch-uid delta-uid edit-events]
+  ;; HACK
+  (letfn [(add-edit-event
+            [{:as vcs ::keys [branches state-by-delta-uid timeline]}
+             {:as effects ::editor/keys [uuid-fn]}
+             file-uid
+             branch-uid
+             delta-uid
+             edit-event]
+            (let [state                   (get state-by-delta-uid delta-uid)
+                  all-deltas              (get state ::state.deltas/deltas state.deltas/empty-deltas)
+                  files-state-by-file-uid (get state ::state.files/state-by-file-uid state.files/empty-state-by-file-uid)
+                  [files-state-by-file-uid'
+                   deltas'
+                   delta-uid']            (state.files/add-edit-event files-state-by-file-uid effects file-uid branch-uid delta-uid edit-event)
+                  all-deltas'             (state.deltas/add-deltas all-deltas deltas')
+                  state'                  {::state.deltas/deltas           all-deltas'
+                                           ::state.files/state-by-file-uid files-state-by-file-uid'}
+                  vcs'                    (assoc-in vcs [::state-by-delta-uid delta-uid'] state')]
+              [vcs' deltas' delta-uid']))]
+    (let [[vcs' deltas' delta-uid']   (reduce
+                                       (fn [[vcs deltas delta-uid] edit-event]
+                                         (let [[vcs' deltas' delta-uid'] (add-edit-event vcs effects file-uid branch-uid delta-uid edit-event)]
+                                           [vcs' (into deltas deltas') delta-uid']))
+                                       [vcs [] delta-uid] edit-events)]
+      [(assoc vcs' ::timeline (state.timeline/add-deltas timeline branches uuid-fn deltas')) deltas' delta-uid'])))
+
+
 ;; * Queries
 ;;
 

@@ -1,6 +1,7 @@
 (ns vimsical.vcs.state.branches
   "Keep track of the deltas for a branch"
   (:require
+   [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
    [clojure.spec.alpha :as s]
    [vimsical.vcs.alg.topo :as topo]
    [vimsical.vcs.branch :as branch]
@@ -36,17 +37,18 @@
         :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas ::delta/delta)
         :ret ::deltas-by-branch-uid)
 
-(defn add-delta
+(defnp add-delta
   [deltas-by-branch-uid {:keys [branch-uid] :as delta}]
   {:pre [branch-uid]}
   (update deltas-by-branch-uid branch-uid conj-deltas delta))
 
-(s/fdef add-deltas
-        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas (s/nilable (s/every ::delta/delta)))
+(s/fdef add-deltas-by-branch-uid
+        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid
+                     :deltas-by-branch-uid (s/every-kv ::branch/uid (s/every ::delta/delta)))
         :ret ::deltas-by-branch-uid)
 
-(defn add-deltas
-  [deltas-by-branch-uid deltas]
+(defnp add-deltas-by-branch-uid
+  [deltas-by-branch-uid deltas-by-branch-uid']
   (reduce-kv
    (fn [acc branch-uid deltas]
      (let [deltas' (new-vector deltas)]
@@ -55,7 +57,16 @@
                 (splittable/append prev-deltas deltas')
                 deltas'))))
    deltas-by-branch-uid
-   (group-by :branch-uid deltas)))
+   deltas-by-branch-uid'))
+
+
+(s/fdef add-deltas
+        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas (s/nilable (s/every ::delta/delta)))
+        :ret ::deltas-by-branch-uid)
+
+(defnp add-deltas
+  [deltas-by-branch-uid deltas]
+  (add-deltas-by-branch-uid deltas-by-branch-uid (group-by :branch-uid deltas)))
 
 (s/fdef get-deltas
         :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid
@@ -74,7 +85,7 @@
               :params (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :branch-uid ::branch/uid :delta-uid ::delta/prev-uid))
         :ret  (s/nilable number?))
 
-(defn index-of-delta
+(defnp index-of-delta
   ([deltas-by-branch-uid {:keys [branch-uid uid] :as delta}]
    (index-of-delta deltas-by-branch-uid branch-uid uid))
   ([deltas-by-branch-uid branch-uid delta-uid]

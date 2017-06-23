@@ -24,6 +24,7 @@
   offset it anyway."
   (:refer-clojure :exclude [vec vector vector?])
   (:require
+   [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
    [clojure.spec.alpha :as s]
    [vimsical.vcs.data.indexed.vector-impl :as impl]
    [vimsical.vcs.data.splittable :as splittable]
@@ -87,22 +88,25 @@
 
      splittable/Splittable
      (split [_ idx]
-       (let [[l r] (splittable/split m idx (- offset))]
-         [(Index. offset l) (Index. (- offset ^long idx) r)]))
+       (p ::split-index
+          (let [[l r] (splittable/split m idx (- offset))]
+            [(Index. offset l) (Index. (- offset ^long idx) r)])))
 
      splittable/Mergeable
      (append [_ other]
-       (let [other-offset (+ (count m) (- (.offset ^Index other) offset))
-             m-other      (impl/-normalize (.m ^Index other) other-offset)]
-         (Index. offset (merge m m-other))))
+       (p ::append-index
+          (let [other-offset (+ (count m) (- (.offset ^Index other) offset))
+                m-other      (impl/-normalize (.m ^Index other) other-offset)]
+            (Index. offset (merge m m-other)))))
 
      (splice [this idx other]
-       (if (== (count m) (long idx))
-         (splittable/append this other)
-         (let [[left right] (splittable/split this idx)]
-           (->  left
-                (splittable/append other)
-                (splittable/append right)))))))
+       (p ::splice-index
+          (if (== (count m) (long idx))
+            (splittable/append this other)
+            (let [[left right] (splittable/split this idx)]
+              (->  left
+                   (splittable/append other)
+                   (splittable/append right))))))))
 
 #?(:cljs
    (deftype Index [offset m]
@@ -287,14 +291,16 @@
 
      splittable/Splittable
      (split [_ idx]
-       (let [[index-a index-b] (splittable/split index idx)
-             [v-a v-b]         (splittable/split v idx)]
-         [(IndexedVector. f index-a v-a)
-          (IndexedVector. f index-b v-b)]))
+       (p ::split-vector
+          (let [[index-a index-b] (splittable/split index idx)
+                [v-a v-b]         (splittable/split v idx)]
+            [(IndexedVector. f index-a v-a)
+             (IndexedVector. f index-b v-b)])))
      (omit [this idx cnt]
-       (let [[l tmp] (splittable/split this idx)
-             [_ r]   (splittable/split tmp cnt)]
-         (splittable/append l r)))
+       (p ::omit-vector
+          (let [[l tmp] (splittable/split this idx)
+                [_ r]   (splittable/split tmp cnt)]
+            (splittable/append l r))))
 
      splittable/SplittablePerf
      (split-vec [_ idx]
@@ -303,18 +309,20 @@
 
      splittable/Mergeable
      (splice [this idx other]
-       (if (== (count this) (long idx))
-         (splittable/append this other)
-         (let [index' (splittable/splice index idx (.index ^IndexedVector other))
-               v'     (splittable/splice v idx (.v ^IndexedVector other))]
-           (IndexedVector. f index' v'))))
+       (p ::splice-vector
+          (if (== (count this) (long idx))
+            (splittable/append this other)
+            (let [index' (splittable/splice index idx (.index ^IndexedVector other))
+                  v'     (splittable/splice v idx (.v ^IndexedVector other))]
+              (IndexedVector. f index' v')))))
      (append [this other]
        (when other (assert (vector? other)))
-       (if (nil? other)
-         this
-         (let [index' (splittable/append index (.index ^IndexedVector other))
-               v'     (splittable/append v (.v ^IndexedVector other))]
-           (IndexedVector. f index' v'))))))
+       (p ::append-vector
+          (if (nil? other)
+            this
+            (let [index' (splittable/append index (.index ^IndexedVector other))
+                  v'     (splittable/append v (.v ^IndexedVector other))]
+              (IndexedVector. f index' v')))))))
 
 #?(:cljs
    (deftype IndexedVector [f ^Index index v]

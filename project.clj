@@ -46,7 +46,8 @@
    {:source-paths ["src/vcs"]
     :dependencies [[org.clojure/data.avl "0.0.17"]
                    [diffit "1.0.0" :exclusions [org.clojure/tools.reader]]
-                   [net.cgrand/xforms "0.9.3" :exclusions [org.clojure/clojurescript]]]}
+                   [net.cgrand/xforms "0.9.3" :exclusions [org.clojure/clojurescript]]
+                   [com.taoensso/tufte "1.1.1"]]}
    ;;
    ;; Common
    ;;

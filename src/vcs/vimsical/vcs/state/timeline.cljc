@@ -61,6 +61,7 @@
      chunk.
   "
   (:require
+   [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
    [clojure.data.avl :as avl]
    [clojure.spec.alpha :as s]
    [vimsical.vcs.state.chunks :as state.chunks]
@@ -114,7 +115,7 @@
 (s/def ::branch-children-chunks-by-delta-branch-off-index
   (s/every-kv ::index (s/every ::chunk/chunk) :kind sorted? :into (avl/sorted-map)))
 
-(defn- new-chunks-by-delta-start-index
+(defnp new-chunks-by-delta-start-index
   "Return an avl map where each chunk is assoc'd with its delta-start index."
   [chunks]
   (::m
@@ -127,7 +128,7 @@
         :args (s/cat :branch ::branch/branch)
         :ret  ::branch-chunks-by-delta-start-index)
 
-(defn- new-branch-chunks-by-delta-start-index
+(defnp new-branch-chunks-by-delta-start-index
   [{:keys [db/uid] ::branch/keys [chunks]}]
   (new-chunks-by-delta-start-index chunks))
 
@@ -136,7 +137,7 @@
                      :branch ::branch/branch)
         :ret ::branch-children-chunks-by-delta-branch-off-index)
 
-(defn new-branch-children-chunks-by-delta-branch-off-indexes
+(defnp new-branch-children-chunks-by-delta-branch-off-indexes
   "Return an avl map where each child's chunks are assoc'd in a single sequence
   with the branch-off index relative to the base branch."
   [deltas-by-branch-uid {:keys [db/uid] ::branch/keys [children] :as branch}]
@@ -164,7 +165,7 @@
                      :uuid-fn ::uuid-fn)
         :ret  ::branch-chunks-by-delta-start-index)
 
-(defn- slice-branch-chunks-by-delta-index
+(defnp slice-branch-chunks-by-delta-index
   "Split the chunks in `branch-chunks-by-delta-start-index` according to
   `indexes`. Will not create new chunks for an index that points directly to the
   delta-start of an existing chunk in `branch-chunks-by-delta-start-index`."
@@ -193,7 +194,7 @@
                      :uuid-fn ::uuid-fn)
         :ret (s/every ::chunk/chunk))
 
-(defn- new-inlined-chunks-seq
+(defnp new-inlined-chunks-seq
   "Return a sequence of chunks representing the in-lining of the branch's
   children chunks within its own. The implementation currently hard-codes the
   ordering to be: branch chunks left of branch-off, children chunks, branch
@@ -223,7 +224,7 @@
         :args (s/cat :chunks (s/nilable (s/every ::chunk/chunk)))
         :ret  ::chunks-by-absolute-start-time)
 
-(defn- new-chunks-by-absolute-start-time
+(defnp new-chunks-by-absolute-start-time
   "Return an avl map where each chunk is assoc'd with it's absolute start time
   within `chunks`."
   [chunks]
@@ -243,7 +244,7 @@
                      :uuid-fn ::uuid-fn)
         :ret (s/nilable (s/every ::chunk/chunk)))
 
-(defn inline-chunks
+(defnp inline-chunks
   "Perform a depth-first walk over the branch tree and splices the children's
   deltas into its parent's deltas. The order of the final sequence is currently
   determined by both `traversal/new-branch-comparator` and
@@ -289,7 +290,7 @@
                      :delta ::delta/delta)
         :ret ::timeline)
 
-(defn add-delta
+(defnp add-delta
   [{:as timeline ::keys [deltas-by-branch-uid chunks-by-branch-uid duration]} branches uuid-fn
    {:keys [pad] :as delta}]
   (let [deltas-by-branch-uid'          (state.branches/add-delta deltas-by-branch-uid delta)
@@ -309,10 +310,11 @@
                      :deltas (s/nilable (s/every ::delta/delta)))
         :ret ::timeline)
 
-(defn add-deltas
+(defnp add-deltas
   [{:as timeline ::keys [deltas-by-branch-uid chunks-by-branch-uid duration]} branches uuid-fn deltas]
-  (let [deltas-by-branch-uid'          (state.branches/add-deltas deltas-by-branch-uid deltas)
-        chunks-by-branch-uid'          (state.chunks/add-deltas chunks-by-branch-uid branches uuid-fn deltas)
+  (let [deltas-grouped-by-branch-uid   (group-by :branch-uid deltas)
+        deltas-by-branch-uid'          (state.branches/add-deltas-by-branch-uid deltas-by-branch-uid deltas-grouped-by-branch-uid)
+        chunks-by-branch-uid'          (state.chunks/add-deltas-by-branch-uid chunks-by-branch-uid branches uuid-fn deltas-grouped-by-branch-uid)
         inlined-chunks                 (inline-chunks deltas-by-branch-uid' chunks-by-branch-uid' branches uuid-fn)
         chunks-by-absolute-start-time' (new-chunks-by-absolute-start-time inlined-chunks)]
     (assoc timeline
@@ -362,7 +364,7 @@
 
 (s/fdef entry-at-absolute-time :args (s/cat :timeline ::timeline :t ::absolute-time) :ret ::entry)
 
-(defn entry-at-absolute-time
+(defnp entry-at-absolute-time
   [timeline expect-abs-time]
   (some-> timeline
           (nearest-chunk-entry < expect-abs-time)
@@ -370,14 +372,14 @@
 
 (s/fdef first-entry :args (s/cat :timeline ::timeline) :ret (s/nilable ::entry))
 
-(defn first-entry
+(defnp first-entry
   [{::keys [chunks-by-absolute-start-time]}]
   (let [[_ chunk] (first chunks-by-absolute-start-time)]
     (some-> chunk chunk/first-entry)))
 
 (s/fdef next-entry :args (s/cat :timeline ::timeline :entry ::entry) :ret (s/nilable ::entry))
 
-(defn next-entry
+(defnp next-entry
   [timeline [t _]]
   ;; The next delta might be in the next chunk, but we look to the left first
   (or (some-> timeline (nearest-chunk-entry < t)  (nearest-delta-entry > t))
@@ -385,13 +387,13 @@
 
 (s/fdef last-entry :args (s/cat :timeline ::timeline) :ret (s/nilable ::entry))
 
-(defn last-entry
+(defnp last-entry
   [timeline]
   (let [t #?(:clj  Integer/MAX_VALUE :cljs js/Number.MAX_SAFE_INTEGER)]
     (some-> timeline
             (nearest-chunk-entry < t)
             (nearest-delta-entry < t))))
 
-(defn delta-at-absolute-time
+(defnp delta-at-absolute-time
   [timeline expect-abs-time]
   (second (entry-at-absolute-time timeline expect-abs-time)))

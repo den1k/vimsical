@@ -1,8 +1,9 @@
 (ns vimsical.vcs.state.chunks-test
   #?@(:clj
       [(:require
+        [orchestra.spec.test :as st]
         [clojure.test :as t :refer [deftest is]]
-        [vimsical.common.test :refer [uuid uuid-gen]]
+        [vimsical.common.test :refer [diff= uuid uuid-gen]]
         [vimsical.vcs.branch :as branch]
         [vimsical.vcs.state.chunk :as chunk]
         [vimsical.vcs.state.chunks :as sut])]
@@ -13,6 +14,8 @@
         [vimsical.vcs.branch :as branch]
         [vimsical.vcs.state.chunk :as chunk]
         [vimsical.vcs.state.chunks :as sut])]))
+
+(st/instrument)
 
 (def deltas
   [{:branch-uid (uuid :b0),,, :file-uid (uuid :f0), :uid (uuid :d0) :prev-uid nil,,,,,,,, :op [:str/ins nil "h"],,,,,,,, :pad 1, :meta {:timestamp 1, :version 1.0}}
@@ -36,7 +39,7 @@
   [a b]
   [(chunk/with-bounds a true nil) (chunk/with-bounds b nil true)])
 
-(deftest add-delta-to-chunks-by-branch-uid-test
+(deftest add-delta-test
   (let [{[chk0 chk1
           chk2 chk3
           chk4 chk5] :seq
@@ -52,3 +55,32 @@
                             (sut/add-delta chunks-by-branch-uid branches uuid-fn delta))
                           sut/emtpy-chunks-by-branch-uid deltas)]
     (is (= expect actual))))
+
+(deftest add-deltas-test
+  (let [{[chk0 chk1
+          chk2 chk3
+          chk4 chk5] :seq
+         uuid-fn     :f} (uuid-gen)
+        [d0 d1 d2
+         d3 d4 d5
+         d6 d7 d8]       deltas
+        expect           {(uuid :b0)   (chunks-vec (chunk/new-chunk chk0 0 [d0 d1] true) (chunk/new-chunk chk1 0 [d2] false))
+                          (uuid :b1-1) (chunks-vec (chunk/new-chunk chk2 1 [d3 d4] true) (chunk/new-chunk chk3 1 [d5] false))
+                          (uuid :b1-2) (chunks-vec (chunk/new-chunk chk4 1 [d6 d7] true) (chunk/new-chunk chk5 1 [d8] false))}
+        actual           (sut/add-deltas sut/emtpy-chunks-by-branch-uid branches uuid-fn deltas)]
+    (is (= expect actual))))
+
+(deftest add-deltas-by-branch-uid-test
+  (let [{[chk0 chk1
+          chk2 chk3
+          chk4 chk5] :seq
+         uuid-fn     :f}     (uuid-gen)
+        [d0 d1 d2
+         d3 d4 d5
+         d6 d7 d8]           deltas
+        deltas-by-branch-uid (group-by :branch-uid deltas)
+        expect               {(uuid :b0)   (chunks-vec (chunk/new-chunk chk0 0 [d0 d1] true) (chunk/new-chunk chk1 0 [d2] false))
+                              (uuid :b1-1) (chunks-vec (chunk/new-chunk chk2 1 [d3 d4] true) (chunk/new-chunk chk3 1 [d5] false))
+                              (uuid :b1-2) (chunks-vec (chunk/new-chunk chk4 1 [d6 d7] true) (chunk/new-chunk chk5 1 [d8] false))}
+        actual               (sut/add-deltas-by-branch-uid sut/emtpy-chunks-by-branch-uid branches uuid-fn deltas-by-branch-uid)]
+    (diff= expect actual)))
