@@ -36,7 +36,21 @@
 ;;
 
 (defprotocol IIndexedVector
-  (index-of [_ val]))
+  (index-of [_ val] [_ val start]))
+
+(defn -index-of
+  [v val start]
+  #?(:clj
+     (let [i (.indexOf v val)]
+       (when-not (neg? ^long i) i))
+     :cljs
+     (or (let [i (.indexOf v val start)]
+           (when-not (neg? i) i))
+         (loop [i start]
+           (when-not (neg? ^long i)
+             (if (= val (nth v i))
+               i
+               (recur (dec ^long i))))))))
 
 ;;
 ;; * Private
@@ -113,8 +127,8 @@
      (nth [_ idx not-found] (nth v idx not-found))
 
      IIndexedVector
-     (index-of [_ val]
-       (p :index-of (util/index-of index val)))
+     (index-of [_ val] (p :index-of (.indexOf index val)))
+     (index-of [_ val start] (p :index-of-start (-index-of index val start)))
 
      IIndexedInternal
      (-consistent? [this]
@@ -245,8 +259,8 @@
      (-nth [_ idx not-found] (nth v idx not-found))
 
      IIndexedVector
-     (index-of [_ val]
-       (p :index-of (util/index-of index val)))
+     (index-of [_ val] (p :index-of (.indexOf index val)))
+     (index-of [_ val start] (p :index-of-start (-index-of index val start)))
 
      IIndexedInternal
      (-consistent? [this]

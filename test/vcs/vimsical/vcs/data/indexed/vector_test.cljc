@@ -80,9 +80,6 @@
 
 (deftest update-test
   (let [{:keys [v vb]} (test-data)]
-    (is (thrown?
-         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
-         (= {:uid 0 :foo :bar} (first (update v 0 assoc :foo :bar)))))
     (is (= {:uid 0 :foo :bar} (first (update vb 0 assoc :foo :bar))))))
 
 (deftest next-test

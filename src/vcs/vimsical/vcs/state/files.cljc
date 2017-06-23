@@ -74,20 +74,19 @@
         :ret  ::edit-event/idx)
 
 (defnp op-uid->op-idx
-  [{::keys [deltas] :as state} op-uid]
-  (or (cond
-        ;; First delta
-        (nil? op-uid)    0
-        ;; Moved to a new file
-        (empty? deltas)  0
-        ;; range
-        (vector? op-uid) (op-uid->op-idx state (second op-uid))
-        ;; uid
-        :else            (some-> deltas
-                                 (indexed/index-of op-uid)
-                                 inc))
-      (throw
-       (ex-info "Id not found" {:op-uid op-uid :deltas deltas}))))
+  [{::keys [deltas cursor] :as state} op-uid]
+  (let [start (max 0 (dec (if (vector? cursor) (second cursor) cursor)))]
+    (or (cond
+          ;; First delta
+          (nil? op-uid)    0
+          ;; Moved to a new file
+          (empty? deltas)  0
+          ;; range
+          (vector? op-uid) (op-uid->op-idx state (second op-uid))
+          ;; uid
+          :else            (when-some [i (indexed/index-of deltas op-uid start)] (inc ^long i)))
+        (throw
+         (ex-info "Id not found" {:op-uid op-uid :deltas deltas})))))
 
 (s/fdef op-idx->op-uid
         :args (s/cat :state ::state :op-idx ::edit-event/idx)
