@@ -3,7 +3,7 @@
       [(:require
         [orchestra.spec.test :as st]
         [clojure.test :as t :refer [deftest is]]
-        [vimsical.common.test :refer [diff= uuid uuid-gen]]
+        [vimsical.common.test :refer [uuid uuid-gen]]
         [vimsical.vcs.branch :as branch]
         [vimsical.vcs.state.chunk :as chunk]
         [vimsical.vcs.state.chunks :as sut])]
@@ -83,4 +83,4 @@
                               (uuid :b1-1) (chunks-vec (chunk/new-chunk chk2 1 [d3 d4] true) (chunk/new-chunk chk3 1 [d5] false))
                               (uuid :b1-2) (chunks-vec (chunk/new-chunk chk4 1 [d6 d7] true) (chunk/new-chunk chk5 1 [d8] false))}
         actual               (sut/add-deltas-by-branch-uid sut/emtpy-chunks-by-branch-uid branches uuid-fn deltas-by-branch-uid)]
-    (diff= expect actual)))
+    (is (= expect actual))))
