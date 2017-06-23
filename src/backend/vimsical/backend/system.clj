@@ -9,6 +9,7 @@
    [vimsical.backend.adapters.cassandra.cluster :as cassandra-cluster]
    [vimsical.backend.components.datomic :as datomic]
    [vimsical.backend.components.delta-store :as delta-store]
+   [vimsical.backend.components.repl :as repl]
    [vimsical.backend.components.server :as server]
    [vimsical.backend.components.service :as service]
    [vimsical.backend.components.session-store :as session-store]
@@ -101,4 +102,10 @@
      :delta-store
      :snapshot-store
      :session-store
-     :service-map])))
+     :service-map])
+
+   ;;
+   ;; * nRepl server
+   ;;
+   :nrepl-server
+   (repl/->repl (env/optional :nrepl-port ::env/int))))
