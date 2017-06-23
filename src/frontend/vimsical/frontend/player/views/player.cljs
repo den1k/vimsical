@@ -27,12 +27,14 @@
    [preview-container opts]
    [timeline-bar opts]
    [info-and-editor-container opts]])
-
-(defn player [{:keys [vims standalone? orientation show-info?] :as opts}
-              {show-info? true}]
+(defn player [{:keys [vims standalone? orientation show-info? ui-key] :as opts}]
   (let [vims        (if standalone? (<sub [::app.subs/vims]) vims)
         orientation (or orientation (<sub [::ui.subs/orientation]))
-        opts        (assoc opts :vims vims :orientation orientation)]
+        opts        (merge {:vims        vims
+                            :orientation orientation
+                            :ui-key      :player
+                            :show-info?  true}
+                           opts)]
     (when vims                          ; fixme player should have loader
       [:div.vimsical-frontend-player.player
        {:class (name orientation)}

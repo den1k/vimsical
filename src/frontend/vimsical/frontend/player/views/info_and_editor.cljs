@@ -37,7 +37,7 @@
     (reagent/create-class
      {:render
       (fn [c]
-        (let [{:keys [vims show-info? orientation read-only?] :as opts}
+        (let [{:keys [vims show-info? orientation read-only? ui-key] :as opts}
               (reagent/props c)
               {::vims/keys [title owner]} (<sub [::app.subs/vims-info vims])
               files                 (<sub [::vcs.subs/files vims])
@@ -51,7 +51,7 @@
                                        ^{:key (:db/uid fl)}
                                        [code-editor {:vims       vims
                                                      :file       fl
-                                                     :ui-key     :player
+                                                     :ui-key     ui-key
                                                      :read-only? read-only?
                                                      :compact?   true}])
                                      uid->file)

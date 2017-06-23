@@ -13,11 +13,15 @@
             [vimsical.frontend.player.views.player :as player]
             [vimsical.frontend.vims.handlers :as vims.handlers]
             [re-frame.core :as re-frame]
-            [re-com.core :as re-com]))
+            [re-com.core :as re-com]
+            [vimsical.frontend.landing.handlers :as handlers]))
 
 (def landing-vims->uid
   {:bug         (uuid "5947d83b-602f-4c0a-83e5-88c03281c0a0")
-   :hello-world (uuid "594b29e0-f21c-4753-9836-d9d45b4b4809")})
+   :hello-world (uuid "594b29e0-f21c-4753-9836-d9d45b4b4809")
+   :shines      (uuid "594b3b7e-8b61-4d4f-a36d-99282559c7c3")
+   :owl         (uuid "594b509c-c801-4abf-9e6d-5f03aed1771a")
+   :tree        (uuid "594c137a-c665-4eeb-8b25-e183fd000c80")})
 
 (defn load-landing-vims []
   (doseq [[_ uid] landing-vims->uid]
@@ -55,6 +59,9 @@
   (-> (.getElementById js/document waitlist-signup-id)
       (util.dom/scroll-to)))
 
+;;
+;; Credit Wrapper
+;;
 (defn credit [title author]
   [:div.credit
    "Adapted from " [:span.title title] " by " [:span.author author]])
@@ -65,26 +72,94 @@
    content
    (when-not above? [credit title author])])
 
-(defn- vims-preview [{:keys [vims-uid]}]
-  (when-let [vims (<sub [::vims.subs/vcs-vims vims-uid])]
-    [live-preview.views/live-preview
-     {:ui-key  ::page-header
-      :static? true
-      ;:from-snapshot? true
-      :vims    vims}]))
+;;
+;; Vims Preview
+;;
+
+(defn- vims-preview [{:keys [ui-key vims-uid scroll-skim? from-snapshot?]}]
+  (let [scroll-skim-ratio (when scroll-skim? (interop/ratom 0))]
+    (fn []
+      (when-let [vims (<sub [::vims.subs/vcs-vims vims-uid])]
+        (let [view [live-preview.views/live-preview
+                    {:ui-key         ui-key
+                     :static?        (not scroll-skim?)
+                     :from-snapshot? from-snapshot?
+                     :vims           vims}]]
+          (if-not scroll-skim?
+            view
+            (letfn [(dispatch-fn [ratio]
+                      (re-frame/dispatch
+                       [::handlers/set-vims-preview-throttle vims ratio]))]
+              [ui.views/viewport-ratio dispatch-fn true view])))))))
+
+;;
+;; Video Player
+;;
+
+(defn video-player [{:keys [class loop? src]
+                     :or   {loop? true}}]
+  (let [node          (interop/ratom nil)
+        on-vis-change (fn [visible?]
+                        (if visible?
+                          (doto @node
+                            (aset "currentTime" 0)
+                            (.play))
+                          (.pause @node)))]
+    (fn []
+      [ui.views/visibility {:on-visibility-change on-vis-change}
+       [:video.video
+        {:class    class
+         :ref      (fn [vid-node]
+                     (reset! node vid-node))
+         :controls false
+         ;:auto-play false
+         ;; necessary to autoplay on iOS
+         :muted    true
+         ;; necesssary to not enter full-screen mode in iOS
+         ;; but seeming not currently supported in react
+         ;:plays-inline true
+         :loop     loop?
+         :preload  "auto"
+         :src      src}]])))
+
+;;
+;; Scroll Player
+;;
+
+(defn scroll-player [{:keys [ui-key vims-uid scroll-skim?]}]
+  (let [scroll-skim-ratio (when scroll-skim? (interop/ratom 0))]
+    (fn []
+      (when-let [vims (<sub [::vims.subs/vcs-vims vims-uid])]
+        (let [view [player/player {:vims        vims
+                                   :orientation :landscape
+                                   :show-info?  false
+                                   :read-only?  true
+                                   :ui-key      ui-key}]]
+          (if-not scroll-skim?
+            view
+            (letfn [(dispatch-fn [ratio]
+                      (re-frame/dispatch
+                       [::handlers/set-player-preview vims ratio]))]
+              [ui.views/viewport-ratio dispatch-fn true view])))))))
+
+
+;;
+;; Vims Sections
+;;
+
 
 (defn page-header []
   [:div.stmt-wrapper.jsb.ac
    [:div.vimsical-stmt
-    [:h1.header "Vimsical"]
+    [:h1.header.vimsical "Vimsical"]
     [:h2.subheader
-     "Your educational playground"
-     [:br]
-     "To explore and create."]
+     "Your coding playground"]
     [:div.join
      {:on-click (e> (scroll-to-waitlist))}
      "Join our Journey"]]
-   [vims-preview {:vims-uid (:hello-world landing-vims->uid)}]])
+   [vims-preview {:ui-key         ::page-header
+                  :from-snapshot? true
+                  :vims-uid       (:tree landing-vims->uid)}]])
 
 (defn create-section []
   [:div.create.section
@@ -94,7 +169,9 @@
    [credit-wrapper
     "Trail"
     "Lee Hamsmith"
-    [:div.lp-vims-lg]]])
+    [video-player
+     {:class "create-video"
+      :src   "video/create.m4v"}]]])
 
 (defn explore []
   [:div.explore.section
@@ -104,26 +181,17 @@
    [credit-wrapper
     "The Bug"
     "Ana Tudor"
-    [:video.explore-video
-     {:controls  false
-      :auto-play true
-      ;; necessary to autoplay on iOS
-      :muted     true
-      ;; necesssary to not enter full-screen mode in iOS
-      ;; but seeming not currently supported in react
-      ;:plays-inline true
-      :loop      true
-      :preload   "auto"
-      :src       "video/explore.m4v"}]]])
+    [video-player
+     {:class "explore-video"
+      :src   "video/explore.m4v"}]]])
 
 (defn mission-section []
   [:div.mission-section.dc.ac.section
    [ui.views/visibility
-    {:once? true
-     :child
-            [:div.logo-and-slogan.jsb.ac
-             [icons/logo-and-type]
-             [:h2.learnable "make it learnable."]]}]
+    {:once? true}
+    [:div.logo-and-slogan.jsb.ac
+     [icons/logo-and-type]
+     [:h2.learnable "make it learnable."]]]
    [:p.stmt
     "Our mission is to nurture understanding, accelerate learning and ease teaching"
     [:br]
@@ -132,13 +200,14 @@
 (defn player-section []
   ;; todo skim vims by scrolling
   [:div.player-section.dc.ac.section
-   [:h2.header "Play"]
+   [:h2.header "Player"]
    [:h3.subheader "Take your creations places."]
    [credit-wrapper "Wormhole" "Jack Aniperdo"
-    (when-let [vims (<sub [::vims.subs/vcs-vims (:hello-world landing-vims->uid)])]
-      [player/player {:vims       vims :orientation :landscape
-                      :show-info? false
-                      :read-only? true}])]
+    (when-let [vims (<sub [::vims.subs/vcs-vims (:owl landing-vims->uid)])]
+      [player/player {:vims        vims
+                      :orientation :landscape
+                      :show-info?  false
+                      :read-only?  true}])]
    [:p.embed-stmt
     "Empower others with an immersive learning experience"
     [:br]
@@ -164,7 +233,7 @@
            success [:div.result.success
                     "Thank You!"
                     [:br]
-                    "We'll let you know as soon as we're live!"]
+                    "We can't wait to see what you'll come up with."]
            error [:div.result.error
                   "Oh no!"
                   [:br] "Something went wrong. Please try again."])]))))
@@ -175,22 +244,24 @@
 
 (defn landing []
   (load-landing-vims)
+
   (fn []
     [:div.landing.asc.dc.ac.ais
      [:div.wrapper
       [page-header]
       [create-section]
       [explore]
-      [player-section]
-      [:div.section
-       [:h3 "TODO Creations here"]]
+      [player-section]                  ;; emoji predictor
+      #_[:div.section
+         [:h3 "TODO Creations here"]
+         ]
       [mission-section]
 
-      [:div.section
-       [:h3 "TODO Creations here"]]
+      #_[:div.section
+         [:h3 "TODO Creations here"]]
 
-      [:div.bottom-waitlist.dc.ac
+      [:div.bottom-waitlist.dc.ac.section
        [:h1.join "Join our Journey"]
        [waitlist]]
-      [icons/logo-and-type
-       {:class "footer-logo jc ac"}]]]))
+      #_[icons/logo-and-type
+         {:class "footer-logo jc ac"}]]]))

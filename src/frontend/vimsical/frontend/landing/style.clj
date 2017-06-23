@@ -4,7 +4,8 @@
 
 (def credit
   [[:.credit-wrapper
-    {:display :inline-block}]
+    {:display        :inline-flex
+     :flex-direction :column}]
    [:.credit
     {:text-align :right
      :font-size  :12px
@@ -31,19 +32,21 @@
    [:.vimsical-stmt
     {:letter-spacing :.004em
      :flex           0.5}
-    [:.header
-     {:font-size :65px}]
+    [:.header.vimsical
+     {:font-size     :65px
+      :margin-bottom :5px}]
     [:.subheader
      {:font-size :28px}]
     [:.join
      {:cursor :pointer}]]
    [:.live-preview
-    {:flex 0.4}]])
+    {:flex   0.4
+     :height :200px}]])
 
 (def explore-and-create
   [[:.explore
     {:text-align :right}]
-   [:.explore-video
+   [:.video
     {:border "1px solid hsl(0, 0%, 93%)"
      :width  :700px}]])
 
@@ -95,7 +98,7 @@
 
 (def waitlist
   [[:.bottom-waitlist
-    {:margin-bottom :200px}
+    {:margin-bottom :400px}
     [:.join
      {:font-size      :60px
       :letter-spacing :.02em
@@ -136,16 +139,6 @@
      :align-self :center}
     [:.section
      {:margin-top :200px}]
-
-    ;; temp
-    [:.lp-vims
-     {:width      :400px
-      :height     :300px
-      :background :tomato}]
-    [:.lp-vims-lg
-     {:width      :700px
-      :height     :400px
-      :background :lightgreen}]
     credit
     headers
     vimsical-stmt
