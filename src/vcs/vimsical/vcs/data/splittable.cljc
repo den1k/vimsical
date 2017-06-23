@@ -27,6 +27,8 @@
 ;; * Default implementations
 ;;
 
+;; ** Splittable
+
 (extend-protocol Splittable
   #?(:clj String :cljs string)
   (split [s idx]
@@ -40,7 +42,6 @@
   (omit [v ^long idx ^long cnt]
     (into (subvec v 0 idx) (subvec v (+ cnt idx)))))
 
-
 #?(:cljs
    (extend-protocol Splittable
      Subvec
@@ -49,6 +50,7 @@
      (omit [v ^long idx ^long cnt]
        (into (subvec v 0 idx) (subvec v (+ (long cnt) (long idx)))))))
 
+;; ** Mergeable
 
 (extend-protocol Mergeable
   #?(:clj String :cljs string)
@@ -65,7 +67,6 @@
       (into v other)
       (into (into (subvec v 0 idx) other) (subvec v idx))))
   (append [v other]
-    (assert (vector? other))
     (into v other)))
 
 #?(:cljs
@@ -76,9 +77,11 @@
          (into v other)
          (into (into (subvec v 0 idx) other) (subvec v idx))))
      (append [v other]
-       (assert (vector? other))
        (into v other))))
 
+;;
+;; * Helpers
+;;
 
 (s/def ::idx nat-int?)
 (s/def ::offset integer?)
