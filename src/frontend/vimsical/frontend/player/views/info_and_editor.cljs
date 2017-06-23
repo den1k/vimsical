@@ -77,5 +77,5 @@
            [:div.logo-and-file-type.bar
             (case orientation
               :landscape [icons/logo-and-type]
-              :portrait [elems/explore opts])
+              :portrait [icons/logo-and-type] #_[elems/explore opts])
             (active-file-badge {:file active-file})]]))})))

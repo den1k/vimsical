@@ -8,24 +8,31 @@
             [re-frame.interop :as interop]
             [vimsical.frontend.util.dom :as util.dom]
             [vimsical.frontend.util.re-frame :refer [<sub]]
+            [vimsical.frontend.ui.subs :as ui.subs]
             [vimsical.frontend.vims.subs :as vims.subs]
             [vimsical.frontend.live-preview.views :as live-preview.views]
             [vimsical.frontend.player.views.player :as player]
             [vimsical.frontend.vims.handlers :as vims.handlers]
             [re-frame.core :as re-frame]
             [re-com.core :as re-com]
-            [vimsical.frontend.landing.handlers :as handlers]))
+            [vimsical.frontend.landing.handlers :as handlers]
+            [vimsical.frontend.router.routes :as router.routes]))
 
 (def landing-vims->uid
   {:bug         (uuid "5947d83b-602f-4c0a-83e5-88c03281c0a0")
    :hello-world (uuid "594b29e0-f21c-4753-9836-d9d45b4b4809")
    :shines      (uuid "594b3b7e-8b61-4d4f-a36d-99282559c7c3")
    :owl         (uuid "594b509c-c801-4abf-9e6d-5f03aed1771a")
-   :tree        (uuid "594c137a-c665-4eeb-8b25-e183fd000c80")})
+   :tree        (uuid "594c137a-c665-4eeb-8b25-e183fd000c80")
+   :tree-light  (uuid "594d58c7-6268-4ae2-af3a-fd48edf23d0d")})
 
 (defn load-landing-vims []
   (doseq [[_ uid] landing-vims->uid]
     (re-frame/dispatch [::vims.handlers/load-vims uid])))
+
+(defn link-for-vims [title-kw]
+  (-> {:db/uid (get landing-vims->uid title-kw)}
+      (router.routes/vims-uri)))
 
 ;;
 ;; * Waitlist Form
@@ -60,17 +67,24 @@
       (util.dom/scroll-to)))
 
 ;;
-;; Credit Wrapper
+;; Wrappers
 ;;
-(defn credit [title author]
-  [:div.credit
-   "Adapted from " [:span.title title] " by " [:span.author author]])
 
-(defn credit-wrapper [title author content {:keys [above?]}]
-  [:div.credit-wrapper
-   (when above? [credit title author])
-   content
-   (when-not above? [credit title author])])
+(defn credit [vims-title-kw title author]
+  ;; TODO add links to author's sites
+  [:div.credit
+   "Adapted from " [:span.title title] " by " [:span.author author]
+   " ∙ "
+   [:span.explore
+    {:on-click (e> (util.dom/open (link-for-vims vims-title-kw)))}
+    "explore"]])
+
+(defn credit-wrapper [vims-title-kw title author content {:keys [above?]}]
+  (let [credit-view [credit vims-title-kw title author]]
+    [:div.credit-wrapper
+     (when above? credit-view)
+     content
+     (when-not above? credit-view)]))
 
 ;;
 ;; Vims Preview
@@ -142,9 +156,8 @@
                        [::handlers/set-player-preview vims ratio]))]
               [ui.views/viewport-ratio dispatch-fn true view])))))))
 
-
 ;;
-;; Vims Sections
+;; Landing Sections
 ;;
 
 
@@ -156,34 +169,35 @@
      "Your coding playground"]
     [:div.join
      {:on-click (e> (scroll-to-waitlist))}
-     "Join our Journey"]]
-   [vims-preview {:ui-key         ::page-header
-                  :from-snapshot? true
-                  :vims-uid       (:tree landing-vims->uid)}]])
+     "Join our Journey"]]])
 
 (defn create-section []
-  [:div.create.section
+  [:div.create.section.dc
    [:h2.header "Create"]
    [:h3.subheader
     "Vimsical turns your coding process into an interactive tutorial. Automatically."]
-   [credit-wrapper
-    "Trail"
-    "Lee Hamsmith"
-    [video-player
-     {:class "create-video"
-      :src   "video/create.m4v"}]]])
+   [:div.video-wrapper
+    [credit-wrapper
+     :owl
+     "Trail"
+     "Lee Hamsmith"
+     [video-player
+      {:class "create-video"
+       :src   "video/create.m4v"}]]]])
 
 (defn explore []
-  [:div.explore.section
+  [:div.explore.section.dc
    [:h2.header "Explore"]
    [:h3.subheader
     "See your favorite projects take shape. And make edits with one click."]
-   [credit-wrapper
-    "The Bug"
-    "Ana Tudor"
-    [video-player
-     {:class "explore-video"
-      :src   "video/explore.m4v"}]]])
+   [:div.video-wrapper
+    [credit-wrapper
+     :owl
+     "The Bug"
+     "Ana Tudor"
+     [video-player
+      {:class "explore-video"
+       :src   "video/explore.m4v"}]]]])
 
 (defn mission-section []
   [:div.mission-section.dc.ac.section
@@ -202,12 +216,13 @@
   [:div.player-section.dc.ac.section
    [:h2.header "Player"]
    [:h3.subheader "Take your creations places."]
-   [credit-wrapper "Wormhole" "Jack Aniperdo"
+   [credit-wrapper :owl "Wormhole" "Jack Aniperdo"
     (when-let [vims (<sub [::vims.subs/vcs-vims (:owl landing-vims->uid)])]
-      [player/player {:vims        vims
-                      :orientation :landscape
-                      :show-info?  false
-                      :read-only?  true}])]
+      [player/player
+       (cond-> {:vims       vims
+                :show-info? false
+                :read-only? true}
+         (not (<sub [::ui.subs/on-mobile?])) (assoc :orientation :landscape))])]
    [:p.embed-stmt
     "Empower others with an immersive learning experience"
     [:br]
@@ -244,7 +259,6 @@
 
 (defn landing []
   (load-landing-vims)
-
   (fn []
     [:div.landing.asc.dc.ac.ais
      [:div.wrapper
@@ -264,4 +278,13 @@
        [:h1.join "Join our Journey"]
        [waitlist]]
       #_[icons/logo-and-type
-         {:class "footer-logo jc ac"}]]]))
+         {:class "footer-logo jc ac"}]]
+     #_(when-not (<sub [::ui.subs/on-mobile?])
+         [:div.preview-wrap
+          (when-let [vims (<sub [::vims.subs/vcs-vims (:tree-light landing-vims->uid)])]
+            [live-preview.views/live-preview
+             {:ui-key         ::page-header
+              :static?        true
+              :from-snapshot? true
+              :vims           vims}]
+            )])]))

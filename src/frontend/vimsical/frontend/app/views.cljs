@@ -18,6 +18,9 @@
   [{::routes/keys [route-handler]}]
   (str "route-" (name route-handler)))
 
+(defn on-landing? [route]
+  (= ::routes/landing (::routes/route-handler route)))
+
 (defn app []
   (with-subs [route      [::router.subs/route]
               modal      [::subs/modal]
@@ -29,7 +32,7 @@
       :on-click (e> (re-frame/dispatch [::handlers/close-modal]))
       ;; height is set for landscape mode on mobile
       :style    {:height height}}
-     (when-not on-mobile? [nav])
+     (when (or (on-landing? route) (not on-mobile?)) [nav])
      [views.modal/modal]
      [:div.main {:class (when modal "modal-overlay")}
       [router.views/view-for route]

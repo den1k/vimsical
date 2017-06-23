@@ -59,7 +59,7 @@
   [v e]
   (view-contains? v (.-relatedTarget e)))
 
-(defn open-ext-popup [url & opts]
+(defn open [url & opts]
   (.open js/window url
          ;; window name
          (str (gensym))
