@@ -1,5 +1,6 @@
 (ns vimsical.vcs.bench
   (:require
+   [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
    [criterium.core :refer [quick-bench]]
    [vimsical.common.test :refer [uuid uuid-fixture uuid-gen]]
    [vimsical.vcs.core :as sut]
@@ -43,15 +44,7 @@
 ;; * Helpers
 ;;
 
-(defn- add-edit-events
-  [vcs effects file-uid branch-uid delta-uid edit-events]
-  (reduce
-   (fn [[vcs deltas delta-uid] edit-event]
-     (let [[vcs' deltas' delta-uid'] (sut/add-edit-event vcs effects file-uid branch-uid (or (-> deltas last :uid) delta-uid) edit-event)]
-       [vcs' (into deltas deltas') delta-uid']))
-   [vcs [] delta-uid] edit-events))
-
-(defn edit-events->deltas
+(defnp edit-events->deltas
   [edit-events]
   (let [{uuid-fn :f} (uuid-gen)
         branches     [master]
@@ -59,7 +52,7 @@
                       ::editor/uuid-fn      (fn [& _] (uuid-fn))
                       ::editor/timestamp-fn (constantly 1)}
         [_  deltas _] (-> (sut/empty-vcs branches)
-                          (add-edit-events effects (uuid :html) (uuid :master) nil edit-events))]
+                          (sut/add-edit-events effects (uuid :html) (uuid :master) nil edit-events))]
     deltas))
 
 ;;
@@ -84,13 +77,11 @@
   Suspendisse consequat ac mauris nec vestibulum. Nullam at odio bibendum metus posuere malesuada at et turpis. Nunc cursus semper molestie. Quisque mollis libero in eros eleifend eleifend. Mauris sollicitudin lorem vitae eros vehicula, sit amet facilisis dui mattis. Suspendisse sed est enim. Duis lorem leo, elementum at diam a, blandit dignissim sem. Donec id sodales tortor, sit amet faucibus mauris. Nunc eget consequat metus. Vestibulum molestie mauris sed libero euismod, vitae porta felis sagittis. ")
 
 
-(defn spliced-edit-events
+(defnp spliced-edit-events
   [txt]
   [{:vimsical.vcs.edit-event/op :str/ins, :vimsical.vcs.edit-event/diff txt :vimsical.vcs.edit-event/idx 0}
    {:vimsical.vcs.edit-event/op :str/rplc, :vimsical.vcs.edit-event/diff txt :vimsical.vcs.edit-event/idx 0 , :vimsical.vcs.edit-event/amt (count txt)}
    {:vimsical.vcs.edit-event/op :str/ins, :vimsical.vcs.edit-event/diff txt :vimsical.vcs.edit-event/idx 0}])
-
-(defn deltas [txt] (edit-events->deltas (add-edit-events txt)))
 
 (def  uuid-fn (:f (uuid-gen)))
 
@@ -112,3 +103,23 @@
       (quick-bench (edit-events->deltas edit-events))
       (sep "1.2 Add deltas")
       (quick-bench (-> (sut/empty-vcs branches) (sut/add-deltas uuid-fn deltas))))))
+
+
+;;
+;; * Profiling
+;;
+
+
+;; TODO
+;; - optimized add-chunks
+;; - splittable/insert (1 element)
+;; - splittable/splice-coll (normalize with offset)
+;; - splittable/append-coll (normalize with offset)
+
+(tufte/add-basic-println-handler! {})
+
+(let [txt small-ipsum
+      deltas (profile {:id :events} (edit-events->deltas (spliced-edit-events txt)))
+      _      (profile {:id :deltas} (-> (sut/empty-vcs branches) (sut/add-deltas uuid-fn deltas)))]
+  nil)
+;;

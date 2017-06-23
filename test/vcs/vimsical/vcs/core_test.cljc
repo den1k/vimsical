@@ -29,14 +29,6 @@
 ;; * Integration tests
 ;;
 
-(defn- add-edit-events
-  [vcs effects file-uid branch-uid delta-uid edit-events]
-  (reduce
-   (fn [[vcs deltas delta-uid] edit-event]
-     (let [[vcs' deltas' delta-uid'] (sut/add-edit-event vcs effects file-uid branch-uid (or (-> deltas last :uid) delta-uid) edit-event)]
-       [vcs' (into deltas deltas') delta-uid']))
-   [vcs [] delta-uid] edit-events))
-
 (deftest add-edit-event-test
   (let [{uuid-fn :f}           (uuid-gen)
         branches               [examples/master]
@@ -56,9 +48,9 @@
                                 ::editor/uuid-fn      (fn [& _] (uuid-fn))
                                 ::editor/timestamp-fn (constantly 1)}
         [vcs deltas delta-uid] (-> (sut/empty-vcs branches)
-                                   (add-edit-events effects (uuid :html) (uuid :master) nil html-edit-events))
+                                   (sut/add-edit-events effects (uuid :html) (uuid :master) nil html-edit-events))
         [vcs _ delta-uid]      (-> vcs
-                                   (add-edit-events effects (uuid :css) (uuid :master) (-> deltas last :uid) css-edit-events))
+                                   (sut/add-edit-events effects (uuid :css) (uuid :master) (-> deltas last :uid) css-edit-events))
         html-deltas            (sut/file-deltas vcs (uuid :html) delta-uid)
         css-deltas             (sut/file-deltas vcs (uuid :css) delta-uid)
         all-deltas             (into html-deltas css-deltas)]
@@ -111,7 +103,7 @@
                                                        ::editor/uuid-fn      (fn [& _] (uuid-fn))
                                                        ::editor/timestamp-fn (constantly 1)}
                                          [vcs deltas delta-uid] (-> (sut/empty-vcs branches)
-                                                                    (add-edit-events effects (uuid :html) (uuid :master) nil edit-events))
+                                                                    (sut/add-edit-events effects (uuid :html) (uuid :master) nil edit-events))
                                          vcs2                   (-> (sut/empty-vcs branches)
                                                                     (sut/add-deltas uuid-fn deltas))]
                                      (is (= string
