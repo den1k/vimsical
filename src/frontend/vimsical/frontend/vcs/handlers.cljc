@@ -40,8 +40,12 @@
         vcs-db               {::vcs.db/branch-uid     branch-uid
                               ::vcs.db/delta-uid      delta-uid
                               ::vcs.db/playhead-entry playhead-entry}
-        vcs-entity           (merge {:db/uid (uuid-fn)} vcs vcs-db)]
-    {:db (mg/add db (assoc vims ::vims/vcs vcs-entity))
+        vcs-entity           (merge {:db/uid (uuid-fn)} vcs vcs-db)
+        vcs-ref              (util.mg/->ref db vcs-entity)
+        vims-vcs             (assoc vims ::vims/vcs vcs-ref)]
+    {:db (-> db
+             (mg/add vims-vcs)
+             (vcs.db/add vcs-entity))
      #?@(:cljs
          [:dispatch
           ;; Cyclic deps
@@ -179,9 +183,9 @@
       [_ {vims-uid :db/uid :as vims} {file-uid :db/uid} edit-event]]
    {:pre [vims-uid effects file-uid]}
    (when-let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)]
-     (let [playhead' (-> vcs' ::vcs.db/playhead-entry first)
-           db'       (mg/add db vcs')
-           ui-db'    (timeline.ui-db/set-playhead ui-db vims playhead')]
+     (let [playhead'     (-> vcs' ::vcs.db/playhead-entry first)
+           db'           (vcs.db/add db vcs')
+           ui-db'        (timeline.ui-db/set-playhead ui-db vims playhead')]
        (cond-> {:db         db'
                 :ui-db      ui-db'
                 :dispatch-n [[::sync.handlers/add-deltas vims-uid deltas]]}

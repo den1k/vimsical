@@ -69,7 +69,7 @@
       [_ vims coords coords-and-svg-node->timeline-position-fn]]
    (let [[t entry] (ui-timeline-entry cofx coords coords-and-svg-node->timeline-position-fn)
          vcs'   (vcs.db/set-skimhead-entry vcs entry)
-         db'    (mg/add db vcs')
+         db'    (vcs.db/add db vcs')
          ui-db' (-> ui-db
                     (timeline.ui-db/set-skimhead vims t)
                     (timeline.ui-db/set-skimming vims true))]
@@ -88,7 +88,7 @@
    (let [skimhead' (max 0 (min duration (- skimhead dx)))
          entry     (vcs/timeline-entry-at-time vcs skimhead')
          vcs'      (vcs.db/set-skimhead-entry vcs entry)
-         db'       (mg/add db vcs')
+         db'       (vcs.db/add db vcs')
          ui-db'    (timeline.ui-db/set-skimhead ui-db vims skimhead')]
      {:db db' :ui-db ui-db'})))
 
@@ -102,7 +102,7 @@
       [_ vims coords coords-and-svg-node->timeline-position-fn]]
    (let [[t entry] (ui-timeline-entry cofx coords coords-and-svg-node->timeline-position-fn)
          vcs'   (vcs.db/set-skimhead-entry vcs entry)
-         db'    (mg/add db vcs')
+         db'    (vcs.db/add db vcs')
          ui-db' (timeline.ui-db/set-skimhead ui-db vims t)]
      {:db db' :ui-db ui-db'})))
 
@@ -112,7 +112,7 @@
   (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/vcs vims]))]
  (fn [{:keys [ui-db db] ::vcs.subs/keys [vcs] vims ::app.subs/vims} [_ vims]]
    (let [vcs'   (vcs.db/set-skimhead-entry vcs nil)
-         db'    (mg/add db vcs')
+         db'    (vcs.db/add db vcs')
          ui-db' (-> ui-db
                     (timeline.ui-db/set-skimhead vims nil)
                     (timeline.ui-db/set-skimming vims false))]
@@ -159,7 +159,7 @@
       [_ vims coords coords-and-svg-node->timeline-position-fn step-event]]
    (let [[ui-time [entry-time :as entry]] (ui-timeline-entry cofx coords coords-and-svg-node->timeline-position-fn)
          vcs'   (assoc vcs ::vcs.db/playhead-entry entry)
-         db'    (mg/add db vcs')
+         db'    (vcs.db/add db vcs')
          ui-db' (timeline.ui-db/set-playhead ui-db vims ui-time)]
      {:db        db'
       :ui-db     ui-db'

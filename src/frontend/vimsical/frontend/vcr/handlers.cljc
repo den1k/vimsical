@@ -42,7 +42,7 @@
      ;; Reset and "recurse" so we'll start from beginning next time
      (at-end? vcs playhead-entry)
      (let [vcs' (assoc vcs ::vcs.db/playhead-entry nil)
-           db'  (mg/add db vcs')]
+           db'  (vcs.db/add db vcs')]
        {:db       db'
         :dispatch [::play vims]})
 
@@ -65,7 +65,7 @@
                (vcs/timeline-next-entry vcs playhead-entry)))]
      (if-some [[t :as entry] (next-entry vcs playhead-entry)]
        (let [vcs' (assoc vcs ::vcs.db/playhead-entry entry)
-             db'  (mg/add db vcs')]
+             db'  (vcs.db/add db vcs')]
          {:db db' :scheduler {:action :schedule :t t :event [::step vims]}})
        {:dispatch [::pause vims]}))))
 
@@ -81,7 +81,7 @@
  (fn [{:keys           [db]
        ::vcs.subs/keys [vcs]} [_ vims]]
    (let [vcs' (assoc vcs ::vcs.db/playhead-entry nil)
-         db'  (mg/add db vcs')]
+         db'  (vcs.db/add db vcs')]
      {:dispatch  [::timeline.handlers/set-playing vims false]
       :db        db'
       :scheduler {:action :stop}})))

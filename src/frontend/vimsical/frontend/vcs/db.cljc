@@ -4,7 +4,8 @@
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.state.timeline :as timeline]))
+   [vimsical.vcs.state.timeline :as timeline]
+   [vimsical.frontend.util.mapgraph :as util.mg]))
 
 (s/def ::branch-uid ::branch/uid)
 (s/def ::delta-uid ::delta/prev-uid)
@@ -24,3 +25,24 @@
 
 (s/fdef set-skimhead-entry :args (s/cat :vcs ::vcs :entry ::skimhead-entry) :ret ::vcs)
 (defn set-skimhead-entry [vcs entry] (assoc vcs ::skimhead-entry entry))
+
+;;
+;; * VCS Normalization
+;;
+
+;; NOTE mg/add will recursively traverse a datastructure looking for entities,
+;; eventhough the vcs is normalized in the db, this fn gets expensive as the vcs
+;; gets large. So far the vcs only contains references for branches in
+;; ::vcs/branches making it simple to manually normalize and assoc into the db
+
+(defn- normalize
+  [db vcs]
+  (update vcs ::vcs/branches
+          (fn [branches]
+            (mapv (partial util.mg/->ref db) branches))))
+
+(defn add
+  [db vcs]
+  (let [ref   (util.mg/->ref db vcs)
+        normd (normalize db vcs)]
+    (assoc db ref normd)))
