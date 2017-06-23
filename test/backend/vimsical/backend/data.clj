@@ -35,6 +35,11 @@
 
 (def to-sub-type->compiler (util/project ::compiler/to-sub-type compilers))
 
+(def owner {:db/uid           (uuid ::user)
+            ::user/first-name "Jane"
+            ::user/last-name  "Applecrust"
+            ::user/email      "kalavox@gmail.com"})
+
 (defn- new-file
   ([uuid type sub-type] (new-file uuid type sub-type nil nil))
   ([uuid type sub-type lang-version compilers]
@@ -48,7 +53,7 @@
 (defn- new-branch
   [uuid user-uid name files libs]
   (-> {:db/uid                       uuid
-       ::branch/owner                {:db/uid user-uid}
+       ::branch/owner                owner
        ::branch/name                 name
        ::branch/created-at           (util/now)
        ::branch/files                files}
@@ -81,24 +86,20 @@
 
 (def vims
   {:db/uid         (uuid ::vims)
-   ::vims/owner    {:db/uid (uuid ::user)}
+   ::vims/owner    owner
    ::vims/title    "Title"
    ::vims/branches branches})
 
 (def vims2
   {:db/uid         (uuid ::vims2)
-   ::vims/owner    {:db/uid (uuid ::user)}
+   ::vims/owner    owner
    ::vims/title    "Title"
    ::vims/branches branches2})
 
 (s/assert ::vims/vims vims)
 
 (def user
-  {:db/uid           (uuid ::user)
-   ::user/first-name "Jane"
-   ::user/last-name  "Applecrust"
-   ::user/email      "kalavox@gmail.com"
-   ::user/vimsae     [vims]})
+  (assoc owner ::user/vimsae [vims]))
 
 (s/assert ::user/user user)
 

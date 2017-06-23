@@ -2,6 +2,7 @@
   (:require
    [vimsical.queries.file :as file]
    [vimsical.queries.lib :as lib]
+   [vimsical.queries.owner :as owner]
    [vimsical.vcs.branch :as branch]))
 
 (def pull-query
@@ -10,7 +11,7 @@
    ::branch/start-delta-uid
    ::branch/branch-off-delta-uid
    ::branch/created-at
-   {::branch/owner [:db/uid]}
+   {::branch/owner owner/pull-query}
    {::branch/parent '...}
    {::branch/files file/pull-query}
    {::branch/libs lib/pull-query}])
