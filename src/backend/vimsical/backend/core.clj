@@ -4,13 +4,20 @@
    [vimsical.backend.system :as system])
   (:gen-class))
 
-(defn add-shutdown-hook!
-  [system]
+;; Statically define the system so that the repl can access it at runtime
+
+(defonce system nil)
+
+(defn set-shutdown-hook! [sys]
   (.addShutdownHook
    (Runtime/getRuntime)
-   (Thread. #(some-> system cp/stop))))
+   (Thread. #(some-> sys cp/stop))))
+
+(defn set-system! [sys]
+  (alter-var-root #'system (constantly sys)))
 
 (defn -main [& _]
-  (-> (system/new-system)
-      (cp/start)
-      (add-shutdown-hook!)))
+  (doto (cp/start
+         (system/new-system))
+    (set-system!)
+    (set-shutdown-hook!)))
