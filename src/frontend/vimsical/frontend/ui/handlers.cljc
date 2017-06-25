@@ -3,7 +3,8 @@
             [vimsical.frontend.config :as config]
             [vimsical.frontend.ui.subs :as subs]
    #?(:cljs [vimsical.frontend.util.dom :as util.dom])
-            [vimsical.frontend.util.re-frame :as util.re-frame]))
+            [vimsical.frontend.util.re-frame :as util.re-frame]
+            [vimsical.frontend.router.routes :as routes]))
 
 (re-frame/reg-event-fx
  ::init
@@ -27,9 +28,10 @@
  ::on-scroll
  [(re-frame/inject-cofx :ui-db)]
  #?(:cljs
-    (fn [{:keys [ui-db]} _]
-      {:debounce {:ms       200
-                  :dispatch [::resize-app]}})))
+    (fn [{:keys [db ui-db]} _]
+      (when-not (routes/landing? (:app/route db))
+        {:debounce {:ms       200
+                    :dispatch [::resize-app]}}))))
 
 (re-frame/reg-event-fx
  ::track-orientation

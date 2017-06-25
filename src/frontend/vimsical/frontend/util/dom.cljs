@@ -169,11 +169,9 @@
 (defn viewport-ratio
   "Offset ratio within visible viewport"
   [el]
-  (let [scroll-top (.. js/document -body -scrollTop)
-        offset-top (.-offsetTop el)
-        win-height (.-innerHeight js/window)
-        rel-top    (- offset-top scroll-top)]
-    (util/clamp (/ rel-top win-height) 0 1)))
+  (let [{:keys [top]} (bounding-client-rect el)
+        win-height (.-innerHeight js/window)]
+    (util/clamp (/ top win-height) 0 1)))
 
 ;;
 ;; * Blobs

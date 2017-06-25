@@ -26,6 +26,9 @@
     "emoji"            ::emoji
     true               ::landing}])
 
+(defn landing? [route]
+  (= ::landing (::route-handler route)))
+
 ;;
 ;; * Coercion
 ;;

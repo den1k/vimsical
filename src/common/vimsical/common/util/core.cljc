@@ -13,7 +13,8 @@
         [goog.object :as gobj]
         [medley.core :as md]
         [goog.functions :as gfns]
-        [goog.string :as gstr])
+        [goog.string :as gstr]
+        [thi.ng.geom.viz.core :as viz])
        (:require-macros [cljs.core.async.macros :refer [alt! go-loop]])]))
 
 #?(:cljs
@@ -294,9 +295,15 @@
    (defn norm-str [s]
      (some-> s not-empty gstr/collapseWhitespace)))
 
-(defn clamp                             ; from thi.ng.math.core/clamp
+(defn clamp
   "Constraints x to be in closed interval [min max]."
   [x min-x max-x] (clojure.core/max min-x (clojure.core/min max-x x)))
+
+#?(:cljs
+   (defn linear-scale
+     [[da db :as domain] [ra rb :as range]]
+     (let [scale (viz/linear-scale domain range)]
+       (fn [x] (scale (clamp x da db))))))
 
 (defn round [num decimals]
   #?(:cljs (js/Number (str (js/Math.round (str num "e" decimals)) "e-" decimals))

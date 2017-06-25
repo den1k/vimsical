@@ -48,19 +48,20 @@
   [files]
   (remove file/javascript? files))
 
-(defn register [node {:keys [vims from-snapshot? static? error-catcher?] :as opts}]
+(defn register [node {:keys [vims static? error-catcher?] :as opts}]
   {:pre [node vims]}
   (re-frame/dispatch [::handlers/register-iframe opts node])
-  (if from-snapshot?
-    (re-frame/dispatch [::handlers/update-iframe-snapshots opts])
-    (re-frame/dispatch [::handlers/update-iframe-src opts]))
-  (when-not static?
-    (when error-catcher?
-      (re-frame/dispatch [::error-catcher/init])
-      (re-frame/dispatch [::error-catcher/track-start opts]))
-    (re-frame/dispatch [::handlers/track-vims opts])))
+  (if static?
+    (do
+      (re-frame/dispatch [::handlers/update-iframe-snapshots opts])
+      (re-frame/dispatch [::handlers/update-iframe-src opts]))
+    (do
+      (when error-catcher?
+        (re-frame/dispatch [::error-catcher/init])
+        (re-frame/dispatch [::error-catcher/track-start opts]))
+      (re-frame/dispatch [::handlers/track-vims opts]))))
 
-(defn dispose [{:keys [vims from-snapshot? static? error-catcher?] :as opts}]
+(defn dispose [{:keys [vims static? error-catcher?] :as opts}]
   (when-not static?
     (when error-catcher?
       (re-frame/dispatch [::error-catcher/track-stop])
