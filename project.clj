@@ -164,7 +164,7 @@
      :plugins    [[lein-doo "0.1.7"]]}]
 
    :player
-   [:vcs :common :css-player :-frontend-config]
+   [:vcs :common :cljs :css-player :-frontend-config]
 
    :player-dev
    [:player :-frontend-dev-config :env.frontend/dev]
@@ -310,7 +310,8 @@
                                               :fn-symbol           "λ"}}}}
       {:id           "player-prod"
        :jar          true
-       :source-paths ["checkouts/mapgraph/src" "src/frontend" "src/common" "src/vcs"]
+       :source-paths [;; "checkouts/mapgraph/src"
+                      "src/frontend" "src/common" "src/vcs"]
        :compiler     {:main          vimsical.frontend.player.core
                       :asset-path    "/js"
                       :externs       ["resources/externs/svg.js"]
