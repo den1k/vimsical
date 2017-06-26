@@ -59,10 +59,6 @@
                   :img-src      "https://www.dropbox.com/s/rxivavc1aw18bbk/Screenshot%202017-06-24%2020.51.57.png?dl=1"}})
 
 
-(defn load-landing-vims []
-  (doseq [[_ uid] landing-vims->uid]
-    (re-frame/dispatch [::vims.handlers/load-vims uid])))
-
 ;;
 ;; * Waitlist Form
 ;;
@@ -327,28 +323,26 @@
 ;;
 
 (defn landing []
-  ;(load-landing-vims)
-  (fn []
-    [:div.landing.asc.dc.ac.ais
-     [page-header]
+  [:div.landing.asc.dc.ac.ais
+   [page-header]
 
-     [create-section]
+   [create-section]
 
-     [explore-section]
+   [explore-section]
 
-     [player-section]                   ;; emoji predictor
+   [player-section]                     ;; emoji predictor
 
-     ;; Todo Education section?
-     [vims-preview-section {:vims-title-kw :joy-division :class "teach-by-doing"}
-      [:div.sub-stmt
-       "Teach, by doing."]]
+   ;; Todo Education section?
+   [vims-preview-section {:vims-title-kw :joy-division :class "teach-by-doing"}
+    [:div.sub-stmt
+     "Teach, by doing."]]
 
-     [:div.bottom-waitlist.dc.ac.section
-      [:div.sub-section.aic
-       [:h1.join "Join our Journey"]
-       [waitlist]]]
+   [:div.bottom-waitlist.dc.ac.section
+    [:div.sub-section.aic
+     [:h1.join "Join our Journey"]
+     [waitlist]]]
 
-     [vims-preview-section {:vims-title-kw :fireworks :class "create-watch-explore"}
-      [:div.sub-stmt
-       "Create. Watch. Explore."]]
-     [mission-section]]))
+   [vims-preview-section {:vims-title-kw :fireworks :class "create-watch-explore"}
+    [:div.sub-stmt
+     "Create. Watch. Explore."]]
+   [mission-section]])
