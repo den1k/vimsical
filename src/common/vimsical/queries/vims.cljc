@@ -11,6 +11,7 @@
    ::vims/created-at
    ::vims/title
    ::vims/cast
+   ::vims/license-addendum
    {::vims/owner owner/pull-query}
    {::vims/branches branch/pull-query}])
 
@@ -19,7 +20,8 @@
    ::vims/created-at
    ::vims/title
    ::vims/cast
-   {::vims/vcs ['* {::vcs/branches branch/pull-query}]}
+   ::vims/license-addendum
+   {::vims/vcs   ['* {::vcs/branches branch/pull-query}]}
    {::vims/owner owner/pull-query}
    {::vims/snapshots snapshot/pull-query}
    {::vims/branches branch/pull-query}])
@@ -29,5 +31,6 @@
    ::vims/created-at
    ::vims/title
    ::vims/cast
+   ::vims/license-addendum
    {::vims/owner owner/pull-query}
    {::vims/branches branch/datomic-pull-query}])
