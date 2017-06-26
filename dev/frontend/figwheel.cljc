@@ -19,7 +19,7 @@
 #?(:clj
    (def build-id
      "Takes command line args as build ids."
-     (or (first *command-line-args*) "player-dev")))
+     (or (first *command-line-args*) "dev")))
 
 #?(:clj (def port
           (case build-id
@@ -43,10 +43,10 @@
      (let [{:keys [build-id port]} config]
        {:figwheel-options
         (cond->
-            {:css-dirs         ["resources/public/css"]
-             :reload-clj-files {:clj false :cljc true}
-             :server-port      port
-             :ring-handler     'vimsical.frontend.figwheel-handler/handler}
+         {:css-dirs         ["resources/public/css"]
+          :reload-clj-files {:clj false :cljc true}
+          :server-port      port
+          :ring-handler     'vimsical.frontend.figwheel-handler/handler}
           open-file-command (assoc :open-file-command open-file-command))
         :build-ids
         [build-id]
