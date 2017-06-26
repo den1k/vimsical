@@ -15,24 +15,53 @@
             [vimsical.frontend.vims.handlers :as vims.handlers]
             [re-frame.core :as re-frame]
             [re-com.core :as re-com]
+            [vimsical.user :as user]
             [vimsical.frontend.landing.handlers :as handlers]
-            [vimsical.frontend.router.routes :as router.routes]))
+            [vimsical.frontend.router.routes :as router.routes]
+            [vimsical.frontend.styles.color :refer [colors]]))
 
-(def landing-vims->uid
-  {:bug         (uuid "5947d83b-602f-4c0a-83e5-88c03281c0a0")
-   :hello-world (uuid "594b29e0-f21c-4753-9836-d9d45b4b4809")
-   :shines      (uuid "594b3b7e-8b61-4d4f-a36d-99282559c7c3")
-   :owl         (uuid "594b509c-c801-4abf-9e6d-5f03aed1771a")
-   :tree        (uuid "594c137a-c665-4eeb-8b25-e183fd000c80")
-   :tree-light  (uuid "594d58c7-6268-4ae2-af3a-fd48edf23d0d")})
+(def vims-kw->info
+  {:bezier       {:vims-uid     nil
+                  :title        "Bézier Curve"
+                  :author       {::user/first-name "Kynd"
+                                 ::user/twitter    "https://twitter.com/kyndinfo"}
+                  :original-src "https://codepen.io/kynd/pen/bREZXv"
+                  :img-src      "https://www.dropbox.com/s/mi70cypdot7bld5/Screenshot%202017-06-24%2010.41.39.png?dl=1"}
+
+   :fireworks    {:vims-uid     nil
+                  :title        "Anime.js Fireworks"
+                  :author       {::user/first-name "Julian" ::user/last-name "Garnier"
+                                 ::user/twitter    "https://twitter.com/juliangarnier"}
+                  :original-src "https://codepen.io/juliangarnier/pen/gmOwJX"
+                  :img-src      "https://www.dropbox.com/s/b9665muqf4kbkhk/Screenshot%202017-06-24%2010.33.03.png?dl=1"}
+
+   :strandbeast  {:vims-uid     nil
+                  :title        "The Mighty Strandbeest"
+                  :author       {::user/first-name "Brandel" ::user/last-name "Zachernuk"
+                                 ::user/twitter    "https://twitter.com/zachernuk"}
+                  :original-src "https://codepen.io/zachernuk/pen/RRLxLR"
+                  :img-src      "https://www.dropbox.com/s/jmgq7ghrnxhzp0y/Screenshot%202017-06-24%2019.19.24.png?dl=1"}
+   :trail        {:vims-uid     nil
+                  :title        "Trail"
+                  :author       {::user/first-name "Hakim" ::user/middle-name "El" ::user/last-name "Hattab"
+                                 ::user/twitter    "https://twitter.com/hakimel"}
+                  :original-src "https://codepen.io/hakimel/pen/KanIi"}
+   :tree         {:vims-uid     nil
+                  :title        "Fractal Tree ( L-System)"
+                  :author       {::user/first-name "Patrick" ::user/last-name "Stillhart"
+                                 ::user/website    "https://stillh.art/"}
+                  :original-src "https://codepen.io/arcs/pen/mEdqQX/"}
+   :joy-division {:vims-uid     nil
+                  :title        "Interactive Joy Division"
+                  :author       {::user/first-name "Mark" ::user/last-name "Benzan"
+                                 ::user/twitter    "https://twitter.com/clawtros"}
+                  :original-src "https://codepen.io/clawtros/pen/YWgmRR"
+                  :img-src      "https://www.dropbox.com/s/rxivavc1aw18bbk/Screenshot%202017-06-24%2020.51.57.png?dl=1"}})
+
 
 (defn load-landing-vims []
   (doseq [[_ uid] landing-vims->uid]
     (re-frame/dispatch [::vims.handlers/load-vims uid])))
-
-(defn link-for-vims [title-kw]
-  (-> {:db/uid (get landing-vims->uid title-kw)}
-      (router.routes/vims-uri)))
 
 ;;
 ;; * Waitlist Form
@@ -70,41 +99,56 @@
 ;; Wrappers
 ;;
 
-(defn credit [vims-title-kw title author]
+(defn credit [{:keys [title author original-src vims-uid] :as vims-info}]
   ;; TODO add links to author's sites
   [:div.credit
-   "Adapted from " [:span.title title] " by " [:span.author author]
-   " ∙ "
-   [:span.explore
-    {:on-click (e> (util.dom/open (link-for-vims vims-title-kw)))}
-    "explore"]])
+   "Adapted from " [:span.title
+                    {:on-click (e> (util.dom/open original-src))}
+                    title] " by "
+   [:span.author
+    {:on-click (e> (util.dom/open (or (::user/twitter author) (::user/website author))))}
+    (user/full-name author)]
+   (when vims-uid
+     [:span
+      " ∙ "
+      [:span.explore
+       {:on-click (e> (util.dom/open (router.routes/vims-uri {:db/uid vims-uid})))}
+       "explore"]])])
 
-(defn credit-wrapper [vims-title-kw title author content {:keys [above?]}]
-  (let [credit-view [credit vims-title-kw title author]]
+(defn credit-wrapper [vims-info child {:keys [above?]}]
+  (let [credit-view [credit vims-info]]
     [:div.credit-wrapper
      (when above? credit-view)
-     content
+     child
      (when-not above? credit-view)]))
 
 ;;
 ;; Vims Preview
 ;;
 
-(defn- vims-preview [{:keys [ui-key vims-uid scroll-skim? from-snapshot?]}]
-  (let [scroll-skim-ratio (when scroll-skim? (interop/ratom 0))]
-    (fn []
-      (when-let [vims (<sub [::vims.subs/vcs-vims vims-uid])]
-        (let [view [live-preview.views/live-preview
-                    {:ui-key         ui-key
-                     :static?        (not scroll-skim?)
-                     :from-snapshot? from-snapshot?
-                     :vims           vims}]]
-          (if-not scroll-skim?
-            view
-            (letfn [(dispatch-fn [ratio]
-                      (re-frame/dispatch
-                       [::handlers/set-vims-preview-throttle vims ratio]))]
-              [ui.views/viewport-ratio dispatch-fn true view])))))))
+(defn- vims-preview [{:keys [vims-title-kw]}]
+  (when-let [vims (<sub [::vims.subs/vcs-vims (-> vims-kw->info vims-title-kw :vims-uid)])]
+    [:div.vims-preview
+     [live-preview.views/live-preview
+      {:ui-key  vims-title-kw
+       :static? true
+       :vims    vims}]]))
+
+(defn vims-preview-section [{:keys [class vims-title-kw] :as opts} child]
+  (let [{:keys [img-src] :as vims-info} (get vims-kw->info vims-title-kw)]
+    [ui.views/visibility {:range-pred (fn [ratio]
+                                        (or #_(<= 0 ratio 0.2)
+                                         (<= 0.2 ratio 1)))}
+     [:div.section.vims-preview-section
+      {:class class}
+      child
+      [:div.vims-preview
+       [:img.live-preview               ;; temp
+        {:src img-src}]
+       #_[live-preview.views/live-preview
+          {:ui-key  vims-title-kw
+           :static? true
+           :vims    vims}]]]]))
 
 ;;
 ;; Video Player
@@ -162,49 +206,70 @@
 
 
 (defn page-header []
-  [:div.stmt-wrapper.jsb.ac
-   [:div.vimsical-stmt
-    [:h1.header.vimsical "Vimsical"]
-    [:h2.subheader
-     "Your coding playground"]
-    [:div.join
-     {:on-click (e> (scroll-to-waitlist))}
-     "Join our Journey"]]])
+  [:div.page-header-section.jc.section
+   [:div.sub-section.aifs
+    [:div.vimsical-stmt.dc.jc
+     [:h1.header.vimsical "Vimsical"]
+     [:h2.subheader
+      "Your coding playground"]
+     [:div.join
+      {:on-click (e> (scroll-to-waitlist))}
+      "Join our Journey"]]
+
+    (let [{:keys [img-src] :as vims-info} (:strandbeast vims-kw->info)]
+      [:div.preview-wrapper
+       [credit-wrapper vims-info
+        [:div.vims-preview
+         [:img.live-preview             ;; temp
+          {:src img-src}]
+         #_[live-preview.views/live-preview
+            {:ui-key  vims-title-kw
+             :static? true
+             :vims    vims}]]]])
+    ]])
 
 (defn create-section []
-  [:div.create.section.dc
-   [:h2.header "Create"]
-   [:h3.subheader
-    "Vimsical turns your coding process into an interactive tutorial. Automatically."]
-   [:div.video-wrapper
-    [credit-wrapper
-     :owl
-     "Trail"
-     "Lee Hamsmith"
-     [video-player
-      {:class "create-video"
-       :src   "video/create.m4v"}]]]])
+  (let [ratio         (interop/ratom 0)
+        scale         (util/linear-scale [0.4 0.6] [85 80])
+        video-wrapper (fn []
+                        [:div.video-wrapper
+                         ;{:style {:width (str (scale @ratio) "%")}}
+                         [credit-wrapper
+                          (:tree vims-kw->info)
+                          [video-player
+                           {:class "create-video"
+                            :src   "video/create.m4v"}]]])]
+    (fn []
+      [:div.create-section.section
+       [:div.sub-section.aife
+        [:h2.header "Create"]
+        [:h3.subheader
+         "Vimsical turns your coding process into an interactive tutorial. Automatically."]
+        [ui.views/visibility {:ratio ratio}
+         [video-wrapper ratio]]]])))
 
-(defn explore []
-  [:div.explore.section.dc
-   [:h2.header "Explore"]
-   [:h3.subheader
-    "See your favorite projects take shape. And make edits with one click."]
-   [:div.video-wrapper
-    [credit-wrapper
-     :owl
-     "The Bug"
-     "Ana Tudor"
-     [video-player
-      {:class "explore-video"
-       :src   "video/explore.m4v"}]]]])
+(defn explore-section []
+  [:div.explore-section.section
+   [:div.sub-section
+    [:h2.header "and Explore"]
+    [:h3.subheader
+     "See your favorite projects take shape. And make edits with one click."]
+    [ui.views/visibility {}
+     [:div.video-wrapper
+      [credit-wrapper
+       (:trail vims-kw->info)
+       [video-player
+        {:class "explore-video"
+         :src   "video/explore.m4v"}]]]]]])
 
 (defn mission-section []
   [:div.mission-section.dc.ac.section
    [ui.views/visibility
     {:once? true}
-    [:div.logo-and-slogan.jsb.ac
+    ;{}
+    [:div.logo-and-slogan.ac.jsb
      [icons/logo-and-type]
+     [:div.stretcher]
      [:h2.learnable "make it learnable."]]]
    [:p.stmt
     "Our mission is to nurture understanding, accelerate learning and ease teaching"
@@ -212,29 +277,33 @@
     "By providing tools to record, share and explore our process."]])
 
 (defn player-section []
-  ;; todo skim vims by scrolling
-  [:div.player-section.dc.ac.section
-   [:h2.header "Player"]
-   [:h3.subheader "Take your creations places."]
-   [credit-wrapper :owl "Wormhole" "Jack Aniperdo"
-    (when-let [vims (<sub [::vims.subs/vcs-vims (:owl landing-vims->uid)])]
-      [player/player
-       (cond-> {:vims       vims
-                :show-info? false
-                :read-only? true}
-         (not (<sub [::ui.subs/on-mobile?])) (assoc :orientation :landscape))])]
-   [:p.embed-stmt
-    "Empower others with an immersive learning experience"
-    [:br]
-    "Embed"
-    [:span.bold " Player "]
-    "on your website, Twitter or use it in your classroom."]])
+  [:div.player-section.section
+   [ui.views/visibility {}
+    [:div.dc.ac.sub-section
+     [:h2.header "Play"]
+     [:h3.subheader "Take your creations places."]
+     ;; todo credit
+     [:div.player-wrapper
+      [:img.player
+       {:src "https://www.dropbox.com/s/pbj9rhof6ayc5c8/Screenshot%202017-06-24%2009.22.36.png?dl=1"}]
+      #_(when-let [vims (<sub [::vims.subs/vcs-vims (:emoji landing-vims->uid)])]
+          [player/player
+           (cond-> {:vims       vims
+                    :show-info? false
+                    :read-only? true}
+             (not (<sub [::ui.subs/on-mobile?])) (assoc :orientation :landscape))])]
+     [:p.sub-stmt
+      "Embed"
+      [:span.bold " Player "]
+      "and bring powerful learning experiences"
+      [:br]
+      "to your website, blog and classroom."]]]])
 
 (defn waitlist []
   (let [state (reagent/atom {:success nil :error nil :email ""})]
     (fn []
       (let [{:keys [success error email]} @state]
-        [:div.waitlist.section
+        [:div.waitlist
          {:id waitlist-signup-id}
          [:div.form.ac
           [:input.email {:type        "email"
@@ -258,33 +327,28 @@
 ;;
 
 (defn landing []
-  (load-landing-vims)
+  ;(load-landing-vims)
   (fn []
     [:div.landing.asc.dc.ac.ais
-     [:div.wrapper
-      [page-header]
-      [create-section]
-      [explore]
-      [player-section]                  ;; emoji predictor
-      #_[:div.section
-         [:h3 "TODO Creations here"]
-         ]
-      [mission-section]
+     [page-header]
 
-      #_[:div.section
-         [:h3 "TODO Creations here"]]
+     [create-section]
 
-      [:div.bottom-waitlist.dc.ac.section
+     [explore-section]
+
+     [player-section]                   ;; emoji predictor
+
+     ;; Todo Education section?
+     [vims-preview-section {:vims-title-kw :joy-division :class "teach-by-doing"}
+      [:div.sub-stmt
+       "Teach, by doing."]]
+
+     [:div.bottom-waitlist.dc.ac.section
+      [:div.sub-section.aic
        [:h1.join "Join our Journey"]
-       [waitlist]]
-      #_[icons/logo-and-type
-         {:class "footer-logo jc ac"}]]
-     #_(when-not (<sub [::ui.subs/on-mobile?])
-         [:div.preview-wrap
-          (when-let [vims (<sub [::vims.subs/vcs-vims (:tree-light landing-vims->uid)])]
-            [live-preview.views/live-preview
-             {:ui-key         ::page-header
-              :static?        true
-              :from-snapshot? true
-              :vims           vims}]
-            )])]))
+       [waitlist]]]
+
+     [vims-preview-section {:vims-title-kw :fireworks :class "create-watch-explore"}
+      [:div.sub-stmt
+       "Create. Watch. Explore."]]
+     [mission-section]]))
