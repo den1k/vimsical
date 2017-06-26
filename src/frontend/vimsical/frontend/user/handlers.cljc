@@ -28,6 +28,13 @@
  (fn [{:keys [db]} [_ user]]
    {:db (util.mg/add-linked-entities db {:app/user user})}))
 
+;; We mosly ignore this because this would happened for every anon user when trying
+;; to initialize an non-existing session
+
+(re-frame/reg-event-fx
+ ::me-error
+ (fn [{:keys [db]} _]))
+
 ;;
 ;; * Settings
 ;;
@@ -41,7 +48,7 @@
          cur-speed (get settings :settings/playback-speed 1)
          speed     (first (md/drop-upto #(= cur-speed %) (cycle range)))
          settings  (assoc (or settings {:db/uid (uuid)})
-                     :settings/playback-speed speed)
+                          :settings/playback-speed speed)
          db'       (mg/add
                     db
                     {:db/uid         (second (:app/user db))
