@@ -134,7 +134,7 @@
   (let [{:keys [img-src] :as vims-info} (get vims-kw->info vims-title-kw)]
     [ui.views/visibility {:range-pred (fn [ratio]
                                         (or #_(<= 0 ratio 0.2)
-                                         (<= 0.2 ratio 1)))}
+                                         (<= 0.5 ratio 1)))}
      [:div.section.vims-preview-section
       {:class class}
       child
@@ -234,7 +234,7 @@
                           (:tree vims-kw->info)
                           [video-player
                            {:class "create-video"
-                            :src   "video/create.m4v"}]]])]
+                            :src   "/video/create.m4v"}]]])]
     (fn []
       [:div.create-section.section
        [:div.sub-section.aife
@@ -247,16 +247,16 @@
 (defn explore-section []
   [:div.explore-section.section
    [:div.sub-section
-    [:h2.header "and Explore"]
+    [:h2.header "Explore"]
     [:h3.subheader
-     "See your favorite projects take shape. And make edits with one click."]
+     "See how your favorite projects come together. And make edits with one click."]
     [ui.views/visibility {}
      [:div.video-wrapper
       [credit-wrapper
        (:trail vims-kw->info)
        [video-player
         {:class "explore-video"
-         :src   "video/explore.m4v"}]]]]]])
+         :src   "/video/explore.m4v"}]]]]]])
 
 (defn mission-section []
   [:div.mission-section.dc.ac.section
@@ -270,7 +270,7 @@
    [:p.stmt
     "Our mission is to nurture understanding, accelerate learning and ease teaching"
     [:br]
-    "By providing tools to record, share and explore our process."]])
+    "by providing tools to record, share and explore our process."]])
 
 (defn player-section []
   [:div.player-section.section
@@ -333,16 +333,18 @@
    [player-section]                     ;; emoji predictor
 
    ;; Todo Education section?
-   [vims-preview-section {:vims-title-kw :joy-division :class "teach-by-doing"}
+   #_[vims-preview-section {:vims-title-kw :joy-division :class "teach-by-doing"}
     [:div.sub-stmt
      "Teach, by doing."]]
+
+
+
+   #_[vims-preview-section {:vims-title-kw :fireworks :class "create-watch-explore"}
+    [:div.sub-stmt
+     "Create. Watch. Explore."]]
 
    [:div.bottom-waitlist.dc.ac.section
     [:div.sub-section.aic
      [:h1.join "Join our Journey"]
      [waitlist]]]
-
-   [vims-preview-section {:vims-title-kw :fireworks :class "create-watch-explore"}
-    [:div.sub-stmt
-     "Create. Watch. Explore."]]
    [mission-section]])

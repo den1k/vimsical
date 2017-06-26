@@ -108,6 +108,8 @@
 (def player
   [:.player-section
    {:background :mintcream}
+   [:.header
+    {:font-size :80px}]
    [:.visibility
     {:align-items :center}
     [:.player-wrapper

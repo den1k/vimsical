@@ -96,7 +96,6 @@
    [:.aife
     {:display     :flex
      :align-items :stretch}]
-
    [:.asc
     {:display    :flex
      :align-self :center}]
