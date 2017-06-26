@@ -73,21 +73,8 @@
 ;; * Current vims
 ;;
 
-(def close-prev-vims-interceptor
-  "Interceptor that dispatches ::close-vims with the previous :app/vims."
-  (interceptor/->interceptor
-   :id    ::close-vims-interceptor
-   :after
-   (fn [context]
-     (let [{before :app/vims} (interceptor/get-coeffect context :db)
-           {after :app/vims}  (interceptor/get-effect context :db)
-           changed?           (some-> before (not= after))]
-       (cond-> context
-         changed? (update-in [:effects :dispatch-n] conj [::close-vims before]))))))
-
 (re-frame/reg-event-fx
  ::set-vims
- [close-prev-vims-interceptor]
  (fn [{:keys [db]} [_ vims]]
    (let [vims-ref (util.mg/->ref db vims)
          vims-ent (util.mg/->entity db vims)]
@@ -114,9 +101,22 @@
 ;; * Open
 ;;
 
-(defmethod router.handlers/route-fx ::router.routes/vims
-  [{:keys [db]} {::router.routes/keys [args]}]
+(defmethod router.handlers/did-unmount-route-fx-handler ::router.routes/vims
+  [{:keys [db]} [_ {::router.routes/keys [args]}]]
+  ;; If the current vims is still the same one that was unmounted we need to
+  ;; clear the state.
+  (let [route-vims-ref (util.mg/->ref db args)
+        app-vims-ref   (util.mg/->ref db :app/vims)
+        dissoc-vims?   (= route-vims-ref app-vims-ref)]
+    (cond-> {:dispatch [::close-vims args]}
+      dissoc-vims? (assoc :db (dissoc db :app/vims) ))))
+
+;; NOTE only do this when the route is mounted by the history since we need the
+;; side-effects for loading the vims
+(defmethod router.handlers/did-mount-history-route-fx-handler ::router.routes/vims
+  [{:keys [db]} [_ {::router.routes/keys [args]}]]
   {:dispatch [::open-vims args]})
+
 
 (re-frame/reg-event-fx
  ::open-vims

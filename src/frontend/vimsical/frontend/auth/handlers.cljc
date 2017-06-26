@@ -16,8 +16,8 @@
 
 ;; Reading the invite
 
-(defmethod router.handlers/route-fx ::router.routes/invite
-  [_ route]
+(defmethod router.handlers/did-mount-history-route-fx-handler ::router.routes/invite
+  [_ [_ route]]
   (if-some [token (router.routes/get-arg route :token)]
     {:remote
      {:id               :backend

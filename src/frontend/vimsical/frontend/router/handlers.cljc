@@ -38,13 +38,27 @@
 (re-frame/reg-fx :history (comp history-fx routes/encode-route))
 
 ;;
-;; * Route fx
+;; * Route lifecycle
 ;;
 
-(defmulti route-fx
-  (fn [coeffects {::routes/keys [route-handler] :as route}] route-handler))
+(defn route-fx-dispatch
+  [coeffects [_ {::routes/keys [route-handler] :as route}]] route-handler)
 
-(defmethod route-fx :default [_ _])
+(defmulti did-mount-route-fx-handler route-fx-dispatch)
+(defmethod did-mount-route-fx-handler :default [_ _])
+(re-frame/reg-event-fx ::did-mount-route did-mount-route-fx-handler)
+
+(defmulti did-unmount-route-fx-handler route-fx-dispatch)
+(defmethod did-unmount-route-fx-handler :default [_ _])
+(re-frame/reg-event-fx ::did-unmount-route did-unmount-route-fx-handler)
+
+(defmulti did-mount-history-route-fx-handler route-fx-dispatch)
+(defmethod did-mount-history-route-fx-handler :default [_ _])
+(re-frame/reg-event-fx ::did-mount-history-route did-mount-history-route-fx-handler)
+
+(defmulti did-unmount-history-route-fx-handler route-fx-dispatch)
+(defmethod did-unmount-history-route-fx-handler :default [_ _])
+(re-frame/reg-event-fx ::did-unmount-history-route did-unmount-history-route-fx-handler)
 
 ;;
 ;; * Handlers
@@ -61,7 +75,10 @@
          new-route (routes/decode-route (routes/new-route route-handler route-params))]
      (when-not (routes/route= app-route new-route)
        {:history new-route
-        :db      (assoc db :app/route new-route)}))))
+        :db      (assoc db :app/route new-route)
+        :dispatch-n
+        [[::did-unmount-route app-route]
+         [::did-mount-route new-route]]}))))
 
 (re-frame/reg-event-fx
  ::history-route
@@ -69,6 +86,7 @@
    (let [app-route (:app/route db)
          new-route (routes/decode-route (routes/new-route route-handler route-params))]
      (when-not (routes/route= app-route new-route)
-       (let [coeffects {:db (assoc db :app/route new-route)}
-             effects   (route-fx coeffects new-route)]
-         (merge coeffects effects))))))
+       {:db (assoc db :app/route new-route)
+        :dispatch-n
+        [[::did-unmount-history-route app-route]
+         [::did-mount-history-route new-route]]}))))
