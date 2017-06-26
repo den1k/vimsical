@@ -20,7 +20,7 @@
 (def routes
   ["/"
    {["vims/" :db/uid]  ::vims
-    ["embed/" :db/uid] ::vims
+    "embed/"           ::embed
     "signup"           ::signup
     ["invite/" :token] ::invite
     "emoji"            ::emoji
@@ -52,6 +52,9 @@
 (defmulti  decode-route ::route-handler)
 (defmethod decode-route :default [route] route)
 (defmethod decode-route ::vims   [route] (update-in route [::args :db/uid] str->uuid))
+(defmethod decode-route ::embed  [route]
+  ;; remap query-param to internal format used in the vims route
+  (assoc-in route [::args :db/uid] (some-> route ::args :vims_uid str->uuid)))
 
 ;;
 ;; * Ctor

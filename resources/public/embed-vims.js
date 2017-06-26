@@ -14,7 +14,7 @@
 
   // Return a string url for the iFrame src
   var frameSrc = function (script_src, vims_uid) {
-    let path = '/embed/' + vims_uid,
+    let path = '/embed/?vims-uid=' + vims_uid,
         origin = frameOrigin(script_src),
         url = new URL(path, origin);
     return url.toString();

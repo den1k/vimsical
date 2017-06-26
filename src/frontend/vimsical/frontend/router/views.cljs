@@ -44,8 +44,7 @@
 (defmethod title-for ::routes/vims [_]
   (let [{::vims/keys [title owner]} (<sub [::app.subs/vims
                                            [:db/uid ::vims/title
-                                            {::vims/owner [::user/first-name
-                                                           ::user/last-name]}]])
+                                            {::vims/owner [::user/first-name ::user/last-name]}]])
         {::user/keys [first-name last-name]} owner]
     (util.dom/set-title
      (util/space-join (or title "A vims") "by" first-name last-name))))

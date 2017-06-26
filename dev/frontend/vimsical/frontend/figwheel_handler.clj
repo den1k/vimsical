@@ -12,7 +12,7 @@
 (defn- resource-path [path] (str (io/file (io/resource path))))
 
 (defn- index [_] (response/file-response (resource-path "public/index.html")))
-(defn- embed [_] (response/file-response (resource-path "public/player.html")))
+(defn- embed [_] (response/file-response (resource-path "public/embed/index.html")))
 
 ;;
 ;; * Routes
@@ -20,8 +20,8 @@
 
 (def ^:private routes
   ["/"
-   {["embed/" :db/uid] embed
-    true               index}])
+   {"embed/" embed
+    true     index}])
 
 ;;
 ;; * Handler

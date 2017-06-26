@@ -75,11 +75,11 @@
 
 (re-frame/reg-event-fx
  ::set-vims
- (fn [{:keys [db]} [_ vims]]
+ (fn [{:keys [db]} [_ vims {:keys [route?] :or {route? true}}]]
    (let [vims-ref (util.mg/->ref db vims)
          vims-ent (util.mg/->entity db vims)]
-     {:db         (assoc db :app/vims vims-ref)
-      :dispatch-n [[::router.handlers/route ::router.routes/vims vims-ent]]})))
+     (cond-> {:db (assoc db :app/vims vims-ref)}
+       route? (assoc :dispatch-n [[::router.handlers/route ::router.routes/vims vims-ent]])))))
 
 ;;
 ;; * New
@@ -127,6 +127,21 @@
        (cond-> {:dispatch-n
                 [[::set-vims vims]
                  [::close-modal]]}
+         (not (vims.db/loaded? db vims))
+         (assoc :async-flow (open-vims-async-flow vims-uid options)))))))
+
+(defmethod router.handlers/route-fx ::router.routes/embed
+  [{:keys [db]} {::router.routes/keys [args]}]
+  {:dispatch [::open-embed args]})
+
+(re-frame/reg-event-fx
+ ::open-embed
+ (fn [{:keys [db]} [_ vims {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
+   {:pre [vims]}
+   (when vims
+     (let [[_ vims-uid] (util.mg/->ref db vims)]
+       (cond-> {:dispatch-n
+                [[::set-vims vims {:route? false}]]}
          (not (vims.db/loaded? db vims))
          (assoc :async-flow (open-vims-async-flow vims-uid options)))))))
 
