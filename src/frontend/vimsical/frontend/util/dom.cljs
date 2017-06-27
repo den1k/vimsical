@@ -209,4 +209,3 @@
 
 (defn first-touch->e [e]
   (get (.-targetTouches e) 0))
-
