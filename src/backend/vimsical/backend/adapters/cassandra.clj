@@ -81,11 +81,12 @@
 
 (defn commands->statements
   [connection commands]
-  (not-empty
-   (map
-    (fn [command]
-      (command->statement connection command))
-    commands)))
+  (transduce
+   (map (fn [command]
+          (command->statement connection command)))
+   (fnil conj [])
+   nil
+   commands))
 
 ;;
 ;; * Connection options
@@ -175,15 +176,21 @@
     [this commands batch-type]
     (protocol/execute-batch-chan this commands batch-type nil))
   (execute-batch-chan
-    [{:keys [session] :as this} commands batch-type {:keys [channel] :as options :or {channel (new-error-chan)}}]
+    [{:keys [session] :as this} commands batch-type options]
+    (assert (-> options :channel nil?) "execute-batch-chan doesn't allow for custom channels")
+    ;; NOTE in order to ensure writes do not timeout we might spread the
+    ;; commands over multiple requests, which makes it inconvenient to let api
+    ;; clients pass their own channel.
     (try
       (if-some [statements (commands->statements this commands)]
-        (let [batch    (alia/batch statements batch-type)
-              options' (new-options options)]
-          (alia.async/execute-chan-buffered session batch options'))
+        (async/merge
+         (for [statements (sequence (partition-all default-fetch-size) statements)]
+           (let [batch    (alia/batch statements batch-type)
+                 options' (new-options options)]
+             (alia.async/execute-chan-buffered session batch options'))))
         (throw (ex-info "invalid commands" {:commands commands})))
       (catch Throwable t
-        (doto channel
+        (doto (new-error-chan)
           (async/put! t)
           (async/close!))))))
 
