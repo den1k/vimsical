@@ -64,8 +64,9 @@
   [response-event]
   (let [xhr        (.-target response-event)
         error-code (.getLastErrorCode xhr)
+        status     (.getStatus xhr)
         error-msg  (ErrorCode.getDebugMessage error-code)]
-    {:reason error-msg}))
+    {:reason error-msg :status status}))
 
 (defn response-status
   [response-event]
