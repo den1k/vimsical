@@ -139,20 +139,19 @@
 (def interleave-all md/interleave-all)
 
 (defn index-of
-  ([coll x]
-   (index-of coll x 0))
-  ([coll x start]
+  ([coll x] (.indexOf coll x))
+  ([coll x ^long start]
    (let [len (count coll)]
      (if (>= start len)
        -1
        (loop [idx (cond
                     (pos? start) start
-                    (neg? start) (clojure.core/max 0 (+ start len))
+                    (neg? start) (clojure.core/max 0 ^long  (+ start len))
                     :else start)]
-         (if (< idx len)
+         (if (< ^long idx len)
            (if (= (nth coll idx) x)
              idx
-             (recur (inc idx)))
+             (recur (inc ^long idx)))
            -1))))))
 
 (defn qualify-keys

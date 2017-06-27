@@ -24,6 +24,7 @@
   offset it anyway."
   (:refer-clojure :exclude [vec vector vector?])
   (:require
+   [vimsical.common.util.core :as util]
    [clojure.spec.alpha :as s]
    [vimsical.vcs.data.indexed.vector-impl :as impl]
    [vimsical.vcs.data.splittable :as splittable]
@@ -34,7 +35,21 @@
 ;;
 
 (defprotocol IIndexedVector
-  (index-of [_ val]))
+  (index-of [_ val] [_ val start]))
+
+(defn -index-of
+  [v val start]
+  #?(:clj
+     (let [i (.indexOf v val)]
+       (when-not (neg? ^long i) i))
+     :cljs
+     (or (let [i (.indexOf v val start)]
+           (when-not (neg? i) i))
+         (loop [i start]
+           (when-not (neg? ^long i)
+             (if (= val (nth v i))
+               i
+               (recur (dec ^long i))))))))
 
 ;;
 ;; * Private
@@ -42,147 +57,6 @@
 
 (defprotocol IIndexedInternal
   (-consistent? [_]))
-
-;;
-;; ** Index
-;;
-
-#?(:clj
-   (deftype Index [^long offset ^clojure.lang.IPersistentMap m]
-
-     clojure.lang.IPersistentCollection
-     (empty [_] (Index. 0 (impl/index)))
-
-     (equiv [_ other]
-       (if (instance? Index other)
-         (= (impl/-normalize m offset)
-            (impl/-normalize (.m ^Index other) (.offset ^Index  other)))
-         false))
-
-     clojure.lang.ISeq
-     (seq [_] (seq m))
-     (first [_] (first m))
-     (next [_] (next m))
-     (more [this] (or (.next ^clojure.lang.ISeq m) (empty this)))
-
-     clojure.lang.IPersistentMap
-     (assoc [_ val i]
-       (Index. offset (assoc m val (+ ^long i (- offset)))))
-     (without [_ key]
-       ;; The expectation is that dissoc is only invoked from next, meaning we have
-       ;; to shift right by one
-       (Index. (dec offset) (.without m key)))
-
-     clojure.lang.Associative
-     (containsKey [_ key]
-       (.containsKey m key))
-     (entryAt [_ key]
-       (when-some [i (.entryAt ^clojure.lang.Associative m key)]
-         (+ offset (int i))))
-
-     clojure.lang.ILookup
-     (valAt [_ key]
-       (when-some [i (.valAt m key)]
-         (+ offset ^long i)))
-
-     splittable/Splittable
-     (split [_ idx]
-       (let [[l r] (splittable/split m idx)]
-         [(Index. offset l) (Index. (- offset ^int idx) r)]))
-
-     splittable/Mergeable
-     (append [_ other]
-       (let [other-offset (+ (count m) (- (.offset ^Index other) offset))
-             m-other      (impl/-normalize (.m ^Index other) other-offset)]
-         (Index. offset (merge m m-other))))
-
-     (splice [this idx other]
-       (if (== (count m) (long idx))
-         (splittable/append this other)
-         (let [[left right] (splittable/split this idx)]
-           (->  left
-                (splittable/append other)
-                (splittable/append right)))))))
-
-#?(:cljs
-   (deftype Index [offset m]
-     Object
-     (toString [this]
-       (pr-str* (impl/-normalize m offset)))
-
-     IEmptyableCollection
-     (-empty [_] (Index. 0 (impl/index)))
-
-     IEquiv
-     (-equiv [this other]
-       (or (identical? this other)
-           (if (instance? Index other)
-             (-equiv (impl/-normalize m offset)
-                     (impl/-normalize (.-m other) (.-offset other)))
-             false)))
-
-     ISeq
-     (-first [_] (first m))
-     (-rest [this] (or (next m) (empty this)))
-
-     ISeqable
-     (-seq [_] (seq m))
-
-     INext
-     (-next [_] (next m))
-
-     IAssociative
-     (-assoc [_ val i]
-       (Index. offset (assoc m val (+ i (- offset)))))
-
-     IMap
-     (-dissoc [_ key]
-       ;; The expectation is that dissoc is only invoked from next, meaning we have
-       ;; to shift right by one
-       (Index. (dec offset) (dissoc m key)))
-
-     ILookup
-     (-lookup [_ key]
-       (when-some [i (get m key)]
-         (+ offset i)))
-
-     splittable/Splittable
-     (split [_ idx]
-       (let [[l r] (splittable/split m idx)]
-         [(Index. offset l) (Index. (- offset idx) r)]))
-
-     splittable/Mergeable
-     (append [_ other]
-       (let [other-offset (+ (count m) (- (.-offset other) offset))
-             m-other      (impl/-normalize (.-m other) other-offset)]
-         (Index. offset (merge m m-other))))
-
-     (splice [this idx other]
-       (if (== (count m) (long idx))
-         (splittable/append this other)
-         (let [[left right] (splittable/split this idx)]
-           (->  left
-                (splittable/append other)
-                (splittable/append right)))))))
-
-(s/def ::index #(instance? Index %))
-
-(defn- new-index
-  ([] (Index. 0 (impl/index)))
-  ([vals] (Index. 0 (impl/index identity vals)))
-  ([f vals] (Index. 0 (impl/index f vals))))
-
-;;
-;; ** Printing
-;;
-
-#?(:clj
-   (defmethod pprint/simple-dispatch Index [^Index m]
-     ((get-method pprint/simple-dispatch clojure.lang.IPersistentMap) (.m m))))
-
-#?(:clj
-   (defmethod print-method Index [^Index m w]
-     (print-method (impl/-normalize (.m m) (.offset m)) w)))
 
 ;;
 ;; * Impl
@@ -194,7 +68,7 @@
 
 #?(:clj
    (deftype IndexedVector
-       [f ^Index index v]
+       [f index v]
 
      clojure.lang.Seqable
      (seq [this] (when (seq v) this))
@@ -203,35 +77,29 @@
      (first [_] (first v))
      (next [_]
        (when-some [nv (next v)]
-         (let [old-val     (first v)
-               old-val-key (f old-val)
-               index'      (dissoc index old-val-key)
+         (let [index'      (impl/vec (next index))
                v'          (impl/vec nv)]
-           (vector f index' v'))))
+           (IndexedVector. f index' v'))))
      (more [this]
        (or (.next this) (empty this)))
      (cons [this val]
-       (let [i       (count v)
-             val-key (f val)
-             index'  (update index val-key
-                             (fn [prev-i?]
-                               (if (some? prev-i?)
-                                 (throw (ex-info "index already assigned" {:i i}))
-                                 i)))
+       (let [val-key (f val)
+             index'  (conj index val-key)
              v'      (conj v val)]
-         (vector f index' v')))
+         (IndexedVector. f index' v')))
 
      clojure.lang.IPersistentStack
-     (peek [_] (.peek v))
+     (peek [_] (.peek ^clojure.lang.IPersistentStack v))
 
      java.lang.Iterable
      ;; XXX This might be a bit risky in cases where someone would call remove()
      ;; on the vector's iterator, our index would go out of sync.
-     (iterator [_] (.iterator v))
+     (iterator [_] (.iterator ^java.lang.Iterable v))
 
      clojure.lang.IPersistentCollection
      (empty [_]
-       (vector f (new-index) (impl/vector)))
+       (IndexedVector. f (impl/index) (impl/vector)))
+
      (equiv [this other]
        (or (identical? this other)
            (if (instance? IndexedVector other)
@@ -248,65 +116,73 @@
 
      clojure.lang.IPersistentVector
      (assocN [_ i val]
-       (when (and (= identity f) (not= i (count v)))
-         ;; Unsupported for now...
-         (throw
-          (ex-info
-           "Cannot update a value that will change the key." {:f f :val val :i i :val-at-i (get v i)})))
        (let [val-key (f val)
-             index'  (assoc index val-key i)
+             index'  (assoc index i val-key)
              v'      (assoc v i val)]
-         (vector f index' v')))
+         (IndexedVector. f index' v')))
 
      clojure.lang.Indexed
      (nth [_ idx] (nth v idx))
      (nth [_ idx not-found] (nth v idx not-found))
 
      IIndexedVector
-     (index-of [_ val]
-       ;; The entire purpose of this whole file!
-       (get index val))
+     (index-of [_ val] (.indexOf index val))
+     (index-of [_ val start] (-index-of index val start))
 
      IIndexedInternal
      (-consistent? [this]
-       (doseq [[i val] (map-indexed clojure.core/vector v)]
-         (when-not (= i (index-of this (f val)))
-           (throw
-            (ex-info
-             "Inconsistent indexed vector state"
-             {:val          val
-              :fval         (f val)
-              :index-pos    (index-of this (f val))
-              :index-vector i
-              :index        index
-              :v            v}))))
+       (doseq [[i val] (map clojure.core/vector index v)]
+         (try
+           (when-not (= i (f val))
+             (throw
+              (ex-info
+               "Inconsistent indexed vector state"
+               {:val          val
+                :fval         (f val)
+                :index-vector i
+                :index        index
+                :v            v})))
+           (catch Throwable t
+             (throw (ex-info "Index impl error" {:i i :val val :fval (f val) :index index :v v})))))
        this)
 
      splittable/Splittable
      (split [_ idx]
        (let [[index-a index-b] (splittable/split index idx)
              [v-a v-b]         (splittable/split v idx)]
-         [(vector f index-a v-a)
-          (vector f index-b v-b)]))
+         [(IndexedVector. f index-a v-a)
+          (IndexedVector. f index-b v-b)]))
      (omit [this idx cnt]
        (let [[l tmp] (splittable/split this idx)
              [_ r]   (splittable/split tmp cnt)]
          (splittable/append l r)))
 
+     splittable/SplittablePerf
+     (split-vec [_ idx]
+       (splittable/split v idx))
+
+
      splittable/Mergeable
+     (insert [this idx element]
+       (if (== (count this) (long idx))
+         (conj this element)
+         (let [[left right] (splittable/split this idx)]
+           (splittable/append (conj left element) right))))
+
      (splice [this idx other]
        (if (== (count this) (long idx))
          (splittable/append this other)
          (let [index' (splittable/splice index idx (.index ^IndexedVector other))
                v'     (splittable/splice v idx (.v ^IndexedVector other))]
-           (vector f index' v'))))
+           (IndexedVector. f index' v'))))
+
      (append [this other]
        (when other (assert (vector? other)))
        (if (nil? other)
          this
          (let [index' (splittable/append index (.index ^IndexedVector other))
                v'     (splittable/append v (.v ^IndexedVector other))]
-           (vector f index' v'))))))
+           (IndexedVector. f index' v'))))))
 
 #?(:cljs
    (deftype IndexedVector [f ^Index index v]
@@ -330,9 +206,9 @@
        (when-some [nv (next v)]
          (let [old-val     (first v)
                old-val-key (f old-val)
-               index'      (dissoc index old-val-key)
+               index'      (impl/vec (next index))
                v'          (impl/vec nv)]
-           (vector f index' v'))))
+           (IndexedVector. f index' v'))))
 
      IReduce
      (-reduce [_ f] (-reduce v f))
@@ -340,18 +216,13 @@
 
      ICollection
      (-conj [this val]
-       (let [i       (count v)
-             val-key (f val)
-             index'  (update index val-key
-                             (fn [prev-i?]
-                               (if (some? prev-i?)
-                                 (throw (ex-info "index already assigned" {:i i}))
-                                 i)))
+       (let [val-key (f val)
+             index'  (conj index val-key)
              v'      (conj v val)]
-         (vector f index' v')))
+         (IndexedVector. f index' v')))
 
      IEmptyableCollection
-     (-empty [_] (vector f (new-index) (impl/vector)))
+     (-empty [_] (IndexedVector. f (impl/index) (impl/vector)))
 
      ISequential
      IEquiv
@@ -372,35 +243,28 @@
 
      IVector
      (-assoc-n [_ i val]
-       (when (and (= identity f) (not= i (count v)))
-         ;; Unsupported for now...
-         (throw
-          (ex-info
-           "Cannot update a value that will change the key." {:f f :val val :i i :val-at-i (get v i)})))
        (let [val-key (f val)
-             index'  (assoc index val-key i)
+             index'  (assoc index i val-key)
              v'      (assoc v i val)]
-         (vector f index' v')))
+         (IndexedVector. f index' v')))
 
      IIndexed
      (-nth [_ idx] (nth v idx))
      (-nth [_ idx not-found] (nth v idx not-found))
 
      IIndexedVector
-     (index-of [_ val]
-       ;; The entire purpose of this whole file!
-       (get index val))
+     (index-of [_ val] (.indexOf index val))
+     (index-of [_ val start] (-index-of index val start))
 
      IIndexedInternal
      (-consistent? [this]
-       (doseq [[i val] (map-indexed clojure.core/vector v)]
-         (when-not (= i (index-of this (f val)))
+       (doseq [[i val] (map clojure.core/vector index v)]
+         (when-not (= i (f val))
            (throw
             (ex-info
              "Inconsistent indexed vector state"
              {:val          val
               :fval         (f val)
-              :index-pos    (index-of this (f val))
               :index-vector i
               :index        index
               :v            v}))))
@@ -410,27 +274,37 @@
      (split [_ idx]
        (let [[index-a index-b] (splittable/split index idx)
              [v-a v-b]         (splittable/split v idx)]
-         [(vector f index-a v-a)
-          (vector f index-b v-b)]))
+         [(IndexedVector. f index-a v-a)
+          (IndexedVector. f index-b v-b)]))
      (omit [this idx cnt]
        (let [[l tmp] (splittable/split this idx)
              [_ r]   (splittable/split tmp cnt)]
          (splittable/append l r)))
 
+     splittable/SplittablePerf
+     (split-vec [_ idx]
+       (splittable/split v idx))
+
      splittable/Mergeable
+     (insert [this idx element]
+       (if (== (count this) (long idx))
+         (conj this element)
+         (let [[left right] (splittable/split this idx)]
+           (splittable/append (conj left element) right))))
+
      (splice [this idx other]
        (if (== (count this) (long idx))
          (splittable/append this other)
          (let [index' (splittable/splice index idx (.-index other))
                v'     (splittable/splice v idx (.-v other))]
-           (vector f index' v'))))
+           (IndexedVector. f index' v'))))
      (append [this other]
        (when other (assert (vector? other)))
        (if (empty? other)
          this
          (let [index' (splittable/append index (.-index other))
                v'     (splittable/append v (.-v other))]
-           (vector f index' v'))))))
+           (IndexedVector. f index' v'))))))
 
 ;;
 ;; ** Printing
@@ -444,9 +318,6 @@
    (defmethod print-method IndexedVector [^IndexedVector v w]
      (print-method (.v v) w)))
 
-#?(:clj
-   (prefer-method pprint/simple-dispatch Index clojure.lang.IPersistentMap ))
-
 ;;
 ;; * API
 ;;
@@ -455,6 +326,7 @@
   ([]  (vector))
   ([x] (instance? IndexedVector x)))
 
+(s/def ::index clojure.core/vector?)
 (s/def ::vector-like (s/or :seq seq? :vec clojure.core/vector? :sequ sequential?))
 (s/def ::vector (s/and vector? -consistent?))
 
@@ -465,7 +337,7 @@
 (s/fdef vec :args (s/cat :v ::vector-like))
 
 (defn vec [v]
-  (IndexedVector. identity (new-index v) (impl/vec v)))
+  (IndexedVector. identity (impl/index v) (impl/vec v)))
 
 (s/fdef vector
         :args (s/* (s/cat :f ifn? :index ::index :v ::impl/vector))
@@ -473,7 +345,7 @@
 
 (defn vector
   ([]
-   (IndexedVector. identity (new-index) (impl/vector)))
+   (IndexedVector. identity (impl/index) (impl/vector)))
   ([f index v]
    (IndexedVector. f index (impl/vec v))))
 
@@ -484,12 +356,12 @@
 (s/fdef vec-by :args (s/cat :f ifn? :v ::vector-like))
 
 (defn vec-by [f v]
-  (vector f (new-index f v) (impl/vec v)))
+  (vector f (impl/index f v) (impl/vec v)))
 
 (s/fdef vector-by :args (s/cat :f ifn?))
 
 (defn vector-by [f]
-  (vector f (new-index) (impl/vector)))
+  (vector f (impl/index) (impl/vector)))
 
 (comment
   (orchestra.spec.test/unstrument)

@@ -28,14 +28,15 @@
 (deftest diffs->edit-events
   (is (= (sut/diffs->edit-events "" "foor" "four")
          [{::edit-event/op :str/ins, ::edit-event/idx 0, ::edit-event/diff "foor"}
-          {::edit-event/op :crsr/mv, ::edit-event/idx 4}
-          {::edit-event/op :crsr/mv, ::edit-event/idx 3}
-          {::edit-event/op :crsr/mv, ::edit-event/idx 2}
           {::edit-event/op :str/rem, ::edit-event/idx 2, ::edit-event/amt 1}
-          {::edit-event/op :crsr/mv, ::edit-event/idx 1}
-          {::edit-event/op :crsr/mv, ::edit-event/idx 2}
-          {::edit-event/op :str/ins, ::edit-event/idx 2, ::edit-event/diff "u"}
-          {::edit-event/op :crsr/mv, ::edit-event/idx 3}])))
+          {::edit-event/op :str/ins, ::edit-event/idx 2, ::edit-event/diff "u"}]))
+  (is (= (sut/diffs->edit-events "" ["foor"] ["four"])
+         [{::edit-event/op :str/ins, ::edit-event/idx 0, ::edit-event/diff "f"}
+          {::edit-event/op :str/ins, ::edit-event/idx 1, ::edit-event/diff "o"}
+          {::edit-event/op :str/ins, ::edit-event/idx 2, ::edit-event/diff "o"}
+          {::edit-event/op :str/ins, ::edit-event/idx 3, ::edit-event/diff "r"}
+          {::edit-event/op :str/rem, ::edit-event/idx 2, ::edit-event/amt 1}
+          {::edit-event/op :str/ins, ::edit-event/idx 2, ::edit-event/diff "u"}])))
 
 (deftest diffs->edit-deltas
   ;; NOTE can't really track the uuids used for deltas since we update the whole
@@ -50,4 +51,4 @@
         deltas            (vcs/deltas vcs (-> deltas last :uid))]
     ;; Assertion is trivial but rely on the deltas spec to check for the topo
     ;; sort as wel as valid delta ops
-    (is (= 6 (count deltas)))))
+    (is (= 3 (count deltas)))))

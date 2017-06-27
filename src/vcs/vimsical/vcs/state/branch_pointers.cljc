@@ -39,7 +39,7 @@
   (update branch-pointers-by-branch-uid branch-uid update-pointers uid uid))
 
 (s/fdef add-deltas
-        :args (s/cat :bpbb ::branch-pointers-by-branch-uid ::deltas (s/every ::delta/delta))
+        :args (s/cat :bpbb ::branch-pointers-by-branch-uid ::deltas (s/nilable (s/every ::delta/delta)))
         :ret ::branch-pointers-by-branch-uid)
 
 (defn add-deltas

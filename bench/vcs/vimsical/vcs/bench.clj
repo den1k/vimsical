@@ -43,14 +43,6 @@
 ;; * Helpers
 ;;
 
-(defn- add-edit-events
-  [vcs effects file-uid branch-uid delta-uid edit-events]
-  (reduce
-   (fn [[vcs deltas delta-uid] edit-event]
-     (let [[vcs' deltas' delta-uid'] (sut/add-edit-event vcs effects file-uid branch-uid (or (-> deltas last :uid) delta-uid) edit-event)]
-       [vcs' (into deltas deltas') delta-uid']))
-   [vcs [] delta-uid] edit-events))
-
 (defn edit-events->deltas
   [edit-events]
   (let [{uuid-fn :f} (uuid-gen)
@@ -59,7 +51,7 @@
                       ::editor/uuid-fn      (fn [& _] (uuid-fn))
                       ::editor/timestamp-fn (constantly 1)}
         [_  deltas _] (-> (sut/empty-vcs branches)
-                          (add-edit-events effects (uuid :html) (uuid :master) nil edit-events))]
+                          (sut/add-edit-events effects (uuid :html) (uuid :master) nil edit-events))]
     deltas))
 
 ;;
@@ -90,8 +82,6 @@
    {:vimsical.vcs.edit-event/op :str/rplc, :vimsical.vcs.edit-event/diff txt :vimsical.vcs.edit-event/idx 0 , :vimsical.vcs.edit-event/amt (count txt)}
    {:vimsical.vcs.edit-event/op :str/ins, :vimsical.vcs.edit-event/diff txt :vimsical.vcs.edit-event/idx 0}])
 
-(defn deltas [txt] (edit-events->deltas (add-edit-events txt)))
-
 (def  uuid-fn (:f (uuid-gen)))
 
 ;;
@@ -112,3 +102,4 @@
       (quick-bench (edit-events->deltas edit-events))
       (sep "1.2 Add deltas")
       (quick-bench (-> (sut/empty-vcs branches) (sut/add-deltas uuid-fn deltas))))))
+

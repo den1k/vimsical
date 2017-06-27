@@ -11,7 +11,8 @@
    [vimsical.remotes.backend.vcs.commands :as commands]
    [vimsical.user :as user]
    [vimsical.vcs.branch :as branch]
-   [vimsical.vcs.lib :as lib]))
+   [vimsical.vcs.lib :as lib]
+   [vimsical.vims :as vims]))
 
 ;;
 ;; * Context specs
@@ -25,10 +26,11 @@
 ;;
 
 (defmethod multi/handle-event ::commands/add-branch
-  [{:keys [datomic] :as context} [_ branch]]
-  (multi/async
-   context
-   (multi/set-response context (<? (datomic/transact-chan datomic branch)))))
+  [{:keys [datomic] :as context} [_ vims-uid branch]]
+  (let [tx  {:db/uid vims-uid ::vims/branches branch}]
+    (multi/async
+     context
+     (multi/set-response context (<? (datomic/transact-chan datomic tx))))))
 
 ;;
 ;; * Deltas

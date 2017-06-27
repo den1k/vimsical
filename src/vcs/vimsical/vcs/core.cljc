@@ -79,10 +79,11 @@
         all-deltas'              (state.deltas/add-delta all-deltas delta)
         files-state-by-file-uid  (get state ::state.files/state-by-file-uid state.files/empty-state-by-file-uid)
         files-state-by-file-uid' (state.files/add-delta files-state-by-file-uid delta)
+        state'                   {::state.deltas/deltas           all-deltas'
+                                  ::state.files/state-by-file-uid files-state-by-file-uid'}
         timeline'                (state.timeline/add-delta timeline branches uuid-fn delta)]
     (-> vcs
-        (assoc-in [::state-by-delta-uid uid ::state.deltas/deltas] all-deltas')
-        (assoc-in [::state-by-delta-uid uid ::state.files/state-by-file-uid] files-state-by-file-uid')
+        (assoc-in [::state-by-delta-uid uid] state')
         (assoc ::timeline timeline'))))
 
 (s/fdef add-deltas
@@ -91,12 +92,24 @@
                      :deltas (s/nilable (s/every ::delta/delta)))
         :ret  ::vcs)
 
+;; NOTE the only optimization here -- compared to  (reduce add-delta deltas) is
+;; to prevent building the timeline for every single delta
+
 (defn add-deltas
-  [vcs uuid-fn deltas]
-  (reduce
-   (fn [vcs delta]
-     (add-delta vcs uuid-fn delta))
-   vcs deltas))
+  [{::keys [timeline branches] :as vcs} uuid-fn deltas]
+  (-> (reduce
+       (fn [{:as vcs ::keys [branches state-by-delta-uid timeline]} {:keys [prev-uid branch-uid uid] :as delta}]
+         (let [state                    (get state-by-delta-uid prev-uid)
+               all-deltas               (get state ::state.deltas/deltas state.deltas/empty-deltas)
+               all-deltas'              (state.deltas/add-delta all-deltas delta)
+               files-state-by-file-uid  (get state ::state.files/state-by-file-uid state.files/empty-state-by-file-uid)
+               files-state-by-file-uid' (state.files/add-delta files-state-by-file-uid delta)
+               state'                   {::state.deltas/deltas           all-deltas'
+                                         ::state.files/state-by-file-uid files-state-by-file-uid'}]
+           (assoc-in vcs [::state-by-delta-uid uid] state')))
+       vcs deltas)
+      (assoc ::timeline (state.timeline/add-deltas timeline branches uuid-fn deltas))))
+
 
 ;;
 ;; ** Writing (events from the editor)
@@ -125,10 +138,11 @@
          deltas'
          delta-uid']            (state.files/add-edit-event files-state-by-file-uid effects file-uid branch-uid delta-uid edit-event)
         all-deltas'             (state.deltas/add-deltas all-deltas deltas')
+        state'                  {::state.deltas/deltas           all-deltas'
+                                 ::state.files/state-by-file-uid files-state-by-file-uid'}
         timeline'               (state.timeline/add-deltas timeline branches uuid-fn deltas')
         vcs'                    (-> vcs
-                                    (assoc-in [::state-by-delta-uid (-> deltas' peek :uid) ::state.deltas/deltas] all-deltas')
-                                    (assoc-in [::state-by-delta-uid (-> deltas' peek :uid) ::state.files/state-by-file-uid] files-state-by-file-uid')
+                                    (assoc-in [::state-by-delta-uid delta-uid'] state')
                                     (assoc ::timeline timeline'))]
     [vcs' deltas' delta-uid']))
 
@@ -161,13 +175,46 @@
         branches'               (conj branches branch)
         all-deltas'             (state.deltas/add-deltas all-deltas deltas')
         timeline'               (state.timeline/add-deltas timeline branches' uuid-fn deltas')
+        state'                  {::state.deltas/deltas           all-deltas'
+                                 ::state.files/state-by-file-uid files-state-by-file-uid'}
         vcs'                    (-> vcs
-                                    (assoc-in [::state-by-delta-uid delta-uid' ::state.deltas/deltas] all-deltas')
-                                    (assoc-in [::state-by-delta-uid delta-uid' ::state.files/state-by-file-uid] files-state-by-file-uid')
+                                    (assoc-in [::state-by-delta-uid delta-uid'] state')
                                     (assoc ::branches branches' ::timeline timeline'))]
     [vcs' deltas' delta-uid' branch]))
 
 ;;
+
+(defn add-edit-events
+  [{:as vcs ::keys [branches state-by-delta-uid timeline]}
+   {:as effects ::editor/keys [uuid-fn]}
+   file-uid branch-uid delta-uid edit-events]
+  ;; HACK
+  (letfn [(add-edit-event
+            [{:as vcs ::keys [branches state-by-delta-uid timeline]}
+             {:as effects ::editor/keys [uuid-fn]}
+             file-uid
+             branch-uid
+             delta-uid
+             edit-event]
+            (let [state                   (get state-by-delta-uid delta-uid)
+                  all-deltas              (get state ::state.deltas/deltas state.deltas/empty-deltas)
+                  files-state-by-file-uid (get state ::state.files/state-by-file-uid state.files/empty-state-by-file-uid)
+                  [files-state-by-file-uid'
+                   deltas'
+                   delta-uid']            (state.files/add-edit-event files-state-by-file-uid effects file-uid branch-uid delta-uid edit-event)
+                  all-deltas'             (state.deltas/add-deltas all-deltas deltas')
+                  state'                  {::state.deltas/deltas           all-deltas'
+                                           ::state.files/state-by-file-uid files-state-by-file-uid'}
+                  vcs'                    (assoc-in vcs [::state-by-delta-uid delta-uid'] state')]
+              [vcs' deltas' delta-uid']))]
+    (let [[vcs' deltas' delta-uid']   (reduce
+                                       (fn [[vcs deltas delta-uid] edit-event]
+                                         (let [[vcs' deltas' delta-uid'] (add-edit-event vcs effects file-uid branch-uid delta-uid edit-event)]
+                                           [vcs' (into deltas deltas') delta-uid']))
+                                       [vcs [] delta-uid] edit-events)]
+      [(assoc vcs' ::timeline (state.timeline/add-deltas timeline branches uuid-fn deltas')) deltas' delta-uid'])))
+
+
 ;; * Queries
 ;;
 

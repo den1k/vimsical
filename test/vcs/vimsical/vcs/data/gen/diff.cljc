@@ -118,7 +118,14 @@
      cat)))
 
 
-(defn- splice-edit-events-xf [] (comp (map #'state.files/splice-edit-event) cat))
+(defn- splice-edit-events-xf []
+  (comp
+   (map
+    (fn [e]
+      (if (#'state.files/splice-edit-event? e)
+        (#'state.files/splice-edit-event e)
+        [e])))
+   cat))
 
 
 ;;
@@ -196,19 +203,16 @@
               (splice-edit-events-xf)
               (map identity)))]
     (vec
-     (move-to-next-events
-      (::edit-events
-       (reduce
-        (fn [{::keys [s edit-events] :as acc} splice-or-str]
-          (let [s' (if (vector? splice-or-str) (first splice-or-str) splice-or-str)
-                xf (comp
-                    (splice-xf splice-or-str)
-                    (move-past-edit-events-xf))]
-            (if (nil? acc)
-              {::s s' ::edit-events []}
-              {::s s' ::edit-events
-               (transduce  xf conj edit-events (diff->edit-events s s'))})))
-        nil splices-and-strs))))))
+     (::edit-events
+      (reduce
+       (fn [{::keys [s edit-events] :as acc} splice-or-str]
+         (let [s' (if (vector? splice-or-str) (first splice-or-str) splice-or-str)
+               xf (splice-xf splice-or-str)]
+           (if (nil? acc)
+             {::s s' ::edit-events []}
+             {::s s' ::edit-events
+              (transduce  xf conj edit-events (diff->edit-events s s'))})))
+       nil splices-and-strs)))))
 
 (s/fdef diffs->vcs
         :args (s/cat :vcs ::vcs/vcs
@@ -224,7 +228,8 @@
   (assert (string? (first strs)))
   (assert (every? vector? (next strs)))
   (letfn [(splice-strs [strs] (mapv (fn [str] (if (vector? str) str [str])) strs))]
-    (reduce
-     (fn [[vcs deltas delta-uid] edit-event]
-       (vcs/add-edit-event vcs effects file-uid branch-uid (or (-> deltas last :uid) delta-uid) edit-event))
-     [vcs nil delta-uid] (apply diffs->edit-events (splice-strs strs)))))
+    (vcs/add-edit-events
+     vcs
+     effects
+     file-uid branch-uid delta-uid
+     (apply diffs->edit-events (splice-strs strs)))))

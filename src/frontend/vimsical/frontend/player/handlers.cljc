@@ -21,7 +21,7 @@
       [_ vims ui-time]]
    (let [[entry-time :as entry] (vcs/timeline-entry-at-time vcs ui-time)
          vcs'   (assoc vcs ::vcs.db/playhead-entry entry)
-         db'    (mg/add db vcs')
+         db'    (vcs.db/add db vcs')
          ui-db' (timeline.ui-db/set-playhead ui-db vims ui-time)]
      {:db        db'
       :ui-db     ui-db'
@@ -40,7 +40,7 @@
        ::vcs.subs/keys [vcs]} [_ vims ui-time]]
    (let [entry  (vcs/timeline-entry-at-time vcs ui-time)
          vcs'   (vcs.db/set-skimhead-entry vcs entry)
-         db'    (mg/add db vcs')
+         db'    (vcs.db/add db vcs')
          ui-db' (-> ui-db
                     (timeline.ui-db/set-skimhead vims ui-time)
                     (timeline.ui-db/set-skimming vims true))]
@@ -54,7 +54,7 @@
        ::vcs.subs/keys [vcs]} [_ vims ui-time]]
    (let [entry  (vcs/timeline-entry-at-time vcs ui-time)
          vcs'   (vcs.db/set-skimhead-entry vcs entry)
-         db'    (mg/add db vcs')
+         db'    (vcs.db/add db vcs')
          ui-db' (timeline.ui-db/set-skimhead ui-db vims ui-time)]
      {:db db' :ui-db ui-db'})))
 
@@ -64,7 +64,7 @@
   (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/vcs vims]))]
  (fn [{:keys [ui-db db] ::vcs.subs/keys [vcs]} [_ vims]]
    (let [vcs'   (vcs.db/set-skimhead-entry vcs nil)
-         db'    (mg/add db vcs')
+         db'    (vcs.db/add db vcs')
          ui-db' (-> ui-db
                     (timeline.ui-db/set-skimhead vims nil)
                     (timeline.ui-db/set-skimming vims false))]

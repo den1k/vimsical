@@ -34,6 +34,7 @@
 (s/def ::uid uuid?)
 (s/def ::prev-uid (s/nilable ::uid))
 (s/def ::op ::op/op)
+(s/def ::op-uid (s/or :id ::prev-uid :range (s/tuple ::prev-uid ::prev-uid)))
 (s/def ::pad nat-int?)
 (s/def ::branch-uid uuid?)
 (s/def ::file-uid uuid?)
@@ -70,18 +71,18 @@
 ;; * Accessors
 ;;
 
-(defn op-uid  [{[_ uid] :op}] uid)
-(defn op-type [{[op] :op}] op)
-(defn op-diff [{[_ _ diff] :op}] (assert diff "Not a :str/ins") diff)
-(defn op-amt  [{[_ _ amt] :op}] (assert amt "Not :str/rem") amt)
+(defn op-uid  [delta] (get-in delta [:op 1]))
+(defn op-type [delta] (get-in delta [:op 0]))
+(defn op-diff [delta] (get-in delta [:op 2]))
+(defn op-amt  [delta] (get-in delta [:op 2]))
 
 ;;
 ;; * Offsets
 ;;
 
 (defmulti prospective-idx-offset op-type)
-(defmethod prospective-idx-offset :str/ins [delta] (count (op-diff delta)))
 ;; Deletions in the VCS's internal data structures happen left to right, with
 ;; the cursor sitting left of the char(s) to be deleted. This means that the
 ;; cursor position should remain the same after performing the delete operation
 (defmethod prospective-idx-offset :str/rem [_] 0)
+(defmethod prospective-idx-offset :str/ins [delta] (count (op-diff delta)))

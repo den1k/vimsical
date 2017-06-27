@@ -5,14 +5,12 @@
    [vimsical.vcs.alg.topo :as topo]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.data.indexed.vector :as indexed]
-   [vimsical.vcs.delta :as delta]))
+   [vimsical.vcs.delta :as delta]
+   [vimsical.vcs.data.splittable :as splittable]))
 
 ;;
 ;; * Spec
 ;;
-
-(defn ops-point-to-str-id
-  [deltas-by-branch-uid ])
 
 (s/def ::deltas (s/and ::indexed/vector (s/every ::delta/delta) topo/sorted?))
 
@@ -28,15 +26,11 @@
   ([] (indexed/vector-by :uid))
   ([deltas] (indexed/vec-by :uid deltas)))
 
-(def conj-deltas (fnil conj (new-vector)))
-
-(defn- update-deltas
-  [deltas delta]
-  (conj-deltas deltas delta))
-
 ;;
 ;; * API
 ;;
+
+(def ^:private conj-deltas (fnil conj (new-vector)))
 
 (s/fdef add-delta
         :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas ::delta/delta)
@@ -45,15 +39,33 @@
 (defn add-delta
   [deltas-by-branch-uid {:keys [branch-uid] :as delta}]
   {:pre [branch-uid]}
-  (update deltas-by-branch-uid branch-uid update-deltas delta))
+  (update deltas-by-branch-uid branch-uid conj-deltas delta))
+
+(s/fdef add-deltas-by-branch-uid
+        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid
+                     :deltas-by-branch-uid (s/every-kv ::branch/uid (s/every ::delta/delta)))
+        :ret ::deltas-by-branch-uid)
+
+(defn add-deltas-by-branch-uid
+  [deltas-by-branch-uid deltas-by-branch-uid']
+  (reduce-kv
+   (fn [acc branch-uid deltas]
+     (let [deltas' (new-vector deltas)]
+       (assoc acc branch-uid
+              (if-some [prev-deltas (get acc branch-uid)]
+                (splittable/append prev-deltas deltas')
+                deltas'))))
+   deltas-by-branch-uid
+   deltas-by-branch-uid'))
+
 
 (s/fdef add-deltas
-        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas (s/every ::delta/delta))
+        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid :deltas (s/nilable (s/every ::delta/delta)))
         :ret ::deltas-by-branch-uid)
 
 (defn add-deltas
   [deltas-by-branch-uid deltas]
-  (reduce add-delta deltas-by-branch-uid deltas))
+  (add-deltas-by-branch-uid deltas-by-branch-uid (group-by :branch-uid deltas)))
 
 (s/fdef get-deltas
         :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid

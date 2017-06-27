@@ -102,8 +102,6 @@
    ::chunks-by-absolute-start-time (avl/sorted-map)
    ::duration                      0})
 
-(s/assert* ::timeline empty-timeline)
-
 ;;
 ;; * Transient state - denormalizations used during inlining
 ;;
@@ -116,7 +114,7 @@
 (s/def ::branch-children-chunks-by-delta-branch-off-index
   (s/every-kv ::index (s/every ::chunk/chunk) :kind sorted? :into (avl/sorted-map)))
 
-(defn- new-chunks-by-delta-start-index
+(defn new-chunks-by-delta-start-index
   "Return an avl map where each chunk is assoc'd with its delta-start index."
   [chunks]
   (::m
@@ -129,7 +127,7 @@
         :args (s/cat :branch ::branch/branch)
         :ret  ::branch-chunks-by-delta-start-index)
 
-(defn- new-branch-chunks-by-delta-start-index
+(defn new-branch-chunks-by-delta-start-index
   [{:keys [db/uid] ::branch/keys [chunks]}]
   (new-chunks-by-delta-start-index chunks))
 
@@ -166,7 +164,7 @@
                      :uuid-fn ::uuid-fn)
         :ret  ::branch-chunks-by-delta-start-index)
 
-(defn- slice-branch-chunks-by-delta-index
+(defn slice-branch-chunks-by-delta-index
   "Split the chunks in `branch-chunks-by-delta-start-index` according to
   `indexes`. Will not create new chunks for an index that points directly to the
   delta-start of an existing chunk in `branch-chunks-by-delta-start-index`."
@@ -195,7 +193,7 @@
                      :uuid-fn ::uuid-fn)
         :ret (s/every ::chunk/chunk))
 
-(defn- new-inlined-chunks-seq
+(defn new-inlined-chunks-seq
   "Return a sequence of chunks representing the in-lining of the branch's
   children chunks within its own. The implementation currently hard-codes the
   ordering to be: branch chunks left of branch-off, children chunks, branch
@@ -222,10 +220,10 @@
          branch-children-chunks-by-delta-branch-off-index))))))
 
 (s/fdef new-chunks-by-absolute-start-time
-        :args (s/cat :chunks (s/every ::chunk/chunk))
+        :args (s/cat :chunks (s/nilable (s/every ::chunk/chunk)))
         :ret  ::chunks-by-absolute-start-time)
 
-(defn- new-chunks-by-absolute-start-time
+(defn new-chunks-by-absolute-start-time
   "Return an avl map where each chunk is assoc'd with it's absolute start time
   within `chunks`."
   [chunks]
@@ -243,7 +241,7 @@
                      :chunks-by-branch-uid ::chunks-by-branch-uid
                      :branches (s/every ::branch/branch)
                      :uuid-fn ::uuid-fn)
-        :ret  (s/every ::chunk/chunk))
+        :ret (s/nilable (s/every ::chunk/chunk)))
 
 (defn inline-chunks
   "Perform a depth-first walk over the branch tree and splices the children's
@@ -308,15 +306,21 @@
         :args (s/cat :timeline ::timeline
                      :branches (s/every ::branch/branch)
                      :uuid-fn ::uuid-fn
-                     :deltas (s/every ::delta/delta))
+                     :deltas (s/nilable (s/every ::delta/delta)))
         :ret ::timeline)
 
 (defn add-deltas
-  [timeline branches uuid-fn deltas]
-  (reduce
-   (fn [timeline delta]
-     (add-delta timeline branches uuid-fn delta))
-   timeline deltas))
+  [{:as timeline ::keys [deltas-by-branch-uid chunks-by-branch-uid duration]} branches uuid-fn deltas]
+  (let [deltas-grouped-by-branch-uid   (group-by :branch-uid deltas)
+        deltas-by-branch-uid'          (state.branches/add-deltas-by-branch-uid deltas-by-branch-uid deltas-grouped-by-branch-uid)
+        chunks-by-branch-uid'          (state.chunks/add-deltas-by-branch-uid chunks-by-branch-uid branches uuid-fn deltas-grouped-by-branch-uid)
+        inlined-chunks                 (inline-chunks deltas-by-branch-uid' chunks-by-branch-uid' branches uuid-fn)
+        chunks-by-absolute-start-time' (new-chunks-by-absolute-start-time inlined-chunks)]
+    (assoc timeline
+           ::deltas-by-branch-uid deltas-by-branch-uid'
+           ::chunks-by-branch-uid chunks-by-branch-uid'
+           ::chunks-by-absolute-start-time chunks-by-absolute-start-time'
+           ::duration (reduce + (long duration) (map :pad deltas)))))
 
 ;;
 ;; ** Queries

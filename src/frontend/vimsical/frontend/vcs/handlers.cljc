@@ -40,8 +40,12 @@
         vcs-db               {::vcs.db/branch-uid     branch-uid
                               ::vcs.db/delta-uid      delta-uid
                               ::vcs.db/playhead-entry playhead-entry}
-        vcs-entity           (merge {:db/uid (uuid-fn)} vcs vcs-db)]
-    {:db (mg/add db (assoc vims ::vims/vcs vcs-entity))
+        vcs-entity           (merge {:db/uid (uuid-fn)} vcs vcs-db)
+        vcs-ref              (util.mg/->ref db vcs-entity)
+        vims-vcs             (assoc vims ::vims/vcs vcs-ref)]
+    {:db (-> db
+             (mg/add vims-vcs)
+             (vcs.db/add vcs-entity))
      #?@(:cljs
          [:dispatch
           ;; Cyclic deps
@@ -92,10 +96,10 @@
   [{:keys [uuid-fn timestamp elapsed] :as context}]
   {:pre [uuid-fn timestamp elapsed]}
   (assoc context ::editor/effects
-                 ;; NOTE all these fns take the edit-event
-                 {::editor/uuid-fn      (fn [& _] (uuid-fn))
-                  ::editor/timestamp-fn (fn [& _] timestamp)
-                  ::editor/pad-fn       (new-pad-fn elapsed)}))
+         ;; NOTE all these fns take the edit-event
+         {::editor/uuid-fn      (fn [& _] (uuid-fn))
+          ::editor/timestamp-fn (fn [& _] timestamp)
+          ::editor/pad-fn       (new-pad-fn elapsed)}))
 
 (re-frame/reg-cofx :editor editor-cofx)
 
@@ -179,16 +183,17 @@
       [_ {vims-uid :db/uid :as vims} {file-uid :db/uid} edit-event]]
    {:pre [vims-uid effects file-uid]}
    (when-let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)]
-     (let [playhead' (-> vcs' ::vcs.db/playhead-entry first)
-           db'       (mg/add db vcs')
-           ui-db'    (timeline.ui-db/set-playhead ui-db vims playhead')]
+     (let [playhead'     (-> vcs' ::vcs.db/playhead-entry first)
+           db'           (vcs.db/add db vcs')
+           ui-db'        (timeline.ui-db/set-playhead ui-db vims playhead')]
        (cond-> {:db         db'
                 :ui-db      ui-db'
                 :dispatch-n [[::sync.handlers/add-deltas vims-uid deltas]]}
          ;; NOTE branch is already in ::vcs/branches, don't need to mg/add it
          (some? ?branch)
          (-> (update :db util.mg/add-join :app/vims ::vims/branches ?branch)
-             (update :dispatch-n conj [::sync.handlers/add-branch vims-uid ?branch])))))))
+             ;; NOTE We don't remote branches for now
+             #_(update :dispatch-n conj [::sync.handlers/add-branch vims-uid ?branch])))))))
 
 ;;
 ;; * Libs

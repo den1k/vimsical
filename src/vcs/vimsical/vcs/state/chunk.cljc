@@ -57,18 +57,19 @@
 ;;
 
 (s/fdef new-deltas-by-relative-time
-        :args (s/cat :deltas ::deltas)
+        :args (s/cat :deltas ::deltas :offset (s/? number?))
         :ret  (s/tuple ::duration ::deltas-by-relative-time))
 
-(defn- new-deltas-by-relative-time
+(defn new-deltas-by-relative-time
   "Return an avl map where each delta is assoc'd to the sum of the previous
   deltas' pad values + the delta's own pad value."
-  [deltas]
-  (reduce
-   (fn [[t deltas] {:keys [pad] :as delta}]
-     (let [t' (+ ^long t ^long pad)]
-       [t' (assoc deltas t' delta)]))
-   [0 (avl/sorted-map)] deltas))
+  ([deltas] (new-deltas-by-relative-time deltas 0))
+  ([deltas offset]
+   (reduce
+    (fn [[t deltas] {:keys [pad] :as delta}]
+      (let [t' (+ ^long t ^long pad)]
+        [t' (assoc deltas t' delta)]))
+    [offset (avl/sorted-map)] deltas)))
 
 ;;
 ;; * Ctor
@@ -110,23 +111,38 @@
    (util/=by ::branch-uid :branch-uid chunk delta)))
 
 
+(def ^:private assoc-deltas-by-relative-time
+  (fnil assoc (avl/sorted-map)))
+
 (s/fdef add-delta
-        :args (s/cat :chunk ::chunk :delta ::delta/delta)
+        :args (s/and (s/cat :chunk ::chunk :delta ::delta/delta) (fn [{:keys [chunk delta]}] (conj? chunk delta)))
         :ret  ::chunk)
 
 (defn add-delta
   "Update `chunk` by adding `delta` to `::deltas-by-relative-time`, adding the
   delta's `:pad` to the chunks' `::duration`, moving the `::delta-end-uid` and
   setting the `::delta-start-uid` if it was previously nil."
-  [{::keys [duration] :as chunk} {:keys [uid pad] :as delta}]
-  (if-not (conj? chunk delta)
-    (throw (ex-info "Cannot conj delta onto chunk" {:delta delta :chunk chunk}))
-    (let [t (+ duration pad)]
-      (-> chunk
-          (assoc  ::delta-end-uid uid ::duration t)
-          (update ::count inc)
-          (update ::delta-start-uid (fnil identity uid))
-          (update ::deltas-by-relative-time (fnil assoc (avl/sorted-map)) t delta)))))
+  [{::keys [duration count delta-start-uid deltas-by-relative-time] :as chunk} {:keys [uid pad] :as delta}]
+  (let [duration' (+ ^long duration ^long  pad)]
+    (cond-> (assoc chunk
+                   ::delta-end-uid uid
+                   ::count (inc count)
+                   ::duration duration'
+                   ::deltas-by-relative-time (assoc-deltas-by-relative-time deltas-by-relative-time duration' delta))
+      (nil? delta-start-uid) (assoc ::delta-start-uid uid))))
+
+(defn add-deltas
+  [{::keys [duration count delta-start-uid deltas-by-relative-time] :as chunk} deltas]
+  (let [{first-uid :uid}                     (first deltas)
+        {last-uid :uid}                      (peek deltas)
+        [duration' deltas-by-relative-time'] (new-deltas-by-relative-time deltas duration)
+        coll-count                           #?(:cljs cljs.core/count :clj clojure.core/count)]
+    (cond-> (assoc chunk
+                   ::delta-end-uid last-uid
+                   ::count (+ count (coll-count deltas))
+                   ::duration duration'
+                   ::deltas-by-relative-time (merge deltas-by-relative-time deltas-by-relative-time'))
+      (nil? delta-start-uid) (assoc ::delta-start-uid first-uid))))
 
 (defn with-bounds [chunk start? end?]
   (when chunk
