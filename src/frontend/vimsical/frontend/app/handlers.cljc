@@ -130,7 +130,7 @@
          (not (vims.db/loaded? db vims))
          (assoc :async-flow (open-vims-async-flow vims-uid options)))))))
 
-(defmethod router.handlers/route-fx ::router.routes/embed
+(defmethod router.handlers/did-mount-history-route-fx-handler ::router.routes/embed
   [{:keys [db]} {::router.routes/keys [args]}]
   {:dispatch [::open-embed args]})
 
