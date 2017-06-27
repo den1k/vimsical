@@ -133,6 +133,8 @@
         editors        (editors vims visi-files)]
     [splits/n-h-split
      :class "live-preview-and-editors"
+     ;; XXX files are required to prevent a race condition, c.f. live-preview
+     ;; component for a description of the problem
      :panels [[live-preview {:ui-key :vcr :vims vims :files all-files :error-catcher? false}]
               [splits/n-v-split
                :height "100%"

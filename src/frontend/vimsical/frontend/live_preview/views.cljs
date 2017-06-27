@@ -104,14 +104,11 @@
           {:on-load #(re-frame/dispatch [::handlers/move-script-nodes opts])}))])}))
 
 (defn live-preview [opts]
-  ;; NOTE the vims that is being passed down through the props will initially
-  ;; only contain the :db/uid when we're loading the app from the
-  ;; router.
-  ;;
-  ;; However the side-effectful dispatch to track-start through register in
-  ;; component-did-mount expects to have files available so we ensure they've
-  ;; been loaded before rendering
-  ;;
+  ;; XXX There is a race condition if we register a vims that doesn't have its
+  ;; files yet (due to async loading). The exact issue is still TBD but in these
+  ;; cases, once the file tracks update with the file strings we end up with
+  ;; markup for the document that's missing the script nodes in the header and
+  ;; the content in the body.
   (letfn [(opts-ready? [{:keys [from-snapshot? files]}]
             (or from-snapshot? (not-empty files)))]
     [:div.live-preview
