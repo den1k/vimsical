@@ -224,3 +224,11 @@
                       [user
                        [:db/retract e :vimsical.user/invite-token token]]
                       (throw (ex-info "Token expired" {}))))}}]
+
+;;
+;; * Vims licence addendum
+
+[{:db/id          #db/id [:db.part/db]
+  :db/ident       :vimsical.vims/license-addendum
+  :db/valueType   :db.type/string
+  :db/cardinality :db.cardinality/one}]
