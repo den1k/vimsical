@@ -76,7 +76,7 @@
                                         ;:plays-inline true
         :loop      true
         :preload   "auto"
-        :src       "video/watch-and-interact.m4v"}]]
+        :src       "/video/watch-and-interact.m4v"}]]
      [:div.text-and-waitlist.dc.ac
       [:div.text
        [:span.just-code
@@ -108,7 +108,7 @@
        " code."]]
      [:div.img-wrapper.dc.jc
       [:img.img
-       {:src "img/platform-crop.png"}]]]
+       {:src "/img/platform-crop.png"}]]]
     [:div.process-control-stmt]
     [:div.player.dc.ac
      [:div.text
@@ -118,7 +118,7 @@
        "Embed on any website with a simple script tag. Also, we’re adding
        support for Twitter, Medium, Reddit and blogs."]]
      [:img.img
-      {:src "img/ep.png"}]
+      {:src "/img/ep.png"}]
      [:div.text.summary
       [:div.desc
        "Under the hood Vimsical is powered by a full-fledged version control

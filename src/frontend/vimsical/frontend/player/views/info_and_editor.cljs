@@ -24,11 +24,12 @@
             [vimsical.frontend.player.views.elems :as elems]))
 
 (defn active-file-badge [{:keys [file]}]
-  (let [{::file/keys [sub-type]} file
-        title (name (get {:javascript :js} sub-type sub-type))]
-    [:div.active-file-type
-     {:class title}
-     (string/upper-case title)]))
+  (when file
+    (let [{::file/keys [sub-type]} file
+          title (name (get {:javascript :js} sub-type sub-type))]
+      [:div.active-file-type
+       {:class title}
+       (string/upper-case title)])))
 
 (defn info-and-editor-container []
   (let [info-hover? (reagent/atom true)
