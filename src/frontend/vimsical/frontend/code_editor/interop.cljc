@@ -109,7 +109,6 @@
      (let [{:keys [diff idx added deleted]
             :as   e-state} (content-event-state model e)
            event-type      (content-event-type e-state)]
-       (.log js/console e)
        (case event-type
          :str/ins  {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
          :str/rem  {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}

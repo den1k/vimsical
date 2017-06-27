@@ -135,7 +135,7 @@
  (fn [{:keys [db]} [_ vims-uid branch]]
    {:remote
     {:id               :backend
-     :event            [::commands/add-branch branch]
+     :event            [::commands/add-branch vims-uid branch]
      :dispatch-success (->dispatch ::add-branch-success vims-uid)
      :dispatch-error   (->dispatch ::add-branch-error vims-uid)}}))
 
