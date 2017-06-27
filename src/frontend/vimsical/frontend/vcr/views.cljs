@@ -133,7 +133,7 @@
         editors        (editors vims visi-files)]
     [splits/n-h-split
      :class "live-preview-and-editors"
-     :panels [[live-preview {:ui-key :vcr :vims vims :error-catcher? false}]
+     :panels [[live-preview {:ui-key :vcr :vims vims :files all-files :error-catcher? false}]
               [splits/n-v-split
                :height "100%"
                :splitter-size "31px"

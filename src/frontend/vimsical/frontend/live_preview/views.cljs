@@ -104,5 +104,16 @@
           {:on-load #(re-frame/dispatch [::handlers/move-script-nodes opts])}))])}))
 
 (defn live-preview [opts]
-  [:div.live-preview
-   [iframe-preview opts]])
+  ;; NOTE the vims that is being passed down through the props will initially
+  ;; only contain the :db/uid when we're loading the app from the
+  ;; router.
+  ;;
+  ;; However the side-effectful dispatch to track-start through register in
+  ;; component-did-mount expects to have files available so we ensure they've
+  ;; been loaded before rendering
+  ;;
+  (letfn [(opts-ready? [{:keys [from-snapshot? files]}]
+            (or from-snapshot? (not-empty files)))]
+    [:div.live-preview
+     (when (opts-ready? opts)
+       [iframe-preview opts])]))
