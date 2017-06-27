@@ -192,7 +192,8 @@
          ;; NOTE branch is already in ::vcs/branches, don't need to mg/add it
          (some? ?branch)
          (-> (update :db util.mg/add-join :app/vims ::vims/branches ?branch)
-             (update :dispatch-n conj [::sync.handlers/add-branch vims-uid ?branch])))))))
+             ;; NOTE We don't remote branches for now
+             #_(update :dispatch-n conj [::sync.handlers/add-branch vims-uid ?branch])))))))
 
 ;;
 ;; * Libs
