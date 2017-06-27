@@ -45,6 +45,9 @@
      (reagent.dom.server/render-to-static-markup
       [lib-node lib])))
 
+(def default-styles
+  "<style>body,html{margin:0;padding:0;}</style>")
+
 (defn- preview-markup
   [vims {::branch/keys [files libs]}]
   #?(:cljs
@@ -52,7 +55,7 @@
       (let [by-subtype     (group-by ::file/sub-type files)
             libs-string    (transduce (map lib-node-markup) str libs)
             license-string (<sub [::license.subs/license-string-html-comment vims])
-            license+libs   (str license-string libs-string)
+            license+libs   (str license-string default-styles libs-string)
             head-string    (transduce (map #(<sub [::preprocessed-file-markup vims %]))
                                       str
                                       license+libs
@@ -81,7 +84,7 @@
               css
               javascript]} (group-by ::snapshot/sub-type snapshots)
             libs-string  (transduce (map lib-node-markup) str libs)
-            license+libs (str license-string libs-string)
+            license+libs (str license-string default-styles libs-string)
             head-string  (transduce (map snapshot-node-markup) str license+libs css)
             body-string  (transduce (map snapshot-node-markup) str (concat html javascript))
             body-id      (-> html first ::snapshot/file-uid)]
