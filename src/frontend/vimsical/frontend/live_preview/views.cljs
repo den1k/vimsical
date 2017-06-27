@@ -104,5 +104,13 @@
           {:on-load #(re-frame/dispatch [::handlers/move-script-nodes opts])}))])}))
 
 (defn live-preview [opts]
-  [:div.live-preview
-   [iframe-preview opts]])
+  ;; XXX There is a race condition if we register a vims that doesn't have its
+  ;; files yet (due to async loading). The exact issue is still TBD but in these
+  ;; cases, once the file tracks update with the file strings we end up with
+  ;; markup for the document that's missing the script nodes in the header and
+  ;; the content in the body.
+  (letfn [(opts-ready? [{:keys [from-snapshot? files]}]
+            (or from-snapshot? (not-empty files)))]
+    [:div.live-preview
+     (when (opts-ready? opts)
+       [iframe-preview opts])]))

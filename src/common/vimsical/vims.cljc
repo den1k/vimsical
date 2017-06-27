@@ -23,7 +23,8 @@
 (s/def ::branches (s/every ::branch))
 (s/def ::snapshots (s/every ::vcs.snapshot/frontend-snapshot))
 (s/def ::vims (s/keys :req [:db/uid ::owner ::branches] :opt [::title ::cast ::snapshots]))
-(s/def ::create-at inst?)
+(s/def ::created-at nat-int?)
+
 ;;
 ;; * Helpers
 ;;
