@@ -135,11 +135,11 @@
   :db/cardinality :db.cardinality/one}
  {:db/id          #db/id [:db.part/db]
   :db/ident       :vimsical.vcs.branch/start-delta-uid
-  :db/valueType   :db.type/long
+  :db/valueType   :db.type/uuid
   :db/cardinality :db.cardinality/one}
  {:db/id          #db/id [:db.part/db]
   :db/ident       :vimsical.vcs.branch/branch-off-delta-uid
-  :db/valueType   :db.type/long
+  :db/valueType   :db.type/uuid
   :db/cardinality :db.cardinality/one}
  {:db/id          #db/id [:db.part/db]
   :db/ident       :vimsical.vcs.branch/created-at
