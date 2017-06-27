@@ -1,4 +1,15 @@
 ;;
+;; WARN
+;;
+;; Each form in this file will internally be assigned a magic number by datomic
+;; during the schema transaction, that number is used to auto-migrate the DB and
+;; is **ORDER-DEPENDENT**.
+;;
+;; We should only **APPEND** to this file, and never insert an attribute inside
+;; an existing transaction, or insert new transactions in between existing ones.
+
+
+;;
 ;; * UID
 ;;
 
