@@ -51,10 +51,7 @@
         :ret  (s/every ::cassandra/command))
 
 (defn-  insert-deltas-commands
-  [vims-uid
-   user-uid
-   {::validation/keys [order-by-branch-uid]}
-   deltas]
+  [vims-uid user-uid {::validation/keys [order-by-branch-uid]} deltas]
   ;; Group the deltas by branch-uid and flatten each branch into a vector of
   ;; commands. The order of the resulting commands should match the on-disk
   ;; clustering since we iterate over the deltas in the order of the
@@ -62,7 +59,7 @@
   (persistent!
    (reduce-kv
     (fn [commands! branch-uid deltas]
-      (let [order  (get order-by-branch-uid branch-uid -1)
+      (let [order  (long (get order-by-branch-uid branch-uid -1))
             norder (inc order)
             orders (range norder (+ norder (count deltas)))]
         (reduce-kv
