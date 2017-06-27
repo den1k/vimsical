@@ -47,4 +47,4 @@
                                             {::vims/owner [::user/first-name ::user/last-name]}]])
         {::user/keys [first-name last-name]} owner]
     (util.dom/set-title
-     (util/space-join (or title "A vims") "by" first-name last-name))))
+     (util/space-join (or title "A Vims") "by" first-name last-name))))

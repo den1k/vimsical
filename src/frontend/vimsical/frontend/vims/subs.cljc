@@ -1,5 +1,6 @@
 (ns vimsical.frontend.vims.subs
   (:require [re-frame.core :as re-frame]
+            [vimsical.vims :as vims]
             [vimsical.queries.vims :as queries.vims]))
 
 (re-frame/reg-sub

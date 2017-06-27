@@ -75,7 +75,11 @@
 (defn preview-code-exec-script-tag
   "Relative paths for local resources do not work in iFrames for security reasons"
   []
-  "<script src=\"" (.. js/window -location -origin) "/js/preview-code-exec.js\"></script>")
+  #?(:cljs
+     (str
+      "<script src=\""
+      (.. js/window -location -origin)
+      "/js/preview-code-exec.js\"></script>")))
 
 (defn snapshots-markup
   [snapshots libs license-string]

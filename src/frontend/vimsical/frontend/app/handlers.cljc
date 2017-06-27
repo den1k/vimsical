@@ -59,8 +59,8 @@
    (let [vims-uid (uuid-fn)]
      {:dispatch-n
       [[::vims.handlers/new owner nil {:uid vims-uid}]
-       [::vcs.sync.handlers/start vims-uid]
        [::vims.handlers/load-vims-async-did-complete vims-uid options]
+       [::vcs.sync.handlers/start vims-uid]
        [::set-vims vims-uid]]})))
 
 ;;

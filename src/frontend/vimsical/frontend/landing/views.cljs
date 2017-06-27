@@ -10,6 +10,7 @@
             [vimsical.frontend.util.re-frame :refer [<sub]]
             [vimsical.frontend.ui.subs :as ui.subs]
             [vimsical.frontend.vims.subs :as vims.subs]
+            [vimsical.frontend.live-preview.handlers :as live-preview.handlers]
             [vimsical.frontend.live-preview.views :as live-preview.views]
             [vimsical.frontend.player.views.player :as player]
             [vimsical.frontend.vims.handlers :as vims.handlers]
@@ -47,7 +48,7 @@
                                  ::user/twitter    "https://twitter.com/hakimel"}
                   :original-src "https://codepen.io/hakimel/pen/KanIi"}
    :tree         {:vims-uid     nil
-                  :title        "Fractal Tree ( L-System)"
+                  :title        "Fractal Tree (L-System)"
                   :author       {::user/first-name "Patrick" ::user/last-name "Stillhart"
                                  ::user/website    "https://stillh.art/"}
                   :original-src "https://codepen.io/arcs/pen/mEdqQX/"}
@@ -122,8 +123,28 @@
 ;; Vims Preview
 ;;
 
-(defn- vims-preview [{:keys [vims-title-kw]}]
-  (when-let [vims (<sub [::vims.subs/vcs-vims (-> vims-kw->info vims-title-kw :vims-uid)])]
+(defn- vims-preview [{:keys [class vims-title-kw] :as opts}]
+  (let [{:keys [img-src vims-uid] :as vims-info} (get vims-kw->info vims-title-kw)
+        lp-opts {:ui-key vims-title-kw :static? true :vims {:db/uid vims-uid}}]
+    [ui.views/visibility
+     {:range-pred
+      (fn [ratio]
+        (or #_(<= 0 ratio 0.2)
+         (<= 0.5 ratio 1)))
+      :on-visibility-change
+      (fn [visible?]
+        (re-frame/dispatch
+         [(if visible? ::live-preview.handlers/defreeze
+                       ::live-preview.handlers/freeze) lp-opts]))}
+     [:div.vims-preview
+      {:class class}
+      (if vims-uid
+        [live-preview.views/live-preview
+         lp-opts]
+        [:img.live-preview              ;; temp
+         {:src img-src}])
+      ]])
+  #_(when-let [vims (<sub [::vims.subs/vcs-vims (-> vims-kw->info vims-title-kw :vims-uid)])]
     [:div.vims-preview
      [live-preview.views/live-preview
       {:ui-key  vims-title-kw
@@ -131,20 +152,28 @@
        :vims    vims}]]))
 
 (defn vims-preview-section [{:keys [class vims-title-kw] :as opts} child]
-  (let [{:keys [img-src] :as vims-info} (get vims-kw->info vims-title-kw)]
-    [ui.views/visibility {:range-pred (fn [ratio]
-                                        (or #_(<= 0 ratio 0.2)
-                                         (<= 0.5 ratio 1)))}
+  (let [{:keys [img-src vims-uid] :as vims-info} (get vims-kw->info vims-title-kw)
+        lp-opts {:ui-key vims-title-kw :static? true :vims {:db/uid vims-uid}}]
+    [ui.views/visibility
+     {:range-pred
+      (fn [ratio]
+        (or #_(<= 0 ratio 0.2)
+         (<= 0.5 ratio 1)))
+      :on-visibility-change
+      (fn [visible?]
+        (re-frame/dispatch
+         [(if visible? ::live-preview.handlers/defreeze
+                       ::live-preview.handlers/freeze) lp-opts]))}
      [:div.section.vims-preview-section
       {:class class}
       child
       [:div.vims-preview
-       [:img.live-preview               ;; temp
-        {:src img-src}]
-       #_[live-preview.views/live-preview
-          {:ui-key  vims-title-kw
-           :static? true
-           :vims    vims}]]]]))
+       (if vims-uid
+         [live-preview.views/live-preview
+          lp-opts]
+         [:img.live-preview             ;; temp
+          {:src img-src}])
+       ]]]))
 
 ;;
 ;; Video Player
@@ -215,7 +244,8 @@
     (let [{:keys [img-src] :as vims-info} (:strandbeast vims-kw->info)]
       [:div.preview-wrapper
        [credit-wrapper vims-info
-        [:div.vims-preview
+        [vims-preview {:vims-title-kw :strandbeast}]
+        #_[:div.vims-preview
          [:img.live-preview             ;; temp
           {:src img-src}]
          #_[live-preview.views/live-preview
@@ -226,7 +256,7 @@
 
 (defn create-section []
   (let [ratio         (interop/ratom 0)
-        scale         (util/linear-scale [0.4 0.6] [85 80])
+
         video-wrapper (fn []
                         [:div.video-wrapper
                          ;{:style {:width (str (scale @ratio) "%")}}
@@ -333,15 +363,15 @@
    [player-section]                     ;; emoji predictor
 
    ;; Todo Education section?
-   #_[vims-preview-section {:vims-title-kw :joy-division :class "teach-by-doing"}
+   #_[vims-preview-section {:vims-title-kw :trail :class "teach-by-doing"}
     [:div.sub-stmt
      "Teach, by doing."]]
 
 
 
    #_[vims-preview-section {:vims-title-kw :fireworks :class "create-watch-explore"}
-    [:div.sub-stmt
-     "Create. Watch. Explore."]]
+      [:div.sub-stmt
+       "Create. Watch. Explore."]]
 
    [:div.bottom-waitlist.dc.ac.section
     [:div.sub-section.aic
