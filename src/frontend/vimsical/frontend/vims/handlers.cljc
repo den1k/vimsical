@@ -10,6 +10,8 @@
    [vimsical.frontend.vims.db :as db]
    [vimsical.remotes.backend.vims.commands :as vims.commands]
    [vimsical.remotes.backend.vims.queries :as vims.queries]
+   [vimsical.frontend.router.handlers :as router.handlers]
+   [vimsical.frontend.router.routes :as router.routes]
    [vimsical.vcs.file :as vcs.file]
    [vimsical.vcs.snapshot :as vcs.snapshot]
    [vimsical.vims :as vims]
@@ -148,14 +150,21 @@
    {:id               :backend
     :status-key       status-key
     :event            [::vims.queries/vims vims-uid]
-    :dispatch-success (fn [vims] [::vims-success vims-uid vims])}})
+    :dispatch-success (fn [vims] [::vims-success vims-uid vims])
+    :dispatch-error   (fn [e] [::vims-error vims-uid e])}})
 
 (defn vims-success-event-fx
   [{:keys [db]} [_ _ vims]]
   {:db (util.mg/add db vims)})
 
+(defn vims-error-event-fx
+  [{:keys [db]} [_ _ {:keys [status]}]]
+  (when (== 404 status)
+    {:dispatch [::router.handlers/route ::router.routes/landing]}))
+
 (re-frame/reg-event-fx ::vims         vims-handler)
 (re-frame/reg-event-fx ::vims-success vims-success-event-fx)
+(re-frame/reg-event-fx ::vims-error   vims-error-event-fx)
 
 ;;
 ;; ** Deltas
