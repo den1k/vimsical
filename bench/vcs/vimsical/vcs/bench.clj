@@ -1,6 +1,5 @@
 (ns vimsical.vcs.bench
   (:require
-   [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
    [criterium.core :refer [quick-bench]]
    [vimsical.common.test :refer [uuid uuid-fixture uuid-gen]]
    [vimsical.vcs.core :as sut]
@@ -44,7 +43,7 @@
 ;; * Helpers
 ;;
 
-(defnp edit-events->deltas
+(defn edit-events->deltas
   [edit-events]
   (let [{uuid-fn :f} (uuid-gen)
         branches     [master]
@@ -77,7 +76,7 @@
   Suspendisse consequat ac mauris nec vestibulum. Nullam at odio bibendum metus posuere malesuada at et turpis. Nunc cursus semper molestie. Quisque mollis libero in eros eleifend eleifend. Mauris sollicitudin lorem vitae eros vehicula, sit amet facilisis dui mattis. Suspendisse sed est enim. Duis lorem leo, elementum at diam a, blandit dignissim sem. Donec id sodales tortor, sit amet faucibus mauris. Nunc eget consequat metus. Vestibulum molestie mauris sed libero euismod, vitae porta felis sagittis. ")
 
 
-(defnp spliced-edit-events
+(defn spliced-edit-events
   [txt]
   [{:vimsical.vcs.edit-event/op :str/ins, :vimsical.vcs.edit-event/diff txt :vimsical.vcs.edit-event/idx 0}
    {:vimsical.vcs.edit-event/op :str/rplc, :vimsical.vcs.edit-event/diff txt :vimsical.vcs.edit-event/idx 0 , :vimsical.vcs.edit-event/amt (count txt)}
@@ -104,22 +103,3 @@
       (sep "1.2 Add deltas")
       (quick-bench (-> (sut/empty-vcs branches) (sut/add-deltas uuid-fn deltas))))))
 
-
-;;
-;; * Profiling
-;;
-
-
-;; TODO
-;; - optimized add-chunks
-;; - splittable/insert (1 element)
-;; - splittable/splice-coll (normalize with offset)
-;; - splittable/append-coll (normalize with offset)
-
-(tufte/add-basic-println-handler! {})
-
-(let [txt small-ipsum
-      deltas (profile {:id :events} (edit-events->deltas (spliced-edit-events txt)))
-      _      (profile {:id :deltas} (-> (sut/empty-vcs branches) (sut/add-deltas uuid-fn deltas)))]
-  nil)
-;;

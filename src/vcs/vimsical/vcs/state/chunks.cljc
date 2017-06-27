@@ -1,6 +1,5 @@
 (ns vimsical.vcs.state.chunks
   (:require
-   [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
    [clojure.spec.alpha :as s]
    [vimsical.common.util.core :as util]
    [vimsical.vcs.branch :as branch]
@@ -111,7 +110,7 @@
                      :delta ::delta/delta)
         :ret ::chunks-by-branch-uid)
 
-(defnp add-delta
+(defn add-delta
   [chunks-by-branch-uid branches uuid-fn {:keys [branch-uid] :as delta}]
   (let [depth  (delta-depth branches delta)
         chunks (get chunks-by-branch-uid branch-uid)]
@@ -188,7 +187,7 @@
      chunks-by-branch-uid
      deltas-by-branch-uid)))
 
-#_(defnp add-deltas
+#_(defn add-deltas
     [chunks-by-branch-uid branches uuid-fn [delta :as deltas]]
     (-> chunks-by-branch-uid
         (update branch-uid update-chunks-delta uuid-fn delta)

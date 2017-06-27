@@ -1,6 +1,5 @@
 (ns vimsical.vcs.state.chunk
   (:require
-   [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
    [clojure.data.avl :as avl]
    [clojure.spec.alpha :as s]
    [vimsical.common.util.core :as util]
@@ -61,7 +60,7 @@
         :args (s/cat :deltas ::deltas :offset (s/? number?))
         :ret  (s/tuple ::duration ::deltas-by-relative-time))
 
-(defnp new-deltas-by-relative-time
+(defn new-deltas-by-relative-time
   "Return an avl map where each delta is assoc'd to the sum of the previous
   deltas' pad values + the delta's own pad value."
   ([deltas] (new-deltas-by-relative-time deltas 0))
@@ -119,7 +118,7 @@
         :args (s/and (s/cat :chunk ::chunk :delta ::delta/delta) (fn [{:keys [chunk delta]}] (conj? chunk delta)))
         :ret  ::chunk)
 
-(defnp add-delta
+(defn add-delta
   "Update `chunk` by adding `delta` to `::deltas-by-relative-time`, adding the
   delta's `:pad` to the chunks' `::duration`, moving the `::delta-end-uid` and
   setting the `::delta-start-uid` if it was previously nil."
@@ -132,7 +131,7 @@
                    ::deltas-by-relative-time (assoc-deltas-by-relative-time deltas-by-relative-time duration' delta))
       (nil? delta-start-uid) (assoc ::delta-start-uid uid))))
 
-(defnp add-deltas
+(defn add-deltas
   [{::keys [duration count delta-start-uid deltas-by-relative-time] :as chunk} deltas]
   (let [{first-uid :uid}                     (first deltas)
         {last-uid :uid}                      (peek deltas)
@@ -160,7 +159,7 @@
         :ret  (s/tuple (s/nilable ::chunk)
                        (s/nilable ::chunk)))
 
-(defnp split-at-delta-index
+(defn split-at-delta-index
   [{::keys [count depth delta-branch-off-uid deltas-by-relative-time branch-start? branch-end?]} uuid-fn index]
   {:pre [(< index count)]}
   ;; XXX We should use the left and right deltas as is and keep a time offset on
@@ -185,13 +184,13 @@
 
 (s/fdef first-entry :args (s/cat :chunk ::chunk) :ret ::entry)
 
-(defnp first-entry
+(defn first-entry
   [{::keys [deltas-by-relative-time]}]
   (first deltas-by-relative-time))
 
 (s/fdef last-entry :args (s/cat :chunk ::chunk) :ret ::entry)
 
-(defnp last-entry
+(defn last-entry
   [{::keys [deltas-by-relative-time]}]
   (avl/nearest
    deltas-by-relative-time
@@ -201,7 +200,7 @@
         :args (s/cat :chunk ::chunk :test ifn? :t ::relative-time)
         :ret  (s/nilable ::entry))
 
-(defnp entry-at-relative-time
+(defn entry-at-relative-time
   [{::keys [deltas-by-relative-time]} test t]
   (some-> deltas-by-relative-time (avl/nearest test t)))
 
@@ -209,6 +208,6 @@
         :args (s/cat :chunk ::chunk :t ::relative-time)
         :ret ::delta/delta)
 
-(defnp delta-at-relative-time
+(defn delta-at-relative-time
   [timeline t]
   (second (entry-at-relative-time timeline <= t)))

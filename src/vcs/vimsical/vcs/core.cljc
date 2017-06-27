@@ -23,7 +23,6 @@
   events?
   "
   (:require
-   [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
    [clojure.spec.alpha :as s]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]
@@ -73,7 +72,7 @@
                      :delta ::delta/delta)
         :ret  ::vcs)
 
-(defnp add-delta
+(defn add-delta
   [{:as vcs ::keys [branches state-by-delta-uid timeline]} uuid-fn {:keys [prev-uid branch-uid uid] :as delta}]
   (let [state                    (get state-by-delta-uid prev-uid)
         all-deltas               (get state ::state.deltas/deltas state.deltas/empty-deltas)
@@ -96,7 +95,7 @@
 ;; NOTE the only optimization here -- compared to  (reduce add-delta deltas) is
 ;; to prevent building the timeline for every single delta
 
-(defnp add-deltas
+(defn add-deltas
   [{::keys [timeline branches] :as vcs} uuid-fn deltas]
   (-> (reduce
        (fn [{:as vcs ::keys [branches state-by-delta-uid timeline]} {:keys [prev-uid branch-uid uid] :as delta}]
@@ -125,7 +124,7 @@
                      :edit-event ::edit-event/edit-event)
         :ret (s/tuple ::vcs (s/every ::delta/delta) ::delta/uid))
 
-(defnp add-edit-event
+(defn add-edit-event
   [{:as vcs ::keys [branches state-by-delta-uid timeline]}
    {:as effects ::editor/keys [uuid-fn]}
    file-uid
@@ -156,7 +155,7 @@
                      :edit-event ::edit-event/edit-event)
         :ret (s/tuple ::vcs (s/every ::delta/delta) ::delta/uid))
 
-(defnp add-edit-event-branching
+(defn add-edit-event-branching
   [{:as vcs ::keys [branches state-by-delta-uid timeline]}
    {:as effects ::editor/keys [uuid-fn timestamp-fn]}
    file-uid
@@ -185,7 +184,7 @@
 
 ;;
 
-(defnp add-edit-events
+(defn add-edit-events
   [{:as vcs ::keys [branches state-by-delta-uid timeline]}
    {:as effects ::editor/keys [uuid-fn]}
    file-uid branch-uid delta-uid edit-events]

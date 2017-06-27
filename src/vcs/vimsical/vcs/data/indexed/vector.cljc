@@ -25,7 +25,6 @@
   (:refer-clojure :exclude [vec vector vector?])
   (:require
    [vimsical.common.util.core :as util]
-   [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
    [clojure.spec.alpha :as s]
    [vimsical.vcs.data.indexed.vector-impl :as impl]
    [vimsical.vcs.data.splittable :as splittable]
@@ -127,8 +126,8 @@
      (nth [_ idx not-found] (nth v idx not-found))
 
      IIndexedVector
-     (index-of [_ val] (p :index-of (.indexOf index val)))
-     (index-of [_ val start] (p :index-of-start (-index-of index val start)))
+     (index-of [_ val] (.indexOf index val))
+     (index-of [_ val start] (-index-of index val start))
 
      IIndexedInternal
      (-consistent? [this]
@@ -149,16 +148,14 @@
 
      splittable/Splittable
      (split [_ idx]
-       (p ::split-vector
-          (let [[index-a index-b] (splittable/split index idx)
-                [v-a v-b]         (splittable/split v idx)]
-            [(IndexedVector. f index-a v-a)
-             (IndexedVector. f index-b v-b)])))
+       (let [[index-a index-b] (splittable/split index idx)
+             [v-a v-b]         (splittable/split v idx)]
+         [(IndexedVector. f index-a v-a)
+          (IndexedVector. f index-b v-b)]))
      (omit [this idx cnt]
-       (p ::omit-vector
-          (let [[l tmp] (splittable/split this idx)
-                [_ r]   (splittable/split tmp cnt)]
-            (splittable/append l r))))
+       (let [[l tmp] (splittable/split this idx)
+             [_ r]   (splittable/split tmp cnt)]
+         (splittable/append l r)))
 
      splittable/SplittablePerf
      (split-vec [_ idx]
@@ -167,28 +164,25 @@
 
      splittable/Mergeable
      (insert [this idx element]
-       (p ::insert-vector
-          (if (== (count this) (long idx))
-            (conj this element)
-            (let [[left right] (splittable/split this idx)]
-              (splittable/append (conj left element) right)))))
+       (if (== (count this) (long idx))
+         (conj this element)
+         (let [[left right] (splittable/split this idx)]
+           (splittable/append (conj left element) right))))
 
      (splice [this idx other]
-       (p ::splice-vector
-          (if (== (count this) (long idx))
-            (splittable/append this other)
-            (let [index' (splittable/splice index idx (.index ^IndexedVector other))
-                  v'     (splittable/splice v idx (.v ^IndexedVector other))]
-              (IndexedVector. f index' v')))))
+       (if (== (count this) (long idx))
+         (splittable/append this other)
+         (let [index' (splittable/splice index idx (.index ^IndexedVector other))
+               v'     (splittable/splice v idx (.v ^IndexedVector other))]
+           (IndexedVector. f index' v'))))
 
      (append [this other]
        (when other (assert (vector? other)))
-       (p ::append-vector
-          (if (nil? other)
-            this
-            (let [index' (splittable/append index (.index ^IndexedVector other))
-                  v'     (splittable/append v (.v ^IndexedVector other))]
-              (IndexedVector. f index' v')))))))
+       (if (nil? other)
+         this
+         (let [index' (splittable/append index (.index ^IndexedVector other))
+               v'     (splittable/append v (.v ^IndexedVector other))]
+           (IndexedVector. f index' v'))))))
 
 #?(:cljs
    (deftype IndexedVector [f ^Index index v]
@@ -259,8 +253,8 @@
      (-nth [_ idx not-found] (nth v idx not-found))
 
      IIndexedVector
-     (index-of [_ val] (p :index-of (.indexOf index val)))
-     (index-of [_ val start] (p :index-of-start (-index-of index val start)))
+     (index-of [_ val] (.indexOf index val))
+     (index-of [_ val start] (-index-of index val start))
 
      IIndexedInternal
      (-consistent? [this]
@@ -293,11 +287,10 @@
 
      splittable/Mergeable
      (insert [this idx element]
-       (p ::insert-vector
-          (if (== (count this) (long idx))
-            (conj this element)
-            (let [[left right] (splittable/split this idx)]
-              (splittable/append (conj left element) right)))))
+       (if (== (count this) (long idx))
+         (conj this element)
+         (let [[left right] (splittable/split this idx)]
+           (splittable/append (conj left element) right))))
 
      (splice [this idx other]
        (if (== (count this) (long idx))
