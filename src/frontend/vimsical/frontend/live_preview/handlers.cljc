@@ -175,7 +175,7 @@
     (for [{:keys [db/uid] :as file} files]
       {:action          :register
        :id              (ui-db/path opts [::file uid])
-       :subscription    [::subs/file-string+file-lint-or-preprocessing-errors vims file]
+       :subscription    [::subs/file-string-or-no-history-string+file-lint-or-preprocessing-errors vims file]
        :val->event      (fn [[file-string file-lint-or-preprocessing-errors]]
                           [::update-live-preview opts file file-string file-lint-or-preprocessing-errors])})}))
 

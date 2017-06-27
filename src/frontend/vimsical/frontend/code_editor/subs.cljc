@@ -94,3 +94,9 @@
    [(re-frame/subscribe [::playhead-cursor vims file])
     (re-frame/subscribe [::playhead-string vims file])])
  position-handler)
+
+(re-frame/reg-sub
+ ::no-history-string
+ :<- [::ui-db/ui-db]
+ (fn [ui-db [_ vims file]]
+   (code-editor.ui-db/no-history-string ui-db vims file)))

@@ -49,11 +49,11 @@
               file-uid->code-editor (util/map-vals
                                      (fn [fl]
                                        ^{:key (:db/uid fl)}
-                                       [code-editor {:vims       vims
-                                                     :file       fl
-                                                     :ui-key     ui-key
+                                       [code-editor {:vims     vims
+                                                     :file     fl
+                                                     :ui-key   ui-key
                                                      :read-only? read-only?
-                                                     :compact?   true}])
+                                                     :compact? true:no-history? true}])
                                      uid->file)
               on-mobile?            (<sub [::ui.subs/on-mobile?])
               show-info?            (and show-info?

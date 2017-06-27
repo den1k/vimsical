@@ -196,26 +196,29 @@
 (re-frame/reg-event-fx
  ::content-change
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ {:keys [vims file] :as opts} e]]
+ (fn [{:keys [ui-db]} [_ {:keys [vims file no-history?] :as opts} e]]
    #?(:cljs
-      (let [editor     (ui-db/get-editor ui-db opts)
-            model      (.-model editor)
-            edit-event (interop/parse-content-event model e)]
-        {:ui-db    (ui-db/set-last-edit-event ui-db vims file edit-event)
-         :dispatch [::vcs.handlers/add-edit-event vims file edit-event]}))))
+      (let [editor (ui-db/get-editor ui-db opts)]
+        (if no-history?
+          {:ui-db (ui-db/set-no-history-string ui-db vims file (interop/get-value editor))}
+          (let [model      (.-model editor)
+                edit-event (interop/parse-content-event model e)]
+            {:ui-db    (ui-db/set-last-edit-event ui-db vims file edit-event)
+             :dispatch [::vcs.handlers/add-edit-event vims file edit-event]}))))))
 
 (re-frame/reg-event-fx
  ::cursor-change
  [(re-frame/inject-cofx :ui-db)]
- (fn [{:keys [ui-db]} [_ {:keys [vims file] :as opts} e]]
+ (fn [{:keys [ui-db]} [_ {:keys [vims file no-history?] :as opts} e]]
    #?(:cljs
-      (let [editor     (ui-db/get-editor ui-db opts)
-            model      (.-model editor)
-            edit-event (interop/parse-selection-event model e)
-            prev-event (ui-db/get-last-edit-event ui-db vims file)]
-        (when (moved-since? prev-event edit-event)
-          {:ui-db    (ui-db/set-last-edit-event ui-db vims file edit-event)
-           :dispatch [::vcs.handlers/add-edit-event vims file edit-event]})))))
+      (when-not no-history?
+        (let [editor     (ui-db/get-editor ui-db opts)
+              model      (.-model editor)
+              edit-event (interop/parse-selection-event model e)
+              prev-event (ui-db/get-last-edit-event ui-db vims file)]
+          (when (moved-since? prev-event edit-event)
+            {:ui-db    (ui-db/set-last-edit-event ui-db vims file edit-event)
+             :dispatch [::vcs.handlers/add-edit-event vims file edit-event]}))))))
 
 (re-frame/reg-event-fx
  ::focus

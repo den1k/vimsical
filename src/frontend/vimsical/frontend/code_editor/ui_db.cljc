@@ -55,3 +55,16 @@
 
 (defn get-last-edit-event [ui-db {vims-uid :db/uid} {file-uid :db/uid}] (get-in ui-db [::last-edit-event vims-uid file-uid]))
 (defn set-last-edit-event [ui-db {vims-uid :db/uid} {file-uid :db/uid} edit-event] (assoc-in ui-db [::last-edit-event vims-uid file-uid] edit-event))
+
+;;
+;; * No History String - used when edit events are not added to VCS
+;;
+
+(defn no-history-string [ui-db {vims-uid :db/uid} {file-uid :db/uid}]
+  (get-in ui-db [vims-uid ::no-history-strings file-uid]))
+
+(defn set-no-history-string [ui-db {vims-uid :db/uid} {file-uid :db/uid} string]
+  (assoc-in ui-db [vims-uid ::no-history-strings file-uid] string))
+
+(defn remove-no-history-strings [ui-db {vims-uid :db/uid}]
+  (assoc-in ui-db [vims-uid ::no-history-strings] nil))

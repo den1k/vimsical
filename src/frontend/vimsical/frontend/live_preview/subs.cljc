@@ -3,6 +3,7 @@
    [re-frame.core :as re-frame]
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.frontend.license.subs :as license.subs]
+   [vimsical.frontend.code-editor.subs :as code-editor.subs]
    [vimsical.vcs.file :as file]
    [vimsical.vcs.lib :as lib]
    [vimsical.vcs.branch :as branch]
@@ -128,6 +129,15 @@
     (re-frame/subscribe [::vcs.subs/libs vims])])
  (fn [file-string+file-lint-or-preprocessing-errors+libs _]
    (vec file-string+file-lint-or-preprocessing-errors+libs)))
+
+(re-frame/reg-sub
+ ::file-string-or-no-history-string+file-lint-or-preprocessing-errors
+ (fn [[_ vims file]]
+   [(re-frame/subscribe [::file-string+file-lint-or-preprocessing-errors vims file])
+    (re-frame/subscribe [::code-editor.subs/no-history-string vims file])])
+ (fn [[file-string+file-lint-or-preprocessing-errors+libs no-history-string] _]
+   (cond-> file-string+file-lint-or-preprocessing-errors+libs
+     no-history-string (assoc 0 no-history-string))))
 
 (re-frame/reg-sub
  ::error-catcher-branch-libs
