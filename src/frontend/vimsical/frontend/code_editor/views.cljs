@@ -69,19 +69,31 @@
          :snippetSuggestions         :none
          :scrollbar                  {:verticalScrollbarSize 7}}]
 
-    {:editor
-     (util/deep-merge
-      defaults
-      scrollbar-defaults
-      (when compact? compact-defaults)
-      custom-opts)
+    {:editor-opts
+                 (util/deep-merge
+                  defaults
+                  scrollbar-defaults
+                  (when compact? compact-defaults)
+                  custom-opts)
      ;; https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.itextmodelupdateoptions.html
-     :model {:tabSize 2}}))
+     :model-opts {:tabSize 2}}))
 
-(defn new-editor [el {:keys [editor model]}]
-  {:pre [editor model]}
-  (doto (js/monaco.editor.create el (clj->js editor))
-    (.. getModel (updateOptions (clj->js model)))))
+(defn set-keyboard-shortcuts [editor]
+  ;; VCS can't currently handle multiline commenting. So we're overriding it.
+  (.addAction
+   editor
+   (clj->js
+    {:id          "disable-commenting"
+     :label       "no-comment"
+     :keybindings (js* "[monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_SLASH]")
+     :run         #(constantly nil)})))
+
+(defn new-editor [el {:keys [editor-opts model-opts]}]
+  {:pre [editor-opts model-opts]}
+  (doto (js/monaco.editor.create el (clj->js editor-opts))
+    (set-keyboard-shortcuts)
+    (.. getModel (updateOptions (clj->js model-opts)))))
+
 
 ;;
 ;; * Component
