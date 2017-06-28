@@ -23,15 +23,16 @@
               modal      [::subs/modal]
               height     [::ui.subs/height]
               on-mobile? [::ui.subs/on-mobile?]]
-    (router.views/title-for route)
-    [:div.app
-     {:class    (route->class route)
-      :on-click (e> (re-frame/dispatch [::handlers/close-modal]))
-      ;; height is set for landscape mode on mobile
-      :style    {:height height}}
-     (when (or (routes/landing? route) (not on-mobile?)) [nav])
-     [views.modal/modal]
-     [:div.main {:class (when modal "modal-overlay")}
-      [router.views/view-for route]
-      [quick-search]]
-     [window-listeners]]))
+    (when route
+      (router.views/title-for route)
+      [:div.app
+       {:class    (route->class route)
+        :on-click (e> (re-frame/dispatch [::handlers/close-modal]))
+        ;; height is set for landscape mode on mobile
+        :style    {:height height}}
+       (when (or (routes/landing? route) (not on-mobile?)) [nav])
+       [views.modal/modal]
+       [:div.main {:class (when modal "modal-overlay")}
+        [router.views/view-for route]
+        [quick-search]]
+       [window-listeners]])))

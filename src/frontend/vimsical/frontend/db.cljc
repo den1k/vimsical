@@ -64,7 +64,6 @@
                       :quick-search/filter-category-idx nil}
    :app/libs         libs
    :app/compilers    compilers
-   :app/route        (router.routes/new-route ::router.routes/landing)
    :app/modal        nil})
 
 ;;
