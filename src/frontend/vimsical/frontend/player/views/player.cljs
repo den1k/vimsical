@@ -31,7 +31,7 @@
 
 (defn player [{:keys [vims standalone? orientation show-info? ui-key] :as opts}]
   (let [vims        (if standalone? (<sub [::app.subs/vims]) vims)
-        files       (<sub [::vcs.subs/files vims])
+        files       (when vims (<sub [::vcs.subs/files vims]))
         orientation (or orientation (<sub [::ui.subs/orientation]))
         opts        (merge {:vims        vims
                             :files       files
