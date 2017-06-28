@@ -18,7 +18,10 @@
 (defn get-playhead-entry [vcs] (get vcs ::playhead-entry))
 
 (s/fdef set-playhead-entry :args (s/cat :vcs ::vcs :entry ::playhead-entry) :ret ::vcs)
-(defn set-playhead-entry [vcs entry] (assoc vcs ::playhead-entry entry))
+(defn set-playhead-entry [{::vcs/keys [branches] :as vcs} [_ {:keys [branch-uid]} :as entry]]
+  (assoc vcs
+         ::playhead-entry entry
+         ::branch-uid (if entry branch-uid (-> branches branch/master :db/uid))))
 
 (s/fdef get-skimhead-entry :args (s/cat :vcs ::vcs)  :ret ::skimhead-entry)
 (defn get-skimhead-entry [vcs] (get vcs ::skimhead-entry))
