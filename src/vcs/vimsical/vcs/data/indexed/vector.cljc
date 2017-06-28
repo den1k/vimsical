@@ -67,8 +67,7 @@
 
 
 #?(:clj
-   (deftype IndexedVector
-       [f index v]
+   (deftype IndexedVector [f index v]
 
      clojure.lang.Seqable
      (seq [this] (when (seq v) this))
@@ -185,7 +184,7 @@
            (IndexedVector. f index' v'))))))
 
 #?(:cljs
-   (deftype IndexedVector [f ^Index index v]
+   (deftype IndexedVector [f index v]
      Object
      (toString [this]
        (pr-str* v))
