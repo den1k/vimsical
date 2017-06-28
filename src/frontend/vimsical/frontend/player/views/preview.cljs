@@ -24,11 +24,10 @@
        {:on-click (e> (re-frame/dispatch [::vcr.handlers/play vims]))}
        [elems/play-button]])))
 
-(defn preview-container [{:keys [vims ui-key] :as opts}]
+(defn preview-container [opts]
   [:div.preview-container.f1
    [central-play-button opts]
-   [live-preview {:ui-key ui-key
-                  :vims   vims}]])
+   [live-preview opts]])
 
 (defn social-bar [{:keys [vims orientation] :as opts}]
   (let [liked (reagent/atom false)]

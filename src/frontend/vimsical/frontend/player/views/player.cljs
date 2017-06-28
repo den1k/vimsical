@@ -1,6 +1,7 @@
 (ns vimsical.frontend.player.views.player
   (:require
    [vimsical.frontend.util.re-frame :refer [<sub]]
+   [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.frontend.ui.subs :as ui.subs]
    [vimsical.frontend.views.splits :as splits]
    [vimsical.frontend.player.views.elems :as elems]
@@ -23,24 +24,26 @@
 
 (defn portrait [opts]
   [:div.portrait-split
-   ;[social-bar opts]
+   ;; [social-bar opts]
    [preview-container opts]
    [timeline-bar opts]
    [info-and-editor-container opts]])
+
 (defn player [{:keys [vims standalone? orientation show-info? ui-key] :as opts}]
   (let [vims        (if standalone? (<sub [::app.subs/vims]) vims)
+        files       (<sub [::vcs.subs/files vims])
         orientation (or orientation (<sub [::ui.subs/orientation]))
         opts        (merge {:vims        vims
+                            :files       files
                             :orientation orientation
                             :ui-key      :player
-                            :show-info?  true}
-                           opts)]
+                            :show-info?  true} opts)]
     (when vims                          ; fixme player should have loader
       [:div.vimsical-frontend-player.player
        {:class (name orientation)}
        [(case orientation
           :landscape landscape
-          :portrait portrait)
+          :portrait  portrait)
         opts]
        (when standalone?
          [window-listeners])])))
