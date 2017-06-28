@@ -63,20 +63,20 @@
     (number? idx)
     (let [str-len (count string)]
       (cond
-        (zero? idx)     {:line 1 :col 1}
+        (zero? idx) {:line 1 :col 1}
         (> idx str-len) nil             ; out of bounds
         :else
         (reduce
          (fn [[cur-idx l c :as step] char]
            (let [next-idx (inc ^long cur-idx)]
              (cond
-               (== cur-idx idx)      (reduced {:line l :col c})
+               (== cur-idx idx) (reduced {:line l :col c})
                ;; lookahead at last step of reduction
                ;; this becomes true only when idx is at last char
                (== next-idx str-len) (reduced {:line l :col (inc c)})
-               :else                 (if (identical? \newline char)
-                                       [next-idx (inc ^long l) 1]
-                                       [next-idx l (inc ^long c)]))))
+               :else (if (identical? \newline char)
+                       [next-idx (inc ^long l) 1]
+                       [next-idx l (inc ^long c)]))))
          [0 1 1]
          string)))
     :else (throw (ex-info "Expected vector or number" {:idx idx}))))
@@ -108,10 +108,10 @@
    (defn parse-content-event [model e]
      (let [{:keys [diff idx added deleted]
             :as   e-state} (content-event-state model e)
-           event-type      (content-event-type e-state)]
+           event-type (content-event-type e-state)]
        (case event-type
-         :str/ins  {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
-         :str/rem  {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
+         :str/ins {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx}
+         :str/rem {::edit-event/op event-type ::edit-event/idx idx ::edit-event/amt deleted}
          :str/rplc {::edit-event/op event-type ::edit-event/diff diff ::edit-event/idx idx ::edit-event/amt deleted}))))
 
 ;;
@@ -164,6 +164,14 @@
 #?(:cljs
    (defn add-action [^js/monaco.editor editor action]
      (.addAction editor action)))
+
+#?(:cljs
+   (defn update-options [^js/monaco.editor editor options]
+     (.updateOptions editor (clj->js options))))
+
+#?(:cljs
+   (defn update-model-options [^js/monaco.editor editor options]
+     (.. editor getModel (updateOptions (clj->js options)))))
 
 #?(:cljs
    (defn bind-listeners

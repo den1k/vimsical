@@ -92,6 +92,9 @@
    (when (seq coll)
      (apply clojure.core/max coll))))
 
+(def max-integer
+  #?(:clj Integer/MAX_VALUE :cljs js/Number.MAX_SAFE_INTEGER))
+
 (defn now []
   #?(:clj  (.getTime (java.util.Date.))
      :cljs (.now js/Date)))

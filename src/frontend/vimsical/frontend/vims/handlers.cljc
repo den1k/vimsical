@@ -35,20 +35,20 @@
 
 (defn new-event-fx
   [{:keys [db]} [_ owner status-key opts]]
-  (let [new-files                       (vims/default-files)
-        owner'                          (select-keys owner [:db/uid])
+  (let [new-files (vims/default-files)
+        owner'    (select-keys owner [:db/uid])
         {vims-uid :db/uid :as new-vims} (vims/new-vims owner' nil new-files opts)
         ;; This is a bit low-level, we could just conj the vims onto the owner
         ;; and add that, but we'd have to make sure we're passed the full
         ;; app/user, not sure if that'd be inconvenient.
-        db'                             (util.mg/add-join db owner' ::user/vimsae new-vims)]
+        db'       (util.mg/add-join db owner' ::user/vimsae new-vims)]
     {:db db'
      :remote
-     {:id               :backend
-      :event            [::vims.commands/new new-vims]
-      :dispatch-success (fn [_] [::new-success vims-uid new-vims])
-      :dispatch-error   (fn [error] [::new-error vims-uid new-vims error])
-      :status-key       status-key}}))
+         {:id               :backend
+          :event            [::vims.commands/new new-vims]
+          :dispatch-success (fn [_] [::new-success vims-uid new-vims])
+          :dispatch-error   (fn [error] [::new-error vims-uid new-vims error])
+          :status-key       status-key}}))
 
 (re-frame/reg-event-fx ::new new-event-fx)
 (re-frame/reg-event-fx ::new-success (fn [_ _] (re-frame.loggers/console :log "New vims success")))
@@ -64,15 +64,15 @@
         db'      (util.mg/remove db vims)]
     {:db db'
      :remote
-     {:id               :backend
-      :event            [::vims.commands/delete vims-uid]
-      :dispatch-success (fn [_] [::delete-success vims-uid])
-      :dispatch-error   (fn [_] [::delete-error vims-uid])
-      :status-key       status-key}}))
+         {:id               :backend
+          :event            [::vims.commands/delete vims-uid]
+          :dispatch-success (fn [_] [::delete-success vims-uid])
+          :dispatch-error   (fn [_] [::delete-error vims-uid])
+          :status-key       status-key}}))
 
 (re-frame/reg-event-fx ::delete delete-event-fx)
 (re-frame/reg-event-fx ::delete-success (fn [_ _] (re-frame.loggers/console :log "Delete success")))
-(re-frame/reg-event-fx ::delete-error   (fn [_ e] (re-frame.loggers/console :log "Delete error" e)))
+(re-frame/reg-event-fx ::delete-error (fn [_ e] (re-frame.loggers/console :log "Delete error" e)))
 
 ;;
 ;; * Title
@@ -85,11 +85,11 @@
         db'    (util.mg/add db vims')]
     {:db db'
      :remote
-     {:id               :backend
-      :event            [::vims.commands/title remote]
-      :dispatch-success (fn [_] [::title-success vims'])
-      :dispatch-error   (fn [error] [::title-error vims error])
-      :status-key       status-key}}))
+         {:id               :backend
+          :event            [::vims.commands/title remote]
+          :dispatch-success (fn [_] [::title-success vims'])
+          :dispatch-error   (fn [error] [::title-error vims error])
+          :status-key       status-key}}))
 
 (re-frame/reg-event-fx ::title title-event-fx)
 (re-frame/reg-event-fx ::title-success (fn [_ _] (re-frame.loggers/console :log "title success")))
@@ -117,10 +117,10 @@
        ::vcs.subs/keys [preprocessed-file-string]}
       [_ vims file]]
    (when preprocessed-file-string
-     (let [[_ vims-uid :as vims-ref]                   (util.mg/->ref db vims)
+     (let [[_ vims-uid :as vims-ref] (util.mg/->ref db vims)
            {:as vims' {user-uid :db/uid} ::vims/owner} (mg/pull db [:db/uid {::vims/owner [:db/uid]} {::vims/snapshots ['*]}] vims-ref)
-           snapshot                                    (vcs.snapshot/new-frontend-snapshot (uuid) user-uid vims-uid file preprocessed-file-string)
-           vims''                                      (update vims' ::vims/snapshots (fnil util/replace-by-or-conj []) ::vcs.snapshot/file-uid snapshot)]
+           snapshot (vcs.snapshot/new-frontend-snapshot (uuid) user-uid vims-uid file preprocessed-file-string)
+           vims''   (update vims' ::vims/snapshots (fnil util/replace-by-or-conj []) ::vcs.snapshot/file-uid snapshot)]
        {:db (util.mg/add db vims'')}))))
 
 (re-frame/reg-event-fx
@@ -128,9 +128,9 @@
  (fn upload-snapshots-event-fx
    [{:keys [db]} [_ vims status-key]]
    ;; Pull the vims again since we know it is now stale
-   (let [vims-ref                  (util.mg/->ref db vims)
+   (let [vims-ref         (util.mg/->ref db vims)
          {::vims/keys [snapshots]} (mg/pull db [{::vims/snapshots ['*]}] vims-ref)
-         remote-snapshots          (mapv vcs.snapshot/->remote-snapshot snapshots)]
+         remote-snapshots (mapv vcs.snapshot/->remote-snapshot snapshots)]
      (when (seq remote-snapshots)
        {:remote
         {:id               :backend
@@ -165,9 +165,9 @@
   (when (== 404 status)
     {:dispatch [::router.handlers/route ::router.routes/landing]}))
 
-(re-frame/reg-event-fx ::vims         vims-handler)
+(re-frame/reg-event-fx ::vims vims-handler)
 (re-frame/reg-event-fx ::vims-success vims-success-event-fx)
-(re-frame/reg-event-fx ::vims-error   vims-error-event-fx)
+(re-frame/reg-event-fx ::vims-error vims-error-event-fx)
 
 ;;
 ;; * Async loading flow

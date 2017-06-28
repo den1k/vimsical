@@ -132,22 +132,22 @@
    editor-header
    code-editor])
 
-(def footer-options
-  [:.options
-   {:flex-basis :70px}
-   [:.option
-    {:cursor :pointer}]])
-
 (def vcr-footer
   [:.vcr-footer
-   footer-options
-   {:padding        "2px 10px"
+   {:white-space    :nowrap
+    :padding        "2px 10px"
     :font-size      :12px
     :letter-spacing :0.3px
-    :background     (:darkgrey colors)
-    :color          :whitesmoke}
+    :background     (:mediumgrey colors)}
+
+   [:.section
+    {:width :150px}]
+
+   [:.options
+    [:.option
+     {:cursor :pointer}]]
+
    [:.sync-status-wrapper
-    {:width :70px}
     [:.sync-status
      [:.status-circle
       {:width         :6px
@@ -160,7 +160,7 @@
        {:background :limegreen}]]]]
    [:.author-credit
     {:letter-spacing :0.5px
-     :color          :white}]])
+     :font-weight    500}]])
 
 (def vcr
   (media/not-on-mobile

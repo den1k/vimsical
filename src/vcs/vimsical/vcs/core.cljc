@@ -70,7 +70,7 @@
         :args (s/cat :vcs ::vcs
                      :uuid-fn ::editor/uuid-fn
                      :delta ::delta/delta)
-        :ret  ::vcs)
+        :ret ::vcs)
 
 (defn add-delta
   [{:as vcs ::keys [branches state-by-delta-uid timeline]} uuid-fn {:keys [prev-uid branch-uid uid] :as delta}]
@@ -90,7 +90,7 @@
         :args (s/cat :vcs ::vcs
                      :uuid-fn ::editor/uuid-fn
                      :deltas (s/nilable (s/every ::delta/delta)))
-        :ret  ::vcs)
+        :ret ::vcs)
 
 ;; NOTE the only optimization here -- compared to  (reduce add-delta deltas) is
 ;; to prevent building the timeline for every single delta
@@ -136,7 +136,7 @@
         files-state-by-file-uid (get state ::state.files/state-by-file-uid state.files/empty-state-by-file-uid)
         [files-state-by-file-uid'
          deltas'
-         delta-uid']            (state.files/add-edit-event files-state-by-file-uid effects file-uid branch-uid delta-uid edit-event)
+         delta-uid'] (state.files/add-edit-event files-state-by-file-uid effects file-uid branch-uid delta-uid edit-event)
         all-deltas'             (state.deltas/add-deltas all-deltas deltas')
         state'                  {::state.deltas/deltas           all-deltas'
                                  ::state.files/state-by-file-uid files-state-by-file-uid'}
@@ -169,7 +169,7 @@
         files-state-by-file-uid (get state ::state.files/state-by-file-uid state.files/empty-state-by-file-uid)
         [files-state-by-file-uid'
          [first-delta :as deltas']
-         delta-uid']            (state.files/add-edit-event files-state-by-file-uid effects file-uid branch-uid' delta-uid edit-event)
+         delta-uid'] (state.files/add-edit-event files-state-by-file-uid effects file-uid branch-uid' delta-uid edit-event)
         parent                  (util/ffilter (partial util/=by identity :db/uid branch-uid) branches)
         branch                  (branch/new-branch branch-uid' created-at parent first-delta)
         branches'               (conj branches branch)
@@ -201,17 +201,17 @@
                   files-state-by-file-uid (get state ::state.files/state-by-file-uid state.files/empty-state-by-file-uid)
                   [files-state-by-file-uid'
                    deltas'
-                   delta-uid']            (state.files/add-edit-event files-state-by-file-uid effects file-uid branch-uid delta-uid edit-event)
+                   delta-uid'] (state.files/add-edit-event files-state-by-file-uid effects file-uid branch-uid delta-uid edit-event)
                   all-deltas'             (state.deltas/add-deltas all-deltas deltas')
                   state'                  {::state.deltas/deltas           all-deltas'
                                            ::state.files/state-by-file-uid files-state-by-file-uid'}
                   vcs'                    (assoc-in vcs [::state-by-delta-uid delta-uid'] state')]
               [vcs' deltas' delta-uid']))]
-    (let [[vcs' deltas' delta-uid']   (reduce
-                                       (fn [[vcs deltas delta-uid] edit-event]
-                                         (let [[vcs' deltas' delta-uid'] (add-edit-event vcs effects file-uid branch-uid delta-uid edit-event)]
-                                           [vcs' (into deltas deltas') delta-uid']))
-                                       [vcs [] delta-uid] edit-events)]
+    (let [[vcs' deltas' delta-uid'] (reduce
+                                     (fn [[vcs deltas delta-uid] edit-event]
+                                       (let [[vcs' deltas' delta-uid'] (add-edit-event vcs effects file-uid branch-uid delta-uid edit-event)]
+                                         [vcs' (into deltas deltas') delta-uid']))
+                                     [vcs [] delta-uid] edit-events)]
       [(assoc vcs' ::timeline (state.timeline/add-deltas timeline branches uuid-fn deltas')) deltas' delta-uid'])))
 
 
@@ -248,7 +248,7 @@
 
 (s/fdef file-deltas
         :args (s/cat :vcs ::vcs :file-uid ::file/uid :delta-uid ::delta/prev-uid)
-        :ret  (s/every ::delta/delta))
+        :ret (s/every ::delta/delta))
 
 (defn file-deltas
   [vcs file-uid delta-uid]
@@ -258,7 +258,7 @@
 
 (s/fdef file-string
         :args (s/cat :vcs ::vcs :file-uid ::file/uid :delta-uid ::delta/prev-uid)
-        :ret  (s/nilable string?))
+        :ret (s/nilable string?))
 
 (defn file-string
   [vcs file-uid delta-uid]
@@ -268,7 +268,7 @@
 
 (s/fdef file-cursor
         :args (s/cat :vcs ::vcs :file-uid ::file/uid :delta-uid ::delta/prev-uid)
-        :ret  (s/nilable nat-int?))
+        :ret (s/nilable nat-int?))
 
 (defn file-cursor
   [vcs file-uid delta-uid]
@@ -284,7 +284,7 @@
         :args (s/cat :vcs ::vcs
                      :branch-uid ::branch/uid
                      :timeline-entry (s/nilable ::state.timeline/entry))
-        :ret  boolean?)
+        :ret boolean?)
 
 (defn branching?
   [vcs current-branch-uid [_ {current-delta-uid :uid}]]
@@ -316,46 +316,53 @@
 
 (s/fdef timeline-duration
         :args (s/cat :vcs ::vcs)
-        :ret  ::state.timeline/duration)
+        :ret ::state.timeline/duration)
 
 (defn timeline-duration [{::keys [timeline]}]
   (state.timeline/duration timeline))
 
 (s/fdef timeline-delta-at-time
         :args (s/cat :vcs ::vcs :time ::state.timeline/absolute-time)
-        :ret  (s/nilable ::delta/delta))
+        :ret (s/nilable ::delta/delta))
 
 (defn timeline-delta-at-time [{::keys [timeline]} time]
   (state.timeline/delta-at-absolute-time timeline time))
 
 (s/fdef timeline-entry-at-time
         :args (s/cat :vcs ::vcs :time ::state.timeline/absolute-time)
-        :ret  ::state.timeline/entry)
+        :ret ::state.timeline/entry)
 
 (defn timeline-entry-at-time [{::keys [timeline]} time]
   (state.timeline/entry-at-absolute-time timeline time))
 
 (s/fdef timeline-chunks-by-absolute-start-time
         :args (s/cat :vcs ::vcs)
-        :ret  ::state.timeline/chunks-by-absolute-start-time)
+        :ret ::state.timeline/chunks-by-absolute-start-time)
 
 (defn timeline-chunks-by-absolute-start-time [{::keys [timeline]}]
   (state.timeline/chunks-by-absolute-start-time timeline))
 
 (s/fdef timeline-first-entry
         :args (s/cat :vcs ::vcs)
-        :ret  (s/nilable ::state.timeline/entry))
+        :ret (s/nilable ::state.timeline/entry))
 
 (defn timeline-first-entry [{::keys [timeline]}] (state.timeline/first-entry timeline))
 
 (s/fdef timeline-next-entry
         :args (s/cat :vcs ::vcs :entry (s/nilable ::state.timeline/entry))
-        :ret  (s/nilable ::state.timeline/entry))
+        :ret (s/nilable ::state.timeline/entry))
 
 (defn timeline-next-entry [{::keys [timeline]} entry] (some->> entry (state.timeline/next-entry timeline)))
 
 (s/fdef timeline-last-entry
         :args (s/cat :vcs ::vcs)
-        :ret  (s/nilable ::state.timeline/entry))
+        :ret (s/nilable ::state.timeline/entry))
 
 (defn timeline-last-entry [{::keys [timeline]}] (state.timeline/last-entry timeline))
+
+(s/fdef timeline-branch-last-entry
+        :args (s/cat :vcs ::vcs :time ::state.timeline/absolute-time)
+        :ret (s/nilable ::state.timeline/entry))
+
+(defn timeline-branch-last-entry [{::keys [timeline]} time]
+  (state.timeline/branch-last-entry timeline time))

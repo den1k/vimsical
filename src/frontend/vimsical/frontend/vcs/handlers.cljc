@@ -27,22 +27,22 @@
 
 (defn init-event-fx
   [{:keys [db]} [_ vims deltas {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
-  (let [vims-ref                 (util.mg/->ref db vims)
+  (let [vims-ref   (util.mg/->ref db vims)
         {:as         vims
          ::vims/keys [branches]} (mg/pull db queries/vims vims-ref)
 
-        vcs (vcs/add-deltas (vcs/empty-vcs branches) uuid-fn deltas)
+        vcs        (vcs/add-deltas (vcs/empty-vcs branches) uuid-fn deltas)
 
         {branch-uid :db/uid} (branch/master branches)
 
         [_ {delta-uid :uid}
          :as playhead-entry] (vcs/timeline-last-entry vcs)
-        vcs-db               {::vcs.db/branch-uid     branch-uid
-                              ::vcs.db/delta-uid      delta-uid
-                              ::vcs.db/playhead-entry playhead-entry}
-        vcs-entity           (merge {:db/uid (uuid-fn)} vcs vcs-db)
-        vcs-ref              (util.mg/->ref db vcs-entity)
-        vims-vcs             (assoc vims ::vims/vcs vcs-ref)]
+        vcs-db     {::vcs.db/branch-uid     branch-uid
+                    ::vcs.db/delta-uid      delta-uid
+                    ::vcs.db/playhead-entry playhead-entry}
+        vcs-entity (merge {:db/uid (uuid-fn)} vcs vcs-db)
+        vcs-ref    (util.mg/->ref db vcs-entity)
+        vims-vcs   (assoc vims ::vims/vcs vcs-ref)]
     {:db (-> db
              (mg/add vims-vcs)
              (vcs.db/add vcs-entity))
@@ -96,10 +96,10 @@
   [{:keys [uuid-fn timestamp elapsed] :as context}]
   {:pre [uuid-fn timestamp elapsed]}
   (assoc context ::editor/effects
-         ;; NOTE all these fns take the edit-event
-         {::editor/uuid-fn      (fn [& _] (uuid-fn))
-          ::editor/timestamp-fn (fn [& _] timestamp)
-          ::editor/pad-fn       (new-pad-fn elapsed)}))
+                 ;; NOTE all these fns take the edit-event
+                 {::editor/uuid-fn      (fn [& _] (uuid-fn))
+                  ::editor/timestamp-fn (fn [& _] timestamp)
+                  ::editor/pad-fn       (new-pad-fn elapsed)}))
 
 (re-frame/reg-cofx :editor editor-cofx)
 
@@ -183,9 +183,9 @@
       [_ {vims-uid :db/uid :as vims} {file-uid :db/uid} edit-event]]
    {:pre [vims-uid effects file-uid]}
    (when-let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)]
-     (let [playhead'     (-> vcs' ::vcs.db/playhead-entry first)
-           db'           (vcs.db/add db vcs')
-           ui-db'        (timeline.ui-db/set-playhead ui-db vims playhead')]
+     (let [playhead' (-> vcs' ::vcs.db/playhead-entry first)
+           db'       (vcs.db/add db vcs')
+           ui-db'    (timeline.ui-db/set-playhead ui-db vims playhead')]
        (cond-> {:db         db'
                 :ui-db      ui-db'
                 :dispatch-n [[::sync.handlers/add-deltas vims-uid deltas]]}
@@ -206,14 +206,14 @@
    (let [[_ branch-uid :as branch-ref] (util.mg/->ref db branch)]
      {:db (util.mg/add-join db branch-ref ::branch/libs lib)
       :remote
-      {:id               :backend
-       :event            [::vcs.commands/add-lib branch-uid lib]
-       :dispatch-success ::add-lib-success
-       :dispatch-error   ::add-lib-error}})))
+          {:id               :backend
+           :event            [::vcs.commands/add-lib branch-uid lib]
+           :dispatch-success ::add-lib-success
+           :dispatch-error   ::add-lib-error}})))
 
 ;; temp
 (re-frame/reg-event-fx ::add-lib-success (fn [{:keys [db]} _] (println "Lib add sucess")))
-(re-frame/reg-event-fx ::add-lib-error   (fn [{:keys [db]} e] (println "Lib add error" e)))
+(re-frame/reg-event-fx ::add-lib-error (fn [{:keys [db]} e] (println "Lib add error" e)))
 
 (re-frame/reg-event-fx
  ::remove-lib
@@ -223,11 +223,11 @@
      (println lib)
      {:db (util.mg/remove-join db branch-ref ::branch/libs lib)
       :remote
-      {:id               :backend
-       :event            [::vcs.commands/remove-lib branch-uid lib]
-       :dispatch-success ::remove-lib-success
-       :dispatch-error   ::remove-lib-error}})))
+          {:id               :backend
+           :event            [::vcs.commands/remove-lib branch-uid lib]
+           :dispatch-success ::remove-lib-success
+           :dispatch-error   ::remove-lib-error}})))
 
 ;; temp
 (re-frame/reg-event-fx ::remove-lib-success (fn [{:keys [db]} _] (println "Lib remove sucess")))
-(re-frame/reg-event-fx ::remove-lib-error   (fn [{:keys [db]} e] (println "Lib remove error" e)))
+(re-frame/reg-event-fx ::remove-lib-error (fn [{:keys [db]} e] (println "Lib remove error" e)))

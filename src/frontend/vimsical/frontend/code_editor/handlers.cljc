@@ -300,6 +300,15 @@
          [::bind-listeners opts]]}))))
 
 (re-frame/reg-event-fx
+ ::set-read-only
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db]} [_ opts bool]]
+   #?(:cljs
+      (let [editors (ui-db/get-editors ui-db opts)]
+        (doseq [e editors]
+          (interop/update-options e {:readOnly bool}))))))
+
+(re-frame/reg-event-fx
  ::track-start
  (fn [_ [_ {:keys [vims file] :as opts}]]
    {:track
@@ -312,14 +321,19 @@
       ;; Prevents showing cursors on all editors when reloading
       :dispatch-first? false
       :subscription    [::subs/position vims file]
-      :val->event      (fn [position] [::update-editor-position opts position])}]}))
+      :val->event      (fn [position] [::update-editor-position opts position])}
+     {:id           (ui-db/path opts ::branch-limit)
+      :action       :register
+      :subscription [::vcs.subs/branch-limit? vims]
+      :val->event   (fn [limit?] [::set-read-only opts limit?])}]}))
 
 (re-frame/reg-event-fx
  ::track-stop
  (fn [_ [_ opts]]
    {:track
     [{:id (ui-db/path opts ::editor-str) :action :dispose}
-     {:id (ui-db/path opts ::editor-pos) :action :dispose}]}))
+     {:id (ui-db/path opts ::editor-pos) :action :dispose}
+     {:id (ui-db/path opts ::branch-limit) :action :dispose}]}))
 
 (re-frame/reg-event-fx
  ::reset-editor-to-playhead

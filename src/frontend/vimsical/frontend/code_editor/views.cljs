@@ -4,7 +4,9 @@
    [reagent.core :as reagent]
    [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.code-editor.handlers :as handlers]
-   [vimsical.frontend.code-editor.interop :as interop]))
+   [vimsical.frontend.timeline.handlers :as timeline.handlers]
+   [vimsical.frontend.code-editor.interop :as interop]
+   [vimsical.frontend.util.dom :refer-macros [e>]]))
 
 (defn editor-opts
   "https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditorconstructionoptions.html"
@@ -92,8 +94,15 @@
   {:pre [editor-opts model-opts]}
   (doto (js/monaco.editor.create el (clj->js editor-opts))
     (set-keyboard-shortcuts)
-    (.. getModel (updateOptions (clj->js model-opts)))))
+    (interop/update-model-options model-opts)))
 
+(defn editor-lifecycle [opts]
+  (fn [?node]
+    (if ?node
+      (let [editor (new-editor ?node (editor-opts opts))]
+        (re-frame/dispatch [::handlers/register opts editor])
+        (re-frame/dispatch [::handlers/init opts]))
+      (re-frame/dispatch [::handlers/dispose opts]))))
 
 ;;
 ;; * Component
@@ -103,17 +112,21 @@
   [{:keys [file] :as opts}]
   {:pre [file]}
   (reagent/create-class
-   {:component-did-mount
-    (fn [c]
-      (let [node   (reagent/dom-node c)
-            editor (new-editor node (editor-opts opts))]
-        (re-frame/dispatch [::handlers/register opts editor])
-        (re-frame/dispatch [::handlers/init opts])))
-    :component-will-unmount
-    (fn [c] (re-frame/dispatch [::handlers/dispose (reagent/props c)]))
-    :component-will-receive-props
+   {:component-will-receive-props
     (fn [c [_ new-opts]]
       (let [old-opts (reagent/props c)]
         (re-frame/dispatch [::handlers/recycle old-opts new-opts])))
-    :render
-    (fn [_] [:div.code-editor])}))
+    :reagent-render
+    (fn [{:keys [vims file] :as opts}]
+      [:div.code-editor-wrapper.dc
+       (when true
+         [:div.insert-warning.dc.aic
+          [:div.msg
+           "No support for branching off your own insert, yet."]
+          [:div.action.button
+           {:on-click
+            (e> (re-frame/dispatch [::timeline.handlers/go-to-end-of-insert vims]))}
+           "Go to end of insert"]])
+       [:div.code-editor
+        {:on-wheel (e> (.preventDefault e)) ; don't scroll the page
+         :ref      (editor-lifecycle opts)}]])}))
