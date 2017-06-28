@@ -158,7 +158,7 @@
        ::vcs.subs/keys [vcs]}
       [_ vims coords coords-and-svg-node->timeline-position-fn step-event]]
    (let [[ui-time [entry-time :as entry]] (ui-timeline-entry cofx coords coords-and-svg-node->timeline-position-fn)
-         vcs'   (assoc vcs ::vcs.db/playhead-entry entry)
+         vcs'   (vcs.db/set-playhead-entry vcs entry)
          db'    (vcs.db/add db vcs')
          ui-db' (timeline.ui-db/set-playhead ui-db vims ui-time)]
      {:db        db'
