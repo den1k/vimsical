@@ -202,12 +202,14 @@
  ::freeze
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ opts]]
-   (let [iframe-win (ui-db/get-iframe ui-db opts)]
-     (.. iframe-win -contentWindow (__freeze)))))
+   (when (some-> opts :vims :db/uid)
+     (let [iframe-win (ui-db/get-iframe ui-db opts)]
+       (.. iframe-win -contentWindow (__freeze))))))
 
 (re-frame/reg-event-fx
  ::defreeze
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ opts]]
-   (let [iframe-win (ui-db/get-iframe ui-db opts)]
-     (.. iframe-win -contentWindow (__defreeze)))))
+   (when (some-> opts :vims :db/uid)
+     (let [iframe-win (ui-db/get-iframe ui-db opts)]
+       (.. iframe-win -contentWindow (__defreeze))))))
