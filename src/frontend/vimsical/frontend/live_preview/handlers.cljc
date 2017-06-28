@@ -176,7 +176,6 @@
       {:action          :register
        :id              (ui-db/path opts [::file uid])
        :subscription    [::subs/file-string+file-lint-or-preprocessing-errors vims file]
-       :dispatch-first? false
        :val->event      (fn [[file-string file-lint-or-preprocessing-errors]]
                           [::update-live-preview opts file file-string file-lint-or-preprocessing-errors])})}))
 
@@ -203,12 +202,14 @@
  ::freeze
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ opts]]
-   (let [iframe-win (ui-db/get-iframe ui-db opts)]
-     (.. iframe-win -contentWindow (__freeze)))))
+   (when (some-> opts :vims :db/uid)
+     (let [iframe-win (ui-db/get-iframe ui-db opts)]
+       (.. iframe-win -contentWindow (__freeze))))))
 
 (re-frame/reg-event-fx
  ::defreeze
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ opts]]
-   (let [iframe-win (ui-db/get-iframe ui-db opts)]
-     (.. iframe-win -contentWindow (__defreeze)))))
+   (when (some-> opts :vims :db/uid)
+     (let [iframe-win (ui-db/get-iframe ui-db opts)]
+       (.. iframe-win -contentWindow (__defreeze))))))
