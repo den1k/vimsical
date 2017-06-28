@@ -176,7 +176,6 @@
       {:action          :register
        :id              (ui-db/path opts [::file uid])
        :subscription    [::subs/file-string+file-lint-or-preprocessing-errors vims file]
-       :dispatch-first? false
        :val->event      (fn [[file-string file-lint-or-preprocessing-errors]]
                           [::update-live-preview opts file file-string file-lint-or-preprocessing-errors])})}))
 
