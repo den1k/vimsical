@@ -95,7 +95,7 @@
                      [::close-modal]]}))))
 
 (defmethod router.handlers/did-mount-history-route-fx-handler ::router.routes/embed
-  [{:keys [db]} {::router.routes/keys [args]}]
+  [{:keys [db]} [_ {::router.routes/keys [args] :as route}]]
   {:dispatch [::open-embed args]})
 
 (re-frame/reg-event-fx
