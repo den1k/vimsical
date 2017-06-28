@@ -85,7 +85,7 @@
    (clj->js
     {:id          "disable-commenting"
      :label       "no-comment"
-     :keybindings (js* "[monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_SLASH]")
+     :keybindings [(bit-or js/monaco.KeyMod.CtrlCmd js/monaco.KeyCode.US_SLASH)]
      :run         #(constantly nil)})))
 
 (defn new-editor [el {:keys [editor-opts model-opts]}]
