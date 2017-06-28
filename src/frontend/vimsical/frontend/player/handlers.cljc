@@ -20,7 +20,7 @@
        ::vcs.subs/keys [vcs]}
       [_ vims ui-time]]
    (let [[entry-time :as entry] (vcs/timeline-entry-at-time vcs ui-time)
-         vcs'   (assoc vcs ::vcs.db/playhead-entry entry)
+         vcs'   (vcs.db/set-playhead-entry vcs entry)
          db'    (vcs.db/add db vcs')
          ui-db' (timeline.ui-db/set-playhead ui-db vims ui-time)]
      {:db        db'
