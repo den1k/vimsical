@@ -162,6 +162,10 @@
      (.setValue editor string)))
 
 #?(:cljs
+   (defn add-action [^js/monaco.editor editor action]
+     (.addAction editor action)))
+
+#?(:cljs
    (defn bind-listeners
      "Register `listeners` with their respective handlers on `editor` and return a
      map with the same keys as `listeners` but where the values are the disposables

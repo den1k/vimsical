@@ -80,7 +80,7 @@
 
 (defn set-keyboard-shortcuts [editor]
   ;; VCS can't currently handle multiline commenting. So we're overriding it.
-  (.addAction
+  (interop/add-action
    editor
    (clj->js
     {:id          "disable-commenting"
