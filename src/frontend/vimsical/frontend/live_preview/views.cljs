@@ -110,8 +110,8 @@
   ;; cases, once the file tracks update with the file strings we end up with
   ;; markup for the document that's missing the script nodes in the header and
   ;; the content in the body.
-  (letfn [(opts-ready? [{:keys [from-snapshot? files]}]
-            (or from-snapshot? (not-empty files)))]
+  (letfn [(opts-ready? [{:keys [static? files]}]
+            (or static? (not-empty files)))]
     [:div.live-preview
      (when (opts-ready? opts)
        [iframe-preview opts])]))
