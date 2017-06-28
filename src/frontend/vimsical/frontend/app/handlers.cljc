@@ -9,10 +9,8 @@
    [vimsical.frontend.router.handlers :as router.handlers]
    [vimsical.frontend.router.routes :as router.routes]
    [vimsical.frontend.util.mapgraph :as util.mg]
-   [vimsical.frontend.vcs.handlers :as vcs.handlers]
    [vimsical.frontend.vcs.sync.handlers :as vcs.sync.handlers]
    [vimsical.frontend.vims.db :as vims.db]
-
    [vimsical.frontend.vims.handlers :as vims.handlers]
    [vimsical.vims :as vims]
    [vimsical.frontend.util.re-frame :as util.re-frame]))
@@ -35,39 +33,6 @@
  (fn [{:as db cur-modal :app/modal} [_ modal]]
    (let [next-modal (when (not= cur-modal modal) modal)]
      (assoc db :app/modal next-modal))))
-
-;;
-;; * Async loading flow
-;;
-
-(defn open-vims-async-flow
-  [vims-uid {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]
-  {:pre [(uuid? vims-uid)]}
-  (letfn [(event+uuid [[id uuid]] [id uuid])]
-    {:id                [::open-vims-async vims-uid]
-     :first-dispatch    [::open-vims-async-did-start vims-uid]
-     :event-id->seen-fn {::vims.handlers/deltas-success event+uuid
-                         ::vims.handlers/vims-success   event+uuid}
-     :rules             [{:when     :seen-all-of?
-                          :events   [[::vims.handlers/deltas-success vims-uid]
-                                     [::vims.handlers/vims-success vims-uid]]
-                          :dispatch [::open-vims-async-did-complete vims-uid options]}]
-     :halt?             true}))
-
-(re-frame/reg-event-fx
- ::open-vims-async-did-start
- (fn [{:keys [db]} [_ vims-uid]]
-   {:dispatch-n
-    [[::vims.handlers/vims vims-uid]
-     [::vims.handlers/deltas vims-uid]]}))
-
-(re-frame/reg-event-fx
- ::open-vims-async-did-complete
- (fn [{:keys [db]} [_ vims-uid deltas {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
-   (let [deltas (or deltas (vims.db/get-deltas db vims-uid))]
-     {:dispatch-n
-      [[::vcs.handlers/init vims-uid deltas options]
-       [::vcs.sync.handlers/start vims-uid]]})))
 
 ;;
 ;; * Current vims
@@ -94,8 +59,9 @@
    (let [vims-uid (uuid-fn)]
      {:dispatch-n
       [[::vims.handlers/new owner nil {:uid vims-uid}]
-       [::set-vims vims-uid]
-       [::open-vims-async-did-complete vims-uid options]]})))
+       [::vims.handlers/load-vims-async-did-complete vims-uid options]
+       [::vcs.sync.handlers/start vims-uid]
+       [::set-vims vims-uid]]})))
 
 ;;
 ;; * Open
@@ -117,18 +83,16 @@
   [{:keys [db]} [_ {::router.routes/keys [args]}]]
   {:dispatch [::open-vims args]})
 
-
 (re-frame/reg-event-fx
  ::open-vims
  (fn [{:keys [db]} [_ vims {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
    {:pre [vims]}
    (when vims
      (let [[_ vims-uid] (util.mg/->ref db vims)]
-       (cond-> {:dispatch-n
-                [[::set-vims vims]
-                 [::close-modal]]}
-         (not (vims.db/loaded? db vims))
-         (assoc :async-flow (open-vims-async-flow vims-uid options)))))))
+       {:dispatch-n [[::vims.handlers/load-vims vims options]
+                     [::vcs.sync.handlers/start vims-uid]
+                     [::set-vims vims]
+                     [::close-modal]]}))))
 
 (defmethod router.handlers/did-mount-history-route-fx-handler ::router.routes/embed
   [{:keys [db]} {::router.routes/keys [args]}]

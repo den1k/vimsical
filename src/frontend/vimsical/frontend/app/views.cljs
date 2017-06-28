@@ -29,7 +29,7 @@
       :on-click (e> (re-frame/dispatch [::handlers/close-modal]))
       ;; height is set for landscape mode on mobile
       :style    {:height height}}
-     (when-not on-mobile? [nav])
+     (when (or (routes/landing? route) (not on-mobile?)) [nav])
      [views.modal/modal]
      [:div.main {:class (when modal "modal-overlay")}
       [router.views/view-for route]

@@ -193,3 +193,22 @@
    {:track
     (for [{:keys [db/uid]} files]
       {:action :dispose :id (ui-db/path opts [::file uid])})}))
+
+;;
+;; iFrame Code Execution Control - Pause and Resume JS and CSS (injected only on snapshots)
+;; - see script js/preview-code-exec.js
+;;
+
+(re-frame/reg-event-fx
+ ::freeze
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db]} [_ opts]]
+   (let [iframe-win (ui-db/get-iframe ui-db opts)]
+     (.. iframe-win -contentWindow (__freeze)))))
+
+(re-frame/reg-event-fx
+ ::defreeze
+ [(re-frame/inject-cofx :ui-db)]
+ (fn [{:keys [ui-db]} [_ opts]]
+   (let [iframe-win (ui-db/get-iframe ui-db opts)]
+     (.. iframe-win -contentWindow (__defreeze)))))

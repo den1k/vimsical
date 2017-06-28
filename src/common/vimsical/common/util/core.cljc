@@ -294,7 +294,7 @@
    (defn norm-str [s]
      (some-> s not-empty gstr/collapseWhitespace)))
 
-(defn clamp                             ; from thi.ng.math.core/clamp
+(defn clamp
   "Constraints x to be in closed interval [min max]."
   [x min-x max-x] (clojure.core/max min-x (clojure.core/min max-x x)))
 

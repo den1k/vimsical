@@ -24,13 +24,13 @@
        {:on-click (e> (re-frame/dispatch [::vcr.handlers/play vims]))}
        [elems/play-button]])))
 
-(defn preview-container [{:keys [vims]}]
+(defn preview-container [{:keys [vims ui-key] :as opts}]
   [:div.preview-container.f1
-   [central-play-button {:vims vims}]
-   [live-preview {:ui-key :player
+   [central-play-button opts]
+   [live-preview {:ui-key ui-key
                   :vims   vims}]])
 
-(defn social-bar [{:keys [vims]}]
+(defn social-bar [{:keys [vims orientation] :as opts}]
   (let [liked (reagent/atom false)]
     (fn []
       [:div.bar.social
@@ -43,12 +43,12 @@
                     :md-icon-name "zmdi-share" :tooltip "share" :class "share"]
                    [re-com/md-icon-button
                     :md-icon-name "zmdi-time" :tooltip "watch later" :class "watch-later"]]]
-       (case (<sub [::ui.subs/orientation])
-         :landscape [elems/explore]
+       (case orientation
+         :landscape [elems/explore opts]
          :portrait [icons/logo-and-type])])))
 
-(defn preview-panel [{:keys [vims]}]
+(defn preview-panel [opts]
   [:div.preview-panel.jsb.dc
    ;[social-bar {:vims vims}]
-   [preview-container {:vims vims}]
-   [timeline-bar {:vims vims}]])
+   [preview-container opts]
+   [timeline-bar opts]])

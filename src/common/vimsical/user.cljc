@@ -27,5 +27,5 @@
 
 (def logged-in? (complement anon?))
 
-(defn full-name [{::keys [first-name last-name]}]
-  (str first-name " " last-name))
+(defn full-name [{::keys [first-name middle-name last-name]}]
+  (str first-name " " (some-> middle-name (str " ")) last-name))

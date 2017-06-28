@@ -10,33 +10,37 @@
    [vimsical.frontend.window-listeners.views :refer [window-listeners]]
    [vimsical.frontend.app.subs :as app.subs]))
 
-(defn landscape [{:keys [vims]}]
+(defn landscape [opts]
   [splits/n-h-split
    :class "landscape-split"
    :panels
-   [[preview-panel {:vims vims}]
-    [info-and-editor-container {:vims vims}]]
+   [[preview-panel opts]
+    [info-and-editor-container opts]]
    :splitter-size "1px"
    :splitter-child [elems/resizer]
    :initial-split 60
    :margin "0"])
 
-(defn portrait [{:keys [vims]}]
+(defn portrait [opts]
   [:div.portrait-split
-   ;[social-bar {:vims vims}]
-   [preview-container {:vims vims}]
-   [timeline-bar {:vims vims}]
-   [info-and-editor-container {:vims vims}]])
-
-(defn player [{:keys [vims standalone? orientation]}]
-  (let [orientation (or orientation (<sub [::ui.subs/orientation]))
-        vims        (if standalone? (<sub [::app.subs/vims]) vims)]
+   ;[social-bar opts]
+   [preview-container opts]
+   [timeline-bar opts]
+   [info-and-editor-container opts]])
+(defn player [{:keys [vims standalone? orientation show-info? ui-key] :as opts}]
+  (let [vims        (if standalone? (<sub [::app.subs/vims]) vims)
+        orientation (or orientation (<sub [::ui.subs/orientation]))
+        opts        (merge {:vims        vims
+                            :orientation orientation
+                            :ui-key      :player
+                            :show-info?  true}
+                           opts)]
     (when vims                          ; fixme player should have loader
       [:div.vimsical-frontend-player.player
        {:class (name orientation)}
        [(case orientation
           :landscape landscape
           :portrait portrait)
-        {:vims vims}]
+        opts]
        (when standalone?
          [window-listeners])])))

@@ -48,19 +48,20 @@
   [files]
   (remove file/javascript? files))
 
-(defn register [node {:keys [vims from-snapshot? static? error-catcher?] :as opts}]
+(defn register [node {:keys [vims static? error-catcher?] :as opts}]
   {:pre [node vims]}
   (re-frame/dispatch [::handlers/register-iframe opts node])
-  (if from-snapshot?
-    (re-frame/dispatch [::handlers/update-iframe-snapshots opts])
-    (re-frame/dispatch [::handlers/update-iframe-src opts]))
-  (when-not static?
-    (when error-catcher?
-      (re-frame/dispatch [::error-catcher/init])
-      (re-frame/dispatch [::error-catcher/track-start opts]))
-    (re-frame/dispatch [::handlers/track-vims opts])))
+  (if static?
+    (do
+      (re-frame/dispatch [::handlers/update-iframe-snapshots opts])
+      (re-frame/dispatch [::handlers/update-iframe-src opts]))
+    (do
+      (when error-catcher?
+        (re-frame/dispatch [::error-catcher/init])
+        (re-frame/dispatch [::error-catcher/track-start opts]))
+      (re-frame/dispatch [::handlers/track-vims opts]))))
 
-(defn dispose [{:keys [vims from-snapshot? static? error-catcher?] :as opts}]
+(defn dispose [{:keys [vims static? error-catcher?] :as opts}]
   (when-not static?
     (when error-catcher?
       (re-frame/dispatch [::error-catcher/track-stop])
@@ -109,8 +110,8 @@
   ;; cases, once the file tracks update with the file strings we end up with
   ;; markup for the document that's missing the script nodes in the header and
   ;; the content in the body.
-  (letfn [(opts-ready? [{:keys [from-snapshot? files]}]
-            (or from-snapshot? (not-empty files)))]
+  (letfn [(opts-ready? [{:keys [static? files]}]
+            (or static? (not-empty files)))]
     [:div.live-preview
      (when (opts-ready? opts)
        [iframe-preview opts])]))

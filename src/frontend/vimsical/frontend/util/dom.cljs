@@ -59,7 +59,7 @@
   [v e]
   (view-contains? v (.-relatedTarget e)))
 
-(defn open-ext-popup [url & opts]
+(defn open [url & opts]
   (.open js/window url
          ;; window name
          (str (gensym))
@@ -84,6 +84,11 @@
 (defn clear-active-element []
   (some-> (.-activeElement js/document)
           (set-inner-html! "")))
+
+(defn scroll-to [el]
+  (doto el
+    ;; smooth scrolling is only supported by firefox
+    (.scrollIntoView #js {:behavior "smooth"})))
 
 ;;
 ;; * Event Transformers and Handlers
@@ -154,6 +159,20 @@
 (defn rel-component-mouse-coords-percs [c e]
   (e->rel-mouse-coords-percs e (reagent/dom-node c)))
 
+(defn visible-in-viewport? [el]
+  (let [{:keys [top bottom left right]} (bounding-client-rect el)]
+    (and (>= top 0)
+         (>= left 0)
+         (<= bottom (.-innerHeight js/window))
+         (<= right (.-innerWidth js/window)))))
+
+(defn viewport-ratio
+  "Offset ratio within visible viewport"
+  [el]
+  (let [{:keys [top]} (bounding-client-rect el)
+        win-height (.-innerHeight js/window)]
+    (util/clamp (/ top win-height) 0 1)))
+
 ;;
 ;; * Blobs
 ;;
@@ -209,4 +228,3 @@
 
 (defn first-touch->e [e]
   (get (.-targetTouches e) 0))
-

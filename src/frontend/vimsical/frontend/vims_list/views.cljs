@@ -22,7 +22,6 @@
      [live-preview.views/live-preview
       {:static?        true
        :ui-key         :vims-list
-       :from-snapshot? true
        :vims           vims}]
      [:div.vims-title-and-delete.jsb.ac
       [:div.vims-title (or title "Untitled")]

@@ -31,8 +31,13 @@
     {:box-sizing  :inherit
      :user-select :inherit}]
 
-   [:body :#app :.app :.main
+   [:body :#app
     {:height :100%}]
+
+   [:.route-vims
+    {:height :100%}
+    [:.main
+     {:height :100%}]]
 
    [:input :textarea
     {:user-select :text}]
@@ -76,6 +81,21 @@
     {:display     :flex
      :align-items :center}]
 
+   [:.aic
+    {:display     :flex
+     :align-items :center}]
+
+   [:.ais
+    {:display     :flex
+     :align-items :stretch}]
+
+   [:.aifs
+    {:display     :flex
+     :align-items :stretch}]
+
+   [:.aife
+    {:display     :flex
+     :align-items :stretch}]
    [:.asc
     {:display    :flex
      :align-self :center}]

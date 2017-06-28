@@ -16,7 +16,6 @@
 (defn time->pct [duration playhead]
   (util/clamp (-> playhead (/ duration) (* 100)) 0 100))
 
-
 (defn perc->time [duration perc]
   (-> perc (/ 100) (* duration)))
 
@@ -73,21 +72,17 @@
                      [::user.handlers/playback-speed settings :inc]))}
      (str playback-speed "x")]))
 
-(defn time-or-speed-control [{:keys [vims]}]
+(defn time-or-speed-control []
   (let [show-speed? (reagent/atom false)
         on-mobile?  (<sub [::ui.subs/on-mobile?])]
-    (fn [{:keys [vims]}]
+    (fn [{:keys [vims] :as opts}]
       (let [time (util/time-ms->fmt-time (<sub [::timeline.subs/time vims]))]
         [:div.time-or-speed-control.ac.jc
          {:on-mouse-enter (e> (reset! show-speed? true))
           :on-mouse-out   (e> (reset! show-speed? false))}
          (if (or on-mobile? (not @show-speed?))
            [:div.time time]
-           [re-com/popover-tooltip
-            :label "speed control"
-            :position :above-left
-            :showing? show-speed?
-            :anchor [speed-control {:vims vims}]])]))))
+           [speed-control opts])]))))
 
 (defn timeline []
   (reagent/create-class
@@ -114,12 +109,12 @@
            :style {:left       (or skimhead-perc playhead-perc)
                    :margin-top (when ios? (if skimhead -9 -8))}}]]))}))
 
-(defn timeline-bar [{:keys [vims]}]
+(defn timeline-bar [opts]
   [re-com/h-box
    :class "bar timeline-container"
    :justify :center
    :align :center
    :gap "18px"
-   :children [[play-pause {:vims vims}]
-              [timeline {:vims vims}]
-              [time-or-speed-control {:vims vims}]]])
+   :children [[play-pause opts]
+              [timeline opts]
+              [time-or-speed-control opts]]])

@@ -11,6 +11,7 @@
    [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
    [vimsical.frontend.views.popovers :as popovers]
    [vimsical.user :as user]
+   [vimsical.frontend.landing.views :as landing.views]
    [re-frame.interop :as interop]))
 
 (defmethod frontend.remotes.fx/error-message ::auth.commands/duplicate-email
@@ -121,7 +122,7 @@
               (re-frame/dispatch [::handlers/login @state status-key]))
             (status-msg [status]
               (case status
-                nil "Log in"
+                nil                           "Log in"
                 ::frontend.remotes.fx/pending "Logging you in..."
                 ::frontend.remotes.fx/success "Success!"
                 (frontend.remotes.fx/error-message status)))]
@@ -163,11 +164,7 @@
             [:div.stmt
              "Vimsical is in private beta. Click "
              [:a {:href     "#"
-                  :on-click (e>
-                             (js/console.debug "route to landing and scroll to waitlist")
-                             #_(doto (util.dom/qsel ".bottom-waitlist .email")
-                                 util.dom/scroll-to
-                                 .focus))}
+                  :on-click (e> (landing.views/scroll-to-waitlist))}
               "here"]
              " to join our waitlist."]]])))))
 

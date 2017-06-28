@@ -75,6 +75,15 @@
           {:id                      (:db/uid html-file)
            :dangerouslySetInnerHTML {:__html body-string}}]]))))
 
+(defn preview-code-exec-script-tag
+  "Relative paths for local resources do not work in iFrames for security reasons"
+  []
+  #?(:cljs
+     (str
+      "<script src=\""
+      (.. js/window -location -origin)
+      "/js/preview-code-exec.js\"></script>")))
+
 (defn snapshots-markup
   [snapshots libs license-string]
   #?(:cljs
@@ -91,7 +100,7 @@
         [:html
          [:head
           {:dangerouslySetInnerHTML
-           {:__html head-string}}]
+           {:__html (str (preview-code-exec-script-tag) head-string)}}]
          [:body
           {:id                      body-id
            :dangerouslySetInnerHTML {:__html body-string}}]]))))
