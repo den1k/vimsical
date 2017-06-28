@@ -107,7 +107,7 @@
        (cond-> {:dispatch-n
                 [[::set-vims vims {:route? false}]]}
          (not (vims.db/loaded? db vims))
-         (assoc :async-flow (open-vims-async-flow vims-uid options)))))))
+         (assoc :async-flow (vims.handlers/load-vims-async-flow vims-uid options)))))))
 
 ;;
 ;; * Close
