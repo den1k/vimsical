@@ -102,3 +102,6 @@ run: infra-start
 
 bench: clean
 	bin/lein with-profile bench run
+
+server:
+	bin/lein with-profile frontend-dev ring server 3449

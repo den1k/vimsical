@@ -137,7 +137,9 @@
 
    :-frontend-dev-config
    {:source-paths ["dev/frontend"]
-    :plugins      [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]]
+    :plugins      [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]
+                   [lein-ring "0.11.0"]]
+    :ring         {:handler vimsical.frontend.figwheel-handler/handler}
     :dependencies [[com.cemerick/piggieback "0.2.2-SNAPSHOT"]
                    [figwheel-sidecar "0.5.10" :exclusions [org.clojure/clojurescript]]
                    [re-frisk "0.4.5" :exclusions [re-frame org.clojure/clojurescript]]
