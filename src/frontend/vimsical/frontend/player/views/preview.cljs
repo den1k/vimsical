@@ -26,11 +26,6 @@
 
 (defn preview-container [opts]
   [:div.preview-container.f1
-   [central-play-button {:vims vims}]
-   [live-preview {:ui-key :player
-                  :vims   vims
-                  ;; XXX see note in LivePreview
-                  :files  (<sub [::vcs.subs/files vims])}]])
    [central-play-button opts]
    [live-preview opts]])
 
