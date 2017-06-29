@@ -64,8 +64,8 @@
  (fn [[skimhead-entry playhead-entry skimming? playing?] _]
    (cond
      skimming? skimhead-entry
-     playing?  playhead-entry
-     :else     ::sentinel)))
+     playing? playhead-entry
+     :else ::sentinel)))
 
 (defn- timeline-entry-subs [[_ vims _]]
   [(re-frame/subscribe [::vcs.subs/vcs vims])

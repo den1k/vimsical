@@ -168,7 +168,7 @@
   [branches]
   (letfn [(parent-uid [branch] (-> branch ::parent :db/uid))]
     (let [branches-by-parent-uid (group-by parent-uid branches)
-          [master & error]       (get branches-by-parent-uid nil)]
+          [master & error] (get branches-by-parent-uid nil)]
       (if error
         (throw (ex-info "Found more than one branch with no parent:" {:error error :master master}))
         (tree* branches-by-parent-uid master)))))

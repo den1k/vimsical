@@ -133,9 +133,10 @@
          (<= 0.5 ratio 1)))
       :on-visibility-change
       (fn [visible?]
-        (re-frame/dispatch
-         [(if visible? ::live-preview.handlers/defreeze
-                       ::live-preview.handlers/freeze) lp-opts]))}
+        (when vims-uid
+          (re-frame/dispatch
+           [(if visible? ::live-preview.handlers/defreeze
+                         ::live-preview.handlers/freeze) lp-opts])))}
      [:div.vims-preview
       {:class class}
       (if vims-uid
@@ -161,9 +162,10 @@
          (<= 0.5 ratio 1)))
       :on-visibility-change
       (fn [visible?]
-        (re-frame/dispatch
-         [(if visible? ::live-preview.handlers/defreeze
-                       ::live-preview.handlers/freeze) lp-opts]))}
+        (when vims-uid
+          (re-frame/dispatch
+           [(if visible? ::live-preview.handlers/defreeze
+                         ::live-preview.handlers/freeze) lp-opts])))}
      [:div.section.vims-preview-section
       {:class class}
       child

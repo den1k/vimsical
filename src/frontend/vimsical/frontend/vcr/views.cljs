@@ -150,7 +150,7 @@
 (defn- vims-sync-status []
   (let [vims-uid (:db/uid (<sub [::app.subs/vims [:db/uid]]))
         status   (<sub [::vcs.sync.subs/vims-sync-status vims-uid])]
-    [:div.sync-status-wrapper
+    [:div.sync-status-wrapper.section
      (when-not (= :init status)
        [:div.sync-status.ac
         {:class (when (= status :success) "saved")}
@@ -158,9 +158,9 @@
         (re-com/gap :size "8px")
         [:div.status-message
          (case status
-           :success "saved"
-           :waiting "saving..."
-           nil)]])]))
+           :waiting "unsaved changes"
+           :saving "saving..."
+           :success "saved")]])]))
 
 (defn- author-credit []
   (let [{::vims/keys [owner]} (<sub [::app.subs/vims
@@ -170,15 +170,19 @@
      (util/space-join "by" (user/full-name owner))]))
 
 (defn- options []
-  [:div.options.jsb
-   [:div.option
-    {:on-click (e> (.stopPropagation e)
-                   (re-frame/dispatch [::app.handlers/modal :modal/libs]))}
-    "libs"]
-   [:div.license.option
-    {:on-click (e> (.stopPropagation e)
-                   (re-frame/dispatch [::app.handlers/modal :modal/license]))}
-    [:div.license-title "license"]]])
+  [re-com/h-box
+   :class "options section"
+   :gap "5px"
+   :justify :end
+   :children
+   [[:div.option
+     {:on-click (e> (.stopPropagation e)
+                    (re-frame/dispatch [::app.handlers/modal :modal/libs]))}
+     "libs"]
+    [:div.license.option
+     {:on-click (e> (.stopPropagation e)
+                    (re-frame/dispatch [::app.handlers/modal :modal/license]))}
+     [:div.license-title "license"]]]])
 
 (defn vcr-footer []
   [:div.vcr-footer.jsb.ac

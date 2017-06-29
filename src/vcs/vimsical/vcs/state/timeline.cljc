@@ -68,7 +68,8 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.state.branches :as state.branches]
-   [vimsical.vcs.state.chunk :as chunk]))
+   [vimsical.vcs.state.chunk :as chunk]
+   [vimsical.common.util.core :as util]))
 
 ;;
 ;; * Spec
@@ -125,14 +126,14 @@
 
 (s/fdef new-branch-chunks-by-delta-start-index
         :args (s/cat :branch ::branch/branch)
-        :ret  ::branch-chunks-by-delta-start-index)
+        :ret ::branch-chunks-by-delta-start-index)
 
 (defn new-branch-chunks-by-delta-start-index
   [{:keys [db/uid] ::branch/keys [chunks]}]
   (new-chunks-by-delta-start-index chunks))
 
 (s/fdef new-branch-children-chunks-by-delta-branch-off-indexes
-        :args (s/cat :deltas-by-branch-uid  ::deltas-by-branch-uid
+        :args (s/cat :deltas-by-branch-uid ::deltas-by-branch-uid
                      :branch ::branch/branch)
         :ret ::branch-children-chunks-by-delta-branch-off-index)
 
@@ -162,7 +163,7 @@
         :args (s/cat :branch-chunks-by-delta-start-index ::branch-chunks-by-delta-start-index
                      :indexes (s/every ::index)
                      :uuid-fn ::uuid-fn)
-        :ret  ::branch-chunks-by-delta-start-index)
+        :ret ::branch-chunks-by-delta-start-index)
 
 (defn slice-branch-chunks-by-delta-index
   "Split the chunks in `branch-chunks-by-delta-start-index` according to
@@ -179,12 +180,12 @@
          branch-chunks-by-delta-start-index
          ;; Else our split point is inside the last chunk on the left, so
          ;; we split it and update the map
-         (let [[chunk-index chunk]      (last left)
-               relative-split-index     (- (long index) (long chunk-index))
+         (let [[chunk-index chunk] (last left)
+               relative-split-index (- (long index) (long chunk-index))
                [chunk-left chunk-right] (chunk/split-at-delta-index chunk uuid-fn relative-split-index)]
            (assoc branch-chunks-by-delta-start-index
-                  chunk-index chunk-left
-                  index chunk-right)))))
+             chunk-index chunk-left
+             index chunk-right)))))
    branch-chunks-by-delta-start-index indexes))
 
 (s/fdef new-inlined-chunks-seq
@@ -209,9 +210,9 @@
         (reduce-kv
          (fn [branch-chunks-by-delta-start-index branch-off-index child-chunks]
            (let [[left [idx chunk-or-chunks] right] (avl/split-key branch-off-index branch-chunks-by-delta-start-index)
-                 value                              (if (vector? chunk-or-chunks)
-                                                      (into chunk-or-chunks child-chunks)
-                                                      (conj child-chunks chunk-or-chunks))]
+                 value (if (vector? chunk-or-chunks)
+                         (into chunk-or-chunks child-chunks)
+                         (conj child-chunks chunk-or-chunks))]
              (merge
               left
               {idx value}
@@ -221,7 +222,7 @@
 
 (s/fdef new-chunks-by-absolute-start-time
         :args (s/cat :chunks (s/nilable (s/every ::chunk/chunk)))
-        :ret  ::chunks-by-absolute-start-time)
+        :ret ::chunks-by-absolute-start-time)
 
 (defn new-chunks-by-absolute-start-time
   "Return an avl map where each chunk is assoc'd with it's absolute start time
@@ -297,10 +298,10 @@
         inlined-chunks                 (inline-chunks deltas-by-branch-uid' chunks-by-branch-uid' branches uuid-fn)
         chunks-by-absolute-start-time' (new-chunks-by-absolute-start-time inlined-chunks)]
     (assoc timeline
-           ::deltas-by-branch-uid deltas-by-branch-uid'
-           ::chunks-by-branch-uid chunks-by-branch-uid'
-           ::chunks-by-absolute-start-time chunks-by-absolute-start-time'
-           ::duration (+ (long duration) (long pad)))))
+      ::deltas-by-branch-uid deltas-by-branch-uid'
+      ::chunks-by-branch-uid chunks-by-branch-uid'
+      ::chunks-by-absolute-start-time chunks-by-absolute-start-time'
+      ::duration (+ (long duration) (long pad)))))
 
 (s/fdef add-deltas
         :args (s/cat :timeline ::timeline
@@ -317,10 +318,10 @@
         inlined-chunks                 (inline-chunks deltas-by-branch-uid' chunks-by-branch-uid' branches uuid-fn)
         chunks-by-absolute-start-time' (new-chunks-by-absolute-start-time inlined-chunks)]
     (assoc timeline
-           ::deltas-by-branch-uid deltas-by-branch-uid'
-           ::chunks-by-branch-uid chunks-by-branch-uid'
-           ::chunks-by-absolute-start-time chunks-by-absolute-start-time'
-           ::duration (reduce + (long duration) (map :pad deltas)))))
+      ::deltas-by-branch-uid deltas-by-branch-uid'
+      ::chunks-by-branch-uid chunks-by-branch-uid'
+      ::chunks-by-absolute-start-time chunks-by-absolute-start-time'
+      ::duration (reduce + (long duration) (map :pad deltas)))))
 
 ;;
 ;; ** Queries
@@ -381,17 +382,35 @@
 (defn next-entry
   [timeline [t _]]
   ;; The next delta might be in the next chunk, but we look to the left first
-  (or (some-> timeline (nearest-chunk-entry < t)  (nearest-delta-entry > t))
+  (or (some-> timeline (nearest-chunk-entry < t) (nearest-delta-entry > t))
       (some-> timeline (nearest-chunk-entry >= t) (nearest-delta-entry > t))))
 
 (s/fdef last-entry :args (s/cat :timeline ::timeline) :ret (s/nilable ::entry))
 
 (defn last-entry
   [timeline]
-  (let [t #?(:clj  Integer/MAX_VALUE :cljs js/Number.MAX_SAFE_INTEGER)]
+  (let [t #?(:clj Integer/MAX_VALUE :cljs js/Number.MAX_SAFE_INTEGER)]
     (some-> timeline
             (nearest-chunk-entry < t)
             (nearest-delta-entry < t))))
+
+(defn branch-last-entry
+  "Returns the last delta-entry of the branch at abs-time."
+  [timeline abs-time]
+  (letfn [(branch-end-chunk-entry [[_ chunk :as chunk-entry]]
+            (when (::chunk/branch-end? chunk) chunk-entry))
+          (current-branch-chunk-entry []
+            (branch-end-chunk-entry
+             (nearest-chunk-entry timeline < abs-time)))
+          (find-next-branch-end-chunk-entry []
+            (loop [cur-time abs-time]
+              (when-some [[abs-time _ :as chunk-entry]
+                          (nearest-chunk-entry timeline > cur-time)]
+                (or (branch-end-chunk-entry chunk-entry)
+                    (recur abs-time)))))]
+    (nearest-delta-entry (or (current-branch-chunk-entry)
+                             (find-next-branch-end-chunk-entry))
+                         < util/max-integer)))
 
 (defn delta-at-absolute-time
   [timeline expect-abs-time]

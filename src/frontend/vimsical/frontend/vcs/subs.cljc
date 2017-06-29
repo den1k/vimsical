@@ -60,6 +60,26 @@
     (fn [branch] (util/=by identity :db/uid branch-uid branch))
     branches)))
 
+(re-frame/reg-sub
+ ::master-branch
+ (fn [[_ vims]] (re-frame/subscribe [::branches vims]))
+ (fn [branches _] (branch/master branches)))
+
+(re-frame/reg-sub
+ ::branch-limit?
+ (fn [[_ vims]]
+   [(re-frame/subscribe [::vcs vims])
+    (re-frame/subscribe [::branch-uid vims])
+    (re-frame/subscribe [::playhead-entry vims])
+    (re-frame/subscribe [::playhead-on-master? vims])])
+ (fn [[{:as vcs ::vcs/keys [branches]}
+       branch-uid
+       playhead-entry
+       playhead-on-master?]]
+   (boolean
+    (and (not playhead-on-master?)
+         (vcs/branching? vcs branch-uid playhead-entry)))))
+
 ;;
 ;; * Heads (timeline entries)
 ;;
@@ -86,6 +106,14 @@
     (re-frame/subscribe [::playhead-entry vims])])
  (fn [[skimhead-entry playhead-entry] _]
    (or skimhead-entry playhead-entry)))
+
+(re-frame/reg-sub
+ ::playhead-on-master?
+ (fn [[_ vims]]
+   [(re-frame/subscribe [::master-branch vims])
+    (re-frame/subscribe [::playhead-entry vims])])
+ (fn [[{:as master master-uid :db/uid} [_ {:keys [branch-uid]}]] _]
+   (= master-uid branch-uid)))
 
 ;;
 ;; * Files
