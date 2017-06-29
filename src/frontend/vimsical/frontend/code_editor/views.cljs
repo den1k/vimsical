@@ -2,7 +2,10 @@
   (:require
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
+   [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.common.util.core :as util :include-macros true]
+   [vimsical.frontend.vcs.subs :as vcs.subs]
+   [vimsical.frontend.code-editor.subs :as subs]
    [vimsical.frontend.code-editor.handlers :as handlers]
    [vimsical.frontend.timeline.handlers :as timeline.handlers]
    [vimsical.frontend.code-editor.interop :as interop]
@@ -108,25 +111,37 @@
 ;; * Component
 ;;
 
+(defn code-editor-instance
+  "Separate component to avoid re-rendering monaco's parent node."
+  [opts]
+  [:div.code-editor
+   {:on-wheel (e> (.preventDefault e))  ; don't scroll the page
+    :ref      (editor-lifecycle opts)}])
+
 (defn code-editor
   [{:keys [file] :as opts}]
   {:pre [file]}
-  (reagent/create-class
-   {:component-will-receive-props
-    (fn [c [_ new-opts]]
-      (let [old-opts (reagent/props c)]
-        (re-frame/dispatch [::handlers/recycle old-opts new-opts])))
-    :reagent-render
-    (fn [{:keys [vims file] :as opts}]
-      [:div.code-editor-wrapper.dc
-       (when true
-         [:div.insert-warning.dc.aic
-          [:div.msg
-           "No support for branching off your own insert, yet."]
-          [:div.action.button
-           {:on-click
-            (e> (re-frame/dispatch [::timeline.handlers/go-to-end-of-insert vims]))}
-           "Go to end of insert"]])
-       [:div.code-editor
-        {:on-wheel (e> (.preventDefault e)) ; don't scroll the page
-         :ref      (editor-lifecycle opts)}]])}))
+  (let [show-warning? (reagent/atom false)]
+    (reagent/create-class
+     {:component-will-receive-props
+      (fn [c [_ new-opts]]
+        (let [old-opts (reagent/props c)]
+          (re-frame/dispatch [::handlers/recycle old-opts new-opts])))
+      :reagent-render
+      (fn [{:keys [vims file] :as opts}]
+        (let [branch-limit? (<sub [::vcs.subs/branch-limit? vims])
+              branch-owner  (<sub [::subs/branch-owned-by-user? vims])]
+          [:div.code-editor-wrapper.dc
+           ;; events bubbling up from editor
+           {:on-click    (e> (reset! show-warning? branch-limit?))
+            :on-key-down (e> (reset! show-warning? branch-limit?))}
+           (when @show-warning?
+             [:div.insert-warning.dc.aic
+              [:div.msg
+               "No support for branching off your own insert, yet."]
+              [:div.action.button
+               {:on-click
+                (e> (reset! show-warning? false)
+                    (re-frame/dispatch [::timeline.handlers/go-to-end-of-insert vims]))}
+               "Go to end of insert"]])
+           [code-editor-instance opts]]))})))

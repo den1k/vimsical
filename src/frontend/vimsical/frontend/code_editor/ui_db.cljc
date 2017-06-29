@@ -21,14 +21,7 @@
 ;;
 
 (defn get-editor [ui-db opts] (get-in ui-db (path opts ::editor)))
-
-(defn get-editors [ui-db {:as opts :keys [vims]}]
-  (get-in ui-db [(:db/uid vims) ::editors]))
-
-(defn set-editor [ui-db {:as opts :keys [vims]} obj]
-  (-> ui-db
-      (assoc-in (path opts ::editor) obj)
-      (update-in [(:db/uid vims) ::editors] (comp set conj) obj)))
+(defn set-editor [ui-db opts obj] (assoc-in ui-db (path opts ::editor) obj))
 
 ;;
 ;; * Listeners

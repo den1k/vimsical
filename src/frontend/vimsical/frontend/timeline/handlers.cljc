@@ -165,3 +165,20 @@
       :ui-db     ui-db'
       :scheduler [{:action :set-time :t ui-time}
                   {:override? true :t entry-time :event step-event}]})))
+
+(re-frame/reg-event-fx
+ ::go-to-end-of-insert
+ [(re-frame/inject-cofx :ui-db)
+  (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/vcs vims]))
+  (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/playhead-entry vims]))]
+ (fn [{:as             cofx
+       :keys           [db ui-db]
+       ::vcs.subs/keys [vcs playhead-entry]}
+      [_ vims]]
+   (let [[time _] playhead-entry
+         [entry-time :as entry] (vcs/timeline-branch-last-entry vcs time)
+         vcs'   (assoc vcs ::vcs.db/playhead-entry entry)
+         db'    (vcs.db/add db vcs')
+         ui-db' (timeline.ui-db/set-playhead ui-db vims entry-time)]
+     {:db    db'
+      :ui-db ui-db'})))

@@ -285,7 +285,6 @@
    [:.landing
     {:color     :black
      :width     :100%
-     :max-width (str (* 1.4 960) "px")
      :position  :relative}
     [:.section
      {:display         :flex

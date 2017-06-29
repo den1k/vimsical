@@ -304,9 +304,8 @@
  [(re-frame/inject-cofx :ui-db)]
  (fn [{:keys [ui-db]} [_ opts bool]]
    #?(:cljs
-      (let [editors (ui-db/get-editors ui-db opts)]
-        (doseq [e editors]
-          (interop/update-options e {:readOnly bool}))))))
+      (let [editor (ui-db/get-editor ui-db opts)]
+        (interop/update-options editor {:readOnly bool})))))
 
 (re-frame/reg-event-fx
  ::track-start
