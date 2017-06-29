@@ -162,6 +162,10 @@
      (.setValue editor string)))
 
 #?(:cljs
+   (defn get-value [^js/monaco.editor editor]
+     (.getValue editor)))
+
+#?(:cljs
    (defn add-action [^js/monaco.editor editor action]
      (.addAction editor action)))
 

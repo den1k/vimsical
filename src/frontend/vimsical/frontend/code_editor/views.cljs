@@ -129,9 +129,8 @@
           (re-frame/dispatch [::handlers/recycle old-opts new-opts])))
       :reagent-render
       (fn [{:keys [vims file] :as opts}]
-        (let [branch-limit? (<sub [::vcs.subs/branch-limit? vims])
-              branch-owner  (<sub [::subs/branch-owned-by-user? vims])]
-          [:div.code-editor-wrapper.dc
+        (let [branch-limit? (<sub [::vcs.subs/branch-limit? vims])]
+          [:div.code-editor-wrapper.dc.f1
            ;; events bubbling up from editor
            {:on-click    (e> (reset! show-warning? branch-limit?))
             :on-key-down (e> (reset! show-warning? branch-limit?))}
