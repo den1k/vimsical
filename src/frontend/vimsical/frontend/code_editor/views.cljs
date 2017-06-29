@@ -139,7 +139,7 @@
               [:div.msg
                "No support for branching off your own insert, yet."]
               [:div.action.button
-               {:on-click
+               {:on-mouse-down
                 (e> (reset! show-warning? false)
                     (re-frame/dispatch [::timeline.handlers/go-to-end-of-insert vims]))}
                "Go to end of insert"]])
