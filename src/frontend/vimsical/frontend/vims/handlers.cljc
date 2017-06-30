@@ -196,10 +196,11 @@
 
 (re-frame/reg-event-fx
  ::load-vims-async-did-complete
- (fn [{:keys [db]} [_ vims-uid deltas {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
-   (let [deltas (or deltas (vims.db/get-deltas db vims-uid))]
+ (fn [{:keys [db]} [_ vims-uid {:keys [uuid-fn] :or {uuid-fn uuid} :as options} ]]
+   (let [deltas (vims.db/get-deltas db vims-uid)]
      {:dispatch-n
-      [[::vcs.handlers/init vims-uid deltas options]]})))
+      [[::vcs.handlers/init vims-uid deltas options]
+       [::vcs.sync.handlers/start vims-uid]]})))
 
 (re-frame/reg-event-fx
  ::load-vims
