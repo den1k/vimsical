@@ -114,7 +114,7 @@
 (defn code-editor-instance
   "Separate component to avoid re-rendering monaco's parent node."
   [opts]
-  [:div.code-editor
+  [:div.code-editor.f1
    {:on-wheel (e> (.preventDefault e))  ; don't scroll the page
     :ref      (editor-lifecycle opts)}])
 

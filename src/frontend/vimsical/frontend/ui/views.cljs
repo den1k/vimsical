@@ -11,7 +11,7 @@
            in-range? (interop/ratom false)
            once?     false}}
    child]
-  (let [node           (atom)
+  (let [node           (atom nil)
         stop?          (interop/ratom false)
 
         check-vis      (fn []
@@ -53,7 +53,7 @@
   ([dispatch-fn child] [viewport-ratio false child])
   ([dispatch-fn mirror? child]
    (fn []
-     (let [node           (atom)
+     (let [node           (atom nil)
            ratio-fn       #(cond->> (util.dom/viewport-ratio @node)
                              mirror? (- 1))
            scroll-handler (fn [_] (dispatch-fn (ratio-fn)))]

@@ -102,7 +102,7 @@
     :env.backend/dev
     :backend-log-dev
     {:dependencies
-     [[criterium "0.4.4"]]
+                   [[criterium "0.4.4"]]
      ;; Get proper deps resolution for fixtures etc
      :source-paths ["dev/backend" "test/vcs" "test/backend" "test/common"]}]
 
@@ -122,7 +122,7 @@
     :plugins      [[lein-cljsbuild "1.1.6"
                     :exclusions [org.apache.commons/commons-compress]]]
     :repositories {"jitpack" {:url "https://jitpack.io"}}
-    :dependencies [[org.clojure/clojurescript "1.9.562" :exclusions [org.clojure/tools.reader]]
+    :dependencies [[org.clojure/clojurescript "1.9.660" :exclusions [org.clojure/tools.reader]]
                    ;; Our mapgraph fork. Must be be symlinked in checkouts.
                    [com.github.vimsical/mapgraph "parser-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
                    [reagent "0.6.2" :exclusions [org.clojure/clojurescript]]
@@ -137,7 +137,7 @@
 
    :-frontend-dev-config
    {:source-paths ["dev/frontend"]
-    :plugins      [[lein-figwheel "0.5.9" :exclusions [[org.clojure/clojure]]]
+    :plugins      [[lein-figwheel "0.5.10" :exclusions [[org.clojure/clojure]]]
                    [lein-ring "0.11.0"]]
     :ring         {:handler vimsical.frontend.figwheel-handler/handler}
     :dependencies [[com.cemerick/piggieback "0.2.2-SNAPSHOT"]
@@ -176,7 +176,7 @@
      :test-paths   ^{:protect false} ["test/integration"]
      :dependencies [[day8.re-frame/test "0.1.5" :exclusions [re-frame org.clojure/clojurescript]]
                     ;; Need more exclusions because guava conflicts with datomic
-                    [org.clojure/clojurescript "1.9.562" :exclusions [com.google.guava/guava org.clojure/tools.reader]]]}
+                    [org.clojure/clojurescript "1.9.660" :exclusions [com.google.guava/guava org.clojure/tools.reader]]]}
     :-frontend-config
     :env.frontend/dev
     :backend-test
@@ -231,19 +231,19 @@
     {:builds
      [{:id           "prod"
        :jar          true
-       :source-paths [ ;; "checkouts/mapgraph/src"
+       :source-paths [;; "checkouts/mapgraph/src"
                       ;; "checkouts/re-frame-async-flow-fx/src"
                       ;; "checkouts/re-frame-forward-events-fx/src"
                       "src/frontend"
                       "src/common"
                       "src/vcs"]
-       :compiler     {:main          vimsical.frontend.core
-                      :asset-path    "/js"
-                      :externs       ["resources/externs/svg.js"]
-                      :output-to     "resources/public/js/compiled/vimsical.js"
-                      :output-dir    "resources/public/js/compiled/out-prod"
-                      :optimizations :advanced
-                      :infer-externs true
+       :compiler     {:main            vimsical.frontend.core
+                      :asset-path      "/js"
+                      :externs         ["resources/externs/svg.js"]
+                      :output-to       "resources/public/js/compiled/vimsical.js"
+                      :output-dir      "resources/public/js/compiled/out-prod"
+                      :optimizations   :advanced
+                      :infer-externs   true
 
                       :parallel-build  true
                       :closure-defines {goog.DEBUG false}
@@ -253,12 +253,12 @@
                       ;; be useful when debugging issues in the optimized
                       ;; JavaScript and can aid in finding missing
                       ;; externs. Defaults to false.
-                      :pseudo-names false
-                      :pretty-print false
-                      :verbose      false}}
+                      :pseudo-names    false
+                      :pretty-print    false
+                      :verbose         false}}
       {:id           "dev"
        :figwheel     {:on-jsload vimsical.frontend.dev/on-reload}
-       :source-paths [ ;; "checkouts/mapgraph/src"
+       :source-paths [;; "checkouts/mapgraph/src"
                       ;; "checkouts/re-frame-async-flow-fx/src"
                       ;; "checkouts/re-frame-forward-events-fx/src"
                       "dev/frontend"
@@ -285,7 +285,7 @@
                                               :fn-symbol           "λ"}}}}
       {:id           "player-dev"
        :figwheel     {:on-jsload vimsical.frontend.player.dev/on-reload}
-       :source-paths [ ;; "checkouts/mapgraph/src"
+       :source-paths [;; "checkouts/mapgraph/src"
                       ;; "checkouts/re-frame-async-flow-fx/src"
                       ;; "checkouts/re-frame-forward-events-fx/src"
                       "dev/frontend"
@@ -314,13 +314,13 @@
        :jar          true
        :source-paths [;; "checkouts/mapgraph/src"
                       "src/frontend" "src/common" "src/vcs"]
-       :compiler     {:main          vimsical.frontend.player.core
-                      :asset-path    "/js"
-                      :externs       ["resources/externs/svg.js"]
-                      :output-to     "resources/public/js/compiled/vimsical-player.js"
-                      :output-dir    "resources/public/js/compiled/player/out-prod"
-                      :optimizations :advanced
-                      :infer-externs true
+       :compiler     {:main            vimsical.frontend.player.core
+                      :asset-path      "/js"
+                      :externs         ["resources/externs/svg.js"]
+                      :output-to       "resources/public/js/compiled/vimsical-player.js"
+                      :output-dir      "resources/public/js/compiled/player/out-prod"
+                      :optimizations   :advanced
+                      :infer-externs   true
 
                       :parallel-build  true
                       :closure-defines {goog.DEBUG false}
@@ -330,11 +330,11 @@
                       ;; be useful when debugging issues in the optimized
                       ;; JavaScript and can aid in finding missing
                       ;; externs. Defaults to false.
-                      :pseudo-names false
-                      :pretty-print false
-                      :verbose      false}}
+                      :pseudo-names    false
+                      :pretty-print    false
+                      :verbose         false}}
       {:id           "test"
-       :source-paths [ ;; "checkouts/mapgraph/src"
+       :source-paths [;; "checkouts/mapgraph/src"
                       ;; "checkouts/re-frame-async-flow-fx/src"
                       ;; "checkouts/re-frame-forward-events-fx/src"
                       "src/frontend"
@@ -351,7 +351,7 @@
                       :optimizations  :none
                       :parallel-build true}}
       {:id           "test-advanced"
-       :source-paths [ ;; "checkouts/mapgraph/src"
+       :source-paths [;; "checkouts/mapgraph/src"
                       ;; "checkouts/re-frame-async-flow-fx/src"
                       ;; "checkouts/re-frame-forward-events-fx/src"
                       "src/frontend"

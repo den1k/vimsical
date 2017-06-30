@@ -86,7 +86,7 @@
         ;;
         ;; NOTE that this will need to change with audio since we'll want the
         ;; actual elapsed time when an audio clip is recording.
-        :else (min elapsed event-max-pad)))))
+        :else (min (if (zero? elapsed) 1 elapsed) event-max-pad)))))
 
 ;;
 ;; ** Editor
@@ -134,6 +134,8 @@
   [[{:as vcs ::vcs.db/keys [playhead-entry branch-uid]} _ delta-uid {new-branch-uid :db/uid :as branch}]]
   {:post [::vcs.db/playhead-entry]}
   (let [next-entry     (vcs/timeline-next-entry vcs playhead-entry)
+        _              (re-frame.loggers/console :log "prev-ph" (str playhead-entry))
+        _              (re-frame.loggers/console :log "next-entry" (str next-entry))
         playhead-entry (or next-entry (vcs/timeline-first-entry vcs))
         pointers       (cond-> {::vcs.db/playhead-entry playhead-entry
                                 ::vcs.db/delta-uid      delta-uid}
@@ -183,9 +185,11 @@
       [_ {vims-uid :db/uid :as vims} {file-uid :db/uid} edit-event]]
    {:pre [vims-uid effects file-uid]}
    (when-let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)]
-     (let [playhead' (-> vcs' ::vcs.db/playhead-entry first)
-           db'       (vcs.db/add db vcs')
-           ui-db'    (timeline.ui-db/set-playhead ui-db vims playhead')]
+     (let [[playhead' _] (::vcs.db/playhead-entry vcs')
+           _      (re-frame.loggers/console :log "ph" (str playhead'))
+           _      (when ?branch (re-frame.loggers/console :log "branch" (str ?branch)))
+           db'    (vcs.db/add db vcs')
+           ui-db' (timeline.ui-db/set-playhead ui-db vims playhead')]
        (cond-> {:db         db'
                 :ui-db      ui-db'
                 :dispatch-n [[::sync.handlers/add-deltas vims-uid deltas]]}
