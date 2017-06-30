@@ -134,8 +134,6 @@
   [[{:as vcs ::vcs.db/keys [playhead-entry branch-uid]} _ delta-uid {new-branch-uid :db/uid :as branch}]]
   {:post [::vcs.db/playhead-entry]}
   (let [next-entry     (vcs/timeline-next-entry vcs playhead-entry)
-        _              (re-frame.loggers/console :log "prev-ph" (str playhead-entry))
-        _              (re-frame.loggers/console :log "next-entry" (str next-entry))
         playhead-entry (or next-entry (vcs/timeline-first-entry vcs))
         pointers       (cond-> {::vcs.db/playhead-entry playhead-entry
                                 ::vcs.db/delta-uid      delta-uid}
@@ -186,8 +184,6 @@
    {:pre [vims-uid effects file-uid]}
    (when-let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)]
      (let [[playhead' _] (::vcs.db/playhead-entry vcs')
-           _      (re-frame.loggers/console :log "ph" (str playhead'))
-           _      (when ?branch (re-frame.loggers/console :log "branch" (str ?branch)))
            db'    (vcs.db/add db vcs')
            ui-db' (timeline.ui-db/set-playhead ui-db vims playhead')]
        (cond-> {:db         db'

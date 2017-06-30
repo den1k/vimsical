@@ -3,6 +3,7 @@
    [re-frame.core :as re-frame]
    [reagent.core :as reagent]
    [vimsical.frontend.util.re-frame :refer [<sub]]
+   [reagent.dom :as dom]
    [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.vcs.subs :as vcs.subs]
    [vimsical.frontend.code-editor.subs :as subs]
@@ -99,14 +100,6 @@
     (set-keyboard-shortcuts)
     (interop/update-model-options model-opts)))
 
-(defn editor-lifecycle [opts]
-  (fn [?node]
-    (if ?node
-      (let [editor (new-editor ?node (editor-opts opts))]
-        (re-frame/dispatch [::handlers/register opts editor])
-        (re-frame/dispatch [::handlers/init opts]))
-      (re-frame/dispatch [::handlers/dispose opts]))))
-
 ;;
 ;; * Component
 ;;
@@ -114,20 +107,36 @@
 (defn code-editor-instance
   "Separate component to avoid re-rendering monaco's parent node."
   [opts]
-  [:div.code-editor.f1
-   {:on-wheel (e> (.preventDefault e))  ; don't scroll the page
-    :ref      (editor-lifecycle opts)}])
+  (reagent/create-class
+   {:component-did-mount
+    (fn [this]
+      (let [node   (dom/dom-node this)
+            editor (new-editor node (editor-opts opts))]
+        (re-frame/dispatch [::handlers/register opts editor])
+        (re-frame/dispatch [::handlers/init opts])))
+
+    :component-will-unmount
+    (fn [this]
+      (let [opts (reagent/props this)]
+        (re-frame/dispatch [::handlers/dispose opts])))
+
+    :component-will-receive-props
+    (fn [c [_ new-opts]]
+      (let [old-opts (reagent/props c)]
+        (re-frame/dispatch [::handlers/recycle old-opts new-opts])))
+
+    :render
+    (fn [_]
+      [:div.code-editor.f1
+       ;; don't scroll the page
+       {:on-wheel (e> (.preventDefault e))}])}))
 
 (defn code-editor
   [{:keys [file] :as opts}]
   {:pre [file]}
   (let [show-warning? (reagent/atom false)]
     (reagent/create-class
-     {:component-will-receive-props
-      (fn [c [_ new-opts]]
-        (let [old-opts (reagent/props c)]
-          (re-frame/dispatch [::handlers/recycle old-opts new-opts])))
-      :reagent-render
+     {:reagent-render
       (fn [{:keys [vims file] :as opts}]
         (let [branch-limit? (<sub [::vcs.subs/branch-limit? vims])]
           [:div.code-editor-wrapper.dc.f1
