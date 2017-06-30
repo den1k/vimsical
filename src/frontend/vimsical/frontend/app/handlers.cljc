@@ -60,7 +60,6 @@
      {:dispatch-n
       [[::vims.handlers/new owner nil {:uid vims-uid}]
        [::vims.handlers/load-vims-async-did-complete vims-uid options]
-       [::vcs.sync.handlers/start vims-uid]
        [::set-vims vims-uid]]})))
 
 ;;
@@ -88,7 +87,6 @@
  (fn [{:keys [db]} [_ vims {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
    (let [[_ vims-uid] (util.mg/->ref db vims)]
      {:dispatch-n [[::vims.handlers/load-vims vims options]
-                   [::vcs.sync.handlers/start vims-uid]
                    [::set-vims vims]
                    [::close-modal]]})))
 
