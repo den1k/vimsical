@@ -334,7 +334,7 @@
      [:h3.subheader "Take your creations places."]
      ;; todo credit
      [:div.player-wrapper
-      (let [vims-uid (uuid "5957960e-f0f7-4c29-bc51-7b6e1f1fbace")]
+      (let [vims-uid (:vims-uid (:emoji vims-kw->info))]
         [player-load-vims {:db/uid vims-uid}])]
      [:p.sub-stmt
       "Embed"
