@@ -52,9 +52,7 @@
   {:pre [node vims]}
   (re-frame/dispatch [::handlers/register-iframe opts node])
   (if static?
-    (do
-      (re-frame/dispatch [::handlers/update-iframe-snapshots opts])
-      (re-frame/dispatch [::handlers/update-iframe-src opts]))
+    (re-frame/dispatch [::handlers/update-iframe-snapshots opts])
     (do
       (when error-catcher?
         (re-frame/dispatch [::error-catcher/init])

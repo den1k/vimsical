@@ -59,19 +59,24 @@
       {:cursor :pointer}]]]
    [:.preview-wrapper
     {:flex 0.5}
-    [:.live-preview
-     {:width         :100%
-      :border-radius :3px
-      ;:position :absolute
-      ;:height :300px
-      }]]])
+    [:.credit-wrapper
+     {:width :100%}
+     [:.vims-preview
+      {:height :400px}
+      [:.live-preview
+       {:width         :100%
+        :height        :100%
+        :border-radius :3px}]]]]])
 
 (def create-and-explore
   [[:.create-section
     {:color      :white
-     :background "linear-gradient(to bottom, rgb(0, 0, 0), rgb(67, 67, 67))"
-     ;:background :black
-     }
+     :background "linear-gradient(to bottom, rgb(0, 0, 0), rgb(100, 100, 100))"}
+    [:.credit
+     {:color :lightgrey}
+     [:.title :.author :.explore
+      [:&:hover
+       {:color (:grey colors)}]]]
     [:.visibility
      {:align-items :flex-end}]
     [:.sub-section
@@ -82,12 +87,16 @@
      [:.video
       {:border-radius :3px}]]]
    [:.explore-section
-    {:background (:beatwhite colors)    ;:#F2F2F2
-     }
+    {:background :black
+     :color      :white}
+    [:.credit
+     [:.title :.author :.explore
+      [:&:hover
+       {:color :white}]]]
     [:.video-wrapper
      {:transform-origin :left}
      [:.video
-      {:border "1px solid hsl(0, 0%, 93%)"}]]]
+      {:border "1px solid white"}]]]
    [:.explore-section :.create-section
     [:.visibility
      [:&.visible
@@ -107,13 +116,21 @@
 
 (def player
   [:.player-section
-   {:background :mintcream}
+   {:background :#ffee58
+    :position   :relative}
    [:.header
     {:font-size :80px}]
+   [:.credit
+    {:position :absolute
+     :right    0
+     :bottom   0
+     :margin   :5px}]
    [:.visibility
-    {:align-items :center}
+    {:align-items :center
+     :width       :100%}
     [:.player-wrapper
-     {:transform  "scale(0.95)"
+     {:width      :80%
+      :transform  "scale(0.95)"
       :transition "transform 0.5s ease"}]
     [:&.visible
      [:.player-wrapper
@@ -121,11 +138,11 @@
    [:.credit-wrapper
     {:width :100%}]
    [:.player-wrapper
-    {:margin-top :10px
-     :box-shadow "0 10px 20px hsla(0, 0%, 20%, 0.3)"}]
+    {:margin-top :10px}]
    [:.player
     {:max-width  :100%
-     :max-height :100%}]
+     :height     :500px
+     :box-shadow "0 10px 20px hsla(0, 0%, 20%, 0.3)"}]
    [:.sub-stmt
     {:margin-top "5vh"}]
    (media/on-mobile
@@ -167,7 +184,7 @@
 
 (def waitlist
   [[:.bottom-waitlist
-    {;:padding-top    :300px
+    {:padding-top :200px
      ;:padding-bottom :400px
      }
     [:.join
@@ -175,7 +192,7 @@
       :letter-spacing :.02em
       :font-weight    :400}]]
    [:.waitlist
-    {:margin-top :1em}
+    {:margin-top :2em}
 
     [:.form
      [:.email
@@ -283,9 +300,9 @@
     [:.landing
      {:min-width :960px}])
    [:.landing
-    {:color     :black
-     :width     :100%
-     :position  :relative}
+    {:color    :black
+     :width    :100%
+     :position :relative}
     [:.section
      {:display         :flex
       :justify-content :space-around

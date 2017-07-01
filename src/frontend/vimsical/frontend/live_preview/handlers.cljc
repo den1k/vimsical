@@ -9,6 +9,7 @@
             [vimsical.vcs.lib :as lib]
             [vimsical.frontend.live-preview.subs :as subs]
             [vimsical.common.util.core :as util :include-macros true]
+            [vimsical.frontend.vims.subs :as vims.subs]
             [vimsical.frontend.util.preprocess.core :as preprocess]
    #?@(:cljs [[reagent.dom.server]
               [vimsical.frontend.util.dom :as util.dom]])))
@@ -107,10 +108,12 @@
  ::update-iframe-snapshots
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::vcs.subs/snapshots vims]))
-  (util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::vcs.subs/libs vims]))
+  ;; fixme when a vims' vcs is not initialized ::vcs.subs/libs are nil
+  (util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::vims.subs/snapshot-libs vims]))
   (util.re-frame/inject-sub (fn [[_ {:keys [vims]}]] [::license.subs/license-string-html-comment vims]))]
  (fn [{:keys           [db ui-db]
-       ::vcs.subs/keys [snapshots libs]
+       libs            ::vims.subs/snapshot-libs
+       ::vcs.subs/keys [snapshots]
        license-string  ::license.subs/license-string-html-comment}
       [_ opts]]
    (let [preview-markup (subs/snapshots-markup snapshots libs license-string)]
@@ -173,11 +176,11 @@
  (fn [_ [_ {:keys [vims] :as opts} files]]
    {:track
     (for [{:keys [db/uid] :as file} files]
-      {:action          :register
-       :id              (ui-db/path opts [::file uid])
-       :subscription    [::subs/file-string-or-no-history-string+file-lint-or-preprocessing-errors vims file]
-       :val->event      (fn [[file-string file-lint-or-preprocessing-errors]]
-                          [::update-live-preview opts file file-string file-lint-or-preprocessing-errors])})}))
+      {:action       :register
+       :id           (ui-db/path opts [::file uid])
+       :subscription [::subs/file-string-or-no-history-string+file-lint-or-preprocessing-errors vims file]
+       :val->event   (fn [[file-string file-lint-or-preprocessing-errors]]
+                       [::update-live-preview opts file file-string file-lint-or-preprocessing-errors])})}))
 
 (re-frame/reg-event-fx
  ::stop-track-vims
