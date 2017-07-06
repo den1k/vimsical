@@ -50,25 +50,27 @@
                                    ::user/twitter    "https://twitter.com/zachernuk"}
                    :original-src  "https://codepen.io/zachernuk/pen/RRLxLR"
                    :img-src       "https://www.dropbox.com/s/jmgq7ghrnxhzp0y/Screenshot%202017-06-24%2019.19.24.png?dl=1"}
-    :trail        {:vims-uid     nil
-                   :title        "Trail"
-                   :video-src    "/video/explore.m4v"
-                   :author       {::user/first-name "Hakim" ::user/middle-name "El" ::user/last-name "Hattab"
-                                  ::user/twitter    "https://twitter.com/hakimel"}
-                   :original-src "https://codepen.io/hakimel/pen/KanIi"}
+    :trail        {:vims-uid         nil
+                   :title            "Trail"
+                   :video-poster-src "/video/explore-still.png"
+                   :video-src        "/video/explore.m4v"
+                   :author           {::user/first-name "Hakim" ::user/middle-name "El" ::user/last-name "Hattab"
+                                      ::user/twitter    "https://twitter.com/hakimel"}
+                   :original-src     "https://codepen.io/hakimel/pen/KanIi"}
     :emoji        {:vims-uid-prod (uuid "5956f31b-744d-4686-a92b-76d4149d2daf")
                    :vims-uid      (uuid "5957960e-f0f7-4c29-bc51-7b6e1f1fbace")
                    :title         "Deeplearning Emoji"
-                   :explore?      false
+                   :explore?      true
                    :author        {::user/first-name "Johan" ::user/last-name "Haneveld"
                                    ::user/twitter    "https://twitter.com/Hipisuit"}
                    :original-src  "https://codepen.io/Idlework/pen/xOgGqM/"}
-    :tree         {:vims-uid     nil
-                   :title        "Fractal Tree (L-System)"
-                   :video-src    "/video/create.m4v"
-                   :author       {::user/first-name "Patrick" ::user/last-name "Stillhart"
-                                  ::user/website    "https://stillh.art/"}
-                   :original-src "https://codepen.io/arcs/pen/mEdqQX/"}
+    :tree         {:vims-uid         nil
+                   :title            "Fractal Tree (L-System)"
+                   :video-poster-src "/video/create-still.png"
+                   :video-src        "/video/create.m4v"
+                   :author           {::user/first-name "Patrick" ::user/last-name "Stillhart"
+                                      ::user/website    "https://stillh.art/"}
+                   :original-src     "https://codepen.io/arcs/pen/mEdqQX/"}
     :joy-division {:vims-uid     nil
                    :title        "Interactive Joy Division"
                    :author       {::user/first-name "Mark" ::user/last-name "Benzan"
@@ -209,13 +211,14 @@
 (defn video-player [{:keys [class loop? vims-kw]
                      :or   {loop? true}}]
   (let [node          (interop/ratom nil)
-        {:keys [video-src]} (get vims-kw->info vims-kw)
+        {:keys [video-src video-poster-src]} (get vims-kw->info vims-kw)
         on-vis-change (fn [visible?]
-                        (if visible?
-                          (doto @node
-                            (aset "currentTime" 0)
-                            (.play))
-                          (.pause @node)))]
+                        (when-not (<sub [::ui.subs/on-mobile?])
+                          (if visible?
+                            (doto @node
+                              (aset "currentTime" 0)
+                              (.play))
+                            (.pause @node))))]
     (fn []
       [ui.views/visibility {:on-visibility-change on-vis-change}
        [:video.video
@@ -231,6 +234,7 @@
          ;:plays-inline true
          :loop     loop?
          :preload  "auto"
+         :poster   video-poster-src
          :src      video-src}]])))
 
 (defn video-player-wrapper [{:keys [class vims-kw] :as opts}]
@@ -270,7 +274,7 @@
     [:div.vimsical-stmt.dc.jc
      [:h1.header.vimsical "Vimsical"]
      [:h2.subheader
-      "Your coding playground"]
+      "Your learning playground"]
      [:div.join
       {:on-click (e> (scroll-to-waitlist))}
       "Join our Journey"]]
@@ -380,7 +384,7 @@
 
    [explore-section]
 
-   [player-section]                     ;; emoji predictor
+   [player-section]
 
    ;; Todo Education section?
    #_[vims-preview-section {:vims-title-kw :trail :class "teach-by-doing"}

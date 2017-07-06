@@ -24,14 +24,14 @@
 
 (def ^:private phone
   "Portrait and landscape. Covers iPhone 5 to 6 Plus."
-  (media-wrapper :330px :736px))
+  (media-wrapper :320px :736px))
 
 (def on-phone (phone :only))
 (def not-on-phone (phone false))
 
 (def ^:private mobile
   "Portrait and landscape. From iPhone 5 to iPad."
-  (media-wrapper :330px :1024px))
+  (media-wrapper :320px :1024px))
 
 (def on-mobile (mobile :only))
 (def not-on-mobile (mobile false))

@@ -17,7 +17,10 @@
       {:color :black}]]
     [:.explore
      {:font-weight    500
-      :letter-spacing :0.3px}]]])
+      :letter-spacing :0.3px}]]
+   (media/on-mobile
+    [:.credit
+     {:font-size :8px}])])
 
 (def headers
   [[:.header
@@ -28,7 +31,13 @@
      :font-size      :20px
      :font-weight    :400
      :line-height    :1.2
-     :letter-spacing :0.02em}]])
+     :letter-spacing :0.02em}]
+   (media/on-mobile
+    [:.header
+     {:font-size :30px}]
+    [:.subheader
+     {:margin-top :0
+      :font-size  :15px}])])
 
 (def sub-statement
   [:.sub-stmt
@@ -52,11 +61,21 @@
       {:font-size     :80px
        :margin-bottom :5px}]
      [:.subheader
-      {:white-space   :nowrap
+      {;:white-space   :nowrap
        :font-size     :28px
        :margin-bottom :5px}]
      [:.join
-      {:cursor :pointer}]]]
+      {:cursor :pointer}]
+     (media/on-mobile
+      [:.header.vimsical
+       {:font-size     :40px
+        :margin-bottom :5px}]
+      [:.subheader
+       {:font-size     :16px
+        :margin-bottom :5px}]
+      [:.join
+       {:font-size :8px
+        :cursor    :pointer}])]]
    [:.preview-wrapper
     {:flex 0.5}
     [:.credit-wrapper
@@ -66,7 +85,10 @@
       [:.live-preview
        {:width         :100%
         :height        :100%
-        :border-radius :3px}]]]]])
+        :border-radius :3px}]]]]
+   (media/on-mobile
+    [:.vims-preview
+     {:height :300px}])])
 
 (def create-and-explore
   [[:.create-section
@@ -105,6 +127,11 @@
        #_{:width :85%}]]]
     [:.header
      {:font-size :80px}]
+    (media/on-mobile
+     [:.header
+      {:font-size :40px}]
+     [:.subheader
+      {:font-size :12px}])
     [:.video
      {:align-self :flex-end}]
     [:.video-wrapper
@@ -132,6 +159,9 @@
      {:width      :80%
       :transform  "scale(0.95)"
       :transition "transform 0.5s ease"}]
+    (media/on-mobile
+     [:.player-wrapper
+      {:width :100%}])
     [:&.visible
      [:.player-wrapper
       {:transform "scale(1)"}]]]
@@ -147,7 +177,16 @@
     {:margin-top "5vh"}]
    (media/on-mobile
     [:.player
-     {:height :70vh}])])
+     {:height :80vh}
+     [:.live-preview
+      {:position :relative}
+      [:.iframe
+       {:position         :absolute
+        :width            :200%
+        :height           :200%
+
+        :transform        "scale(0.5)"
+        :transform-origin "top left"}]]])])
 
 (def mission
   [:.mission-section
@@ -167,30 +206,39 @@
        :font-weight 400}]]
     [:&.visible
      [:.stretcher
-      {:width :80px}]
-     [:.logo-and-slogan]]]
+      {:width :80px}]]]
+   [:.stmt
+    {:font-size   :14px
+     :margin-top  :50px
+     :line-height 1.4
+     :font-weight 300}]
    (media/on-mobile
-    [:.stmt
-     {:font-size :14px}])
+    [:.visibility
+     [:.logo-and-slogan
+      {:max-width :80%}
+      [:.logo-and-type
+       {:transform        "scale(0.7)"
+        :transform-origin "center left"}]
+      [:.learnable
+       {:font-size :15px}]]])
    (media/not-on-mobile
     [:.stmt
      {:font-size :22px}])
-   [:.stmt
-    {:margin-top  :50px
-     :line-height 1.4
-     :font-weight 300}]
    [:.act
     {:margin-top :100px}]])
 
 (def waitlist
   [[:.bottom-waitlist
-    {:padding-top :200px
-     ;:padding-bottom :400px
-     }
+    {:padding-top :200px}
     [:.join
      {:font-size      :60px
       :letter-spacing :.02em
       :font-weight    :400}]]
+   (media/on-mobile
+    [:.bottom-waitlist
+     {:padding-top :50px}
+     [:.join
+      {:font-size :40px}]])
    [:.waitlist
     {:margin-top :2em}
 
@@ -300,9 +348,10 @@
     [:.landing
      {:min-width :960px}])
    [:.landing
-    {:color    :black
-     :width    :100%
-     :position :relative}
+    {:flex-shrink 0
+     :color       :black
+     :width       :100%
+     :position    :relative}
     [:.section
      {:display         :flex
       :justify-content :space-around

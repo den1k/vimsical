@@ -175,6 +175,10 @@
       :box-shadow "0 -2px 6px 0 rgba(143, 144, 150, 0.2)"}
      [:.logo-and-type
       {:width :60%}]
+     (media/on-mobile
+      [:.logo-and-type
+       {:transform        "scale(0.8)"
+        :transform-origin "center left"}])
      [:.active-file-type
       {:padding       "1px 10px"
        :border        "1px solid"

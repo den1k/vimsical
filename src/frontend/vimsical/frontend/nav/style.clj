@@ -10,6 +10,7 @@
    [:.main-nav
     {:border-bottom "solid 2px #eceff3"
      :background    :white
+     :flex-shrink   0
      :padding       "8px 25px"
      :z-index       15}
     [:&.no-border
