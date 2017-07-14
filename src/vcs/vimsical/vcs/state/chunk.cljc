@@ -5,7 +5,8 @@
    [vimsical.common.util.core :as util]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]
-   [vimsical.vcs.file :as file]))
+   [vimsical.vcs.file :as file]
+   [vimsical.vcs.data.splittable :as splittable]))
 
 ;;
 ;; * Spec
@@ -32,12 +33,17 @@
             (every? (partial apply util/=by :branch-uid) (partition 2 deltas)))
           (same-file?   [deltas]
             (every? (partial apply util/=by :file-uid) (partition 2 deltas)))]
-    (s/and (s/every ::delta/delta) same-branch? same-file?)))
+    (s/and
+     (s/every ::delta/delta)
+     same-branch?
+     same-file?
+     vector?)))
 
 (s/def ::chunk
   (s/keys :req [::uid
                 ::depth
                 ::count
+                ::deltas
                 ::deltas-by-relative-time
                 ::duration
                 ::delta-start-uid
@@ -88,7 +94,8 @@
          delta-start-uid :uid}             (first deltas)
         {delta-end-uid :uid}               (last deltas)
         [duration deltas-by-relative-time] (new-deltas-by-relative-time deltas)]
-    (cond-> {::uid                      uid
+    (cond-> {::uid                     uid
+             ::deltas                  (vec deltas)
              ::deltas-by-relative-time deltas-by-relative-time
              ::duration                duration
              ::count                   (count deltas)
@@ -122,25 +129,28 @@
   "Update `chunk` by adding `delta` to `::deltas-by-relative-time`, adding the
   delta's `:pad` to the chunks' `::duration`, moving the `::delta-end-uid` and
   setting the `::delta-start-uid` if it was previously nil."
-  [{::keys [duration count delta-start-uid deltas-by-relative-time] :as chunk} {:keys [uid pad] :as delta}]
+  [{::keys [duration count delta-start-uid deltas deltas-by-relative-time] :as chunk} {:keys [uid pad] :as delta}]
+  (assert (pos? pad))
   (let [duration' (+ ^long duration ^long  pad)]
     (cond-> (assoc chunk
                    ::delta-end-uid uid
                    ::count (inc count)
                    ::duration duration'
+                   ::deltas (conj deltas delta)
                    ::deltas-by-relative-time (assoc-deltas-by-relative-time deltas-by-relative-time duration' delta))
       (nil? delta-start-uid) (assoc ::delta-start-uid uid))))
 
 (defn add-deltas
-  [{::keys [duration count delta-start-uid deltas-by-relative-time] :as chunk} deltas]
-  (let [{first-uid :uid}                     (first deltas)
-        {last-uid :uid}                      (peek deltas)
-        [duration' deltas-by-relative-time'] (new-deltas-by-relative-time deltas duration)
+  [{::keys [duration count delta-start-uid deltas deltas-by-relative-time] :as chunk} deltas']
+  (let [{first-uid :uid}                     (first deltas')
+        {last-uid :uid}                      (peek deltas')
+        [duration' deltas-by-relative-time'] (new-deltas-by-relative-time deltas' duration)
         coll-count                           #?(:cljs cljs.core/count :clj clojure.core/count)]
     (cond-> (assoc chunk
                    ::delta-end-uid last-uid
-                   ::count (+ count (coll-count deltas))
+                   ::count (+ count (coll-count deltas'))
                    ::duration duration'
+                   ::deltas (into deltas deltas')
                    ::deltas-by-relative-time (merge deltas-by-relative-time deltas-by-relative-time'))
       (nil? delta-start-uid) (assoc ::delta-start-uid first-uid))))
 
@@ -160,12 +170,8 @@
                        (s/nilable ::chunk)))
 
 (defn split-at-delta-index
-  [{::keys [count depth delta-branch-off-uid deltas-by-relative-time branch-start? branch-end?]} uuid-fn index]
-  {:pre [(< index count)]}
-  ;; XXX We should use the left and right deltas as is and keep a time offset on
-  ;; the right chunk, this would avoid rebuilding the `deltas-by-relative-time`,
-  ;; it is also similar to the split operation in the indexed vector.
-  (let [[left-deltas right-deltas] (mapv vals (avl/split-at index deltas-by-relative-time))
+  [{::keys [count depth delta-branch-off-uid deltas branch-start? branch-end?]} uuid-fn index]
+  (let [[left-deltas right-deltas] (splittable/split deltas index)
         left-chunk                 (when (seq left-deltas)
                                      (with-bounds
                                        (new-chunk (uuid-fn) depth left-deltas (some? delta-branch-off-uid))
