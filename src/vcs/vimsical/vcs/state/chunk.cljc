@@ -130,7 +130,7 @@
   delta's `:pad` to the chunks' `::duration`, moving the `::delta-end-uid` and
   setting the `::delta-start-uid` if it was previously nil."
   [{::keys [duration count delta-start-uid deltas deltas-by-relative-time] :as chunk} {:keys [uid pad] :as delta}]
-  (assert (pos? pad))
+  (assert (pos? pad) "Can't add a single delta that's part of a paste, use add-deltas instead")
   (let [duration' (+ ^long duration ^long  pad)]
     (cond-> (assoc chunk
                    ::delta-end-uid uid
