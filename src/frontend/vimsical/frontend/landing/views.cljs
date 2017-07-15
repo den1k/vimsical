@@ -57,13 +57,13 @@
                    :author           {::user/first-name "Hakim" ::user/middle-name "El" ::user/last-name "Hattab"
                                       ::user/twitter    "https://twitter.com/hakimel"}
                    :original-src     "https://codepen.io/hakimel/pen/KanIi"}
-    :emoji        {:vims-uid-prod (uuid "5956f31b-744d-4686-a92b-76d4149d2daf")
-                   :vims-uid      (uuid "5957960e-f0f7-4c29-bc51-7b6e1f1fbace")
-                   :title         "Deeplearning Emoji"
+    :emoji        {:vims-uid-prod (uuid "5969777d-8dae-48a6-8b6c-838928b59382")
+                   :vims-uid      (uuid "5969743d-3ab1-49e9-b95f-894190369986")
+                   :title         "Montserrat"
                    :explore?      true
-                   :author        {::user/first-name "Johan" ::user/last-name "Haneveld"
-                                   ::user/twitter    "https://twitter.com/Hipisuit"}
-                   :original-src  "https://codepen.io/Idlework/pen/xOgGqM/"}
+                   :author        {::user/first-name "Claire" ::user/last-name "Larsen"
+                                   ::user/twitter    "https://codepen.io/ClaireLarsen/"}
+                   :original-src  "https://codepen.io/ClaireLarsen/pen/XmVyVX/"}
     :tree         {:vims-uid         nil
                    :title            "Fractal Tree (L-System)"
                    :video-poster-src "/video/create-still.png"

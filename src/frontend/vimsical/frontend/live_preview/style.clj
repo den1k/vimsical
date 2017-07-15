@@ -5,7 +5,10 @@
   [:.live-preview
    {:flex    1
     :display :flex}
+   {:position :relative}
    [:.iframe
-    {:width      :100%
+    {:position   :absolute
+     :width      :100%
+     :height     :100%
      :border     "none"
      :background "white"}]])
