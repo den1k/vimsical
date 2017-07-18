@@ -8,6 +8,7 @@
    [vimsical.backend.components.server.interceptors.event-auth :as interceptors.event-auth]
    [vimsical.backend.components.server.interceptors.session :as interceptors.session]
    [vimsical.backend.components.server.interceptors.transit :as interceptors.transit]
+   [vimsical.backend.components.server.interceptors.oembed :as oembed]
    [vimsical.common.env :as env]))
 
 ;;
@@ -16,10 +17,11 @@
 
 (def routes
   #{["/events"
-     :post [interceptors.event-auth/event-auth
-            interceptors.event/handle-event]
+     :post [interceptors.event-auth/event-auth interceptors.event/handle-event]
      :route-name :events]
-    ["/status" :get (constantly {:status 200 :body ""})
+    ["/services/oembed" :get [oembed/handle-embed]
+     :route-name :oembed]
+    ["/status" :get [interceptors.event-auth/event-auth interceptors.event/handle-event]
      :route-name :status]})
 
 (def url-for
