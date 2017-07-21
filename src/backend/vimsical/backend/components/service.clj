@@ -1,14 +1,15 @@
 (ns vimsical.backend.components.service
   (:require
    [io.pedestal.http :as http]
+   [io.pedestal.http.cors :as cors]
    [io.pedestal.http.ring-middlewares :as middlewares]
    [io.pedestal.http.route :as route]
    [vimsical.backend.components.server.interceptors.errors :as interceptors.errors]
    [vimsical.backend.components.server.interceptors.event :as interceptors.event]
    [vimsical.backend.components.server.interceptors.event-auth :as interceptors.event-auth]
+   [vimsical.backend.components.server.interceptors.oembed :as oembed]
    [vimsical.backend.components.server.interceptors.session :as interceptors.session]
    [vimsical.backend.components.server.interceptors.transit :as interceptors.transit]
-   [vimsical.backend.components.server.interceptors.oembed :as oembed]
    [vimsical.common.env :as env]))
 
 ;;
@@ -19,9 +20,11 @@
   #{["/events"
      :post [interceptors.event-auth/event-auth interceptors.event/handle-event]
      :route-name :events]
-    ["/services/oembed" :get [oembed/handle-embed]
+    ["/services/oembed"
+     :get [(cors/allow-origin "*") oembed/handle-embed]
      :route-name :oembed]
-    ["/status" :get [interceptors.event-auth/event-auth interceptors.event/handle-event]
+    ["/status"
+     :get [interceptors.event-auth/event-auth interceptors.event/handle-event]
      :route-name :status]})
 
 (def url-for
@@ -37,7 +40,7 @@
    interceptors.transit/body
    interceptors.session/session])
 
-;;1
+;;
 ;; * Service map
 ;;
 
