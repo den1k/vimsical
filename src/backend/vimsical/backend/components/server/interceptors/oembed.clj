@@ -16,10 +16,12 @@
 ;;
 
 (defn vims-url->vims-uid [url]
-  (let [uri            (java.net.URI. url)
-        path           (.getPath uri)
-        [_ _ vims-uid] (str/split path #"/")]
-    (java.util.UUID/fromString vims-uid)))
+  (try
+    (let [uri            (java.net.URI. url)
+          path           (.getPath uri)
+          [_ _ vims-uid] (str/split path #"/")]
+      (java.util.UUID/fromString vims-uid))
+    (catch Throwable _)))
 
 (defn vims-url->vims-data
   [datomic url]
@@ -47,15 +49,16 @@
 
 (defn new-response-body
   [vims-url vims-uid vims-title]
-  {:version       "1.0",
-   :type          "rich",
-   :html          (embed-html vims-uid)
-   :width         embed-width,
-   :height        embed-height,
-   :title         vims-title,
-   :url           vims-url,
-   :provider_name "Vimsical",
-   :provider_url  "https://vimsical.com/"})
+  (when vims-uid
+    {:version       "1.0",
+     :type          "rich",
+     :html          (embed-html vims-uid)
+     :width         embed-width,
+     :height        embed-height,
+     :title         vims-title,
+     :url           vims-url,
+     :provider_name "Vimsical",
+     :provider_url  "https://vimsical.com/"}))
 
 (defn- add-response-content-type
   [response format]
@@ -74,12 +77,13 @@
 (defn- enter [{:keys [datomic] :as context}]
   (let [{:keys [url]}                        (-> context :request :params)
         {:keys [db/uid] ::vims/keys [title]} (vims-url->vims-data datomic url)
-        body                                 (new-response-body url uid title)
-        resp                                 {:status 200 :body body}]
-    (assoc context :response resp)))
+        body                                 (new-response-body url uid title)]
+    (if body
+      (assoc context :response {:status 200 :body body})
+      (assoc context :response {:status 404}))))
 
 (defn- leave [{:keys [datomic] :as context}]
-  (let [{:keys [format url]} (-> context :request :params)]
+  (let [{:keys [format]} (-> context :request :params)]
     (-> context
         (update :response add-response-content-type format)
         (update :response encode-response-body format))))

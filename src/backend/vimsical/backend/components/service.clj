@@ -21,7 +21,7 @@
      :post [interceptors.event-auth/event-auth interceptors.event/handle-event]
      :route-name :events]
     ["/services/oembed"
-     :get [(cors/allow-origin "embed.ly") oembed/handle-embed]
+     :get [oembed/handle-embed]
      :route-name :oembed]
     ["/status"
      :get [interceptors.event-auth/event-auth interceptors.event/handle-event]
@@ -52,6 +52,7 @@
    ::http/routes               routes
    ::http/join?                false
    ::http/allowed-origins      {:creds true :allowed-origins (constantly true)}
+   ::http/secure-headers       nil
    ::http/resource-path        "/public"
    ::http/default-interceptors default-interceptors
    ::http/start-fn             http/start
