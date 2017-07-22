@@ -21,7 +21,7 @@
      :post [interceptors.event-auth/event-auth interceptors.event/handle-event]
      :route-name :events]
     ["/services/oembed"
-     :get [(cors/allow-origin "*") oembed/handle-embed]
+     :get [(cors/allow-origin "embed.ly") oembed/handle-embed]
      :route-name :oembed]
     ["/status"
      :get [interceptors.event-auth/event-auth interceptors.event/handle-event]
