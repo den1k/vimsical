@@ -62,12 +62,12 @@
 
 (defn- add-response-content-type
   [response format]
-  (let [content-type (case format "json" "application/json")]
+  (let [content-type (case format "json" "application/json" "application/json")]
     (assoc-in response [:headers "Content-Type"] content-type)))
 
 (defn- encode-response-body
   [response format]
-  (let [f (case format "json" json/encode)]
+  (let [f (case format "json" json/encode json/encode)]
     (update response :body f)))
 
 ;;
