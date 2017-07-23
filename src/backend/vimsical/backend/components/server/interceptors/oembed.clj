@@ -44,7 +44,7 @@
         style   "border:none"
         sandbox "allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts"]
     (format
-     "<iframe src=\"%s\" width=%s height=%s style=\"%s\" sandbox=\"%s\"></iframe>"
+     "<iframe src=\"%s\" width=\"%s\" height=\"%s\" style=\"%s\" sandbox=\"%s\"></iframe>"
      src embed-width embed-height style sandbox)))
 
 (defn new-response-body
