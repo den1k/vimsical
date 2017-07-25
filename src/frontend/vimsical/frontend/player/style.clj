@@ -236,10 +236,7 @@
       {:display :flex}]]]])
 
 (def player
-  [(media/not-on-mobile
-    [:.vimsical-frontend-player.landscape
-     {:height :400px}])
-   [:.vimsical-frontend-player
+  [[:.vimsical-frontend-player
     {:background :white
      :height     :100%}
     [:&.landscape
