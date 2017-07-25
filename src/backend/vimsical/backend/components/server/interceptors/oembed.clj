@@ -41,7 +41,7 @@
 (defn embed-html
   [vims-uid]
   (let [src     (vims-uid->embed-url vims-uid)
-        style   "border:none"
+        style   "border:1px solid lightgray"
         sandbox "allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts"]
     (format
      "<iframe src=\"%s\" width=\"%s\" height=\"%s\" style=\"%s\" sandbox=\"%s\"></iframe>"
