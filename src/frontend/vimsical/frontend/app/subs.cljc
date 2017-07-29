@@ -1,6 +1,6 @@
 (ns vimsical.frontend.app.subs
   (:require
-   [com.stuartsierra.mapgraph :as mg]
+   [vimsical.subgraph :as sg]
    [re-frame.core :as re-frame]
    [vimsical.user :as user]
    [vimsical.vims :as vims]
@@ -47,5 +47,5 @@
       (if ?vims
         [:q
          pattern
-         (mg/ref-to db ?vims)]
+         (sg/ref-to db ?vims)]
         [::vims pattern])))))

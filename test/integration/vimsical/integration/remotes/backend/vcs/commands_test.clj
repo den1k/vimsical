@@ -1,7 +1,7 @@
 (ns vimsical.integration.remotes.backend.vcs.commands-test
   (:require
    [clojure.test :refer [deftest is use-fixtures]]
-   [com.stuartsierra.mapgraph :as mg]
+   [vimsical.subgraph :as sg]
    [day8.re-frame.test :as re-frame.test]
    [orchestra.spec.test :as st]
    [re-frame.core :as re-frame]
@@ -9,7 +9,7 @@
    [vimsical.backend.system.fixture :as system.fixture]
    [vimsical.common.test :refer [uuid]]
    [vimsical.frontend.db :as db]
-   [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.frontend.util.subgraph :as util.sg]
    [vimsical.frontend.util.re-frame :refer [<sub]]
    [vimsical.frontend.vcs.handlers :as vcs.handlers]
    [vimsical.frontend.vcs.subs :as vcs.subs]
@@ -26,7 +26,7 @@
 
 (def test-db
   (-> (db/new-db {:app/user data/user :app/vims data/vims})
-      (mg/add data/vims2)))
+      (sg/add data/vims2)))
 
 (defn re-frame-fixture
   [f]

@@ -5,7 +5,7 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.delta :as delta]
    [vimsical.vcs.state.timeline :as timeline]
-   [vimsical.frontend.util.mapgraph :as util.mg]))
+   [vimsical.frontend.util.subgraph :as util.sg]))
 
 (s/def ::branch-uid ::branch/uid)
 (s/def ::delta-uid ::delta/prev-uid)
@@ -33,7 +33,7 @@
 ;; * VCS Normalization
 ;;
 
-;; NOTE mg/add will recursively traverse a datastructure looking for entities,
+;; NOTE sg/add will recursively traverse a datastructure looking for entities,
 ;; eventhough the vcs is normalized in the db, this fn gets expensive as the vcs
 ;; gets large. So far the vcs only contains references for branches in
 ;; ::vcs/branches making it simple to manually normalize and assoc into the db
@@ -42,10 +42,10 @@
   [db vcs]
   (update vcs ::vcs/branches
           (fn [branches]
-            (mapv (partial util.mg/->ref db) branches))))
+            (mapv (partial util.sg/->ref db) branches))))
 
 (defn add
   [db vcs]
-  (let [ref   (util.mg/->ref db vcs)
+  (let [ref   (util.sg/->ref db vcs)
         normd (normalize db vcs)]
     (assoc db ref normd)))

@@ -9,7 +9,7 @@
    [vimsical.common.util.core :as util]
    [vimsical.remotes.backend.vcs.queries :as queries]
    [vimsical.vims :as vims]
-   [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.frontend.util.subgraph :as util.sg]
    [vimsical.vcs.sync :as vcs.sync]
    [vimsical.vcs.validation :as vcs.validation]))
 
@@ -30,8 +30,8 @@
    (fn prevent-remote-interceptor-after
      [context]
      (letfn [(current-vims-owner? [db]
-               (let [user                  (util.mg/pull* db [:app/user [:db/uid]])
-                     {::vims/keys [owner]} (util.mg/pull* db [:app/vims [{::vims/owner [:db/uid]}]])]
+               (let [user                  (util.sg/pull* db [:app/user [:db/uid]])
+                     {::vims/keys [owner]} (util.sg/pull* db [:app/vims [{::vims/owner [:db/uid]}]])]
                  (util/=by :db/uid user owner)))]
        (let [db              (or (interceptor/get-effect context :db)
                                  (interceptor/get-coeffect context :db))

@@ -6,7 +6,7 @@
             [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
             [vimsical.frontend.vcs.db :as vcs.db]
             [vimsical.frontend.vcr.handlers :as vcr.handlers]
-            [com.stuartsierra.mapgraph :as mg]
+            [vimsical.subgraph :as sg]
             [vimsical.frontend.timeline.handlers :as timeline.handlers]
             [vimsical.frontend.timeline.subs :as timeline.subs]
             [vimsical.frontend.code-editor.handlers :as code-editor.handlers]))

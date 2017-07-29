@@ -1,6 +1,6 @@
 (ns vimsical.frontend.vcr.libs.handlers
   (:require [re-frame.core :as re-frame]
-            [vimsical.frontend.util.mapgraph :as util.mg]
+            [vimsical.frontend.util.subgraph :as util.sg]
             [vimsical.frontend.util.re-frame :as util.re-frame]
             [vimsical.frontend.app.subs :as app.subs]
             [vimsical.frontend.app.vims.subs :as app.vims.subs]

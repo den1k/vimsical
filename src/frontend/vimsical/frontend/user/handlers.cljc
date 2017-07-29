@@ -1,8 +1,8 @@
 (ns vimsical.frontend.user.handlers
   (:require
    [re-frame.core :as re-frame]
-   [com.stuartsierra.mapgraph :as mg]
-   [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.subgraph :as sg]
+   [vimsical.frontend.util.subgraph :as util.sg]
    [vimsical.remotes.backend.user.queries :as user.queries]
    [medley.core :as md]
    [vimsical.common.uuid :refer [uuid]]
@@ -26,7 +26,7 @@
 (re-frame/reg-event-fx
  ::me-success
  (fn [{:keys [db]} [_ user]]
-   {:db (util.mg/add-linked-entities db {:app/user user})}))
+   {:db (util.sg/add-linked-entities db {:app/user user})}))
 
 ;; We mosly ignore this because this would happened for every anon user when trying
 ;; to initialize an non-existing session
@@ -49,7 +49,7 @@
          speed     (first (md/drop-upto #(= cur-speed %) (cycle range)))
          settings  (assoc (or settings {:db/uid (uuid)})
                           :settings/playback-speed speed)
-         db'       (mg/add
+         db'       (sg/add
                     db
                     {:db/uid         (second (:app/user db))
                      ::user/settings settings})]

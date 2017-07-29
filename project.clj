@@ -102,7 +102,7 @@
     :env.backend/dev
     :backend-log-dev
     {:dependencies
-                   [[criterium "0.4.4"]]
+     [[criterium "0.4.4"]]
      ;; Get proper deps resolution for fixtures etc
      :source-paths ["dev/backend" "test/vcs" "test/backend" "test/common"]}]
 
@@ -123,8 +123,7 @@
                     :exclusions [org.apache.commons/commons-compress]]]
     :repositories {"jitpack" {:url "https://jitpack.io"}}
     :dependencies [[org.clojure/clojurescript "1.9.660" :exclusions [org.clojure/tools.reader]]
-                   ;; Our mapgraph fork. Must be be symlinked in checkouts.
-                   [com.github.vimsical/mapgraph "parser-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
+                   [vimsical/subgraph "0.1.0-SNAPSHOT" :exclusions [org.clojure/clojure re-frame]]
                    [reagent "0.6.2" :exclusions [org.clojure/clojurescript]]
                    [re-frame "0.9.4" :exclusions [org.clojure/clojurescript]]
                    [com.andrewmcveigh/cljs-time "0.5.0"] ; required re-com, but we need a newer version
@@ -231,10 +230,7 @@
     {:builds
      [{:id           "prod"
        :jar          true
-       :source-paths [;; "checkouts/mapgraph/src"
-                      ;; "checkouts/re-frame-async-flow-fx/src"
-                      ;; "checkouts/re-frame-forward-events-fx/src"
-                      "src/frontend"
+       :source-paths ["src/frontend"
                       "src/common"
                       "src/vcs"]
        :compiler     {:main            vimsical.frontend.core
@@ -258,10 +254,7 @@
                       :verbose         false}}
       {:id           "dev"
        :figwheel     {:on-jsload vimsical.frontend.dev/on-reload}
-       :source-paths [;; "checkouts/mapgraph/src"
-                      ;; "checkouts/re-frame-async-flow-fx/src"
-                      ;; "checkouts/re-frame-forward-events-fx/src"
-                      "dev/frontend"
+       :source-paths ["dev/frontend"
                       "src/frontend"
                       "src/common"
                       "src/vcs"
@@ -285,10 +278,7 @@
                                               :fn-symbol           "λ"}}}}
       {:id           "player-dev"
        :figwheel     {:on-jsload vimsical.frontend.player.dev/on-reload}
-       :source-paths [;; "checkouts/mapgraph/src"
-                      ;; "checkouts/re-frame-async-flow-fx/src"
-                      ;; "checkouts/re-frame-forward-events-fx/src"
-                      "dev/frontend"
+       :source-paths ["dev/frontend"
                       "src/frontend"
                       "src/common"
                       "src/vcs"
@@ -312,8 +302,7 @@
                                               :fn-symbol           "λ"}}}}
       {:id           "player-prod"
        :jar          true
-       :source-paths [;; "checkouts/mapgraph/src"
-                      "src/frontend" "src/common" "src/vcs"]
+       :source-paths ["src/frontend" "src/common" "src/vcs"]
        :compiler     {:main            vimsical.frontend.player.core
                       :asset-path      "/js"
                       :externs         ["resources/externs/svg.js"]
@@ -334,10 +323,7 @@
                       :pretty-print    false
                       :verbose         false}}
       {:id           "test"
-       :source-paths [;; "checkouts/mapgraph/src"
-                      ;; "checkouts/re-frame-async-flow-fx/src"
-                      ;; "checkouts/re-frame-forward-events-fx/src"
-                      "src/frontend"
+       :source-paths ["src/frontend"
                       "src/common"
                       "src/vcs"
                       "test/frontend"
@@ -351,10 +337,7 @@
                       :optimizations  :none
                       :parallel-build true}}
       {:id           "test-advanced"
-       :source-paths [;; "checkouts/mapgraph/src"
-                      ;; "checkouts/re-frame-async-flow-fx/src"
-                      ;; "checkouts/re-frame-forward-events-fx/src"
-                      "src/frontend"
+       :source-paths ["src/frontend"
                       "src/common"
                       "src/vcs"
                       "test/frontend"

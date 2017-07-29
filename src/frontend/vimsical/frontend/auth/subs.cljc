@@ -1,6 +1,6 @@
 (ns vimsical.frontend.auth.subs
   (:require
-   [com.stuartsierra.mapgraph :as mg]
+   [vimsical.subgraph :as sg]
    [re-frame.core :as re-frame]
    [vimsical.user :as user]
    [vimsical.vims :as vims]))

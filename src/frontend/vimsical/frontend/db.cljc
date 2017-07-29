@@ -1,11 +1,11 @@
 (ns vimsical.frontend.db
   (:refer-clojure :exclude [uuid])
   (:require
-   [com.stuartsierra.mapgraph :as mg]
+   [vimsical.subgraph :as sg]
    [re-frame.core :as re-frame]
    [vimsical.common.test :refer [uuid]]
    [vimsical.frontend.quick-search.commands :as quick-search.commands]
-   [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.frontend.util.subgraph :as util.sg]
    [vimsical.vcs.compiler :as compiler]
    [vimsical.vcs.lib :as lib]
    [vimsical.frontend.router.routes :as router.routes]))
@@ -72,9 +72,9 @@
 
 (defn new-db
   [state]
-  (-> (mg/new-db)
-      (mg/add-id-attr :db/uid ::lib/src)
-      (util.mg/add-linked-entities state)))
+  (-> (sg/new-db)
+      (sg/add-id-attr :db/uid ::lib/src)
+      (util.sg/add-linked-entities state)))
 
 (def default-db (new-db state))
 
