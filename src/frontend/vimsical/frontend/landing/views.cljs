@@ -289,6 +289,7 @@
    [:div.sub-section.aife
     [:h2.header "Create"]
     [:h3.subheader
+     ;"You do the work, we make the tutorial. Automatically.
      "Vimsical turns your coding process into an interactive tutorial. Automatically."]
     [ui.views/visibility {}
      [video-player-wrapper
@@ -300,7 +301,7 @@
    [:div.sub-section
     [:h2.header "Explore"]
     [:h3.subheader
-     "See how your favorite projects come together. And make edits with one click."]
+     "See how projects come together. And make edits with one click."]
     [ui.views/visibility {}
      [video-player-wrapper
       {:class   "explore-video"
@@ -311,10 +312,10 @@
    [ui.views/visibility
     {:once? true}
     ;{}
-    [:div.logo-and-slogan.ac.jsb
-     [icons/logo-and-type]
-     [:div.stretcher]
-     [:h2.learnable "make it learnable."]]]
+    #_[:div.logo-and-slogan.ac.jsb
+       [icons/logo-and-type]
+       [:div.stretcher]
+       [:h2.learnable "make it learnable."]]]
    [:p.stmt
     "Our mission is to nurture understanding, accelerate learning and ease teaching"
     [:br]
@@ -330,22 +331,33 @@
                 :read-only? true}
          (not (<sub [::ui.subs/on-mobile?])) (assoc :orientation :landscape))])))
 
+(defn coder-emojis []
+  [:span.coder-emojis "\uD83D\uDC69\u200D\uD83D\uDCBB \uD83D\uDC68\u200D\uD83D\uDCBB"])
+
 (defn player-section []
   [:div.player-section.section
    [ui.views/visibility {}
     [:div.dc.ac.sub-section
-     [:h2.header "Play"]
-     [:h3.subheader "Take your creations places."]
+     ;[:h2.header "Create. Watch. Explore."]
+     [:h2.header "Automatic Tutorials of Your Work."]
+     (when-not (<sub [::ui.subs/on-mobile?])
+       [re-com/h-box
+        :class "try-cta-box"
+        :gap "5px"
+        :children [[coder-emojis]
+                   [:span.try-cta.ac
+                    " Try changing the code"]
+                   [:span.pointer "☟"]]])
      ;; todo credit
      [:div.player-wrapper
       (let [vims-uid (:vims-uid (:emoji vims-kw->info))]
         [player-load-vims {:db/uid vims-uid}])]
-     [:p.sub-stmt
-      "Embed"
-      [:span.bold " Player "]
-      "and bring powerful learning experiences"
-      [:br]
-      "to your website, blog and classroom."]
+     #_[:p.sub-stmt
+        "Embed"
+        [:span.bold " Player "]
+        "and bring powerful learning experiences"
+        [:br]
+        "to your website, blog and classroom."]
      [credit (:emoji vims-kw->info)]
      ]]])
 
@@ -365,12 +377,37 @@
            [:div.btn-content "Sign up"]]]
          (cond
            success [:div.result.success
-                    "Thank You!"
-                    [:br]
-                    "We can't wait to see what you'll come up with."]
+                    "Thanks! We'll reach out to you soon."]
            error [:div.result.error
                   "Oh no!"
                   [:br] "Something went wrong. Please try again."])]))))
+
+(defn product-stmts []
+  [:div.product-stmts-section.section
+   [re-com/v-box
+    :class "product-stmts sub-section"
+    :gap "60px"
+    :children
+    [[:div.product-stmt-wrapper.ac
+      [icons/deer {:class "stmt-icon deer"}]
+      [:div.product-stmt.dc.jc
+       [:div.title "Just Create."]
+       [:div.stmt "Vimsical turns your coding process into an interactive tutorial. Automatically."]]]
+     [:div.product-stmt-wrapper.ac
+      [icons/monkey {:class "stmt-icon monkey"}]
+      [:div.product-stmt.dc.jc
+       [:div.title "No Video = \uD83D\uDCAF Interactive."]
+       [:div.stmt "See how your favorite projects come together. And make edits with one click."]]]
+     [:div.product-stmt-wrapper.ac
+      [icons/crane {:class "stmt-icon crane"}]
+      [:div.product-stmt.dc.jc
+       [:div.title "Explore Everything, Everywhere."]
+       [:div.stmt "Embed Player and bring powerful learning experiences to your website, company and classroom."]]]]]])
+
+(defn contact-us []
+  [:span.contact
+   {:on-click (e> (util.dom/open "mailto:dennis@vimsical.com?subject=Vimsical%20Demo"))}
+   "Contact us"])
 
 ;;
 ;; * Component
@@ -378,13 +415,14 @@
 
 (defn landing []
   [:div.landing.asc.dc.ac.ais
-   [page-header]
-
-   [create-section]
-
-   [explore-section]
-
+   ;[page-header]
    [player-section]
+   [product-stmts]
+
+   ;[create-section]
+
+   ;[explore-section]
+
 
    ;; Todo Education section?
    #_[vims-preview-section {:vims-title-kw :trail :class "teach-by-doing"}
@@ -403,6 +441,31 @@
 
    [:div.bottom-waitlist.dc.ac.section
     [:div.sub-section.aic
-     [:h1.join "Join our Journey"]
-     [waitlist]]]
-   [mission-section]])
+     [:h2.join "Interested in How Vimsical Could Help You or Your Company?"]
+     [re-com/h-box
+      :class "get-demo-box"
+      :gap "30px"
+      :align :center
+      :style {:flex-flow :wrap}
+      :children [[:span.get-demo "Get a Demo:"] [waitlist]]]]]
+   ;[mission-section]
+   (if (<sub [::ui.subs/on-mobile?])
+     [:footer.footer.jsb.ac.dc
+      [re-com/h-box
+       :class "built-contact mobile"
+       :justify :around
+       :children
+       [[:span "Built in NYC"]
+        [contact-us]]]
+      [icons/logo-and-type {:class :footer-logo}]]
+     [:footer.footer.jsb.ac
+      [:div.footer-box [:span "Copyright © 2017 Vimsical Inc."]]
+      [icons/logo-and-type
+       {:class :footer-logo}]
+      [re-com/h-box
+       :class "built-contact footer-box"
+       :justify :end
+       :gap "10px"
+       :children
+       [[:span "Built in NYC"]
+        [contact-us]]]])])

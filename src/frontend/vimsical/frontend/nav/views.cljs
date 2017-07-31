@@ -91,60 +91,62 @@
             :anchor title-html])]))))
 
 (defn nav []
-  (let
-   [show-popup? (interop/ratom false)
-    route       (<sub [::router.subs/route])
-    modal       (<sub [::app.subs/modal])
-    {::user/keys [vimsae] :as user}
-    (<sub [:q [:app/user
-               [:db/uid
-                ::user/first-name
-                ::user/last-name
-                ::user/email
-                {::user/vimsae [:db/uid]}]]])
+  (fn []
+    (let
+     [show-popup? (interop/ratom false)
+      route       (<sub [::router.subs/route])
+      modal       (<sub [::app.subs/modal])
+      {::user/keys [vimsae] :as user}
+      (<sub [:q [:app/user
+                 [:db/uid
+                  ::user/first-name
+                  ::user/last-name
+                  ::user/email
+                  {::user/vimsae [:db/uid]}]]])
 
-    {::vims/keys [title] :as app-vims} (<sub [:q [:app/vims
-                                                  [:db/uid
-                                                   ::vims/title]]])]
-    [:div.main-nav.ac.jsb
-     {:class (when modal "no-border")}
-     [:div.logo-and-type
-      (cond-> {:on-click (e> (re-frame/dispatch [::router.handlers/route ::router.routes/landing]))}
-        config/debug? (assoc :on-double-click (e> (re-frame/dispatch [::router.handlers/route ::router.routes/signup]))))
-      [:span.logo icons/vimsical-logo]
-      [:span.type icons/vimsical-type]]
-     (when (router.routes/route-name= route :vims)
-       [vims-info])
-     (when-not (user/anon? user)
-       [:div.new-and-my-vims.button-group
-        [:div.button
-         {:on-click (e> (re-frame/dispatch [::app.handlers/new-vims user]))}
-         "New Vims"]
-        (when (not-empty vimsae)
+      {::vims/keys [title] :as app-vims} (<sub [:q [:app/vims
+                                                    [:db/uid
+                                                     ::vims/title]]])
+      logged-in?  (not (user/anon? user))]
+      [:div.main-nav.ac.jsb
+       {:class (util/space-join (when modal "no-border") (when logged-in? "logged-in"))}
+       [:div.logo-and-type
+        (cond-> {:on-click (e> (re-frame/dispatch [::router.handlers/route ::router.routes/landing]))}
+          config/debug? (assoc :on-double-click (e> (re-frame/dispatch [::router.handlers/route ::router.routes/signup]))))
+        [:span.logo icons/vimsical-logo]
+        [:span.type icons/vimsical-type]]
+       (when (router.routes/route-name= route :vims)
+         [vims-info])
+       (when logged-in?
+         [:div.new-and-my-vims.button-group
           [:div.button
-           {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view
-                          (re-frame/dispatch
-                           [::app.handlers/toggle-modal :modal/vims-list]))}
-           "My Vims"])])
-     (when (router.routes/route-name= route :vims)
-       [:div.button
-        {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view
-                       (re-frame/dispatch
-                        [::app.handlers/toggle-modal :modal/share]))}
-        "Share"])
-     [:div.auth-or-user
-      ;; popovers use no-op :on-cancel cb because event bubbles up here
-      {:on-click (e> (swap! show-popup? not))}
-      (if (user/anon? user)
-        [:div.auth
-         [auth.views/login-popover
-          {:showing?  show-popup?
-           :position  :below-left
-           :anchor    [:div.button "login"]
-           :on-cancel (constantly nil)}]]
-        [:div.user.ac
-         [auth.views/logout-popover
-          {:showing?  show-popup?
-           :anchor    [user.views/avatar {:user user}]
-           :on-cancel (constantly nil)}]
-         [user.views/full-name {:user user}]])]]))
+           {:on-click (e> (re-frame/dispatch [::app.handlers/new-vims user]))}
+           "New Vims"]
+          (when (not-empty vimsae)
+            [:div.button
+             {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view
+                            (re-frame/dispatch
+                             [::app.handlers/toggle-modal :modal/vims-list]))}
+             "My Vims"])])
+       (when (router.routes/route-name= route :vims)
+         [:div.button
+          {:on-click (e> (.stopPropagation e) ; avoid calling close hook on app view
+                         (re-frame/dispatch
+                          [::app.handlers/toggle-modal :modal/share]))}
+          "Share"])
+       [:div.auth-or-user
+        ;; popovers use no-op :on-cancel cb because event bubbles up here
+        {:on-click (e> (swap! show-popup? not))}
+        (if-not logged-in?
+          [:div.auth
+           [auth.views/login-popover
+            {:showing?  show-popup?
+             :position  :below-left
+             :anchor    [:div.button "login"]
+             :on-cancel (constantly nil)}]]
+          [:div.user.ac
+           [auth.views/logout-popover
+            {:showing?  show-popup?
+             :anchor    [user.views/avatar {:user user}]
+             :on-cancel (constantly nil)}]
+           [user.views/full-name {:user user}]])]])))

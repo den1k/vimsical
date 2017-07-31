@@ -143,10 +143,23 @@
 
 (def player
   [:.player-section
-   {:background :#ffee58
-    :position   :relative}
+   {:background  :#ffee58
+    :position    :relative
+    :padding-top :7vh}
    [:.header
-    {:font-size :80px}]
+    {:font-size :50px}]
+   [:.try-cta-box
+    {:font-size :18px
+     :position  :relative}
+    [:.coder-emojis
+     {:display :none}
+     {:font-size :22px}]
+    [:.pointer
+     {:font-size :25px
+      :position  :absolute
+      :right     :-20px
+      :bottom    :-7px
+      :transform "scaleX(-1) rotate(25deg)"}]]
    [:.credit
     {:position :absolute
      :right    0
@@ -229,16 +242,29 @@
 
 (def waitlist
   [[:.bottom-waitlist
-    {:padding-top :200px}
+    {:padding "20vh 0"}
     [:.join
-     {:font-size      :60px
-      :letter-spacing :.02em
-      :font-weight    :400}]]
+     {:letter-spacing :.02em
+      :font-weight    :400}]
+    [:.get-demo-box
+     {:margin-top :20px}
+     [:.get-demo
+      {:font-weight :500}]
+     (media/not-on-mobile
+      [:.get-demo
+       {:font-size :45px}])
+     [:.waitlist
+      {:position :relative
+       :padding  0
+       :margin   0}]]]
    (media/on-mobile
     [:.bottom-waitlist
-     {:padding-top :50px}
+     {:padding-top :70px}
      [:.join
-      {:font-size :40px}]])
+      {:font-size :30px}]
+     [:.get-demo
+      {:font-size :25px}]
+     ])
    [:.waitlist
     {:margin-top :2em}
 
@@ -251,20 +277,33 @@
        :height      :50px}]]
     [:.result
      {:font-size   :1rem
-      :margin-top  :20px
+      :position    :absolute
+      :width       :100%
+      :margin-top  :10px
       :line-height :20px
       :text-align  :center}]]])
 
 (def footer
-  [:.footer-logo
-   {:margin "15px auto"}
-   [:.vimsical-logo
-    {:height :45px
-     :width  :45px}]
-   [:.vimsical-type
-    {:width       :140px
-     :margin-left :23px
-     :fill        :black}]])
+  [:.footer
+   {:padding "0px 15px"
+    :color   (:grey colors)}
+   [:.footer-box
+    {:width :250px}]
+   [:.built-contact.mobile
+    {:width         :100%
+     :margin-bottom :20px}]
+   [:.contact:hover
+    {:cursor :pointer
+     :color  :black}]
+   [:.footer-logo
+    {:padding-bottom "5px"}
+    [:.vimsical-logo
+     {:height :38px
+      :width  :38px}]
+    [:.vimsical-type
+     {:width       :130px
+      :margin-left :17px
+      :fill        :black}]]])
 
 (defn vims-preview-section
   ([class defaults] (vims-preview-section class defaults nil))
@@ -343,6 +382,35 @@
        [:.iframe
         {:background :transparent}]]]]]])
 
+(def product-stmts-section
+  [:.product-stmts-section
+   {:background :black
+    :color      :white}
+   [:.product-stmts
+    [:.product-stmt-wrapper
+     [:.icon {:flex-shrink 0}
+      [:.stmt-icon
+       {:stroke :white
+        :width  :100px                  ; crane
+        :height :90px}
+       [:&.deer
+        {:stroke-width :1.3px}]
+       [:&.monkey
+        {:height    :80px
+         :transform "rotateY(180deg)"}]]]
+     [:.product-stmt
+      {:margin-left :50px}
+      [:.title
+       {:font-weight 600
+        :font-size   :36px}]
+      [:.stmt
+       {:font-size :20px}]]
+     (media/on-mobile
+      [:.product-stmt
+       {:margin-left :20px}
+       [:.title {:font-size :20px}]
+       [:.stmt {:font-size :16px}]])]]])
+
 (def landing
   [(media/not-on-mobile
     [:.landing
@@ -356,7 +424,7 @@
      {:display         :flex
       :justify-content :space-around
       :align-items     :center
-      :padding-top     :5vh
+      :padding-top     :10vh
       :padding-bottom  :10vh
       :z-index         1
       :position        :relative}
@@ -371,10 +439,11 @@
     credit
     headers
     sub-statement
-    vimsical-stmt
-    create-and-explore
+    ;vimsical-stmt
+    ;create-and-explore
+    product-stmts-section
     player
-    mission
+    ;mission
     waitlist
-    vims-preview-sections
+    ;vims-preview-sections
     footer]])
