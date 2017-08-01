@@ -29,7 +29,7 @@
    [timeline-bar opts]
    [info-and-editor-container opts]])
 
-(defn player [{:keys [vims standalone? orientation show-info? ui-key] :as opts}]
+(defn player [{:keys [vims standalone? orientation show-info? ui-key style] :as opts}]
   (let [vims        (if standalone? (<sub [::app.subs/vims]) vims)
         files       (when vims (<sub [::vcs.subs/files vims]))
         orientation (or orientation (<sub [::ui.subs/orientation]))
@@ -40,10 +40,11 @@
                             :show-info?  true} opts)]
     (when vims                          ; fixme player should have loader
       [:div.vimsical-frontend-player.player
-       {:class (name orientation)}
+       {:class (name orientation)
+        :style style}
        [(case orientation
           :landscape landscape
-          :portrait  portrait)
+          :portrait portrait)
         opts]
        (when standalone?
          [window-listeners])])))

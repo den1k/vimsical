@@ -14,7 +14,8 @@
 
 (defn mount-root []
   (re-frame/clear-subscription-cache!)
-  (reagent/render [player {:standalone? true}]
+  (reagent/render [player {:standalone? true
+                           :style       {:border "1px solid lightgray"}}]
                   (.getElementById js/document "app")))
 
 (defn ^:export init

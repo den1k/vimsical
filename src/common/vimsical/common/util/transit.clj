@@ -56,8 +56,12 @@
  chan->transit-readable-byte-channel)
 
 (defn- transit-response?
-  [{:keys [body] :as response}]
-  (or (transit-request? response) (coll? body)))
+  [{:keys [body] :as response} content-type-key]
+  (let [content-type (-> response :headers (get content-type-key))]
+    (or (transit-request? response)
+        (= "application/transit+json" content-type)
+        (and (nil? content-type)
+             (coll? body)))))
 
 (defn encode-transit-response
   [{:keys [body] :as response}
@@ -69,7 +73,7 @@
     (chan? body)
     (update response :body chan->transit-readable-byte-channel)
 
-    (transit-response? response)
+    (transit-response? response content-type-key)
     (-> response
         (assoc-in [:headers content-type-key] "application/transit+json")
         (update :body write-transit writer options))
@@ -145,10 +149,10 @@
   ([object] (write-transit object default-writer default-writer-options))
   ([object options] (write-transit object default-writer (merge default-writer-options options)))
   ([object writer options]
-   (let [baos (ByteArrayOutputStream.)
-         transit-writer    (writer baos options)
-         _    (transit/write transit-writer object)
-         ret  (.toString baos)]
+   (let [baos           (ByteArrayOutputStream.)
+         transit-writer (writer baos options)
+         _              (transit/write transit-writer object)
+         ret            (.toString baos)]
      (.reset baos)
      ret)))
 
