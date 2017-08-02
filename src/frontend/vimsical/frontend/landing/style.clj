@@ -147,9 +147,14 @@
     :position    :relative
     :padding-top :7vh}
    [:.header
-    {:font-size   :50px
-     :text-align  :center
+    {:text-align  :center
      :white-space :pre}]
+   (media/not-on-mobile
+    [:.header
+     {:font-size :50px}])
+   (media/on-mobile
+    [:.header
+     {:font-size :20px}])
    [:.try-cta-box
     {:font-size :18px}
     [:.coder-emojis
