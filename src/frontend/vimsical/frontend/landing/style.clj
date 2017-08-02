@@ -389,6 +389,8 @@
    {:background :black
     :color      :white}
    [:.product-stmts
+    {:width     :inherit
+     :max-width :85%}
     [:.product-stmt-wrapper
      [:.icon {:flex-shrink 0}
       [:.stmt-icon
