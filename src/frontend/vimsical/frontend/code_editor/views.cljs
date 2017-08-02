@@ -10,7 +10,8 @@
    [vimsical.frontend.code-editor.handlers :as handlers]
    [vimsical.frontend.timeline.handlers :as timeline.handlers]
    [vimsical.frontend.code-editor.interop :as interop]
-   [vimsical.frontend.util.dom :refer-macros [e>]]))
+   [vimsical.frontend.util.dom :refer-macros [e>]]
+   [re-com.core :as re-com]))
 
 (defn editor-opts
   "https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditorconstructionoptions.html"
@@ -160,9 +161,15 @@
              [:div.insert-warning.dc.aic
               [:div.msg
                "No support for branching off your own insert, yet."]
-              [:div.action.button
-               {:on-mouse-down
-                (e> (reset! show-warning? false)
-                    (re-frame/dispatch [::timeline.handlers/go-to-end-of-insert vims]))}
-               "Go to end of insert"]])
+              [re-com/h-box
+               :gap "10px"
+               :children
+               [[:div.action.button
+                 {:on-mouse-down
+                  (e> (reset! show-warning? false)
+                      (re-frame/dispatch [::timeline.handlers/go-to-end-of-insert vims]))}
+                 "Go to end of insert"]
+                [:div.action.button
+                 {:on-mouse-down (e> (reset! show-warning? false))}
+                 "Dismiss"]]]])
            [code-editor-instance opts]]))})))

@@ -10,6 +10,7 @@
    [vimsical.remotes.backend.vcs.commands :as vcs.commands]
    [vimsical.frontend.vcs.queries :as queries]
    [vimsical.frontend.vcs.subs :as subs]
+   [vimsical.frontend.app.subs :as app.subs]
    [vimsical.frontend.vcs.sync.handlers :as sync.handlers]
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.core :as vcs]
@@ -174,6 +175,7 @@
  ::add-edit-event
  [editor-cofxs
   (re-frame/inject-cofx :ui-db)
+  (util.re-frame/inject-sub ^:ignore-warnings [::app.subs/user [:db/uid]])
   (util.re-frame/inject-sub (fn [[_ vims]] [::subs/vcs vims]))]
  (fn [{:keys           [db ui-db]
        ::app.subs/keys [user]

@@ -13,16 +13,12 @@
    [vimsical.vcs.branch :as branch]
    [vimsical.vcs.core :as vcs]
    [vimsical.vcs.file :as file]
-   [vimsical.vims :as vims]))
+   [vimsical.vims :as vims]
+   [vimsical.frontend.app.subs :as app.subs]))
 
 ;;
 ;; * App
 ;;
-
-(re-frame/reg-sub
- ::user
- (fn [db _]
-   (mg/pull db [:q [:app/user [:db/uid]]])))
 
 ;;
 ;; * VCS
@@ -77,17 +73,13 @@
 (re-frame/reg-sub
  ::branch-limit?
  (fn [[_ vims]]
-   [(re-frame/subscribe [::vcs vims])
-    (re-frame/subscribe [::branch-uid vims])
-    (re-frame/subscribe [::playhead-entry vims])
-    (re-frame/subscribe [::playhead-on-master? vims])])
- (fn [[{:as vcs ::vcs/keys [branches]}
-       branch-uid
-       playhead-entry
-       playhead-on-master?]]
+   [(re-frame/subscribe [::app.subs/user [:db/uid]])
+    (re-frame/subscribe [::playhead-at-end? vims])
+    (re-frame/subscribe [::branch vims])])
+ (fn [[user playhead-at-end? branch]]
    (boolean
-    (and (not playhead-on-master?)
-         (vcs/branching? vcs branch-uid playhead-entry)))))
+    (and (not playhead-at-end?)
+         (util/=by :db/uid user (::branch/owner branch))))))
 
 ;;
 ;; * Heads (timeline entries)
@@ -123,6 +115,16 @@
     (re-frame/subscribe [::playhead-entry vims])])
  (fn [[{:as master master-uid :db/uid} [_ {:keys [branch-uid]}]] _]
    (= master-uid branch-uid)))
+
+(re-frame/reg-sub
+ ::playhead-at-end?
+ (fn [[_ vims]]
+   [(re-frame/subscribe [::vcs vims])
+    (re-frame/subscribe [::playhead-entry vims])])
+ (fn [[vcs playhead-entry] _]
+   (let [[time entry] playhead-entry
+         [_ last-entry] (vcs/timeline-branch-last-entry vcs time)]
+     (= entry last-entry))))
 
 ;;
 ;; * Files
