@@ -19,8 +19,7 @@
 
    [:html
     ;; https://www.paulirish.com/2012/box-sizing-border-box-ftw/
-    {:box-sizing  :border-box
-     :user-select :none}]
+    {:box-sizing :border-box}]
 
    (media/on-phone
     ; see index.html for scaling factor

@@ -165,7 +165,8 @@
 (def vcr
   (media/not-on-mobile
    [:.route-vims
-    {:min-width :700px}]
+    {:min-width   :700px
+     :user-select :none}]
    [:.vcr
     ;; Styles to prevent code-editor from overflowing beyond VCR's boundaries
     ;; Set here instead of on code-editor to allow widget overflow

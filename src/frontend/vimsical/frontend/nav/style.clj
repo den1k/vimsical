@@ -1,6 +1,7 @@
 (ns vimsical.frontend.nav.style
   (:require [vimsical.frontend.styles.color :refer [colors]]
-            [garden.stylesheet :as garden]))
+            [garden.stylesheet :as garden]
+            [vimsical.frontend.styles.media :as media]))
 
 (def nav
   [[:.route-landing :route-signup
@@ -15,11 +16,10 @@
      :z-index       15}
     [:&.no-border
      {:border :none}]
-    (garden/at-media
-     {:screen    true
-      :max-width :800px}
-     [:.vimsical-type
-      {:display :none}])
+    [:&.logged-in
+     (media/on-mobile
+      [:.vimsical-type
+       {:display :none}])]
     (garden/at-media
      {:screen    true
       :max-width :900px}
@@ -50,17 +50,18 @@
       [:&.untitled {:color (:grey colors)}]]]
     [:.new-and-my-vims.button-group
      {:display       :flex
+      :overflow      :auto
       :flex-shrink   0
       :border-radius :5px
       :border        (str "1px solid " (:lightgrey colors))
       :align-items   :center}
      [:.button {;;; divider btw button groups
                 :border                     :none
+                :border-radius              0
                 :border-top-right-radius    0
                 :border-bottom-right-radius 0
                 :border-right               (str "1px solid " (:lightgrey colors))}
-      [:&:last-child {:border-right  :none
-                      :border-radius :5px}]]]
+      [:&:last-child {:border-right :none}]]]
     [:.user
      [:.avatar
       {:width  :30px
