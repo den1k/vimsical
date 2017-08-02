@@ -94,10 +94,23 @@
      :keybindings [(bit-or js/monaco.KeyMod.CtrlCmd js/monaco.KeyCode.US_SLASH)]
      :run         #(constantly nil)})))
 
+(defn TEMP-prevent-tab-on-selection
+  "We don't support multiline edits. This causes problems with multiline inden-
+  tation. So we disable it."
+  [editor]
+  (doto editor
+    (.onKeyDown
+     (fn [e]
+       (when (and (= "Tab" (.. e -browserEvent -key))
+                  (interop/selection? (.getSelection editor)))
+         (.preventDefault e)
+         (.stopPropagation e))))))
+
 (defn new-editor [el {:keys [editor-opts model-opts]}]
   {:pre [editor-opts model-opts]}
   (doto (js/monaco.editor.create el (clj->js editor-opts))
     (set-keyboard-shortcuts)
+    (TEMP-prevent-tab-on-selection)
     (interop/update-model-options model-opts)))
 
 ;;

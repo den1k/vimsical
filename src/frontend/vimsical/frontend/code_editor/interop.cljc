@@ -119,6 +119,17 @@
 ;;
 
 #?(:cljs
+   (defn selection?
+     "Returns a bool whether the passed object represents a **range** selection."
+     [^js/Object sel]
+     (let [start-line   (.-startLineNumber sel)
+           start-column (.-startColumn sel)
+           end-line     (.-endLineNumber sel)
+           end-column   (.-endColumn sel)]
+       (or (not (identical? start-column end-column))
+           (not (identical? start-line end-line))))))
+
+#?(:cljs
    (defn- selection-event-state [^js/Object model ^js/Object e]
      (letfn [(reverse-sel [{:keys [start-idx end-idx] :as sel}]
                (assoc sel :start-idx end-idx :end-idx start-idx))]
@@ -129,8 +140,7 @@
              end-line       (.-endLineNumber sel)
              end-column     (.-endColumn sel)
              lines          (.getLinesContent model)
-             selection?     (or (not (identical? start-column end-column))
-                                (not (identical? start-line end-line)))]
+             selection?     (selection? sel)]
          (cond-> {:selection? selection?
                   :start-idx  (pos->str-idx start-line start-column lines)
                   :end-idx    (when selection? (pos->str-idx end-line end-column lines))
