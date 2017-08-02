@@ -79,7 +79,8 @@
 (re-frame/reg-sub
  ::filters
  :<- [::quick-search [:quick-search/filter-idx]]
- :<- [::app.subs/vims-branch-uid]
+ ;:<- [::app.subs/vims-branch-uid] ;; removed to avoid circular dep.
+ ;; to fix just make this a vcs.sub instead
  :<- [::app.subs/libs]
  (fn [[{:quick-search/keys [filter-idx]} branch-uid libs] _]
    (cond-> (filters [[:libs libs]] {:branch-uid branch-uid})
