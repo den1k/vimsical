@@ -3,7 +3,6 @@
    [vimsical.subgraph :as sg]
    [re-frame.core :as re-frame]
    [vimsical.common.uuid :refer [uuid]]
-   [vimsical.frontend.app.subs :as app.subs]
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
    [vimsical.frontend.util.subgraph :as util.sg]
    [vimsical.frontend.util.re-frame :as util.re-frame]
@@ -182,18 +181,23 @@
        ::editor/keys   [effects]}
       [_ {vims-uid :db/uid :as vims} {file-uid :db/uid} edit-event]]
    {:pre [vims-uid effects file-uid]}
-   (when-let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)]
-     (let [[playhead' _] (::vcs.db/playhead-entry vcs')
-           db'    (vcs.db/add db vcs')
-           ui-db' (timeline.ui-db/set-playhead ui-db vims playhead')]
-       (cond-> {:db         db'
-                :ui-db      ui-db'
-                :dispatch-n [[::sync.handlers/add-deltas vims-uid deltas]]}
-         ;; NOTE branch is already in ::vcs/branches, don't need to sg/add it
-         (some? ?branch)
-         (-> (update :db util.sg/add-join :app/vims ::vims/branches ?branch)
-             ;; NOTE We don't remote branches for now
-             #_(update :dispatch-n conj [::sync.handlers/add-branch vims-uid ?branch])))))))
+   (letfn [(join-branch [cofx branch user]
+             ;; NOTE VCS doesn't keep track of branch owners, we tie the current
+             ;; user to the new branch here
+             (let [branch+owner (assoc branch ::branch/owner user)]
+               (-> cofx
+                   (update :db sg/add branch+owner)
+                   (update :db util.sg/add-join :app/vims ::vims/branches branch+owner)
+                   ;; NOTE We don't remote branches for now
+                   #_(update :dispatch-n conj [::sync.handlers/add-branch vims-uid ?branch]))))]
+     (when-let [[vcs' deltas ?branch] (add-edit-event vcs effects file-uid edit-event)]
+       (let [[playhead' _] (::vcs.db/playhead-entry vcs')
+             db'    (vcs.db/add db vcs')
+             ui-db' (timeline.ui-db/set-playhead ui-db vims playhead')]
+         (cond-> {:db         db'
+                  :ui-db      ui-db'
+                  :dispatch-n [[::sync.handlers/add-deltas vims-uid deltas]]}
+           (some? ?branch) (join-branch ?branch user)))))))
 
 ;;
 ;; * Libs

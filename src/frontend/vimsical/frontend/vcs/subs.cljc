@@ -16,6 +16,15 @@
    [vimsical.vims :as vims]))
 
 ;;
+;; * App
+;;
+
+(re-frame/reg-sub
+ ::user
+ (fn [db _]
+   (mg/pull db [:q [:app/user [:db/uid]]])))
+
+;;
 ;; * VCS
 ;;
 
