@@ -1,7 +1,7 @@
 (ns vimsical.frontend.license.subs
   (:require [re-frame.core :as re-frame]
             [vimsical.frontend.util.re-frame :refer [<sub]]
-            [vimsical.frontend.util.mapgraph :as util.mg]
+            [vimsical.frontend.util.subgraph :as util.sg]
             [vimsical.frontend.router.routes :as router.routes]
             [vimsical.frontend.vims.subs :as vims.subs]
             [vimsical.user :as user]

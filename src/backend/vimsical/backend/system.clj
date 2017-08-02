@@ -1,7 +1,5 @@
 (ns vimsical.backend.system
-  "TODO
-  - Have a strategy to measure latency and throughput
-  - Add an nRepl server component for prod"
+  "TODO - Have a strategy to measure latency and throughput"
   (:require
    [clojure.spec.alpha :as s]
    [com.stuartsierra.component :as cp]

@@ -1,10 +1,10 @@
 (ns vimsical.frontend.vcs.subs
   (:require
-   [com.stuartsierra.mapgraph :as mg]
+   [vimsical.subgraph :as sg]
    [re-frame.core :as re-frame]
    [vimsical.common.util.core :as util :include-macros true]
    [vimsical.frontend.util.lint.core :as lint]
-   [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.frontend.util.subgraph :as util.sg]
    [vimsical.frontend.util.preprocess.core :as preprocess]
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as db]
@@ -22,14 +22,14 @@
 (re-frame/reg-sub
  ::vims-vcs
  (fn [db [_ vims :as event]]
-   (mg/pull db queries/vims-vcs (util.mg/->ref db vims))))
+   (sg/pull db queries/vims-vcs (util.sg/->ref db vims))))
 
 (re-frame/reg-sub
  ::vcs
  (fn [db [_ vims :as event]]
-   (if-some [lookup-ref (util.mg/->ref-maybe db vims)]
+   (if-some [lookup-ref (util.sg/->ref-maybe db vims)]
      (-> db
-         (mg/pull queries/vims-vcs lookup-ref)
+         (sg/pull queries/vims-vcs lookup-ref)
          (get-in [::vims/vcs]))
      (re-frame.loggers/console :error (ex-info "No Vims" {:event event})))))
 
@@ -135,7 +135,7 @@
  ::file
  (fn [db [_ file-uid]]
    {:pre [file-uid]}
-   (mg/pull db queries/file [:db/uid file-uid])))
+   (sg/pull db queries/file [:db/uid file-uid])))
 
 (defn- vcs-and-timeline-entry-subs [[_ vims]]
   [(re-frame/subscribe [::vcs vims])

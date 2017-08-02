@@ -1,8 +1,8 @@
-(ns vimsical.frontend.util.mapgraph
+(ns vimsical.frontend.util.subgraph
   (:refer-clojure :exclude [remove])
   (:require
-   [com.stuartsierra.mapgraph :as mg]
-   [com.stuartsierra.subgraph :as sg]
+   [vimsical.subgraph :as sg]
+   [vimsical.subgraph.re-frame :as sg.re-frame]
    [re-frame.core :as re-frame]
    [re-frame.interop :as interop]))
 
@@ -13,35 +13,35 @@
 (defn- entities? [db coll]
   (boolean
    (when (coll? coll)
-     (every? (partial mg/entity? db) coll))))
+     (every? (partial sg/entity? db) coll))))
 
 (defn- ref-or-refs [db x]
   (cond
-    (mg/entity? db x) (mg/ref-to db x)
-    (entities? db x) (mapv (partial mg/ref-to db) x)
+    (sg/entity? db x) (sg/ref-to db x)
+    (entities? db x) (mapv (partial sg/ref-to db) x)
     :else nil))
 
 (defn ref->entity [[k id]] {k id})
 
 (defn ent->id-attr [db entity]
-  (some ::mg/id-attrs (keys entity)))
+  (some ::sg/id-attrs (keys entity)))
 
 (defn ->entity
   ([db x] (->entity db :db/uid x))
   ([db id-attr x]
-   {:post [(mg/ref-to db %)]}
+   {:post [(sg/ref-to db %)]}
    (cond
      (map? x)       (select-keys x [id-attr])
-     (mg/ref? db x) (apply hash-map x)
+     (sg/ref? db x) (apply hash-map x)
      (uuid? x)      {id-attr x})))
 
 (defn ->ref
   ([db x] (->ref db :db/uid x))
   ([db id-attr x]
-   {:post [(mg/ref? db %)]}
+   {:post [(sg/ref? db %)]}
    (cond
-     (mg/ref? db x) x
-     (map? x)       (mg/ref-to db x)
+     (sg/ref? db x) x
+     (map? x)       (sg/ref-to db x)
      (uuid? x)      [id-attr x]
      (keyword? x)   (->ref db id-attr (get db x)))))
 
@@ -56,7 +56,7 @@
    {:post [(uuid? %)]}
    (cond
      (uuid? x) x
-     (mg/ref? db x) (second x)
+     (sg/ref? db x) (second x)
      (map? x) (get x id-attr))))
 ;;
 ;; * Add
@@ -65,16 +65,16 @@
 (defmulti add
   (fn [db entity-or-entities]
     (cond
-      (mg/entity? db entity-or-entities) :entity
+      (sg/entity? db entity-or-entities) :entity
       (entities? db entity-or-entities) :entities)))
 
 (defmethod add :entity
   ([db entity]
-   (mg/add db entity)))
+   (sg/add db entity)))
 
 (defmethod add :entities
   ([db entities]
-   (apply mg/add db entities)))
+   (apply sg/add db entities)))
 
 (defn add-to [db k v]
   (if-let [rors (ref-or-refs db v)]
@@ -102,12 +102,12 @@
   `entity`. Will default to a vector if the join doesn't exist."
   [db entity join-key join-entity]
   (-> db
-      (mg/add join-entity)
+      (sg/add join-entity)
       (add-join* entity join-key join-entity)))
 
 (defn add-ref
   [db key entity]
-  (assoc db key (mg/ref-to db entity)))
+  (assoc db key (sg/ref-to db entity)))
 
 ;;
 ;; * Remove
@@ -122,7 +122,7 @@
   (let [path     [(->ref db entity) key]
         join-ref (->ref db join)
         pred     (fn [ref] (when-not (= ref join-ref) ref))]
-    (update-in db path (partial #'mg/keept pred))))
+    (update-in db path (partial #'sg/keept pred))))
 
 (defn remove-join
   "Remove `join` to the from the `join-key` on `entity`. Expects a vector of
@@ -147,8 +147,8 @@
 (defn pull* [db pattern]
   (if (rewrite-pattern? pattern)
     (let [{:keys [link pattern]} (rewrite-pattern pattern)]
-      (get (mg/pull db pattern) link))
-    (mg/pull db pattern)))
+      (get (sg/pull db pattern) link))
+    (sg/pull db pattern)))
 
 (defn pull-sub*
   ([db pattern]
@@ -156,10 +156,10 @@
      (let [{:keys [link pattern]} (rewrite-pattern pattern)]
        (interop/make-reaction
         (fn []
-          (get @(sg/pull db pattern) link))))
-     (sg/pull db pattern)))
+          (get @(sg.re-frame/pull db pattern) link))))
+     (sg.re-frame/pull db pattern)))
   ([db pattern lookup-ref]
-   (sg/pull db pattern lookup-ref)))
+   (sg.re-frame/pull db pattern lookup-ref)))
 
 ;;
 ;; * Re-frame x Mapgraph

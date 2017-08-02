@@ -2,7 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.test :refer [deftest is use-fixtures]]
-   [com.stuartsierra.mapgraph :as mg]
+   [vimsical.subgraph :as sg]
    [day8.re-frame.test :as re-frame.test]
    [orchestra.spec.test :as st]
    [re-frame.core :as re-frame]
@@ -50,7 +50,7 @@
 
 (defn get-vims
   [db-sub]
-  (mg/pull @db-sub queries.vims/frontend-pull-query [:db/uid (uuid ::data/vims)]))
+  (sg/pull @db-sub queries.vims/frontend-pull-query [:db/uid (uuid ::data/vims)]))
 
 ;;
 ;; * Vims

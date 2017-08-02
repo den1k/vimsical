@@ -1,7 +1,7 @@
 (ns vimsical.frontend.live-preview.handlers
   (:require [re-frame.core :as re-frame]
             [vimsical.frontend.util.re-frame :as util.re-frame :refer [<sub]]
-            [com.stuartsierra.mapgraph :as mg]
+            [vimsical.subgraph :as sg]
             [vimsical.frontend.vcs.subs :as vcs.subs]
             [vimsical.frontend.license.subs :as license.subs]
             [vimsical.vcs.file :as file]
@@ -11,8 +11,8 @@
             [vimsical.common.util.core :as util :include-macros true]
             [vimsical.frontend.vims.subs :as vims.subs]
             [vimsical.frontend.util.preprocess.core :as preprocess]
-   #?@(:cljs [[reagent.dom.server]
-              [vimsical.frontend.util.dom :as util.dom]])))
+            #?@(:cljs [[reagent.dom.server]
+                       [vimsical.frontend.util.dom :as util.dom]])))
 
 ;;
 ;; * Iframe dom helpers

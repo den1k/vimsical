@@ -1,6 +1,6 @@
 (ns vimsical.frontend.timeline.handlers
   (:require
-   [com.stuartsierra.mapgraph :as mg]
+   [vimsical.subgraph :as sg]
    [re-frame.core :as re-frame]
    [vimsical.frontend.code-editor.handlers :as code-editor.handlers]
    [vimsical.frontend.timeline.subs :as subs]

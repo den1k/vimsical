@@ -2,7 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.test :refer [deftest is use-fixtures testing]]
-   [com.stuartsierra.mapgraph :as mg]
+   [vimsical.subgraph :as sg]
    [day8.re-frame.test :as re-frame.test]
    [orchestra.spec.test :as st]
    [re-frame.core :as re-frame]
@@ -40,7 +40,7 @@
 (defn get-app-user
   [db-sub]
   (:app/user
-   (mg/pull
+   (sg/pull
     @db-sub
     [{[:app/user '_] queries.user/pull-query}])))
 

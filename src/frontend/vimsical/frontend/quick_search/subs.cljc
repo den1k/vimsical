@@ -1,7 +1,7 @@
 (ns vimsical.frontend.quick-search.subs
   (:require [re-frame.core :as re-frame]
-            [com.stuartsierra.mapgraph :as mg]
-            [vimsical.frontend.util.mapgraph :as util.mg]
+            [vimsical.subgraph :as sg]
+            [vimsical.frontend.util.subgraph :as util.sg]
             [vimsical.frontend.util.search :as util.search]
             [vimsical.frontend.db :as db]
             [vimsical.frontend.app.subs :as app.subs]
@@ -13,7 +13,7 @@
 (re-frame/reg-sub
  ::quick-search
  (fn [db [_ ?pattern]]
-   (util.mg/pull* db [:app/quick-search (or ?pattern '[*])])))
+   (util.sg/pull* db [:app/quick-search (or ?pattern '[*])])))
 
 (re-frame/reg-sub
  ::search-results

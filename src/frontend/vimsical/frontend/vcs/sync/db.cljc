@@ -7,7 +7,7 @@
    [vimsical.vcs.delta :as delta]
    [vimsical.vims :as vims]
    [re-frame.loggers :as re-frame.loggers]
-   [vimsical.frontend.util.mapgraph :as util.mg]))
+   [vimsical.frontend.util.subgraph :as util.sg]))
 
 (declare path)
 
@@ -56,7 +56,7 @@
      [context]
      (let [db                        (interceptor/get-coeffect context :db)
            [event-id vims-or-uid :as event] (interceptor/get-coeffect context :event)
-           vims-uid                  (util.mg/->uid db vims-or-uid)
+           vims-uid                  (util.sg/->uid db vims-or-uid)
            {::keys [state]}          (get-in db (path vims-uid))
            allowed-transitions       (get fsm state)]
        (when-not (and allowed-transitions (contains? allowed-transitions (kw-name event-id)))
@@ -67,7 +67,7 @@
   (std-interceptors/enrich
    (fn fsm-enrich-next-state-transition-after
      [db [event-id vims-or-uid :as event]]
-     (let [vims-uid (util.mg/->uid db vims-or-uid)]
+     (let [vims-uid (util.sg/->uid db vims-or-uid)]
        (if-some [{::keys [state]} (get-in db (path vims-uid))]
          (if-some [next-state (get-in fsm [state (kw-name event-id)])]
            (assoc-in db (path vims-uid ::state) next-state)

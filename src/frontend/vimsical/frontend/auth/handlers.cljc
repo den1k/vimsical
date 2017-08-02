@@ -1,7 +1,7 @@
 (ns vimsical.frontend.auth.handlers
   (:require
    [re-frame.core :as re-frame]
-   [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.frontend.util.subgraph :as util.sg]
    [vimsical.remotes.backend.auth.commands :as auth.commands]
    [vimsical.remotes.backend.auth.queries :as auth.queries]
    [vimsical.frontend.router.handlers :as router.handlers]
@@ -28,7 +28,7 @@
 
 (defn invite-success-handler
   [{:keys [db]} [_ invite-user]]
-  {:db (util.mg/add-linked-entities db {:app/user invite-user})})
+  {:db (util.sg/add-linked-entities db {:app/user invite-user})})
 
 (re-frame/reg-event-fx ::invite-success invite-success-handler)
 
@@ -44,7 +44,7 @@
 
 (defn invite-signup-success-handler
   [{:keys [db]} [_ user]]
-  {:db (util.mg/add-linked-entities db {:app/user user})
+  {:db (util.sg/add-linked-entities db {:app/user user})
    :dispatch
    [::router.handlers/route signup-success-route]})
 
@@ -65,7 +65,7 @@
 
 (defn signup-success-handler
   [{:keys [db]} [_ user]]
-  {:db (util.mg/add-linked-entities db {:app/user user})
+  {:db (util.sg/add-linked-entities db {:app/user user})
    :dispatch
    [::router.handlers/route signup-success-route]})
 
@@ -78,7 +78,7 @@
 
 (defn login-event-fx
   [{:keys [db]} [_ login-user status-key]]
-  {:db (util.mg/add db login-user)
+  {:db (util.sg/add db login-user)
    :remote
    {:id               :backend
     :event            [::auth.commands/login login-user]
@@ -88,7 +88,7 @@
 
 (defn login-success-event-fx
   [{:keys [db]} [_ user]]
-  {:db (util.mg/add-linked-entities db {:app/user user})})
+  {:db (util.sg/add-linked-entities db {:app/user user})})
 
 (defn login-error-event-fx
   [{:keys [db]} [_ error]]
@@ -104,7 +104,7 @@
 
 (defn logout-handler
   [{:keys [db]} _]
-  {:db (util.mg/remove db :app/user)
+  {:db (util.sg/remove db :app/user)
    :remote
    {:id               :backend
     :event            [::auth.commands/logout]}

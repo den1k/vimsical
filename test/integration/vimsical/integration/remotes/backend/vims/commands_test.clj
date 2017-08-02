@@ -2,7 +2,7 @@
   "NOTE these tests are used from the remote queries test to assert that remote"
   (:require
    [clojure.test :refer [deftest is testing use-fixtures]]
-   [com.stuartsierra.mapgraph :as mg]
+   [vimsical.subgraph :as sg]
    [day8.re-frame.test :as re-frame.test]
    [orchestra.spec.test :as st]
    [re-frame.core :as re-frame]
@@ -17,7 +17,7 @@
    [vimsical.user :as user]
    [vimsical.vcs.snapshot :as snapshot]
    [vimsical.vims :as vims]
-   [vimsical.frontend.util.mapgraph :as util.mg]))
+   [vimsical.frontend.util.subgraph :as util.sg]))
 
 (st/instrument)
 
@@ -53,7 +53,7 @@
 (defn get-app-user
   [db-sub]
   (-> @db-sub
-      (mg/pull [{[:app/user '_] queries.user/frontend-pull-query}])
+      (sg/pull [{[:app/user '_] queries.user/frontend-pull-query}])
       :app/user))
 
 ;;
@@ -94,7 +94,7 @@
         handler-event [::frontend.vims.handlers/update-snapshots {:db/uid (uuid ::data/vims)} status-key]
         status-sub    (re-frame/subscribe [::frontend.remotes.fx/status :backend status-key])
         db-sub        (re-frame/subscribe [::db/db])]
-    (re-frame/dispatch [::test-db-init (util.mg/add-linked-entities test-db {:app/vims data/vims})])
+    (re-frame/dispatch [::test-db-init (util.sg/add-linked-entities test-db {:app/vims data/vims})])
     (re-frame/dispatch [::vcs.handlers/init uuid data/vims data/deltas])
     (re-frame/dispatch handler-event)
     (is (= ::frontend.remotes.fx/success @status-sub))

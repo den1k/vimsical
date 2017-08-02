@@ -1,6 +1,6 @@
 (ns vimsical.frontend.quick-search.handlers
   (:require [re-frame.core :as re-frame]
-            [com.stuartsierra.mapgraph :as mg]
+            [vimsical.subgraph :as sg]
             [vimsical.frontend.router.handlers :as router.handlers]
             [vimsical.common.util.core :as util :include-macros true]))
 
@@ -95,7 +95,7 @@
  (fn [db [_ query quick-search]]
    (let [quick-search (assoc quick-search :quick-search/query query
                              :quick-search/result-idx 0)]
-     (mg/add db quick-search))))
+     (sg/add db quick-search))))
 
 (re-frame/reg-event-fx
  ::run-cmd
@@ -124,10 +124,10 @@
  ::move
  (fn [db [_ dir opts]]
    {:pre [(contains? #{:up :down :left :right} dir)]}
-   (mg/add db (move dir opts))))
+   (sg/add db (move dir opts))))
 
 (re-frame/reg-event-db
  ::update-result-idx
  (fn [db [_ quick-search results res]]
    (let [idx (util/index-of results res)]
-     (mg/add db (assoc quick-search :quick-search/result-idx idx)))))
+     (sg/add db (assoc quick-search :quick-search/result-idx idx)))))

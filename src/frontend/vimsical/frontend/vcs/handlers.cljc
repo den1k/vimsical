@@ -1,11 +1,11 @@
 (ns vimsical.frontend.vcs.handlers
   (:require
-   [com.stuartsierra.mapgraph :as mg]
+   [vimsical.subgraph :as sg]
    [re-frame.core :as re-frame]
    [vimsical.common.uuid :refer [uuid]]
    [vimsical.frontend.app.subs :as app.subs]
    [vimsical.frontend.timeline.ui-db :as timeline.ui-db]
-   [vimsical.frontend.util.mapgraph :as util.mg]
+   [vimsical.frontend.util.subgraph :as util.sg]
    [vimsical.frontend.util.re-frame :as util.re-frame]
    [vimsical.frontend.vcs.db :as vcs.db]
    [vimsical.remotes.backend.vcs.commands :as vcs.commands]
@@ -27,9 +27,9 @@
 
 (defn init-event-fx
   [{:keys [db]} [_ vims deltas {:keys [uuid-fn] :or {uuid-fn uuid} :as options}]]
-  (let [vims-ref   (util.mg/->ref db vims)
+  (let [vims-ref   (util.sg/->ref db vims)
         {:as         vims
-         ::vims/keys [branches]} (mg/pull db queries/vims vims-ref)
+         ::vims/keys [branches]} (sg/pull db queries/vims vims-ref)
 
         vcs        (vcs/add-deltas (vcs/empty-vcs branches) uuid-fn deltas)
 
@@ -41,10 +41,10 @@
                     ::vcs.db/delta-uid      delta-uid
                     ::vcs.db/playhead-entry playhead-entry}
         vcs-entity (merge {:db/uid (uuid-fn)} vcs vcs-db)
-        vcs-ref    (util.mg/->ref db vcs-entity)
+        vcs-ref    (util.sg/->ref db vcs-entity)
         vims-vcs   (assoc vims ::vims/vcs vcs-ref)]
     {:db (-> db
-             (mg/add vims-vcs)
+             (sg/add vims-vcs)
              (vcs.db/add vcs-entity))
      #?@(:cljs
          [:dispatch
@@ -189,9 +189,9 @@
        (cond-> {:db         db'
                 :ui-db      ui-db'
                 :dispatch-n [[::sync.handlers/add-deltas vims-uid deltas]]}
-         ;; NOTE branch is already in ::vcs/branches, don't need to mg/add it
+         ;; NOTE branch is already in ::vcs/branches, don't need to sg/add it
          (some? ?branch)
-         (-> (update :db util.mg/add-join :app/vims ::vims/branches ?branch)
+         (-> (update :db util.sg/add-join :app/vims ::vims/branches ?branch)
              ;; NOTE We don't remote branches for now
              #_(update :dispatch-n conj [::sync.handlers/add-branch vims-uid ?branch])))))))
 
@@ -203,13 +203,13 @@
  ::add-lib
  [(util.re-frame/inject-sub (fn [[_ vims _]] [::subs/branch vims]))]
  (fn [{:keys [db] branch ::subs/branch} [_ _ lib]]
-   (let [[_ branch-uid :as branch-ref] (util.mg/->ref db branch)]
-     {:db (util.mg/add-join db branch-ref ::branch/libs lib)
+   (let [[_ branch-uid :as branch-ref] (util.sg/->ref db branch)]
+     {:db (util.sg/add-join db branch-ref ::branch/libs lib)
       :remote
-          {:id               :backend
-           :event            [::vcs.commands/add-lib branch-uid lib]
-           :dispatch-success ::add-lib-success
-           :dispatch-error   ::add-lib-error}})))
+      {:id               :backend
+       :event            [::vcs.commands/add-lib branch-uid lib]
+       :dispatch-success ::add-lib-success
+       :dispatch-error   ::add-lib-error}})))
 
 ;; temp
 (re-frame/reg-event-fx ::add-lib-success (fn [{:keys [db]} _] (println "Lib add sucess")))
@@ -219,14 +219,14 @@
  ::remove-lib
  [(util.re-frame/inject-sub (fn [[_ vims _]] [::subs/branch vims]))]
  (fn [{:keys [db] branch ::subs/branch} [_ _ lib]]
-   (let [[_ branch-uid :as branch-ref] (util.mg/->ref db branch)]
+   (let [[_ branch-uid :as branch-ref] (util.sg/->ref db branch)]
      (println lib)
-     {:db (util.mg/remove-join db branch-ref ::branch/libs lib)
+     {:db (util.sg/remove-join db branch-ref ::branch/libs lib)
       :remote
-          {:id               :backend
-           :event            [::vcs.commands/remove-lib branch-uid lib]
-           :dispatch-success ::remove-lib-success
-           :dispatch-error   ::remove-lib-error}})))
+      {:id               :backend
+       :event            [::vcs.commands/remove-lib branch-uid lib]
+       :dispatch-success ::remove-lib-success
+       :dispatch-error   ::remove-lib-error}})))
 
 ;; temp
 (re-frame/reg-event-fx ::remove-lib-success (fn [{:keys [db]} _] (println "Lib remove sucess")))
