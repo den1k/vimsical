@@ -76,7 +76,8 @@
               [:div.desc desc])]
            (get file-uid->code-editor active-file-uid)
            [:div.logo-and-file-type.bar
-            (case orientation
-              :landscape [icons/logo-and-type]
-              :portrait [icons/logo-and-type] #_[elems/explore opts])
+            (let [logo-and-type [icons/logo-and-type {:on-click (e> (util.dom/open "https://vimsical.com"))}]]
+              (case orientation
+                :landscape logo-and-type
+                :portrait logo-and-type #_[elems/explore opts]))
             (active-file-badge {:file active-file})]]))})))

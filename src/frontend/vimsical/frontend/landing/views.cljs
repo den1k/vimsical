@@ -331,23 +331,23 @@
                 :read-only? true}
          (not (<sub [::ui.subs/on-mobile?])) (assoc :orientation :landscape))])))
 
-(defn coder-emojis []
-  [:span.coder-emojis "\uD83D\uDC69\u200D\uD83D\uDCBB \uD83D\uDC68\u200D\uD83D\uDCBB"])
+
+(def coder-emojis-str "\uD83D\uDC69\u200D\uD83D\uDCBB \uD83D\uDC68\u200D\uD83D\uDCBB")
+(defn coder-emojis [] [:span.coder-emojis coder-emojis-str])
 
 (defn player-section []
   [:div.player-section.section
    [ui.views/visibility {}
     [:div.dc.ac.sub-section
      ;[:h2.header "Create. Watch. Explore."]
-     [:h2.header "Automatic Tutorials of Your Work."]
+     [:h2.header "You do the work,\nVimsical makes the tutorial."]
      (when-not (<sub [::ui.subs/on-mobile?])
        [re-com/h-box
         :class "try-cta-box"
-        :gap "5px"
-        :children [[coder-emojis]
-                   [:span.try-cta.ac
-                    " Try changing the code"]
-                   [:span.pointer "☟"]]])
+        :gap "4px"
+        :children [[:span.try-cta.ac "It's automagic! Try changing the code"]
+                   [:span.pointer-wrapper [:span.pointer "☟"]]
+                   [coder-emojis]]])
      ;; todo credit
      [:div.player-wrapper
       (let [vims-uid (:vims-uid (:emoji vims-kw->info))]
@@ -402,7 +402,7 @@
       [icons/crane {:class "stmt-icon crane"}]
       [:div.product-stmt.dc.jc
        [:div.title "Explore Everything, Everywhere."]
-       [:div.stmt "Embed Player and bring powerful learning experiences to your website, company and classroom."]]]]]])
+       [:div.stmt "Vimsical's Embedded Player brings powerful learning experiences to your website, company and classroom."]]]]]])
 
 (defn contact-us []
   [:span.contact
@@ -447,7 +447,7 @@
       :gap "30px"
       :align :center
       :style {:flex-flow :wrap}
-      :children [[:span.get-demo "Get a Demo:"] [waitlist]]]]]
+      :children [[:span.get-demo "Get a demo:"] [waitlist]]]]]
    ;[mission-section]
    (if (<sub [::ui.subs/on-mobile?])
      [:footer.footer.jsb.ac.dc

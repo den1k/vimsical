@@ -60,7 +60,7 @@
                 :border-radius              0
                 :border-top-right-radius    0
                 :border-bottom-right-radius 0
-                :border-right               (str "1px solid " #_(:lightgrey colors))}
+                :border-right               (str "1px solid " (:lightgrey colors))}
       [:&:last-child {:border-right :none}]]]
     [:.user
      [:.avatar

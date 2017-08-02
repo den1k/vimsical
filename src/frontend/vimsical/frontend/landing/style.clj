@@ -147,19 +147,21 @@
     :position    :relative
     :padding-top :7vh}
    [:.header
-    {:font-size :50px}]
+    {:font-size   :50px
+     :text-align  :center
+     :white-space :pre}]
    [:.try-cta-box
-    {:font-size :18px
-     :position  :relative}
+    {:font-size :18px}
     [:.coder-emojis
-     {:display :none}
      {:font-size :22px}]
-    [:.pointer
-     {:font-size :25px
-      :position  :absolute
-      :right     :-20px
-      :bottom    :-7px
-      :transform "scaleX(-1) rotate(25deg)"}]]
+    [:.pointer-wrapper
+     {:position :relative
+      :width    :23px}
+     [:.pointer
+      {:font-size :25px
+       :position  :absolute
+       :bottom    :-7px
+       :transform "scaleX(-1) rotate(25deg)"}]]]
    [:.credit
     {:position :absolute
      :right    0
