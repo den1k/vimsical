@@ -292,8 +292,9 @@
 
 (def footer
   [:.footer
-   {:padding "0px 15px"
-    :color   (:grey colors)}
+   {:padding    "10px 15px 6px 15px"
+    :background (:mediumgrey colors)
+    :color      (:grey colors)}
    [:.footer-box
     {:width :250px}]
    [:.built-contact.mobile

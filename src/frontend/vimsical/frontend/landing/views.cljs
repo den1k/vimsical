@@ -391,17 +391,17 @@
     [[:div.product-stmt-wrapper.ac
       [icons/deer {:class "stmt-icon deer"}]
       [:div.product-stmt.dc.jc
-       [:div.title "Just Create."]
+       [:div.title "Code and Create."]
        [:div.stmt "Vimsical turns your coding process into an interactive tutorial. Automatically."]]]
      [:div.product-stmt-wrapper.ac
       [icons/monkey {:class "stmt-icon monkey"}]
       [:div.product-stmt.dc.jc
-       [:div.title "No Video = \uD83D\uDCAF Interactive."]
+       [:div.title "Beyond Video: \uD83D\uDCAF Interactive."]
        [:div.stmt "See how your favorite projects come together. And make edits with one click."]]]
      [:div.product-stmt-wrapper.ac
       [icons/crane {:class "stmt-icon crane"}]
       [:div.product-stmt.dc.jc
-       [:div.title "Explore Everything, Everywhere."]
+       [:div.title "Explore Anywhere, Teach Everywhere."]
        [:div.stmt "Vimsical's Embedded Player brings powerful learning experiences to your website, company and classroom."]]]]]])
 
 (defn contact-us []
@@ -441,7 +441,7 @@
 
    [:div.bottom-waitlist.dc.ac.section
     [:div.sub-section.aic
-     [:h2.join "Interested in How Vimsical Could Help You or Your Company?"]
+     [:h2.join "Interested in how Vimsical could help you or your company?"]
      [re-com/h-box
       :class "get-demo-box"
       :gap "30px"
