@@ -35,6 +35,7 @@
        (e> (re-frame/dispatch [::handlers/on-mouse-leave vims]))
        :on-click
        (e> (re-frame/dispatch [::handlers/on-click vims (e->time c e dur)]))
+
        :on-touch-move
        (e> (let [time (e->time c (util.dom/first-touch->e e) dur)]
              (reset! last-touch-time time)
@@ -78,8 +79,8 @@
     (fn [{:keys [vims] :as opts}]
       (let [time (util/time-ms->fmt-time (<sub [::timeline.subs/time vims]))]
         [:div.time-or-speed-control.ac.jc
-         {:on-mouse-enter (e> (reset! show-speed? true))
-          :on-mouse-out   (e> (reset! show-speed? false))}
+         {:on-mouse-over  (e> (reset! show-speed? true))
+          :on-mouse-leave (e> (reset! show-speed? false))}
          (if (or on-mobile? (not @show-speed?))
            [:div.time time]
            [speed-control opts])]))))

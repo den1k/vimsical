@@ -29,60 +29,62 @@
 
 (def vims-kw->info
   (->>
-   {:bezier       {:vims-uid     nil
-                   :title        "Bézier Curve"
-                   :author       {::user/first-name "Kynd"
-                                  ::user/twitter    "https://twitter.com/kyndinfo"}
-                   :original-src "https://codepen.io/kynd/pen/bREZXv"
-                   :img-src      "https://www.dropbox.com/s/mi70cypdot7bld5/Screenshot%202017-06-24%2010.41.39.png?dl=1"}
+   {:bezier         {:vims-uid     nil
+                     :title        "Bézier Curve"
+                     :author       {::user/first-name "Kynd"
+                                    ::user/twitter    "https://twitter.com/kyndinfo"}
+                     :original-src "https://codepen.io/kynd/pen/bREZXv"
+                     :img-src      "https://www.dropbox.com/s/mi70cypdot7bld5/Screenshot%202017-06-24%2010.41.39.png?dl=1"}
 
-    :fireworks    {:vims-uid     nil
-                   :title        "Anime.js Fireworks"
-                   :author       {::user/first-name "Julian" ::user/last-name "Garnier"
-                                  ::user/twitter    "https://twitter.com/juliangarnier"}
-                   :original-src "https://codepen.io/juliangarnier/pen/gmOwJX"
-                   :img-src      "https://www.dropbox.com/s/b9665muqf4kbkhk/Screenshot%202017-06-24%2010.33.03.png?dl=1"}
+    :fireworks      {:vims-uid     nil
+                     :title        "Anime.js Fireworks"
+                     :author       {::user/first-name "Julian" ::user/last-name "Garnier"
+                                    ::user/twitter    "https://twitter.com/juliangarnier"}
+                     :original-src "https://codepen.io/juliangarnier/pen/gmOwJX"
+                     :img-src      "https://www.dropbox.com/s/b9665muqf4kbkhk/Screenshot%202017-06-24%2010.33.03.png?dl=1"}
 
-    :strandbeast  {:vims-uid      (uuid "5956e2fe-f747-4efb-86a6-20c39d0a38b1")
-                   :vims-uid-prod (uuid "5954f930-a46a-437a-8307-936671d30465")
-                   :title         "The Mighty Strandbeest"
-                   :author        {::user/first-name "Brandel" ::user/last-name "Zachernuk"
-                                   ::user/twitter    "https://twitter.com/zachernuk"}
-                   :original-src  "https://codepen.io/zachernuk/pen/RRLxLR"
-                   :img-src       "https://www.dropbox.com/s/jmgq7ghrnxhzp0y/Screenshot%202017-06-24%2019.19.24.png?dl=1"}
-    :trail        {:vims-uid         nil
-                   :title            "Trail"
-                   :video-poster-src "/video/explore-still.png"
-                   :video-src        "/video/explore.m4v"
-                   :author           {::user/first-name "Hakim" ::user/middle-name "El" ::user/last-name "Hattab"
-                                      ::user/twitter    "https://twitter.com/hakimel"}
-                   :original-src     "https://codepen.io/hakimel/pen/KanIi"}
-    :emoji        {:vims-uid-prod (uuid "5969777d-8dae-48a6-8b6c-838928b59382")
-                   :vims-uid      (uuid "5969743d-3ab1-49e9-b95f-894190369986")
-                   :title         "Montserrat"
-                   :explore?      true
-                   :author        {::user/first-name "Claire" ::user/last-name "Larsen"
-                                   ::user/twitter    "https://codepen.io/ClaireLarsen/"}
-                   :original-src  "https://codepen.io/ClaireLarsen/pen/XmVyVX/"}
-    :tree         {:vims-uid         nil
-                   :title            "Fractal Tree (L-System)"
-                   :video-poster-src "/video/create-still.png"
-                   :video-src        "/video/create.m4v"
-                   :author           {::user/first-name "Patrick" ::user/last-name "Stillhart"
-                                      ::user/website    "https://stillh.art/"}
-                   :original-src     "https://codepen.io/arcs/pen/mEdqQX/"}
-    :joy-division {:vims-uid     nil
-                   :title        "Interactive Joy Division"
-                   :author       {::user/first-name "Mark" ::user/last-name "Benzan"
-                                  ::user/twitter    "https://twitter.com/clawtros"}
-                   :original-src "https://codepen.io/clawtros/pen/YWgmRR"
-                   :img-src      "https://www.dropbox.com/s/rxivavc1aw18bbk/Screenshot%202017-06-24%2020.51.57.png?dl=1"}
-    :test         {:vims-uid     (uuid "5956de33-b46c-48dc-83d5-ea60eeef7d83")
-                   :title        "Test test test"
-                   :author       {::user/first-name "Test" ::user/last-name "Best"
-                                  ::user/twitter    "https://twitter.com/clawtros"}
-                   :original-src "https://codepen.io/clawtros/pen/YWgmRR"
-                   :img-src      "https://www.dropbox.com/s/rxivavc1aw18bbk/Screenshot%202017-06-24%2020.51.57.png?dl=1"}}
+    :strandbeast    {:vims-uid      (uuid "5956e2fe-f747-4efb-86a6-20c39d0a38b1")
+                     :vims-uid-prod (uuid "5954f930-a46a-437a-8307-936671d30465")
+                     :title         "The Mighty Strandbeest"
+                     :author        {::user/first-name "Brandel" ::user/last-name "Zachernuk"
+                                     ::user/twitter    "https://twitter.com/zachernuk"}
+                     :original-src  "https://codepen.io/zachernuk/pen/RRLxLR"
+                     :img-src       "https://www.dropbox.com/s/jmgq7ghrnxhzp0y/Screenshot%202017-06-24%2019.19.24.png?dl=1"}
+    :trail          {:vims-uid         nil
+                     :title            "Trail"
+                     :video-poster-src "/video/explore-still.png"
+                     :video-src        "/video/explore.m4v"
+                     :author           {::user/first-name "Hakim" ::user/middle-name "El" ::user/last-name "Hattab"
+                                        ::user/twitter    "https://twitter.com/hakimel"}
+                     :original-src     "https://codepen.io/hakimel/pen/KanIi"}
+    :hello-vimsical {:vims-uid-prod    (uuid "5969777d-8dae-48a6-8b6c-838928b59382")
+                     :vims-uid         (uuid "5969743d-3ab1-49e9-b95f-894190369986")
+                     :player-opts      {:autoplay-from (util/time-units->ms 1 10)}
+                     :player-opts-prod {:autoplay-from (util/time-units->ms 5 36)}
+                     :title            "Montserrat"
+                     :explore?         true
+                     :author           {::user/first-name "Claire" ::user/last-name "Larsen"
+                                        ::user/twitter    "https://codepen.io/ClaireLarsen/"}
+                     :original-src     "https://codepen.io/ClaireLarsen/pen/XmVyVX/"}
+    :tree           {:vims-uid         nil
+                     :title            "Fractal Tree (L-System)"
+                     :video-poster-src "/video/create-still.png"
+                     :video-src        "/video/create.m4v"
+                     :author           {::user/first-name "Patrick" ::user/last-name "Stillhart"
+                                        ::user/website    "https://stillh.art/"}
+                     :original-src     "https://codepen.io/arcs/pen/mEdqQX/"}
+    :joy-division   {:vims-uid     nil
+                     :title        "Interactive Joy Division"
+                     :author       {::user/first-name "Mark" ::user/last-name "Benzan"
+                                    ::user/twitter    "https://twitter.com/clawtros"}
+                     :original-src "https://codepen.io/clawtros/pen/YWgmRR"
+                     :img-src      "https://www.dropbox.com/s/rxivavc1aw18bbk/Screenshot%202017-06-24%2020.51.57.png?dl=1"}
+    :test           {:vims-uid     (uuid "5956de33-b46c-48dc-83d5-ea60eeef7d83")
+                     :title        "Test test test"
+                     :author       {::user/first-name "Test" ::user/last-name "Best"
+                                    ::user/twitter    "https://twitter.com/clawtros"}
+                     :original-src "https://codepen.io/clawtros/pen/YWgmRR"
+                     :img-src      "https://www.dropbox.com/s/rxivavc1aw18bbk/Screenshot%202017-06-24%2020.51.57.png?dl=1"}}
    (util/map-vals
     (fn [{:keys [vims-uid vims-uid-prod] :as info}]
       (cond-> info
@@ -321,7 +323,7 @@
     [:br]
     "by providing tools to record, share and explore our process."]])
 
-(defn player-load-vims [{vims-uid :db/uid :as vims}]
+(defn player-load-vims [{vims-uid :db/uid :as vims} player-opts]
   (re-frame/dispatch [::vims.handlers/load-vims vims-uid :player-vims])
   (fn []
     (when-let [vims (<sub [::vims.subs/vcs-vims vims-uid])]
@@ -329,6 +331,7 @@
        (cond-> {:vims       {:db/uid vims-uid}
                 :show-info? false
                 :read-only? true}
+         true (merge player-opts)
          (not (<sub [::ui.subs/on-mobile?])) (assoc :orientation :landscape))])))
 
 
@@ -350,15 +353,17 @@
                    [coder-emojis]]])
      ;; todo credit
      [:div.player-wrapper
-      (let [vims-uid (:vims-uid (:emoji vims-kw->info))]
-        [player-load-vims {:db/uid vims-uid}])]
+      (let [{:keys [vims-uid player-opts player-opts-prod]} (:hello-vimsical vims-kw->info)]
+        [player-load-vims
+         {:db/uid vims-uid}
+         (if on-prod? player-opts-prod player-opts)])]
      #_[:p.sub-stmt
         "Embed"
         [:span.bold " Player "]
         "and bring powerful learning experiences"
         [:br]
         "to your website, blog and classroom."]
-     [credit (:emoji vims-kw->info)]
+     [credit (:hello-vimsical vims-kw->info)]
      ]]])
 
 (defn waitlist []
