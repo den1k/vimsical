@@ -5,11 +5,13 @@
    [vimsical.frontend.ui.subs :as ui.subs]
    [vimsical.frontend.views.splits :as splits]
    [vimsical.frontend.player.views.elems :as elems]
+   [vimsical.frontend.player.handlers :as handlers]
    [vimsical.frontend.player.views.preview :refer [social-bar preview-panel preview-container]]
    [vimsical.frontend.player.views.info-and-editor :refer [info-and-editor-container]]
    [vimsical.frontend.player.views.timeline :refer [timeline-bar]]
    [vimsical.frontend.window-listeners.views :refer [window-listeners]]
-   [vimsical.frontend.app.subs :as app.subs]))
+   [vimsical.frontend.app.subs :as app.subs]
+   [re-frame.core :as re-frame]))
 
 (defn landscape [opts]
   [splits/n-h-split
@@ -29,7 +31,8 @@
    [timeline-bar opts]
    [info-and-editor-container opts]])
 
-(defn player [{:keys [vims standalone? orientation show-info? ui-key style] :as opts}]
+(defn player [{:as   opts
+               :keys [vims standalone? orientation show-info? ui-key style autoplay-from]}]
   (let [vims        (if standalone? (<sub [::app.subs/vims]) vims)
         files       (when vims (<sub [::vcs.subs/files vims]))
         orientation (or orientation (<sub [::ui.subs/orientation]))
@@ -39,6 +42,8 @@
                             :ui-key      :player
                             :show-info?  true} opts)]
     (when vims                          ; fixme player should have loader
+      (when autoplay-from
+        (re-frame/dispatch [::handlers/autoplay vims autoplay-from]))
       [:div.vimsical-frontend-player.player
        {:class (name orientation)
         :style style}

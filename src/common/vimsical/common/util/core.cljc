@@ -313,6 +313,11 @@
              (str mins ":" secs))
      :clj  (assert false "not implemented")))
 
+(defn time-units->ms
+  ([secs] (* 1000 secs))
+  ([mins secs] (+ (time-units->ms (* 60 mins)) (time-units->ms secs)))
+  ([hours mins secs] (time-units->ms (+ (* 60 hours) mins) secs)))
+
 (defn rotate
   ([coll] (rotate 1 coll))
   ([n coll] (vec (take (count coll) (drop n (cycle coll))))))

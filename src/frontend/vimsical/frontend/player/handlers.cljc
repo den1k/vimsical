@@ -12,7 +12,7 @@
             [vimsical.frontend.code-editor.handlers :as code-editor.handlers]))
 
 (re-frame/reg-event-fx
- ::on-click
+ ::seek
  [(re-frame/inject-cofx :ui-db)
   (util.re-frame/inject-sub (fn [[_ vims]] [::vcs.subs/vcs vims]))]
  (fn [{:as             cofx
@@ -27,6 +27,17 @@
       :ui-db     ui-db'
       :scheduler [{:action :set-time :t ui-time}
                   {:override? true :t entry-time :event [::vcr.handlers/step vims]}]})))
+
+(re-frame/reg-event-fx
+ ::on-click
+ (fn [_ [_ vims time]]
+   {:dispatch [::seek vims time]}))
+
+(re-frame/reg-event-fx
+ ::autoplay
+ (fn [_ [_ vims time]]
+   {:dispatch-n [[::seek vims time]
+                 [::vcr.handlers/play vims]]}))
 
 ;;
 ;; ** Skimhead
