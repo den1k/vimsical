@@ -1,14 +1,8 @@
-# vimsical
+# Vimsical
+### A distributed version control system for fine-grained change recording
 
-A Clojure library designed to ... well, that part is up to you.
+[vimsical.com](https://vimsical.com/)
 
-## Usage
+[A vims to play with](https://vimsical.com/vims/5969777d-8dae-48a6-8b6c-838928b59382)
 
-FIXME
-
-## License
-
-Copyright © 2017 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Copyright © 2017 Vimsical Inc.
