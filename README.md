@@ -3,6 +3,6 @@
 
 [vimsical.com](https://vimsical.com/)
 
-[A vims to play with](https://vimsical.com/vims/5969777d-8dae-48a6-8b6c-838928b59382)
+[Try it out!](https://vimsical.com/vims/5969777d-8dae-48a6-8b6c-838928b59382)
 
 Copyright © 2017 Vimsical Inc.
