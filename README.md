@@ -1,5 +1,5 @@
 # Vimsical
-### A distributed version control system for fine-grained change recording
+### A distributed version control system for fine-grained change tracking
 
 [vimsical.com](https://vimsical.com/)
 
